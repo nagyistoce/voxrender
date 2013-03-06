@@ -23,17 +23,6 @@
 
 =========================================================================== */
 
-// OpenGL+Glew Dependencies
-#if defined(__APPLE__)
-#  include <OpenGL/gl.h>
-#else
-#  include <GL/glew.h>
-#  if defined(_WIN32)
-#    include <GL/wglew.h>
-#  endif
-#  include <GL/gl.h>
-#endif
-
 // Include Header
 #include "CudaRendererImpl.h"
 
@@ -129,7 +118,7 @@ void CudaRendererImpl::startup()
     m_context->setStackSize(2800);
 
     // Initialize the context's individual Program components
-    String const ptxFilepath = "C:/Users/Lucas/Documents/Projects/VoxSource/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Programs.cu.ptx";
+    String const ptxFilepath = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Programs.cu.ptx";
     m_context->setMissProgram         (0, m_context->createProgramFromPTXFile(ptxFilepath, "missProgram"));
     m_context->setRayGenerationProgram(0, m_context->createProgramFromPTXFile(ptxFilepath, "rayGenerationProgram"));
     m_context->setExceptionProgram    (0, m_context->createProgramFromPTXFile(ptxFilepath, "exceptionProgram"));
@@ -141,7 +130,7 @@ void CudaRendererImpl::startup()
     m_context["maxDepth"]->setUint(1);
 
     // Intialize a material to be applied to the translucent object
-    std::string const transPtxFile = "C:/Users/Lucas/Documents/Projects/VoxSource/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Translucent.cu.ptx";
+    std::string const transPtxFile = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Translucent.cu.ptx";
     optix::Program transCH = m_context->createProgramFromPTXFile(transPtxFile, "closest_hit_radiance");
     optix::Program transAH = m_context->createProgramFromPTXFile(transPtxFile, "any_hit_shadow");
 
@@ -300,9 +289,9 @@ void CudaRendererImpl::render()
 // --------------------------------------------------------------------
 void CudaRendererImpl::rebuildGeometry()
 {
-    std::string const spherePtxFile = "C:/Users/Lucas/Documents/Projects/VoxSource/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Sphere.cu.ptx";
-    std::string const pgramPtxFile  = "C:/Users/Lucas/Documents/Projects/VoxSource/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Parallelogram.cu.ptx";
-    std::string const checkPtxFile  = "C:/Users/Lucas/Documents/Projects/VoxSource/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Checker.cu.ptx";
+    std::string const spherePtxFile = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Sphere.cu.ptx";
+    std::string const pgramPtxFile  = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Parallelogram.cu.ptx";
+    std::string const checkPtxFile  = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Checker.cu.ptx";
 
     // Construct floor geometry as a plane object
     optix::Geometry translucentObj = m_context->createGeometry();

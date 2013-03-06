@@ -131,7 +131,6 @@ ADD_DEPENDENCIES(CUDARenderer VoxLib)
 TARGET_LINK_LIBRARIES(CUDARenderer 
                       ${VOX_LIB} 
                       ${Boost_LIBRARIES} 
-                      ${GLEW_LIBRARY}
                       ${OPENGL_LIBRARY}
                       optix ${optix_rpath})
 

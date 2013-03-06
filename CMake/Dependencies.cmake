@@ -29,11 +29,11 @@
 
 # Default include directories from build scripts
 
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/boost_1_49_0)
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/qt-everywhere-opensource-src-4.8.0)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/boost)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/qt-everywhere-opensource-src)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/glew-1.5.5)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "C:/Program Files/NVIDIA Corporation/OptiX SDK 3.0.0")
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl-7.29.0/builds/libcurl-vc10-x86-release-dll-ipv6-sspi-spnego-winssl)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl)
 
 #===============================================#
 #                  NVIDIA CUDA                  #
@@ -82,7 +82,7 @@ IF(GLEW_FOUND)
     MESSAGE(STATUS "GLEW library directory: " "${GLEW_LIBRARY}")
     INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH})
 ELSE(GLEW_FOUND)
-    MESSAGE(FATAL_ERROR "GLEW not found.")
+    MESSAGE("GLEW not found.")
 ENDIF(GLEW_FOUND)
 
 #===============================================#

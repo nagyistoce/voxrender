@@ -67,9 +67,13 @@ del "bin\syncqt.bat"
 configure -opensource -release -fast -mp -plugin-manifests -nomake demos -nomake examples -no-multimedia -no-phonon -no-phonon-backend -no-audio-backend -no-webkit -no-script -no-scripttools -no-sse2
 nmake > %CURRENT%\Reports\qt-everywhere-opensource-src-%QT_VER%_x86_build.txt
 cd %CURRENT%
+
 echo d | xcopy %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\lib %INCLUDES%\x86\qt-everywhere-opensource-src\lib /E /D /Y > %CURRENT%\Reports\tmp.txt
 echo d | xcopy %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\bin %INCLUDES%\x86\qt-everywhere-opensource-src\bin /E /D /Y > %CURRENT%\Reports\tmp.txt
-echo d | xcopy %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\include %INCLUDES%\x86\qt-everywhere-opensource-src\include /E /D /Y > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x86\qt-everywhere-opensource-src\include %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\include > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x64\qt-everywhere-opensource-src\include %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\include > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x86\qt-everywhere-opensource-src\src %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\src > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x64\qt-everywhere-opensource-src\src %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\src > %CURRENT%\Reports\tmp.txt
 
 echo.
 echo **************************************************************************

@@ -67,7 +67,9 @@ echo.
 cd %DEPENDS%/curl-%CURL_VER%/winbuild
 nmake /f Makefile.vc VC=10 GEN_PDB=yes mode=dll MACHINE=x86 /S > %CURRENT%\Reports\curl-%CURL_VER%_x86_build.txt
 cd %CURRENT%
-echo d | xcopy %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc10-x86-release-dll-ipv6-sspi-spnego-winssl %INCLUDES%\x86\curl /E /D /Y > %CURRENT%\Reports\tmp.txt
+
+rmdir %INCLUDES%\x86\curl > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x86\curl %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc10-x86-release-dll-ipv6-sspi-spnego-winssl > %CURRENT%\Reports\tmp.txt
 
 echo.
 echo **************************************************************************

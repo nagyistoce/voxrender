@@ -75,9 +75,10 @@ echo.
 echo **************************************************************************
 echo *                     Building Boost::IOStreams                          *
 echo **************************************************************************
-set BUILD_DEBUG=0
-IF %BUILD_DEBUG% EQU 1 ( bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared -a -sZLIB_SOURCE=%VOX_ZLIB_SRC_DIR% -sBZIP2_SOURCE=%VOX_BZIP_SRC_DIR% --with-iostreams --stagedir=stage/boost --build-dir=bin/boost debug stage )
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared -a -sZLIB_SOURCE=%VOX_ZLIB_SRC_DIR% -sBZIP2_SOURCE=%VOX_BZIP_SRC_DIR% --with-iostreams --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_io_x86_d_build.txt
 bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared -a -sZLIB_SOURCE=%VOX_ZLIB_SRC_DIR% -sBZIP2_SOURCE=%VOX_BZIP_SRC_DIR% --with-iostreams --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_io_x86_build.txt
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared address-model=64 -a -sZLIB_SOURCE=%VOX_ZLIB_SRC_DIR% -sBZIP2_SOURCE=%VOX_BZIP_SRC_DIR% --with-iostreams --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_io_x64_d_build.txt
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared address-model=64 -a -sZLIB_SOURCE=%VOX_ZLIB_SRC_DIR% -sBZIP2_SOURCE=%VOX_BZIP_SRC_DIR% --with-iostreams --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_io_x64_build.txt
 
 echo.
 echo **************************************************************************
@@ -90,10 +91,17 @@ echo *          Boost::Date_Time                                              *
 echo *          Boost::Unit_Test_Framework                                    *
 echo *          Boost::Chrono                                                 *
 echo **************************************************************************
-IF %BUILD_DEBUG% EQU 1 ( bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared -a --with-test --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=stage/boost --build-dir=bin/boost debug stage ) 
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug   link=static threading=multi runtime-link=shared -a --with-test --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_d_build.txt
 bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared -a --with-test --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_build.txt
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_d_build.txt
+bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_build.txt
 
-echo d | xcopy %DEPENDS%\boost_%BOOST_VER_U%\boost %INCLUDES%\x86\boost\include /E /D /Y > %CURRENT%\Reports\tmp.txt
+rmdir %INCLUDES%\x86\boost\include > %CURRENT%\Reports\tmp.txt
+rmdir %INCLUDES%\x64\boost\include > %CURRENT%\Reports\tmp.txt
+mkdir %INCLUDES%\x86\boost\include > %CURRENT%\Reports\tmp.txt
+mkdir %INCLUDES%\x64\boost\include > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x86\boost\include\boost %DEPENDS%\boost_%BOOST_VER_U%\boost > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\x64\boost\include\boost %DEPENDS%\boost_%BOOST_VER_U%\boost > %CURRENT%\Reports\tmp.txt
 cd %CURRENT%
 
 echo.
