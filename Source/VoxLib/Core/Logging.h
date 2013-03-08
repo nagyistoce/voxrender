@@ -115,34 +115,30 @@ namespace vox
 	/** 
 	 * VoxRender logging interface
      * 
-     * The logger class interface allows user access to the VoxRender logging
-     * system. The base class associated with logging is the Logger class. In 
-     * addition to containing the members which modify the log filtering level, 
-     * the logger backend can be replaced with a user defined handler function.
+     * The logger class interface allows user access to the VoxRender logging system. The base class 
+     * associated with logging is the Logger class. In addition to containing the members which modify 
+     * the log filtering level, the logger backend can be replaced with a user defined handler function.
      * 
      * \section Logger Backends
-     * The logger backend is a function which takes in the log entry content as
-     * parameters and performs the desired logging operation with them. Several
-     * log backends are provided internally:
+     * The logger backend is a function which takes in the log entry content as parameters and performs 
+     * the desired logging operation with them. Several log backends are provided internally:
      *
      *  - \p ErrorPrint
      *  - \p ErrorAbort
      *  - \p ErrorIgnore
      *
-     * And the respective documentation provides descriptions of their function.
-     * By default, the ErrorPrint backend will be used. The ErrorPrint function
-     * is defined for general use, and outputs formatted error messages to the
-     * std::cerr stream. If logging to a file is desired, the user can simply
-     * redirect the stream to the desired filebuf using the std::stream::set_rdbuf
-     * and std::stream::rdbuf member functions.
+     * And the respective documentation provides descriptions of their function. By default, the ErrorPrint 
+     * backend will be used. The ErrorPrint function is defined for general use, and outputs formatted 
+     * error messages to the std::cerr stream. If logging to a file is desired, the user can simply redirect 
+     * the stream to the desired filebuf using the std::stream::set_rdbuf and std::stream::rdbuf member 
+     * functions.
      *
      * \section Example Usage
-     * Log entries can make their way to the log backend in one of two ways. 
-     * The first method is by using the Logger class's addEntry members. The
-     * addEntry functions, which is overloaded for use with the internal 
-     * exception object Error, immediately sends the log entry to the backend
-     * for processing. The only overhead is in the filtering process, described
-     * in the next section. An example of this usage is provided below:
+     * Log entries can make their way to the log backend in one of two ways. The first method is by using 
+     * the Logger class's addEntry members. The addEntry functions, which is overloaded for use with the 
+     * internal exception object Error, immediately sends the log entry to the backend for processing. The 
+     * only overhead is in the filtering process, described in the next section. An example of this usage 
+     * is provided below:
      *
      * \code
      *  // Logging an exception object
@@ -157,31 +153,28 @@ namespace vox
      *      "error message", __FILE__, __LINE__ );
      * \endcode
      *
-     * The other logging method allows the message portion of the log entry 
-     * to be provided to a given stream object following the initial addEntry
-     * call. The actual request will be logged as soon as the Log object goes
-     * out of scope. In the case of cascading log entries in a single functional
-     * unit of code, it may be benificial to wrap the log calls in a seperate { }
-     * block to ensure the entries are dispatched in the order they are constructed.
-     * The same member function (addEntry) is used as before, but now the 
-     * message parameter is left out and provided to the stream. The resulting
-     * code will appear as follows:
+     * The other logging method allows the message portion of the log entry to be provided to a given stream 
+     * object following the initial addEntry call. The actual request will be logged as soon as the Log object 
+     * goes out of scope. In the case of cascading log entries in a single functional unit of code, it may be 
+     * benificial to wrap the log calls in a seperate { } block to ensure the entries are dispatched in the 
+     * order they are constructed. The same overloaded member function (addEntry) is used as before, but now 
+     * the  message parameter is left out and provided to the stream. An example usage follows:
      *
      * \code
      *
      *  /// Logging an info string
      *  char const* myCategory = "category";
-     *    {
-     *      LogEntry entry = vox::Logger::addEntry( 
-     *          Severity_Info, Error_None, 
-     *          category, __FILE__, __LINE__); 
+     * 
+     *  auto logEntry = vox::Logger::addEntry( 
+     *      Severity_Info, Error_None, 
+     *      category, __FILE__, __LINE__); 
      *
-     *      entry << "This is" << "a log message";
-     *    }
-     *
+     *  foreach(auto x, list) entry << x;
+     * 
      * \endcode
      *
      * \section Filtering
+     *
      * The logging system provides functionality for controlling the log entries
      * which are filtered out from processing both during runtime and during 
      * compilation. 
@@ -282,7 +275,7 @@ namespace vox
 		static int          m_lastError;	///< Code of last error logged
 	};
 
-    // Logging macro for performing filtered logging
+    // Logging macro for performing efficient filtered logging
 #define VOX_LOGF(SEV, CODE, CAT, MSG)                                   \
     if (vox::Logger::getFilteringLevel() <= SEV)                        \
     {                                                                   \

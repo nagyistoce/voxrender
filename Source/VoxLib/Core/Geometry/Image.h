@@ -83,7 +83,7 @@ namespace vox
         T * data() { return m_buffer.get(); }
 
         /** Returns the size of the image content */
-        size_t size()
+        size_t size() const
         {
             return m_stride*m_height;
         }

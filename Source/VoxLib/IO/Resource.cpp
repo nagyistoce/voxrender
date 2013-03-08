@@ -48,9 +48,9 @@ namespace filescope {
     // --------------------------------------------------------------------
     void verifyScheme(String const& scheme)
     {
-        //static const boost::regex schemeRegex("*");
+        static const Char * validChars = "";
 
-        if (false)//!boost::regex_match(scheme, schemeRegex))
+        if (false)//!boost::is_any_not_of(scheme, validChars))
         {
             throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
                         "Invalid scheme", Error_BadToken);
@@ -95,7 +95,11 @@ void Resource::open(
 
     // Apply forced mode settings to the requested mode
     m_openMode = (openMode|m_setMask);
-    
+    if ( (openMode & Mode_Append) == Mode_Append )
+    {
+        m_openMode &= ((~Mode_Truncate)|Mode_Output);
+    }
+
     // Apply (potentially) relative reference URIs to the application base
     m_identifier = m_globalBaseUri.applyRelativeReference(identifier, true); 
 

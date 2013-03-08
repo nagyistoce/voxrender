@@ -65,11 +65,11 @@ echo **************************************************************************
 echo.
 
 cd %DEPENDS%/curl-%CURL_VER%/winbuild
-nmake /f Makefile.vc VC=10 GEN_PDB=yes mode=dll MACHINE=x86 /S > %CURRENT%\Reports\curl-%CURL_VER%_x86_build.txt
+nmake /f Makefile.vc VC=10 GEN_PDB=yes mode=dll MACHINE=%BUILD_PLATFORM% /S > %CURRENT%\Reports\curl-%CURL_VER%_%BUILD_PLATFORM%_build.txt
 cd %CURRENT%
 
-rmdir %INCLUDES%\x86\curl > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\x86\curl %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc10-x86-release-dll-ipv6-sspi-spnego-winssl > %CURRENT%\Reports\tmp.txt
+rmdir %INCLUDES%\%BUILD_PLATFORM%\curl > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\%BUILD_PLATFORM%\curl %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc10-%BUILD_PLATFORM%-release-dll-ipv6-sspi-spnego-winssl > %CURRENT%\Reports\tmp.txt
 
 echo.
 echo **************************************************************************

@@ -55,3 +55,31 @@ if %FORCE_EXTRACT% EQU 1 goto EndExtractChoice
 echo Invalid choice
 goto ForceExtractChoice
 :EndExtractChoice
+
+:: Allow the user to specify platform if not already set
+if defined BUILD_PLATFORM goto EndPlatformChoice
+:BuildPlatformChoice
+set BUILD_PLATFORM=0
+echo.
+echo **************************************************************************
+echo *                         Platform Option                                *
+echo **************************************************************************
+echo.
+echo Are you building 32 or 64 bit binaries? (Note this depends on whether you
+echo are running a standard or x64 Visual Studio command prompt)
+echo.
+echo 0. x86 (default)
+echo 1. x64
+echo.
+set /p BUILD_PLATFORM="Selection? "
+if %BUILD_PLATFORM% EQU 0 ( 
+    set BUILD_PLATFORM=x86
+	goto EndPlatformChoice 
+	)
+if %BUILD_PLATFORM% EQU 1 (
+    set BUILD_PLATFORM=x64
+    goto EndPlatformChoice
+	)
+echo Invalid choice
+goto BuildPlatformChoice
+:EndPlatformChoice

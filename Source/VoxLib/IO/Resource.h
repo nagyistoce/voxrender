@@ -56,8 +56,8 @@ typedef std::shared_ptr<ResourceModule> ResourceModuleH;
  * functional component of the IO library, resource retrieval. Resource retrieval itself is
  * managed by registered resource modules, however the Resource interface forms the abstraction
  * between the resource retrieval modules and the resource request. A request ResourceId is 
- * provided to the resource open() member, and the Id is parsed to determine which retrieval 
- * module registered with the library has been tied with the scheme of the ResourceId. The 
+ * provided to the resource open() member, and the ID is parsed to determine which retrieval 
+ * module registered with the library has been registered to the scheme of the ResourceId. The 
  * retrieval module is then executed and the results of the retrieval made accessable through
  * the iostream interface.
  */
@@ -86,9 +86,9 @@ public:
         Mode_Seekable        = Mode_InputSeekable | Mode_OutputSeekable,    ///< Allow get and put head positioning
         Mode_DualSeekable    = 1<<5 | Mode_Seekable,                        ///< Has unique get and put heads for positioning
         Mode_BidirSeekable   = Mode_Bidir | Mode_Seekable,                  ///< Is bidirectional and allow seeking
-        Mode_Append          = 1<<6 | Mode_Output,                          ///< Reposition put pointer to EOF at each write
-        Mode_StartAtEnd      = 1<<7,                                        ///< Start heads at EOF position 
-        Mode_Truncate        = 1<<8 | Mode_Output                           ///< Create resource or discard existing resource content [default]
+        Mode_Append          = 1<<6 | Mode_Output,                          ///< Reposition put pointer to EOF on write
+        Mode_StartAtEnd      = 1<<7,                                        ///< Start read/write heads at EOF position 
+        Mode_Truncate        = 1<<8 | Mode_Output                           ///< Create resource or discard existing resource content
     };
 
     /** Returns the mode options of the stream */
@@ -107,7 +107,7 @@ public:
     void open(
         ResourceId const& identifier, 
         OptionSet const&  options     = OptionSet(),
-        unsigned int      openMode    = Mode_Truncate
+        unsigned int      openMode    = 0
         );
 
     /** 
@@ -264,7 +264,10 @@ public:
  * A ResourceOStream inherits from std::ostream and provides access to the streambuffer returned
  * the internal resource loader which matches the resource. The resource stream wraps the streambuf
  * returned by the loader function to allow internal usage of the resource identifier in issuing
- * warning to the logger and identifying base URIs for relative references within the document. 
+ * warning to the logger and identifying base URIs for relative references within the document.
+ *
+ * By default, a ResourceOStream will send a Mode_Truncate request on open attempts. If this
+ * behavior is undesirable, a Mode_Append should be specified for the request.
  */
 class VOX_EXPORT ResourceOStream : virtual public std::ostream, virtual public Resource
 {

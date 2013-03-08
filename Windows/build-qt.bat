@@ -15,6 +15,12 @@ echo.
 echo NOTICE: You are about to download and build qt version %QT_VER%
 echo         from the qt website at http://qt.nokia.com/
 echo.
+echo         WARNING: QT is a large library and will require some time to build.
+echo         In addition, unique copies of the build tree are made for each 
+echo         platform and the disk usage may exceed several gigabytes. QT is only
+echo         needed for building the VoxRender application component and not the 
+echo         VoxLib C++ Library.
+echo.
 echo This script will use the following pre-built binaries to help build the project:
 echo  1: GNU wget.exe    http://gnuwin32.sourceforge.net/packages/wget.htm
 echo  2: 7za.exe (7-zip) http://7-zip.org/download.html
@@ -41,15 +47,13 @@ IF NOT EXIST %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip (
 )
 
 :: Extract the qt source directory to the temp folder
-set EXTRACT_QT=1
-IF EXIST %DEPENDS%\qt-everywhere-opensource-src-%QT_VER% IF %FORCE_EXTRACT% NEQ 1 set EXTRACT_QT=0
-IF %EXTRACT_QT% EQU 1 ( 
-	echo.
-	echo **************************************************************************
-	echo *                           Extracting QT                                *
-	echo **************************************************************************
-	%UNZIPBIN% x -y %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip -o%DEPENDS% > nul
-)	
+echo.
+echo **************************************************************************
+echo *                           Extracting QT                                *
+echo **************************************************************************
+rmdir /s /q %INCLUDES%\%BUILD_PLATFORM%\qt-everywhere-opensource-src\ > %CURRENT%\Reports\tmp.txt
+%UNZIPBIN% x -y %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip -o%INCLUDES%\%BUILD_PLATFORM% > nul
+ren %INCLUDES%\%BUILD_PLATFORM%\qt-everywhere-opensource-src-%QT_VER% qt-everywhere-opensource-src
 
 echo.
 echo **************************************************************************
@@ -57,7 +61,7 @@ echo *                           Building QT                                  *
 echo **************************************************************************
 echo.
 
-cd /d %DEPENDS%/qt-everywhere-opensource-src-%QT_VER%
+cd /d %INCLUDES%/%BUILD_PLATFORM%/qt-everywhere-opensource-src
 echo Cleaning Qt, this may take a few moments...
 nmake confclean 1>nul 2>nul
 echo.
@@ -65,15 +69,8 @@ echo.
 del "bin\syncqt"
 del "bin\syncqt.bat"
 configure -opensource -release -fast -mp -plugin-manifests -nomake demos -nomake examples -no-multimedia -no-phonon -no-phonon-backend -no-audio-backend -no-webkit -no-script -no-scripttools -no-sse2
-nmake > %CURRENT%\Reports\qt-everywhere-opensource-src-%QT_VER%_x86_build.txt
+nmake
 cd %CURRENT%
-
-echo d | xcopy %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\lib %INCLUDES%\x86\qt-everywhere-opensource-src\lib /E /D /Y > %CURRENT%\Reports\tmp.txt
-echo d | xcopy %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\bin %INCLUDES%\x86\qt-everywhere-opensource-src\bin /E /D /Y > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\x86\qt-everywhere-opensource-src\include %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\include > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\x64\qt-everywhere-opensource-src\include %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\include > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\x86\qt-everywhere-opensource-src\src %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\src > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\x64\qt-everywhere-opensource-src\src %DEPENDS%\qt-everywhere-opensource-src-%QT_VER%\src > %CURRENT%\Reports\tmp.txt
 
 echo.
 echo **************************************************************************

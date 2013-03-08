@@ -92,6 +92,7 @@ std::shared_ptr<std::streambuf> FilesystemIO::access(
 
     String const filename = filepath.string();
 
+    // Feed back resolved filename information
     if (boost::starts_with(filename, "//"))
     {
         size_t const hostLength = filename.find("/", 2);
@@ -140,6 +141,7 @@ std::shared_ptr<QueryResult> FilesystemIO::query(
     boost::filesystem::path filepath = filescope::getFilename(identifier);
 
     // :TODO:
+    filepath.normalize();                         // resolved-uri
     boost::filesystem::file_size(filepath);       // size
     boost::filesystem::last_write_time(filepath); // last-modified
     boost::filesystem::is_symlink(filepath);      // is-symlink

@@ -1,13 +1,11 @@
 /* ===========================================================================
 
 	Project: VoxRender - Application Interface
-
-	Implements the primary application window and GUI error handler
+    
 	Based on luxrender main window interface classes.
 	Lux Renderer website : http://www.luxrender.net 
 
-	Description:
-	 Implements an interface for run-time logging and error handling
+	Description: Implements a QApplication for VoxRender
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -44,11 +42,11 @@ class VoxGuiApp : public QApplication
 	Q_OBJECT
 
 public:
-	VoxGuiApp( int argc, char **argv );
-	~VoxGuiApp( );
+	VoxGuiApp(int argc, char **argv);
+	~VoxGuiApp();
 
 	MainWindow *mainwindow;
-	void initialize( );
+	void initialize();
 
 private:
 	int m_argc; char **m_argv;

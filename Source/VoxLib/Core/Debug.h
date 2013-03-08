@@ -55,7 +55,7 @@
 		if(!(expr)) {									\
 			std::cout << "Verify fails on line "		\
 			<< __LINE__ << " with expr \"" << #expr		\
-			<< "\"\n"; VOX_PAUSE(FAIL_MSG); } }
+			<< "\"\n"; VOX_BREAK(); } }
 
 	// Assertion
 	#define VOX_ASSERT(expr) {							\

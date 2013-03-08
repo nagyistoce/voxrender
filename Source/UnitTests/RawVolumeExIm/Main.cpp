@@ -89,9 +89,9 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         std::cout << "WARNING: This test may take awhile to complete" << std::endl;
 
         // Register the raw volume file ExIm and a filesystem IO module
-        vox::Scene::registerImportModule(".raw", &vox::RawVolumeFile::importer);
-        vox::Scene::registerExportModule(".raw", &vox::RawVolumeFile::exporter);
-        vox::Resource::registerModule("file", FilesystemIO::create());
+        Scene::registerImportModule(".raw", &RawVolumeFile::importer);
+        Scene::registerExportModule(".raw", &RawVolumeFile::exporter);
+        Resource::registerModule("file", FilesystemIO::create());
         
         // Specify the test volume parameters
         Vector4u extent(256, 256, 256, 1);

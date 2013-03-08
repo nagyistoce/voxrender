@@ -2,12 +2,10 @@
 
 	Project: VoxRender - Application Interface
 
-	Implements the primary application window and GUI error handler
 	Based on luxrender main window interface classes.
 	Lux Renderer website : http://www.luxrender.net 
 
-	Description:
-	 Implements an interface for run-time logging and error handling
+	Description: Implements a QApplication for VoxRender
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -31,20 +29,26 @@
 // Include Header 
 #include "voxapp.h"
 
-// Constructor - Stores the commandline arguments for
-// parsing on initialization
-VoxGuiApp::VoxGuiApp( int argc, char **argv ) : 
-	m_argc(argc), m_argv(argv), QApplication( argc, argv ) { }
-
-// Destructor - Delete the main window
+// --------------------------------------------------------------------
+//  Stores the commandline arguments for parsing on initialization
+// --------------------------------------------------------------------
+VoxGuiApp::VoxGuiApp(int argc, char **argv) : 
+	m_argc(argc), 
+    m_argv(argv), QApplication(argc, argv) 
+{ 
+}
+    
+// --------------------------------------------------------------------
+//  Cleanup window resources
+// --------------------------------------------------------------------
 VoxGuiApp::~VoxGuiApp( )
 {
-	if( mainwindow != NULL )
-		delete mainwindow;
+	if (mainwindow != nullptr) delete mainwindow;
 }
 
-// Initialize - Initializes the main window and parses
-// the commandline options
+// --------------------------------------------------------------------
+//  Allocate window resources and parse commandline arguments
+// --------------------------------------------------------------------
 void VoxGuiApp::initialize( )
 {
 	// Initialize the main window

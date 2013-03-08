@@ -29,6 +29,7 @@
 #include <boost/test/unit_test.hpp>
 
 // Include Dependencies
+#include "VoxLib/Core/System.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/MimeTypes.h"
@@ -117,10 +118,52 @@ BOOST_AUTO_TEST_SUITE_END()
 // --------------------------------------------------------------------
 //  Performs tests of the resource module registration and usage
 // --------------------------------------------------------------------
-BOOST_AUTO_TEST_SUITE( ModuleRegistration )
+BOOST_AUTO_TEST_SUITE( ResourceModulesTest )
 
-    BOOST_AUTO_TEST_CASE( ResourceAccess )
+    // Tests the built-in filesystem IO library
+    BOOST_AUTO_TEST_CASE( FilesystemIOTest )
     {
+        String const data = "abcdefghijklmnopqrstuvwxyz\n!@#$%^&*()1234567890\r\n";
+   
+        String const identifier = "file:///" + System::currentDirectory() + "/test_FileIO.txt";
+
+        // Register the FilesystemIO resource module
+        Resource::registerModule("file", FilesystemIO::create());
+     
+        // Stream some output data to a file
+        ResourceOStream out(identifier);
+        out.write(&data[0], data.size());
+        BOOST_CHECK(out.good());
+        out.close();
+
+        // Read in the streamed data
+        ResourceIStream in(identifier);
+        String readData(data.size(), ' '); 
+        in.read(&readData[0], data.size());
+        BOOST_CHECK(in.good());
+        in.close();
+
+        // Check the data for errors
+        BOOST_CHECK( memcmp(readData.c_str(), data.c_str(), data.size()) == 0 );
+
+        // Append some more data
+        out.open(identifier, Resource::Mode_Append);
+        out.write(&data[0], data.size());
+        BOOST_CHECK(out.good());
+        out.close();
+
+        // Compute new file content
+        String newData = data + data;
+
+        // Read in the streamed data
+        in.open(identifier);
+        String newReadData(newData.size(), ' '); 
+        in.read(&newReadData[0], newData.size());
+        BOOST_CHECK(in.good());
+        in.close();
+
+        // Check the data for errors
+        BOOST_CHECK( memcmp(newReadData.c_str(), newData.c_str(), newData.size()) == 0 );
     }
     
 BOOST_AUTO_TEST_SUITE_END()
