@@ -29,13 +29,14 @@
 #include <boost/test/unit_test.hpp>
 
 // Include Dependencies
+#include "VoxLib/Core/Functors.h"
+#include "VoxLib/Core/Logging.h"
 #include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
 #include "VoxLib/Scene/Scene.h"
 #include "VoxLib/Scene/ExIm/RawVolumeFile.h"
 #include "VoxLib/Scene/Volume.h"
-#include "VoxLib/Core/Logging.h"
 
 #include <stdlib.h>     // srand, rand 
 #include <time.h>       // time 
@@ -92,7 +93,7 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         Scene::registerImportModule(".raw", &RawVolumeFile::importer);
         Scene::registerExportModule(".raw", &RawVolumeFile::exporter);
         Resource::registerModule("file", FilesystemIO::create());
-        
+     
         // Specify the test volume parameters
         Vector4u extent(256, 256, 256, 1);
         Vector4f spacing(1.0f, 1.0f, 1.0f, 1.0f);
@@ -100,11 +101,11 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         size_t   nVoxels = 256*256*256*1*1;
 
         // Generate a random test volume data set
-        boost::shared_array<UInt8> data(new UInt8[nVoxels]);
+        std::shared_ptr<UInt8> data(new UInt8[nVoxels], &arrayDeleter);
         auto volume = std::make_shared<Volume>(data, extent, spacing);
         for (size_t i = 256*256*128; i < nVoxels; i++)
         {
-            data[i] = static_cast<UInt8>( rand()*std::numeric_limits<UInt8>::max() );
+            data.get()[i] = static_cast<UInt8>( rand()*std::numeric_limits<UInt8>::max() );
         }
 
         // Construct scene object for export
