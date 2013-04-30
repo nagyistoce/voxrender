@@ -49,6 +49,9 @@ public:
     explicit TransferWidget( QWidget *parent = 0 );
     ~TransferWidget( );
     
+    void synchronizeView();
+    void processInteractions();
+
 private:
     Ui::TransferWidget *ui;
 
@@ -61,8 +64,10 @@ private:
 	int            m_dimensions;
 
 	// Current nodes
-	vox::Transfer::Region* m_currentRegion;
-    vox::Node*             m_currentNode;
+    std::shared_ptr<vox::Transfer> m_transfer;
+    std::shared_ptr<vox::Node>     m_currentNode;
+	//vox::Transfer::Region* m_currentRegion;
+    //vox::Node*             m_currentNode;
 
 	// Dimensions switching
 	void switchDimensions( int nDims );
@@ -70,6 +75,9 @@ private:
 
 signals:
 	void transferChanged( );
+
+public slots:
+    void setSelectedNode(std::shared_ptr<vox::Node> node);
 
 private slots:
 	// Node selection group box

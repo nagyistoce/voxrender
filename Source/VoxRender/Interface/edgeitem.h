@@ -1,12 +1,12 @@
 /* ===========================================================================
 
-	Project: VoxRender - Transfer function node object for GraphicsView
+	Project: VoxRender - Transfer function edge object for GraphicsView
 
-	Defines a class for managing buffers on devices using CUDA.
+	Defines a class for drawing lines between transfer nodes
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
-    MODIFIED FROM EXPOSURE RENDER'S "nodeitem.h" SOURCE FILE:
+    MODIFIED FROM EXPOSURE RENDER'S "nodeitem.cpp" SOURCE FILE:
 
     Copyright (c) 2011, T. Kroes <t.kroes@tudelft.nl>
     All rights reserved.
@@ -39,53 +39,42 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef NODE_ITEM_H
-#define NODE_ITEM_H
+#ifndef EDGE_ITEM_H
+#define EDGE_ITEM_H
 
-// QT4 Dependencies
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsEllipseItem>
-#include <QtGui/QGraphicsScene>
+// Include Dependencies
+#include <QtGui/QGraphicsLineItem>
+#include <QtGui/QPen>
 
-// Parent graphics item class
-namespace vox { class Node; };
-class TransferItem;
+class NodeItem;
 
-/** Graphics item representing a transfer function node */
-class NodeItem : public QObject, public QGraphicsEllipseItem
+/** Edge item for drawing connections between transfer function nodes */
+class EdgeItem : public QGraphicsLineItem
 {
-    Q_OBJECT
-
 public:
-    /** Constructs a new NodeItem for the specified transfer node */
-	NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node);
+    /** Initializes an edge between two nodes */
+	EdgeItem(QGraphicsItem* parent, std::weak_ptr<NodeItem> node1, std::weak_ptr<NodeItem> node2);
 
-	void setPos( const QPointF& pos );
+    /** Draws a line between the edgeitem's nodes */
+	void paint(QPainter* pPainter, const QStyleOptionGraphicsItem* pOption, QWidget* pWidget);
 
-signals:
-    /** Signal which indicates the position changed */
-    void nodeChanged();
+    /** Sets the normal (unselected) color of the line */
+    static void setPenNormal(QPen const& pen) { m_penNormal = pen; }
 
-protected:
-	virtual void mousePressEvent( QGraphicsSceneMouseEvent* pEvent );
-	virtual void mouseReleaseEvent( QGraphicsSceneMouseEvent* pEvent );
+    /** Sets the highlighted (selected) color of the line */
+    static void setPenHighlight(QPen const& pen) { m_penHighlight = pen; }
 
-	virtual void paint( QPainter* pPainter, 
-		const QStyleOptionGraphicsItem* pOption, 
-		QWidget* pWidget );
-
-    virtual QVariant itemChange( GraphicsItemChange Change, const QVariant& Value );
+    /** Sets the disabled color of the line */
+    static void setPenDisabled(QPen const& pen) { m_penDisabled = pen; }
 
 private:
-    TransferItem* m_parent; ///< Handle to parent 
+    std::weak_ptr<NodeItem> m_node1; ///< Reference to an endpoint
+    std::weak_ptr<NodeItem> m_node2; ///< Reference to an endpoint
 
-    std::shared_ptr<vox::Node> m_pNode;   ///< Associated transfer node
-    
-    bool m_ignorePosChange; ///< Indicates lock for synchronizing node attributes
-
-private slots:
-    void sceneRectangleChanged(QRectF rectangle);
+	static QPen	m_penNormal;
+	static QPen m_penHighlight;
+	static QPen m_penDisabled;
 };
 
 // End definition
-#endif // NODE_ITEM_H
+#endif // EDGE_ITEM_H

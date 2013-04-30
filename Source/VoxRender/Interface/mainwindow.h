@@ -54,6 +54,7 @@
 // Shared pointer MetaType declaration for QT signals/slots
 Q_DECLARE_METATYPE(std::shared_ptr<vox::FrameBufferLock>);
 Q_DECLARE_METATYPE(std::string);
+Q_DECLARE_METATYPE(std::shared_ptr<vox::Node>);
 
 /** GUI Render States */
 enum RenderState
@@ -91,13 +92,22 @@ public:
         return *m_renderer; 
     }
 
+    /** Sets the working transfer node for global editing */
+    void setTransferNode(std::shared_ptr<vox::Node> node)
+    {
+        emit transferNodeSelected(node);
+    }
+
 	vox::RenderController m_renderController; ///< Application render controller
 	vox::Scene activeScene;                   ///< Current scene elements
 
 signals:
     /** Signal sent when the active scene is reloaded */
-    void sceneChanged( );
+    void sceneChanged();
 
+    /** Signal sent when the working transfer node is changed */
+    void transferNodeSelected(std::shared_ptr<vox::Node> node); 
+     
     /** Signal sent when the RenderController feeds back a frame */
     void frameReady(std::shared_ptr<vox::FrameBufferLock> frame);
 
@@ -119,10 +129,6 @@ private:
 
     /** Configures the available plugins */
     void configurePlugins();
-
-    std::ofstream m_logFileStream;  ///< Output stream for logging to disk
-    QTimer        m_logBlinkTimer;  ///< Timer for blinking log tab icon
-    bool          m_logBlinkState;  ///< Log blink flip-flop state
 
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
@@ -182,6 +188,15 @@ private:
     QSpacerItem* m_spacer;
 
     bool m_imagingUpdate;   ///< Flags a image update signal
+    
+    // --------------------------------------------------------------------
+    //  Do not place anything below here, the log stream must be closed 
+    //  after all other object have been shutdown 
+    // --------------------------------------------------------------------
+
+    std::ofstream m_logFileStream;  ///< Output stream for logging to disk
+    QTimer        m_logBlinkTimer;  ///< Timer for blinking log tab icon
+    bool          m_logBlinkState;  ///< Log blink flip-flop state
 
 private slots:
 	// Render pushbuttons

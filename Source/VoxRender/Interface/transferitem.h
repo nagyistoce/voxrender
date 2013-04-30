@@ -32,7 +32,9 @@
 #include <QtGui/QGraphicsRectItem>
 #include <QtGui/QGraphicsView>
 
-class NodeItem;
+// Include Dependencies
+#include "nodeitem.h"
+#include "edgeitem.h"
 
 /** 
  * Transfer function display item 
@@ -41,19 +43,23 @@ class NodeItem;
  * representation of a transfer function along a single plane.
  *
  */
-class TransferItem : public QGraphicsRectItem
+class TransferItem : public QObject, public QGraphicsRectItem
 {
+    Q_OBJECT 
+
 public:
     /** Initializes the transfer function display */
 	TransferItem(QGraphicsItem* parent = nullptr);
 
     /** Detaches the transfer function display from the scene object */
 	~TransferItem() { }
+    
+public slots:
+    void synchronizeView();
 
 private:
-    void update( );
-
-    NodeItem* m_node;
+    std::list<std::shared_ptr<NodeItem>> m_nodes; ///< Graphics items for transfer nodes
+    std::list<std::shared_ptr<EdgeItem>> m_edges; ///< Graphics items for transfer edges
 };
 
 // End definition

@@ -69,8 +69,8 @@ void CameraWidget::synchronizeView()
     // Synchronize the film object controls
     vox::Film & film = *MainWindow::instance->scene().film;
 
-    ui->spinBox_filmWidth->setValue( film.width() );
-    ui->spinBox_filmHeight->setValue( film.height() );
+    ui->spinBox_filmWidth->setValue( camera.filmWidth() );
+    ui->spinBox_filmHeight->setValue( camera.filmHeight() );
 
     // Clean the view to prevent forced update
     m_filmDirty = false; m_dirty = false;
@@ -98,10 +98,10 @@ void CameraWidget::processInteractions()
     {
         m_filmDirty = false;
 
-        vox::Film & film = *MainWindow::instance->scene().film;
+        vox::Camera & camera = *MainWindow::instance->scene().camera;
 
-        film.setWidth( ui->spinBox_filmWidth->value() );
-        film.setHeight( ui->spinBox_filmHeight->value() );
+        camera.setFilmWidth( ui->spinBox_filmWidth->value() );
+        camera.setFilmHeight( ui->spinBox_filmHeight->value() );
     }
 }
 

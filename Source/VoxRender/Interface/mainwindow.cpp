@@ -164,7 +164,7 @@ MainWindow::MainWindow(QWidget *parent) :
                     auto widget = static_cast<PointLightWidget*>(pane->getWidget());
                     widget->processInteractions();
                 }
-
+                
                 // Process changes to the camera widget
                 camerawidget->processInteractions();
             }
@@ -186,6 +186,7 @@ MainWindow::~MainWindow()
     writeSettings();
 
     m_renderController.stop();
+    m_renderer.reset();
 
     delete transferwidget;
 	delete m_renderView;
@@ -412,8 +413,8 @@ void MainWindow::createRecentFileActions()
 		m_recentFileActions[i]->setVisible( false );
 
         // Connect action slot to open recent file to open slot
-		connect( m_recentFileActions[i], SIGNAL(triggered()), 
-                 this, SLOT(onActionOpenRecentFile()) );
+		connect(m_recentFileActions[i], SIGNAL(triggered()), 
+                 this, SLOT(onActionOpenRecentFile()));
 	}
 
     // Add the actions to the recent file submenu
@@ -430,10 +431,10 @@ void MainWindow::updateRecentFileActions()
 {
     // Refresh file listing and detect missing files
 	QMutableListIterator<QFileInfo> i(m_recentFiles);
-	while( i.hasNext( ) ) 
+	while (i.hasNext()) 
     {
-		i.peekNext( ).refresh( );
-		if( !i.next( ).exists( ) )
+		i.peekNext().refresh();
+		if (!i.next().exists())
 			i.remove();
 	}
 
@@ -704,6 +705,8 @@ bool MainWindow::canStopRendering()
 void MainWindow::synchronizeView()
 {
     camerawidget->synchronizeView();
+
+    transferwidget->synchronizeView();
 
     // Remove any light panes from the previous render
     BOOST_FOREACH (auto & pane, m_lightPanes)
@@ -1078,7 +1081,7 @@ void MainWindow::on_actionSave_Panel_Settings_triggered()
 		this, tr("Choose a Voxrender panel settings file to save"), 
 		m_lastOpenDir, tr("Voxrender panel settings (*.ini *.txt)"));
 
-	if( fileName.isEmpty( ) ) return;
+	if (fileName.isEmpty()) return;
 
 	QFileInfo info(fileName);
 	m_lastOpenDir = info.absolutePath( );

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>389</width>
-    <height>1040</height>
+    <height>1075</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -242,21 +242,31 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_localNode">
+    <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
-      <string>Local Transfer</string>
+      <string>Node Position</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <layout class="QGridLayout" name="gridLayout_params">
-        <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="1">
+         <widget class="QSlider" name="horizontalSlider_density">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
          <widget class="QLabel" name="label_density">
           <property name="text">
            <string>Density</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
+        <item row="1" column="2">
          <widget class="QDoubleSpinBox" name="doubleSpinBox_density">
           <property name="suffix">
            <string> %</string>
@@ -266,14 +276,24 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="0" column="1">
+         <widget class="QSlider" name="horizontalSlider_gradient">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
          <widget class="QLabel" name="label_gradient">
           <property name="text">
            <string>Gradient</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item row="0" column="2">
          <widget class="QDoubleSpinBox" name="doubleSpinBox_gradient">
           <property name="suffix">
            <string> %</string>
@@ -283,32 +303,11 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="2">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_opacity">
-          <property name="suffix">
-           <string> %</string>
-          </property>
+        <item row="2" column="1">
+         <widget class="QSlider" name="horizontalSlider_gradient2">
           <property name="maximum">
-           <double>100.000000000000000</double>
+           <number>100</number>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QSlider" name="horizontalSlider_density">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QSlider" name="horizontalSlider_gradient">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QSlider" name="horizontalSlider_opacity">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -321,13 +320,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QSlider" name="horizontalSlider_gradient2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="2">
          <widget class="QDoubleSpinBox" name="doubleSpinBox_gradient2">
           <property name="suffix">
@@ -335,6 +327,39 @@
           </property>
           <property name="maximum">
            <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_localNode">
+     <property name="title">
+      <string>Material Properties</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QGridLayout" name="gridLayout_params">
+        <item row="3" column="2">
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_opacity">
+          <property name="suffix">
+           <string> %</string>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QSlider" name="horizontalSlider_opacity">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
@@ -354,6 +379,9 @@
         </item>
         <item row="4" column="1">
          <widget class="QSlider" name="horizontalSlider_gloss">
+          <property name="maximum">
+           <number>100</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>

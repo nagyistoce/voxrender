@@ -167,7 +167,7 @@ IF(QT4_FOUND)
     #            TARGET LINK LIBRARIES              #
     #===============================================#
 
-    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${CR_LIB} ${QT_LIBRARIES} 
+    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VSR_LIB} ${CR_LIB} ${QT_LIBRARIES} 
                                     ${Boost_LIBRARIES} optix ${optix_rpath})
 
 ELSE(QT4_FOUND)

@@ -54,14 +54,13 @@ HistogramView::HistogramView( QWidget *parent ) :
 	setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
 	setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
 	setDragMode( QGraphicsView::ScrollHandDrag );
-    
+
     // Connect scene change signal to the image update slot
     connect( MainWindow::instance, SIGNAL(sceneChanged()), 
 		this, SLOT(updateHistogramData()) );
 
 	// Setup histogram scene
 	m_scene.setBackgroundBrush( QColor(255, 255, 255) );
-    m_scene.addItem( &m_transferItem );
 	m_scene.addItem( &m_histogramItem ); 
 	m_scene.addItem( &m_gridItem );
 	setScene( &m_scene );
@@ -69,10 +68,16 @@ HistogramView::HistogramView( QWidget *parent ) :
     // Ensure correct ordering
 	m_gridItem.setZValue( 0 );
 	m_histogramItem.setZValue( 1 );
-    m_transferItem.setZValue( 2 );
+    
+    // Transfer function item is optional...
+    if (true)
+    {
+        m_transferItem = new TransferItem();
+        m_scene.addItem( m_transferItem );
+        m_transferItem->setZValue( 2 );
+    }
 
-	// Initialize image buffer
-	updateHistogramImage( );
+	updateCanvas(); // Force initial update of scene
 }
     
 // ---------------------------------------------------------
@@ -104,30 +109,37 @@ void HistogramView::wheelEvent( QWheelEvent* event )
 }
 
 // ---------------------------------------------------------
-// Histogram view resize event
+//  Histogram view resize event
 // ---------------------------------------------------------
 void HistogramView::resizeEvent( QResizeEvent *event ) 
 {	
-	QGraphicsView::resizeEvent( event );
+    // Resize the canvas rectangle and compute margins
+	m_canvasRectangle = rect();
 
-    // Update the histogram rectangle
-	m_canvasRectangle = rect( );
-	QGraphicsView::setSceneRect( m_canvasRectangle );
-	m_canvasRectangle.adjust( m_margins.left( ), m_margins.top( ), 
+	m_scene.setSceneRect(m_canvasRectangle);
+
+	m_canvasRectangle.adjust( 
+        m_margins.left( ), m_margins.top( ), 
 		m_margins.right( ), m_margins.bottom( ) );
 
-    // Resize the histogram grid item
-    m_transferItem.setRect( m_canvasRectangle );
+    if (m_transferItem) m_transferItem->setRect( m_canvasRectangle );
+
 	m_gridItem.setRect( m_canvasRectangle );
 
-    // Redraw the histogram
-    updateHistogramImage( );
+    // Regenerate the background image
+    updateImage( );
+
+	QGraphicsView::resizeEvent( event );
+}
+
+void HistogramView::updateCanvas()
+{
 }
 
 // ---------------------------------------------------------
 // Updates the histogram image
 // ---------------------------------------------------------
-void HistogramView::updateHistogramImage( )
+void HistogramView::updateImage( )
 {
     /*
     size_t memSize = 4 * m_canvasRectangle.width( ) * m_canvasRectangle.height( );
@@ -184,7 +196,7 @@ void HistogramView::updateHistogramData( )
     }
 
     // Redraw the histogram image
-    //updateHistogramImage( );
+    //updateImage( );
 }
 
 // ---------------------------------------------------------

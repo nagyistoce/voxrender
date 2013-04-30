@@ -67,7 +67,7 @@ HistogramWidget::~HistogramWidget( )
 // ---------------------------------------------------------
 void HistogramWidget::Update( )
 {
-	histogramView->updateHistogramImage( );
+	histogramView->updateImage( );
 }
 
 // ---------------------------------------------------------
@@ -76,7 +76,7 @@ void HistogramWidget::Update( )
 void HistogramWidget::on_checkBox_histogramLog_toggled( bool checked )
 {
 	histogramView->setLogEnabled( checked );
-	histogramView->updateHistogramImage( );
+	histogramView->updateImage( );
 }
 
 // ---------------------------------------------------------
@@ -85,7 +85,7 @@ void HistogramWidget::on_checkBox_histogramLog_toggled( bool checked )
 void HistogramWidget::on_checkBox_histogramEqualize_toggled( bool checked )
 {
 	histogramView->setEqualizationEnabled( checked );
-	histogramView->updateHistogramImage( );
+	histogramView->updateImage( );
 }
 
 // ---------------------------------------------------------

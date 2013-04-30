@@ -1,25 +1,53 @@
-/*
-	Copyright (c) 2011, T. Kroes <t.kroes@tudelft.nl>
-	All rights reserved.
+/* ===========================================================================
 
-	Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+	Project: VoxRender - Transfer function node object for GraphicsView
 
-	- Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-	- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-	- Neither the name of the <ORGANIZATION> nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-	
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+	Defines a class for managing buffers on devices using CUDA.
 
-// Modified for use with VoxRender // 
+	Lucas Sherman, email: LucasASherman@gmail.com
+
+    MODIFIED FROM EXPOSURE RENDER'S "nodeitem.cpp" SOURCE FILE:
+
+    Copyright (c) 2011, T. Kroes <t.kroes@tudelft.nl>
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without 
+    modification, are permitted provided that the following conditions are 
+    met:
+
+      - Redistributions of source code must retain the above copyright 
+        notice, this list of conditions and the following disclaimer.
+      - Redistributions in binary form must reproduce the above copyright 
+        notice, this list of conditions and the following disclaimer in the 
+        documentation and/or other materials provided with the distribution.
+      - Neither the name of the <ORGANIZATION> nor the names of its 
+        contributors may be used to endorse or promote products derived from 
+        this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
+    TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+    PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=========================================================================== */
 
 // Include Header
 #include "nodeitem.h"
 
 // VoxRender Includes
 #include "VoxLib/Core/Format.h"
+#include "VoxLib/Core/Logging.h"
+#include "VoxLib/Scene/Transfer.h"
 
 // Include Dependencies 
+#include "mainwindow.h"
 #include "transferitem.h"
 
 // QT4 Dependencies
@@ -65,25 +93,31 @@ namespace
     }
 }
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 // Constructor - Initialize node as interactible object
-// ---------------------------------------------------------
-NodeItem::NodeItem( TransferItem* parent ) : 
-    QGraphicsEllipseItem( parent ),
-    m_parent( parent )
+// --------------------------------------------------------------------
+NodeItem::NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node) : 
+    QGraphicsEllipseItem(parent),
+    m_parent(parent),
+    m_pNode(node),
+    m_ignorePosChange(false)
 {
 	setFlag( QGraphicsItem::ItemIsMovable );
 	setFlag( QGraphicsItem::ItemSendsGeometryChanges );
 	setFlag( QGraphicsItem::ItemIsSelectable );
 
+    // Perform the initial scene rectangle update connection
+    connect(parentItem()->scene(), SIGNAL(sceneRectChanged(QRectF)),
+                this, SLOT(sceneRectangleChanged(QRectF)));
+
     // Update the tooltip
     setToolTip( vox::format( filescope::toolTipTemplate, 
-        1, 2, 3, 4, 5, 6 ).c_str( ) );
+        1, 2, 3, 4, 5, 6 ).c_str( ) );  // :TODO: :DEBUG: implement tooltip
 };
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 //  Draws the node item graphic
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 void NodeItem::paint( QPainter* pPainter, 
 	const QStyleOptionGraphicsItem* pOption, 
     QWidget* pWidget )
@@ -119,14 +153,15 @@ void NodeItem::paint( QPainter* pPainter,
 		Pen   = filescope::penDisabled;
 	}
 
+    auto rectangle = rect();
 	pPainter->setBrush( Brush );
 	pPainter->setPen( Pen );
 	pPainter->drawEllipse( rect( ) );
 }
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 //  Sets the position of the node item
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 void NodeItem::setPos(const QPointF& newPos)
 {
     if (newPos == this->pos()) return;
@@ -142,15 +177,31 @@ void NodeItem::setPos(const QPointF& newPos)
     setRect( ellipseRect );
 }
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 //  Maintain link between node display item and actual node
-// ---------------------------------------------------------
-QVariant NodeItem::itemChange( GraphicsItemChange change, const QVariant& value )
+// --------------------------------------------------------------------
+QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     QPointF position = value.toPointF();
 
+    // Detect selection change due to 
+    if (change == QGraphicsItem::ItemSelectedChange && !m_ignorePosChange)
+    {
+        bool selected = this->isSelected();
+
+        if (!selected) MainWindow::instance->setTransferNode(m_pNode);
+    }
+
+    // Register a rectangle resize callback with the parent scene to 
+    // ensure proper node positioning within the view
+    if (change == QGraphicsItem::ItemSceneChange)
+    {
+        connect(parentItem()->scene(), SIGNAL(sceneRectChanged(QRectF)),
+                this, SLOT(sceneRectangleChanged(QRectF)));
+    }
+
     // Ensure the node remains within the parent boundaries
-    if( change == QGraphicsItem::ItemPositionChange )
+    if (change == QGraphicsItem::ItemPositionChange)
     {
         QPointF const nodeRangeMin = m_parent->rect( ).topLeft( );
         QPointF const nodeRangeMax = m_parent->rect( ).bottomRight( );
@@ -161,13 +212,30 @@ QVariant NodeItem::itemChange( GraphicsItemChange change, const QVariant& value 
         return position;
     }
 
-    if( change == QGraphicsItem::ItemPositionHasChanged )
+    // Update the associated transfer function node when moved
+    if (change == QGraphicsItem::ItemPositionHasChanged && !m_ignorePosChange)
     {
-        // LOCKING MECHANISM //
-
-        // 1D Transfer node
-        //m_pNode->SetIntensity( position.x( ) / m_parent->rect( ).width( ) );
-        //m_pNode->SetOpacity( 1.0f - (position.y( ) / m_parent->rect( ).height( )) );
+        // :TODO: LOCKING MECHANISM (to prevent changes while mapping transfer) //
+        
+        float xNorm = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
+        float yNorm = (position.y() - m_parent->rect().y()) / m_parent->rect().height();
+        
+        // :TODO: Adjust parameter corresponding to parent transfer item's view 
+        if (true) // Density + Opacity
+        {
+            m_pNode->setPosition(0, xNorm);
+            m_pNode->material()->setOpticalThickness(yNorm);
+        }
+        else if (false) // Density + Gradient_Magnitude
+        {
+            m_pNode->setPosition(0, xNorm);
+            m_pNode->setPosition(1, yNorm);
+        }
+        else // Density + Laplacian
+        {
+            m_pNode->setPosition(0, xNorm);
+            m_pNode->setPosition(2, yNorm);
+        }
 
         return position;
     }
@@ -175,10 +243,10 @@ QVariant NodeItem::itemChange( GraphicsItemChange change, const QVariant& value 
     return QGraphicsItem::itemChange( change, value );
 }
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 // Set the mouse cursor type when the node item is clicked
-// ---------------------------------------------------------
-void NodeItem::mousePressEvent( QGraphicsSceneMouseEvent* pEvent )
+// --------------------------------------------------------------------
+void NodeItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 {
 	QGraphicsItem::mousePressEvent( pEvent );
 
@@ -187,12 +255,46 @@ void NodeItem::mousePressEvent( QGraphicsSceneMouseEvent* pEvent )
 		else setCursor( QCursor(Qt::SizeAllCursor) );
 }
 
-// ---------------------------------------------------------
+// --------------------------------------------------------------------
 // Return the cursor to normal when the node item is released
-// ---------------------------------------------------------
-void NodeItem::mouseReleaseEvent( QGraphicsSceneMouseEvent* pEvent )
+// --------------------------------------------------------------------
+void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 {
 	QGraphicsEllipseItem::mouseReleaseEvent( pEvent );
 
 	setCursor( QCursor(Qt::ArrowCursor) );
+}
+
+// --------------------------------------------------------------------
+//  Updates the node item position when the parent scene
+// --------------------------------------------------------------------
+void NodeItem::sceneRectangleChanged(QRectF rectangle)
+{
+    QPointF normPos;
+
+    // Determine the normalized view position based on transfer type
+    if (true)  // :TODO: Analyze parent transfer's typee
+    {
+        normPos.setX(m_pNode->position(0));
+        normPos.setY(m_pNode->material()->opticalThickness());
+    }
+    else if (false)
+    {
+    }
+    else
+    {
+    }
+
+    // Compute the realized coordinates of the node within its parent
+    QPointF const nodeRangeMin = m_parent->rect( ).topLeft( );
+    QPointF const nodeRangeMax = m_parent->rect( ).bottomRight( );
+    QPointF newPos(
+        nodeRangeMin.x() + (nodeRangeMax.x() - nodeRangeMin.x()) * normPos.x(),
+        nodeRangeMin.y() + (nodeRangeMax.y() - nodeRangeMin.y()) * normPos.y()
+        );
+
+    // Issue the position update
+    m_ignorePosChange = true;
+    setPos(newPos); 
+    m_ignorePosChange = false;
 }

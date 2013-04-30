@@ -28,7 +28,7 @@
 #include "transferitem.h"
 
 // Include Dependencies
-#include "nodeitem.h"
+#include "mainwindow.h"
 
 // QT4 Dependencies
 #include <QtGui/QGraphicsSceneMouseEvent>
@@ -36,16 +36,44 @@
 // ---------------------------------------------------------
 //  Constructor - Construct the transfer function editor
 // ---------------------------------------------------------
-TransferItem::TransferItem( QGraphicsItem *parent )
-	: QGraphicsRectItem( parent )
+TransferItem::TransferItem(QGraphicsItem* parent)
+	: QGraphicsRectItem(parent)
 {
-    m_node = new NodeItem( this );
-    m_node->setPos( QPointF( 10.0f, 10.0f ) );
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(synchronizeView()));
 }
 
 // ---------------------------------------------------------
 //  Regenerates the transfer function display nodes
 // ---------------------------------------------------------
-void TransferItem::update( )
+void TransferItem::synchronizeView()
 {
+    m_nodes.clear();
+
+    if (auto transfer = MainWindow::instance->activeScene.transfer)
+    {
+        // Update transfer function nodes
+        auto nodes = transfer->nodes();
+        std::shared_ptr<NodeItem> prevItem;
+        BOOST_FOREACH(auto & node, nodes)
+        {
+            // Create a graphics object for the next transfer function node
+            auto nodeItem = std::shared_ptr<NodeItem>( new NodeItem(this, node) );
+            nodeItem->setZValue(500);
+            m_nodes.push_back( nodeItem );
+
+            // Create an edge between the previous and next nodes
+            if (prevItem)
+            {
+                auto edgeItem = std::shared_ptr<EdgeItem>( 
+                    new EdgeItem(this, prevItem, nodeItem) );
+                edgeItem->setZValue(400);
+                m_edges.push_back( edgeItem );
+            }
+
+            // Set the previous node
+            prevItem = nodeItem;
+        }
+
+        // Update transfer function edges
+    }
 }

@@ -47,33 +47,48 @@
 #include <QtGui/QClipboard>
 #include <QtCore/QMargins>
 
-// Histogram graphics view
+/** Defines view options for VolumeHistogramView objects */
+enum VolHistoType
+{
+    VolHistoType_Begin,                        ///< Begin iterator for VolHistoType enumeration
+    VolHistoType_Density = VolHistoType_Begin, ///< Density magnitude view of volume data
+    VolHistoType_DensityGrad,                  ///< Density vs Gradient view of volume data
+    VolHistoType_DensityLap,                   ///< Density vs Laplacian view of volume data
+    VolHistoType_End                           ///< End iterator for VolHistoType enumeration
+};
+
+/** Implements a QT graphics view for volume histogram data and transfer functions */
 class HistogramView : public QGraphicsView
 {
 	Q_OBJECT
 
 public:
-	HistogramView( QWidget *parent = 0 );
-    ~HistogramView( );
+	HistogramView(QWidget *parent = 0);
 
-    // Enables log scaling of the histogram data
-	void setLogEnabled( bool enabled ) { 
+    ~HistogramView();
+
+    /** Enables log scaling of the density magnitude component of the histogram view */
+	void setLogEnabled(bool enabled) 
+    { 
         if( enabled ) m_options |= HistogramOptionF_LogScale;
-		else m_options ^= HistogramOptionF_LogScale; }
+		else m_options ^= HistogramOptionF_LogScale; 
+    }
 
-    // Enables equalization of the histogram data
-	void setEqualizationEnabled( bool enabled ) { 
+    /** Enables equalization of the histogram's generated results */
+	void setEqualizationEnabled(bool enabled) 
+    { 
         if( enabled ) m_options |= HistogramOptionF_Equalize;
-		else m_options ^= HistogramOptionF_Equalize; }
+		else m_options ^= HistogramOptionF_Equalize; 
+    }
     
-    // Updates the histogram image
-	void updateHistogramImage( );
+    /** Regenerates the histogram display image */
+	void updateImage();
 
 private slots:
     void updateHistogramData( );
 
 private:
-    // Histogram display option flag
+    // Histogram display option flags
     enum HistogramOptionF
     {
         HistogramOptionF_LogScale = 1<<0,
@@ -81,9 +96,13 @@ private:
     };
     
     // Generates a density histogram volume data set
-    void HistogramView::makeDensityHistogram( );
+    void makeDensityHistogram();
 
-    //vox::RenderController::VolumeHistogramType m_type;
+    // Updates the drawing canvas bounds
+    void updateCanvas();
+
+    VolHistoType m_type; ///< The type of the histogram display
+
     std::vector<size_t> m_bins;
     size_t m_binMax;
 
@@ -93,15 +112,16 @@ private:
 	void wheelEvent( QWheelEvent *event );
 	void resizeEvent( QResizeEvent *event );
 	
-	float zoomfactor;
+	float zoomfactor;   ///< Current zoom level on histogram display
+    
+	TransferItem* m_transferItem; ///< Optional transfer function interaction item
 
-	QGraphicsScene m_scene;
-	TransferItem m_transferItem;
-	QGraphicsPixmapItem m_histogramItem;
-	GridItem m_gridItem;
+	QGraphicsScene      m_scene;            ///< Histogram view scene handle
+	QGraphicsPixmapItem m_histogramItem;    ///< Histogram image
+	GridItem            m_gridItem;         ///< Gridlines item object
 
-    QRectF m_canvasRectangle;
-	QMargins m_margins;
+    QRectF   m_canvasRectangle; ///< Full canvas for drawing operations
+	QMargins m_margins;         ///< Margins for actual histogram display
 };
 
 // End definition
