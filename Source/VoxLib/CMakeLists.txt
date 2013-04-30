@@ -84,6 +84,7 @@ Set(VoxLib_HEADERS_SCENE
     Scene/Camera.h
     Scene/Film.h
     Scene/Light.h
+    Scene/Material.h
     Scene/Scene.h
     Scene/Transfer.h
     Scene/Volume.h
@@ -128,6 +129,7 @@ SOURCE_GROUP("Header Files\\Scene\\Exim"                    FILES ${VoxLib_HEADE
 
 Set(VoxLib_SOURCES_CORE
     Core/Devices.cpp
+    Core/Functors.cpp
     Core/Logging.cpp
     Core/System.cpp
 )

@@ -50,15 +50,8 @@ public:
      * @brief Vox Scene File Exporter
      *
      * \b{Valid Options}
-     *  ExportVolume   : bool   [default=true]  | Specifies whether to export volume info
-     *  ExportCamera   : bool   [default=true]  | Specifies whether to export camera info
-     *  ExportTransfer : bool   [default=true]  | Specifies whether to export transfer info
-     *  ExportLights   : bool   [default=true]  | Specifies whether to export lighting info
-     *  ExportFilm     : bool   [default=false] | Specifies whether to export the current film
-     *  Compress
      *
      * \b{Required Options}
-     *  - None
      *
      * @throws
      *  ::vox::Error
@@ -70,17 +63,8 @@ public:
      * @brief Vox Scene File Importer 
      *
      * \b{Valid Options}
-     *  ExportVolume   : bool   [default=true]  | Specifies whether to export volume info
-     *  ExportCamera   : bool   [default=true]  | Specifies whether to export camera info
-     *  ExportTransfer : bool   [default=true]  | Specifies whether to export transfer info
-     *  ExportLights   : bool   [default=true]  | Specifies whether to export lighting info
-     *  ExportFilm     : bool   [default=false] | Specifies whether to export the current film
-     *  ThrowMissing   : string [default=Warn]  | Throw, Warn, or Ignore missing scene components
-     *  ThrowStream    : string [default=Throw] | Throw, Warn, or Ignore a bad stream bitflag
-     *  ThrowVersion   : string [default=Warn]  | Throw, Warn, or Ignore a bad version
      *
      * \b{Required Options}
-     *  - None
      *
      * @throws
      *  ::vox::Error

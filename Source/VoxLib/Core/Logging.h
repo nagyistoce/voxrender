@@ -2,10 +2,7 @@
 
 	Project: VoxRender - Logging interface
 
-	Description:
-	 Implements an front-end for run-time logging and error handling. 
-     The log backend prints to std::clog by default, but is modifiable via
-     a static member of the Logger class.
+	Description: Implements a front-end for run-time logging
 
     Copyright (C) 2013 Lucas Sherman
 

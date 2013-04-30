@@ -36,12 +36,10 @@
 #include "VoxLib/Scene/Light.h"
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
+#include "VoxLib/Scene/Material.h"
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>
-
-// Boost.Endian (conditional acceptance)
-//#include <boost/endian/conversion.hpp>
 
 // API namespace
 namespace vox
@@ -114,7 +112,7 @@ namespace
                 {
                     vox::Logger::addEntry(
                         vox::Severity_Warning, vox::Error_BadStream, VOX_LOG_CATEGORY, 
-                        format("A read operation has silently failed [%1%]", m_displayName).c_str(), 
+                        format("A read operation has silently failed [%1%]", m_displayName), 
                         __FILE__, __LINE__);
                 }
             }
@@ -143,6 +141,7 @@ namespace
                     scene.camera   = loadCamera();
                     scene.film     = loadFilm();
                     scene.lightSet = loadLights();
+                    scene.transfer = loadTransfer();
                 }
 
                 // Malformed data on a node read attempt
@@ -169,16 +168,16 @@ namespace
             }
 
         private:
-            typedef std::pair<std::string const, boost::property_tree::ptree*> Iterator; ///< Stack pointer
+            typedef std::pair<String const, boost::property_tree::ptree*> Iterator; ///< Stack pointer
 
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
-            static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
+            static int const versionMinor = 0; ///< Scene version minor [enforces non-breaking]
 
             boost::property_tree::ptree   m_tree;        ///< Scenefile tree
-            boost::property_tree::ptree * m_node;        ///< Current node
+            boost::property_tree::ptree * m_node;        ///< Current node in tree (top of traversal stack)
             OptionSet const&              m_options;     ///< Import options
-            String                        m_displayName; ///< Warning identifier
-            ResourceId const&             m_identifier;  ///< Resource identifier
+            String                        m_displayName; ///< Warning identifier for making log entries
+            ResourceId const&             m_identifier;  ///< Resource identifier for relative URLs
             
             std::vector<Iterator> m_stack; ///< Property tree traversal stack
 
@@ -199,7 +198,7 @@ namespace
                         Logger::addEntry(vox::Severity_Warning, vox::Error_BadVersion, VOX_LOG_CATEGORY,
                                          vox::format("File version is \"%1%.%2%\" : expected \"%3%.%4%\"", 
                                                      fileVersionMajor, fileVersionMinor, 
-                                                     versionMajor, versionMinor).c_str(),
+                                                     versionMajor, versionMinor),
                                          __FILE__, __LINE__);
                     }
                 }
@@ -209,7 +208,7 @@ namespace
                 {
                     Logger::addEntry(vox::Severity_Warning, vox::Error_MissingData, VOX_LOG_CATEGORY,
                                      format("Scenefile is missing version info [%1%]", 
-                                            m_displayName).c_str(), 
+                                            m_displayName), 
                                      __FILE__, __LINE__);
                 }
             }
@@ -220,11 +219,15 @@ namespace
             std::shared_ptr<Camera> loadCamera()
             {
                 if (!push("Camera", Preferred)) return nullptr;
-
-                  // Instantiate default camera object
-                  auto cameraPtr = std::make_shared<Camera>();
+                
+                  // Instantiate default volume object
+                  auto cameraPtr = executeImportDirectives().camera;
+                  if (!cameraPtr) cameraPtr = std::make_shared<Camera>();
                   auto & camera = *cameraPtr;
                 
+                  // :TODO: This just overwrites imported parameters, should initialize to default
+                  //        in Camera constructor and use import values as defaults for assignment
+
                   // Load direct camera projection parameters
                   camera.setApertureSize( m_node->get("ApertureSize", 0.0f) );
                   camera.setFieldOfView( m_node->get("FieldOfView", 60.0f) / 180.0f * (float)M_PI );
@@ -234,7 +237,11 @@ namespace
                   camera.setPosition( m_node->get("Position", Vector3f(0.0f, 0.0f, 0.0f)) );
                   camera.lookAt( m_node->get("Target", camera.position() + Vector3f(0.0f, 0.0f, 1.0f)) );
 
-                  // :TODO: Allow 2-3 specified orients, compute resulting position
+                  // Load camera film dimensions
+                  camera.setFilmWidth( m_node->get("FilmWidth", 256) );
+                  camera.setFilmHeight( m_node->get("FilmHeight", 256) );
+
+                  // :TODO: Allow 2-3 specified control orients, compute resulting position
                   camera.setEye( m_node->get("Eye", Vector3f(0.0f, 0.0f, 1.0f)) );
                   camera.setRight( m_node->get("Right", Vector3f(1.0f, 0.0f, 0.0f)) );
 
@@ -303,6 +310,12 @@ namespace
                   if (!volumePtr) volumePtr = std::make_shared<Volume>();
                   auto & volume = *volumePtr;
         
+                  // Read inline volume parameter specifications
+                  volume.setSpacing(m_node->get("Spacing", volume.spacing()));
+
+                  // Do not allow other parameter specifications here as they will 
+                  // overwrite interdependent information (ie extent ties to data etc)
+
                 pop();
 
                 return volumePtr;
@@ -317,6 +330,78 @@ namespace
 
                   // Instantiate default transfer object
                   auto transferPtr = executeImportDirectives().transfer;
+                  if (!transferPtr) transferPtr = std::make_shared<Transfer>();
+                  auto & transfer = *transferPtr;
+                  /*
+                  // Transfer function resolution
+                  String resolution = m_node->get("Resolution");
+                  std::vector<String> dimensions;
+                  boost::algorithm::split(
+                    dimensions, 
+                    resolution, 
+                    boost::is_any_of(" ,\n\t\r"), 
+                    boost::algorithm::token_compress_on
+                    );
+                  boost::lexical_cast<size_t>(dimensions[0]);
+                  */
+
+                  // Import any named materials 
+                  auto materials = loadMaterials();
+
+                  // Process transfer function nodes
+                  if (push("Nodes", Preferred))
+                  {
+                      BOOST_FOREACH (auto & region, *m_node)
+                      {
+                          // Create a new node for insertion
+                          auto node = std::make_shared<Node>();
+                          transfer.addNode(node);
+
+                          // Determine the node's material properties
+                          auto materialOpt = region.second.get_optional<String>("Material");
+                          if (materialOpt) // Check for name specification of material
+                          {
+                              auto matIter = materials.find(*materialOpt);
+                              if (matIter != materials.end())
+                              {
+                                  node->setMaterial(matIter->second);
+                              }
+                              else parseError(Error_BadToken, format("Undefined material (%1%) used", *materialOpt));
+                          }
+                          else // load inline specification of material
+                          {
+                              auto material = std::make_shared<Material>();
+                              material->setGlossiness( region.second.get("Glossiness", 0.0f) );
+                              material->setOpticalThickness( region.second.get("Thickness", 0.0f) );
+                              node->setMaterial(material);
+                          }
+
+                          // Determine the node's position
+                          node->setPosition(0, region.second.get<float>("Density"));
+                      }
+                  }
+
+                  // Process transfer function nodes
+                  /*
+                  if (push("Regions", Preferred))
+                  {
+                      BOOST_FOREACH(auto & region, *m_node)
+                      {
+                          // :TODO: This is total BS
+                          std::istringstream input(region.second.data());
+                          size_t index; input >> index;
+                          uchar4 node;
+                          size_t temp;
+                          input >> temp; node.x = temp;
+                          input >> temp; node.y = temp;
+                          input >> temp; node.z = temp;
+                          input >> temp; node.w = temp;
+                          transfer.addDebugMap(index, node);
+                      }
+
+                      pop(); 
+                  }
+                  */
 
                 pop();
 
@@ -324,9 +409,42 @@ namespace
             }
 
             // --------------------------------------------------------------------
-            //  Attempts to execute an import directive at the current node
+            //  Processes the materials node of the transfer function
             // --------------------------------------------------------------------
-            Scene executeImportDirectives()
+            std::map<String, std::shared_ptr<Material>> loadMaterials()
+            {
+                std::map<String, std::shared_ptr<Material>> materials;
+
+                if (push("Materials", Optional))
+                {
+                    BOOST_FOREACH(auto & materialNode, *m_node)
+                    {
+                        // Check for multiply defined material nodes
+                        if (materials.find(materialNode.first) != materials.end())
+                        {
+                            parseError(Error_BadToken, format("Duplicate material defined (%1%)", materialNode.first));
+                        }
+                        
+                        // Parse the material specification :TODO:
+                        auto material = std::make_shared<Material>();
+                        material->setGlossiness( m_node->get("Glossiness", 0.0f) );
+                        material->setOpticalThickness( m_node->get("Thickness", 0.0f) );
+                        materials[materialNode.first] = material;
+                    }
+           
+                    pop();
+                }
+
+                return materials;
+            }
+
+            // --------------------------------------------------------------------
+            //  Attempts to execute an import directive at the current node
+            //  Component parameter specifies the desired component, allowing 
+            //  only necessary scene components to be loaded using the generic
+            //  exim 'Ignore' flag :TODO:
+            // --------------------------------------------------------------------
+            Scene executeImportDirectives(String const& component = "")
             {
                 // Check for external importer specifications
                 if (!push("Import")) return Scene();
@@ -344,14 +462,15 @@ namespace
                   }
                
                   // Attempt to import the imbeded resource
-                  ResourceId resourceId = m_identifier + 
-                      m_node->get<std::string>("Resource");
+                  ResourceId resourceId = m_identifier + m_node->get<String>("Resource");
                   ResourceIStream resource(resourceId);
 
                   // Override mime-type with resource filename
-                  // :TODO: Verify mime-types with filename extension
-                  std::string const extension = m_node->get("Type", 
-                      resource.identifier().extractFileExtension()); 
+                  // :TODO: Warn on mime-types/file extension mismatch
+                  // :TODO: Allow override of extension in scenefile
+                  // :TODO: Determine type from combo of file-ext and mime-type
+                  String const extension = m_node->get(
+                      "Type", resource.identifier().extractFileExtension()); 
 
                 pop();
 
@@ -410,8 +529,7 @@ namespace
                     // Issue warning message
                     vox::Logger::addEntry(
                         Severity_Warning, Error_MissingData, VOX_LOG_CATEGORY, 
-                        format("Node not found \"%1%\" [%2%]", 
-                               name, m_displayName).c_str(), 
+                        format("Node not found \"%1%\" [%2%]", name, m_displayName), 
                         __FILE__, __LINE__
                         );
                 }
@@ -434,11 +552,11 @@ namespace
             }
 
             // --------------------------------------------------------------------
-            //  Returns the current position in the property tree traversal
+            //  Composes the current position string from the ptree stack
             // --------------------------------------------------------------------
-            std::string currentPath()
+            String currentPath()
             {
-                std::string path;
+                String path;
                 BOOST_FOREACH(auto const& node, m_stack)
                 {
                     path += node.first + '.';

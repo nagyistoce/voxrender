@@ -58,9 +58,15 @@ namespace vox
         }
         
         /** Computes the sum of the color components */
-        VOX_HOST_DEVICE ColorRgbLdr operator+(ColorRgbLdr & rhs)
+        VOX_HOST_DEVICE ColorRgbLdr operator+(ColorRgbLdr const& rhs) const
         {
             return ColorRgbLdr(r+rhs.r, g+rhs.g, b+rhs.b);
+        }
+
+        /** Color equality comparison operator */
+        VOX_HOST_DEVICE bool operator==(ColorRgbLdr const& rhs)
+        {
+            return (r==rhs.r) && (g==rhs.g) && (b==rhs.b);
         }
 
         UInt8 r; ///< Red component
@@ -78,6 +84,12 @@ namespace vox
             UInt8 ir, UInt8 ig, UInt8 ib, UInt8 ia = 0xF) :
           r(ir), g(ig), b(ib), a(ia)
         {
+        }
+          
+        /** Color equality comparison operator */
+        VOX_HOST_DEVICE bool operator==(ColorRgbaLdr const& rhs)
+        {
+            return (r==rhs.r) && (g==rhs.g) && (b==rhs.b) && (a==rhs.a);
         }
 
         UInt8 b; ///< Blue component
@@ -114,6 +126,18 @@ namespace vox
             ColorLabHdr const& lhs = *this;
             return distance(lhs, rhs);
         }
+        
+        /** Color equality comparison operator */
+        VOX_HOST_DEVICE bool operator==(ColorLabHdr const& rhs) const
+        {
+            return (l==rhs.l) && (a==rhs.a) && (b==rhs.b);
+        }
+
+        /** Color inequality comparison operator */
+        VOX_HOST_DEVICE bool operator!=(ColorLabHdr const& rhs) const
+        {
+            return (l!=rhs.l) && (a!=rhs.a) && (b!=rhs.b);
+        }
 
     public:
         float l; ///< Lightness component
@@ -144,6 +168,12 @@ namespace vox
         float distance(ColorRgbHdr const& rhs) const
         {
             return 0.f;
+        }
+        
+        /** Color equality comparison operator */
+        VOX_HOST_DEVICE bool operator==(ColorRgbHdr const& rhs)
+        {
+            return (r==rhs.r) && (g==rhs.g) && (b==rhs.b);
         }
 
         float r; ///< Red component

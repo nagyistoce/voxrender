@@ -159,19 +159,10 @@ public:
     static void registerModule(String const& scheme, ResourceModuleH module);
 
     /** Removes the resource module associated with the specified scheme */
-    static void removeModule(String const& scheme)
-    {
-        m_modules.erase(scheme);
-    }
+    static void removeModule(String const& scheme);
 
     /** Removes all instances of the specified resource module */
     static void removeModule(ResourceModuleH module);
-
-	/** Returns a reference to the list containing the active resource openers. */
-	inline static std::map<String,ResourceModuleH> const& modules() throw() 
-    { 
-        return m_modules; 
-    }
 
     /** Returns the application level base URI */
     inline static ResourceId const& appBaseIdentifier()
@@ -196,8 +187,6 @@ private:
     ResourceId   m_identifier;  ///< Resource identifier
     String       m_mimeType;    ///< Returned content-type
     unsigned int m_openMode;    ///< Stream mode settings
-    
-    static std::map<String,ResourceModuleH> m_modules; ///< Resource modules
 
     static ResourceId m_globalBaseUri;  ///< Global base URI (http://tools.ietf.org/html/rfc3986#section-5.1.4)
 };

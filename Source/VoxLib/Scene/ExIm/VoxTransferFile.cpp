@@ -81,7 +81,7 @@ Scene VoxTransferFile::importer(ResourceIStream & data, OptionSet const& options
     // Read data from the resource stream
     auto extent = boost::lexical_cast<Vector<size_t,3>>((*iter).first);
     size_t bytes = extent.fold<size_t>(1, &vox::mul); 
-    boost::shared_array<UInt8> rawData( new UInt8[bytes] );
+    std::shared_ptr<UInt8> rawData(new UInt8[bytes], &arrayDeleter);
     data.read(reinterpret_cast<char*>(rawData.get()), bytes);
     volume.setData(rawData, extent.resize<4>()); // :TODO: Remove 4th dimension flag
 

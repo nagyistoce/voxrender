@@ -37,6 +37,18 @@
 // API namespace
 namespace vox 
 {
+    
+/** Defines export options for scene components */
+enum ExportOpt
+{
+    ExportOpt_Begin,                       ///< Begin iterator for ExportOpt enumeration
+    ExportOpt_Reference = ExportOpt_Begin, ///< Insert a reference (URI) to the original resource (even if modified)
+    ExportOpt_CopyIfModified,              ///< Insert a copy only if the resource was modified (reference otherwise) 
+    ExportOpt_Copy,                        ///< Generate a copy of the resource
+    ExportOpt_Overwrite,                   ///< Overwrite existing content of resource if modified
+    ExportOpt_None,                        ///< Ignore the resource (no reference/no copy)
+    ExportOpt_End                          ///< End iterator for ExportOpt enumeration
+};
 
 /**
  * Vox scene file import / export module
@@ -50,15 +62,15 @@ public:
      * @brief Vox Scene File Exporter
      *
      * \b{Valid Options}
-     *  - ExportVolume   : bool   [default=true]  | Specifies whether to export volume info
-     *  - ExportCamera   : bool   [default=true]  | Specifies whether to export camera info
-     *  - ExportTransfer : bool   [default=true]  | Specifies whether to export transfer info
-     *  - ExportLights   : bool   [default=true]  | Specifies whether to export lighting info
-     *  - ExportFilm     : bool   [default=false] | Specifies whether to export the current film
+     *  - ExportVolume   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export volume data
+     *  - ExportCamera   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export camera data
+     *  - ExportTransfer : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export transfer data
+     *  - ExportLights   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export lighting data
+     *  - ExportFilm     : bool   [default=ExportOpt_] | Specifies whether to export the current film
      *  - Compress       : string [default=""]    | Specifies compression types and order, supported
-     *                                              compression modes include 'zlib', 'bzip2', and 'gzip'
-     *                                              compression is applied from left to right treating
-     *                                              the following as delimiters
+     *                                              compression modes include 'zlib', 'bzip2', and 'gzip'.
+     *                                              Compression is applied from left to right treating
+     *                                              the most common control characters as delimiters
      *
      * \b{Required Options}
      *  - None

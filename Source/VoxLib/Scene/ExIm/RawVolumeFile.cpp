@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "VoxLib/Scene/Volume.h"
+#include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
 
 // API namespace
@@ -156,7 +157,7 @@ namespace
 
                 // Read the raw volume data from the filter chain
                 size_t voxels = size.fold<size_t>(1, &mul);
-                boost::shared_array<UInt8> data(new UInt8[voxels]);
+                std::shared_ptr<UInt8> data(new UInt8[voxels], &arrayDeleter);
                 readInputData(bytesPerVoxel, voxels, data.get());
 
                 volume.setData(data, size);

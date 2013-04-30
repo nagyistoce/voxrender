@@ -40,8 +40,9 @@ namespace vox
 namespace {
 namespace filescope {
 
-    static std::map<String, SceneImporter> importers; // Registered import modules
-    static std::map<String, SceneExporter> exporters; // Registered export modules
+    static std::map<String, SceneImporter> importers;   // Registered import modules
+    static std::map<String, SceneExporter> exporters;   // Registered export modules    
+    static boost::shared_mutex             moduleMutex; // Module access mutex for read-write locks
 
     // --------------------------------------------------------------------
     //  Helper function for issuing warning for missing scene data
@@ -57,7 +58,7 @@ namespace filescope {
 } // namespace anonymous
 
 // --------------------------------------------------------------------
-//  Registered import modules accessor
+//  Registered import modules accessor :TODO: privatize, used for testing
 // --------------------------------------------------------------------
 std::map<String, SceneImporter> const& Scene::importers() 
 { 
@@ -77,6 +78,9 @@ std::map<String, SceneExporter> const& Scene::exporters()
 // --------------------------------------------------------------------
 void Scene::registerImportModule(String const& extension, SceneImporter importer)
 { 
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
     filescope::importers[extension] = importer; 
 }
 
@@ -85,6 +89,9 @@ void Scene::registerImportModule(String const& extension, SceneImporter importer
 // --------------------------------------------------------------------
 void Scene::registerExportModule(String const& extension, SceneExporter exporter)
 { 
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
     filescope::exporters[extension] = exporter; 
 }
 
@@ -93,6 +100,9 @@ void Scene::registerExportModule(String const& extension, SceneExporter exporter
 // --------------------------------------------------------------------
 Scene Scene::imprt(ResourceIStream & data, OptionSet const& options, String const& extension)
 {
+    // Acquire a read-lock on the modules for thread safety support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
     String type = extension.empty() ? data.identifier().extractFileExtension() : extension;
 
 	// Execute the register import module
@@ -111,6 +121,9 @@ Scene Scene::imprt(ResourceIStream & data, OptionSet const& options, String cons
 // --------------------------------------------------------------------
 void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const& extension) const
 {
+    // Acquire a read-lock on the modules for thread safety support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
     String type = extension.empty() ? data.identifier().extractFileExtension() : extension;
 
 	// Execute the register import module

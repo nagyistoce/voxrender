@@ -68,9 +68,6 @@ void RenderController::render(
 
     scene.issueWarningsForMissingHandles(); // Context warnings
 
-    // Stop previous rendering operation
-    if (m_controlThread) { stop(); }
-
     // Initialize the execution configuration
     m_masterRenderer   = renderer;
     m_targetIterations = iterations;
@@ -219,6 +216,8 @@ void RenderController::terminateRenderThreads()
     {
         thread->wait();
     }
+
+    m_masterRenderer.reset();
 }
 
 // ---------------------------------------------------------
@@ -256,6 +255,7 @@ void RenderController::synchronizationSubroutine()
 
         m_scene.film->m_contextChanged     = false;
         m_scene.camera->m_contextChanged   = false;
+        m_scene.camera->m_filmChanged      = false;
         m_scene.lightSet->m_contextChanged = false;
         m_scene.lightSet->m_contentChanged = false;
         m_scene.volume->m_contextChanged   = false;

@@ -43,9 +43,14 @@ template< typename T, size_t M, size_t N > struct Matrix;
 // API namespace
 namespace vox
 {
-	/** CUDA Capable Generic Vector Type */
-    template<typename T, size_t N> 
-	struct Vector
+	/** 
+     * CUDA Capable Generic Vector Type 
+     *
+     * This class provides a device independent representational format for vector data. The intent of the class is
+     * not to provide a high effeciency interface for vector operations, but to provide a framework for specifying 
+     * data structures and operators independent of the device (GPU or CPU).
+     */
+    template<typename T, size_t N> struct Vector
 	{
         VOX_HOST_DEVICE Vector() { } 
 
@@ -91,7 +96,9 @@ namespace vox
 
         /** Constructs a vector whose entries match the values in the input array */
 		VOX_HOST_DEVICE explicit Vector(const T(&data)[N]) 
-            { for (size_t i = 0; i < N; i++) coord[i] = data[i]; }
+        { 
+            for (size_t i = 0; i < N; i++) coord[i] = data[i]; 
+        }
 
 // List form constructor templates
 #define VOX_VECTOR_CONSTRUCTOR(z, n, _)                     \
@@ -238,8 +245,10 @@ namespace vox
 			return dist;
 		}
 
-		/** Vector normalization */
+		/** Normalizes the vector and returns a reference to self */
 		VOX_HOST_DEVICE inline Vector& normalize() { return *this /= length(); }
+
+        /** Returns a normalized copy of the vector */
 		VOX_HOST_DEVICE inline const Vector normalized() const { return *this / length(); }
 
 		/** Assignment Operator **/
@@ -399,6 +408,54 @@ namespace vox
 			return true;
 		}
         
+        /** Less-than comparison operator */
+        VOX_HOST_DEVICE bool operator<(Vector const& rhs) const
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                if (coord[i] < rhs.coord[i]) return true;
+                else if (coord[i] > rhs.coord[i]) return false;
+            }
+
+            return false;
+        }
+
+        /** Less-than or equal-to comparison operator */
+        VOX_HOST_DEVICE bool operator<=(Vector const& rhs) const
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                if (coord[i] < rhs.coord[i]) return true;
+                else if (coord[i] > rhs.coord[i]) return false;
+            }
+
+            return true;
+        }
+
+        /** Greater-than comparison operator */
+        VOX_HOST_DEVICE bool operator>(Vector const& rhs) const
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                if (coord[i] > rhs.coord[i]) return true;
+                else if (coord[i] < rhs.coord[i]) return false;
+            }
+
+            return false;
+        }
+
+        /** Greater-than or equal-to comparison operator */
+        VOX_HOST_DEVICE bool operator>=(Vector const& rhs) const
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                if (coord[i] > rhs.coord[i]) return true;
+                else if (coord[i] < rhs.coord[i]) return false;
+            }
+
+            return true;
+        }
+
         /** Array style access element access */
 		VOX_HOST_DEVICE inline T const& operator[](size_t i) const { return coord[i]; }
 

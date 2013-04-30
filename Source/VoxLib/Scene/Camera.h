@@ -31,15 +31,11 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry.h"
 
-// Context change set
-#define VOX_CC m_contextChanged = true;
-
 // API namespace
 namespace vox
 {
 
 class RenderController;
-class Scene;
 
 /** Camera Class */
 class VOX_EXPORT Camera
@@ -117,11 +113,11 @@ public:
      * Points the camera at the specified 3D position 
      *  
      * The up parameter specifies an ideal up orientation
-     * from which the camera roll will be extracted. If
-     * unspecified, the camera up vector will default
-     * to the current up direction.
+     * from which the camera roll will be extracted.
      */
     void lookAt(Vector3f const& pos, Vector3f const& up);
+
+    /** Overload for lookAt which maintains the camera z-orientation */
     inline void lookAt(Vector3f const& pos) { lookAt(pos, m_up); }
 
     /** Sets the camera eye orientation vector */
@@ -141,6 +137,12 @@ public:
     
     /** Returns the aperture size of the camera */
     inline float apertureSize()  const { return m_apertureSize; }
+    
+    /** Film height accessor */
+    inline size_t filmHeight() const { return m_filmHeight; }
+
+    /** Film width accessor */
+    inline size_t filmWidth() const { return m_filmWidth; }
 
     /** Sets the camera field of view angle in radians */
     inline void setFieldOfView(float angle) { m_fieldOfView = angle; m_contextChanged = true; }
@@ -151,13 +153,26 @@ public:
     /** Sets the aperture size of the camera */
     inline void setApertureSize(float size) { m_apertureSize = size; m_contextChanged = true; }
 
+    /** Returns the aspect ratio of the film */
+    inline float aspectRatio() const { return float(m_filmWidth) / m_filmHeight; }
+
+    /** Film height modifier */
+    inline void setFilmHeight(size_t height) { m_filmHeight = height; m_filmChanged = true; }
+
+    /** Film width modifier */
+    inline void setFilmWidth(size_t width) { m_filmWidth = width; m_filmChanged = true; }
+
     /** Returns true if the context change flag is set */
-    inline bool isDirty() const { return m_contextChanged; }
+    inline bool isDirty() const { return m_contextChanged || m_filmChanged; }
+
+    /** Returns true if the film dimensions change flag is set */
+    inline bool isFilmDirty() const { return m_filmChanged; }
 
 private:
     friend RenderController;
 
     bool m_contextChanged; ///< Context change flag
+    bool m_filmChanged;    ///< Film change flag
 
     // Camera orientation
     Vector3f m_pos;   ///< Camera position vector (mm)
@@ -169,11 +184,13 @@ private:
     float m_focalDistance;  ///< Focal distance (mm)
 	float m_apertureSize;   ///< Aperture size  (mm)
     float m_fieldOfView;    ///< Field of view  (radians)
+
+    // Film dimensions
+    size_t m_filmWidth;  ///< Film width  (pixels)
+    size_t m_filmHeight; ///< Film height (pixels)
 };
 
 }
-
-#undef VOX_CC
 
 // End definition
 #endif // VOX_CAMERA_H

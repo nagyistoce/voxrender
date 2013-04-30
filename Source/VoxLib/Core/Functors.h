@@ -81,6 +81,9 @@ namespace vox
     {
         return (value<low) ? low : ( (value>high) ? high : value );
     }
+
+    /** Functional array deleter method for shared_ptr */
+    VOX_EXPORT VOX_HOST void arrayDeleter(void* data);
 }
 
 #undef VOX_FUNCTOR_LIMIT

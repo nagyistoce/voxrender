@@ -50,6 +50,7 @@ public:
      * @brief Vox Scene File Exporter
      *
      * \b{Valid Options}
+     *  Compression : String [default='']  | Specifies an ordered list of compression types to be applied
      *
      * \b{Required Options}
      */
@@ -59,9 +60,12 @@ public:
      * @brief Vox Scene File Importer 
      *
      * \b{Valid Options}
+     *  Compression : String [default='']  | Specifies an ordered list of compression types to be applied
      *
      * \b{Required Options}
-     *     - 
+     *  BytesPerVoxel : size_t   | Specifies the number of bytes per data voxel
+     *  Size          : Vector4u | Specifies the extent of the 3D volume in the order [x y z t]
+     *  Endianess     : String   | Specifies endianess ("little" or "big") Optional if BytesPerVoxel=8.
      */
 	static Scene importer(ResourceIStream & source, OptionSet const& options);
 };

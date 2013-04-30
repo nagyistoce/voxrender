@@ -4,7 +4,7 @@
 
 	Description: Transfer function applied to volume dataset
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -30,33 +30,87 @@
 namespace vox
 {
     
-// ---------------------------------------------------------
-//  Removes a region from the transfer function
-// ---------------------------------------------------------
-void Transfer::removeRegion(Region* region)
-{
-    m_regions.remove(region);
+namespace {
+namespace filescope {
 
-    m_dirty = true;
-}
-
-// ---------------------------------------------------------
-//  Adds a new region to the transfer function
-// ---------------------------------------------------------
-Transfer::Region* Transfer::addRegion(Transfer::Region* region)
-{
-    if (region == nullptr)
+    /** Shared_ptr sorting operator */
+    template<typename T> bool slt(
+        const std::shared_ptr<T>& left,
+        const std::shared_ptr<T>& right
+        )
     {
-        m_regions.push_back(new Region());
+       return (*left.get() < *right.get());
+    }
+
+} // namespace filescope
+} // namespace anonymous
+
+// ----------------------------------------------------------------------------
+//  Creates a new node and initializes the material property structure if one
+//  is not specified by the user
+// ----------------------------------------------------------------------------
+Node::Node(std::shared_ptr<Material> material) : m_contextChanged(true)
+{ 
+    if (material)
+    {
+        m_material = material;
     }
     else
     {
-        m_regions.push_back(region);
+        m_material = std::make_shared<Material>();
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Changes the desired resolution of the transfer function's mapping texture 
+// ----------------------------------------------------------------------------
+void Transfer::setResolution(Vector3u const& resolution)
+{
+    if (m_resolution != resolution)
+    {
+        m_resolution = resolution;
+
+        m_contextChanged = true;
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Adds a new node to the transfer function  
+// ----------------------------------------------------------------------------
+void Transfer::addNode(std::shared_ptr<Node> node)
+{
+    m_nodes.push_back(node);
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a node from the transfer function  
+// ----------------------------------------------------------------------------
+void Transfer::removeNode(std::shared_ptr<Node> node)
+{
+    m_nodes.remove(node);
+}
+
+// ----------------------------------------------------------------------------
+//  Maps the transfer function to a texture of the specified resolution 
+//  :TEST: 1D transfer function
+// ----------------------------------------------------------------------------
+std::shared_ptr<Material> Transfer::map()
+{
+    // Allocate memory for the transfer
+    auto size = m_resolution[0];
+    std::shared_ptr<Material> mapping = std::shared_ptr<Material>(
+        new Material[size], &arrayDeleter);
+ 
+    // Sort the nodes to identify the control points for the interpolation
+    //std::sort(m_nodes.begin(), m_nodes.end(), filescope::slt<Node>);
+
+    // :TEST: Linear interpolation
+    for (size_t i = 0; i < size; i++)
+    {
+        Material & material = mapping.get()[i];
     }
 
-    m_dirty = true;
-
-    return m_regions.back();
+    return mapping;
 }
 
 } // namespace vox

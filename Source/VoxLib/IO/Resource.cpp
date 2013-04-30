@@ -42,6 +42,10 @@ namespace vox
 namespace {
 namespace filescope {
     
+    static std::map<String,ResourceModuleH> modules; // Resource modules
+
+    static boost::shared_mutex moduleMutex; // Module access mutex for read-write locks
+
     // --------------------------------------------------------------------
     //  Verifies the validity of the input scheme according to the RFC
     //  http://tools.ietf.org/html/rfc3986#section-3.1
@@ -61,7 +65,6 @@ namespace filescope {
 } 
 
 // Static member initialization
-std::map<String,ResourceModuleH> Resource::m_modules;
 ResourceId Resource::m_globalBaseUri("file", "", "", "", "", false);
 
 // --------------------------------------------------------------------
@@ -72,9 +75,12 @@ void Resource::registerModule(
     ResourceModuleH module
     )
 { 
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
     filescope::verifyScheme(scheme);
 
-    m_modules[scheme] = module; 
+    filescope::modules[scheme] = module; 
 }
 
 // --------------------------------------------------------------------
@@ -103,16 +109,21 @@ void Resource::open(
     // Apply (potentially) relative reference URIs to the application base
     m_identifier = m_globalBaseUri.applyRelativeReference(identifier, true); 
 
-    // Verify the resource scheme has a registered handler
-    auto & module = m_modules.find(m_identifier.scheme);
-    if (module == m_modules.end())
-    {
-        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
-                    "No ResourceRetriever found", Error_BadToken);
-    }
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
-    // Acquire the resource streambuffer from the retriever
-    m_buffer = module->second->access(m_identifier, options, m_openMode);
+      // Verify the resource scheme has a registered handler
+      auto & module = filescope::modules.find(m_identifier.scheme);
+      if (module == filescope::modules.end())
+      {
+          throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                      "No ResourceRetriever found", Error_BadToken);
+      }
+
+      // Acquire the resource streambuffer from the retriever
+      m_buffer = module->second->access(m_identifier, options, m_openMode);
+
+    lock.unlock(); // Release the read-lock
 
     // Set the new source buffer
     rdbuf( m_buffer.get() );
@@ -125,10 +136,13 @@ std::shared_ptr<QueryResult> Resource::query(ResourceId const& identifier, Optio
 {
     // Apply (potentially) relative reference URIs to the application base
     ResourceId fullUri = m_globalBaseUri.applyRelativeReference(identifier, true); 
+    
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
     // Verify the resource scheme has a registered handler
-    auto & module = m_modules.find(fullUri.scheme);
-    if (module == m_modules.end())
+    auto & module = filescope::modules.find(fullUri.scheme);
+    if (module == filescope::modules.end())
     {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
                     "No ResourceRemover found", Error_BadToken);
@@ -145,10 +159,13 @@ void Resource::remove(ResourceId const& identifier, OptionSet const& options)
 {
     // Apply (potentially) relative reference URIs to the application base
     ResourceId fullUri = m_globalBaseUri.applyRelativeReference(identifier, true); 
+    
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
     // Verify the resource scheme has a registered handler
-    auto & module = m_modules.find(fullUri.scheme);
-    if (module == m_modules.end())
+    auto & module = filescope::modules.find(fullUri.scheme);
+    if (module == filescope::modules.end())
     {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
                     "No ResourceRemover found", Error_BadToken);
@@ -159,21 +176,35 @@ void Resource::remove(ResourceId const& identifier, OptionSet const& options)
 }
 
 // --------------------------------------------------------------------
+//  Removes the resource module for a specified scheme
+// --------------------------------------------------------------------
+static void removeModule(String const& scheme)
+{
+    // Acquire a write-lock on the modules for thread safe removal support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
+    filescope::modules.erase(scheme);
+}
+
+// --------------------------------------------------------------------
 //  Removes all registered instances of the specified IO Module
 // --------------------------------------------------------------------
 void Resource::removeModule(ResourceModuleH module)
 {
-    auto iter = m_modules.begin();
-    while (iter != m_modules.end())
+    // Acquire a write-lock on the modules for thread safe removal support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
+    auto iter = filescope::modules.begin();
+    while (iter != filescope::modules.end())
     {
         if (iter->second == module)
         {
-            auto old = iter; iter++;
-            m_modules.erase(iter);
+            auto old = iter; ++iter;
+            filescope::modules.erase(iter);
         }
         else
         {
-            iter++;
+            ++iter;
         }
     }
 }

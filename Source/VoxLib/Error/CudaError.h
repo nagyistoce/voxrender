@@ -85,7 +85,7 @@ namespace vox
                           char const* method, cudaError_t const& errorId,
                           int device = -1)
         {
-		    if (errorId) throw CudaError(file, line, category, method, errorId, device);
+		    if (errorId != cudaSuccess) throw CudaError(file, line, category, method, errorId, device);
         }
 
         cudaError   cudaCode;    ///< The CUDA error code 
