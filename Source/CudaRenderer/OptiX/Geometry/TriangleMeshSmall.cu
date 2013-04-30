@@ -29,8 +29,9 @@ using namespace optix;
 // This is to be plugged into an RTgeometry object to represent a triangle mesh
 // with a shared vertex buffer, triangle index buffer, and single material
 
-rtBuffer<float3> vertex_buffer;     
-rtBuffer<int3>   vindex_buffer;    // position indices 
+rtBuffer<float3> vertex_buffer;    // vertex positions
+rtBuffer<float3> normal_buffer;    // vertex normals
+rtBuffer<int3>   vindex_buffer;    // position indices
 
 rtDeclareVariable(float3, texcoord, attribute texcoord, ); 
 rtDeclareVariable(float3, geometric_normal, attribute geometric_normal, ); 
@@ -53,11 +54,17 @@ RT_PROGRAM void mesh_intersect( int primIdx )
 
     if(  rtPotentialIntersection( t ) ) {
 
-      geometric_normal = normalize( n );
-      shading_normal   = geometric_normal;
-      texcoord = make_float3( 0.0f, 0.0f, 0.0f );
+        float3 n0 = normal_buffer[ v_idx.x ];
+        float3 n1 = normal_buffer[ v_idx.y ];
+        float3 n2 = normal_buffer[ v_idx.z ];
 
-      rtReportIntersection( 0 );
+        float3 normal = (1.0f - gamma - beta) * n0 + beta * n1 + gamma * n2;
+
+        geometric_normal = normalize( normal );
+        shading_normal   = geometric_normal;
+        texcoord = make_float3( 0.0f, 0.0f, 0.0f );
+
+        rtReportIntersection( 0 );
     }
   }
 }

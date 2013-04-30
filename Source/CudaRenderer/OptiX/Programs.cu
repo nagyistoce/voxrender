@@ -111,9 +111,9 @@ RT_PROGRAM void rayGenerationProgram()
     // :TEST:
     ColorLabxHdr const& mean   = sampleBuffer.at(launchIndex.x, launchIndex.y);
     ColorRgbaLdr &      target = imageBuffer.at(launchIndex.x, launchIndex.y); 
-    target.r = mean.l * 140.0f;
-    target.g = mean.a * 140.0f;
-    target.b = mean.b * 140.0f;
+    target.r = vox::low(mean.l * 140.0f, 255.0f);
+    target.g = vox::low(mean.a * 140.0f, 255.0f);
+    target.b = vox::low(mean.b * 140.0f, 255.0f);
 }
 
 // --------------------------------------------------------------------

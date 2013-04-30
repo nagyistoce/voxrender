@@ -47,7 +47,6 @@ Set(HEADERS_CORE_IMPL
 
 Set(HEADERS_SCENE_IMPL
     Scene/CCamera.h
-    Scene/CFilm.h
     Scene/CLight.h
     Scene/CTransferBuffer.h
     Scene/CVolumeBuffer.h

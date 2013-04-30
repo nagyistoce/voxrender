@@ -53,6 +53,13 @@ SET(CR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/CudaRenderer.lib
            debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/CudaRenderer.lib)
 
 #===============================================#
+#          SCATTERING VOLUME RENDERER           #
+#===============================================#
+ADD_SUBDIRECTORY(VolumeScatterRenderer)
+SET(VSR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VolumeScatterRenderer.lib
+            debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VolumeScatterRenderer.lib)
+
+#===============================================#
 #              VOXRENDER APPLICATION            #
 #===============================================#
 ADD_SUBDIRECTORY(VoxRender)

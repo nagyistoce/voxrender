@@ -39,6 +39,7 @@
 #include "VoxLib/Scene/Camera.h"
 #include "VoxLib/Scene/Film.h"
 #include "VoxLib/Scene/Light.h"
+#include "VoxLib/Scene/Transfer.h"
 
 // Device representations of scene components
 #include "CudaRenderer/Core/CRandomGenerator.h"
@@ -140,7 +141,7 @@ void CudaRendererImpl::startup()
     m_translucentMaterial->setAnyHitProgram(1, transAH);
 
     // Create a texture object for the volume
-    auto buffer     = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_BYTE, 1, 1, 1);
+    auto buffer     = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT4, 1, 1, 1);
     auto texSampler = m_context->createTextureSampler();
     texSampler->setWrapMode(0, RT_WRAP_CLAMP_TO_EDGE);
     texSampler->setWrapMode(1, RT_WRAP_CLAMP_TO_EDGE);
@@ -153,6 +154,19 @@ void CudaRendererImpl::startup()
     texSampler->setArraySize(1);
     texSampler->setBuffer(0, 0, buffer);
     m_translucentMaterial["volumeTexture"]->setTextureSampler(texSampler);
+
+    // Create a texture object for the transfer function
+    auto buffer2     = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_BYTE4, 1);
+    auto texSampler2 = m_context->createTextureSampler();
+    texSampler2->setWrapMode(0, RT_WRAP_CLAMP_TO_EDGE);
+    texSampler2->setFilteringModes(RT_FILTER_LINEAR, RT_FILTER_LINEAR, RT_FILTER_NONE);
+    texSampler2->setIndexingMode(RT_TEXTURE_INDEX_ARRAY_INDEX);
+    texSampler2->setReadMode(RT_TEXTURE_READ_NORMALIZED_FLOAT);
+    texSampler2->setMaxAnisotropy(1.0f);
+    texSampler2->setMipLevelCount(1);
+    texSampler2->setArraySize(1);
+    texSampler2->setBuffer(0, 0, buffer2);
+    m_translucentMaterial["transferTexture"]->setTextureSampler(texSampler2);
 }
 
 // --------------------------------------------------------------------
@@ -227,7 +241,7 @@ void CudaRendererImpl::syncScene(Scene const& scene)
         m_context["lightBuffer"]->setUserData(sizeof(m_lightBuffer), &m_lightBuffer);
         auto i = m_lightBuffer.read();
     }
-
+    /*
     // Volume data synchronization
     if (scene.volume->isDirty())
     {
@@ -237,13 +251,27 @@ void CudaRendererImpl::syncScene(Scene const& scene)
         buffer->setSize(extent[0], extent[1], extent[2]);
 
         m_translucentMaterial["volumeExtent"]->setUint(extent[0], extent[1], extent[2]);
-        m_translucentMaterial["rayStepSize"]->setFloat(1.0f);
+        m_translucentMaterial["rayStepSize"]->setFloat(0.25f);
+        m_translucentMaterial["specularFactor"]->setFloat(0.2f);
 
         // Copy the volume data to a host mapped buffer
         void* map = buffer->map();
         auto size = extent[0]*extent[1]*extent[2];
         memcpy(map, scene.volume->data(), size); 
         buffer->unmap();
+    }
+    */
+    {
+        /*
+        // Construct the transfer function
+        auto buffer = m_translucentMaterial["transferTexture"]->getTextureSampler()->getBuffer(0, 0);
+
+        buffer->setSize(256);
+        void* map = buffer->map();
+        memcpy(map, scene.transfer->debugMap(), 256*sizeof(uchar4)); 
+        //memset(map, -1, 256*sizeof(uchar4));
+        buffer->unmap();
+        */
     }
 
     static bool init = false; // :DEBUG:
@@ -292,20 +320,147 @@ void CudaRendererImpl::rebuildGeometry()
     std::string const spherePtxFile = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Sphere.cu.ptx";
     std::string const pgramPtxFile  = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Parallelogram.cu.ptx";
     std::string const checkPtxFile  = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_Checker.cu.ptx";
+    std::string const tmeshPtxFile  = "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Source/CudaRenderer/CUDARenderer_generated_TriangleMeshSmall.cu.ptx";
 
-    // Construct floor geometry as a plane object
+    // Construct translucent geometry mesh
     optix::Geometry translucentObj = m_context->createGeometry();
-    translucentObj->setPrimitiveCount(1u);
-    translucentObj->setBoundingBoxProgram(m_context->createProgramFromPTXFile(spherePtxFile, "bounds"));
-    translucentObj->setIntersectionProgram(m_context->createProgramFromPTXFile(spherePtxFile, "intersect"));
-    translucentObj["sphere"]->setFloat(48.0f, 48.0f, 48.0f, 32.0f);
+    translucentObj->setBoundingBoxProgram(m_context->createProgramFromPTXFile(tmeshPtxFile, "mesh_bounds"));
+    translucentObj->setIntersectionProgram(m_context->createProgramFromPTXFile(tmeshPtxFile, "mesh_intersect"));
+
+    {
+        // :TODO: Photon map structure
+        std::ifstream pstream("C:/Users/Lucas/Documents/Projects/voxrender/trunk/models/out.tex");
+
+        Vector<int,3>   dimension;
+        float           resolution;
+        Vector<float,3> origin;
+
+        pstream.read((char*)&dimension, sizeof(dimension));
+        pstream.read((char*)&resolution, sizeof(resolution));
+        pstream.read((char*)&origin, sizeof(origin));
+
+        resolution *= 50.0f;
+
+        std::vector<float4> data( dimension.fold(1, mul<int>) );
+        for (size_t z = 0; z < dimension[2]; z++)
+        for (size_t y = 0; y < dimension[1]; y++)
+        for (size_t x = 0; x < dimension[0]; x++)
+        {
+            size_t i = x + y * dimension[0] + z * dimension[0] * dimension[1];
+
+            pstream.read((char*)&data[i], sizeof(float3));
+            
+            if (z < dimension[2]/4 || z > dimension[2]/4 + dimension[2]/2)
+            {
+                data[i].x *= 0;
+                data[i].y *= 0;
+                data[i].z *= 0;
+            }
+            else
+            {
+                data[i].x = 1000.0f;
+                data[i].y = 1000.0f;
+                data[i].z = 1000.0f;
+            }
+        }
+       
+        pstream.close();
+
+        float rayStepSize = 0.0001f;
+        float3 transmission = expf( - rayStepSize * optix::make_float3(2190.1, 2620.1f, 3000.1f) );
+
+        m_translucentMaterial["extent"]->setUint(dimension[0], dimension[1], dimension[2]);
+        m_translucentMaterial["rayStepSize"]->setFloat(rayStepSize);
+        m_translucentMaterial["specularFactor"]->setFloat(0.0f);
+        m_translucentMaterial["invSpacing"]->setFloat(1.0f/resolution, 1.0f/resolution, 1.0f/resolution);
+        m_translucentMaterial["anchor"]->setFloat(origin[0], origin[1], origin[2]);
+
+        optix::Buffer pbuffer = m_translucentMaterial["volumeTexture"]->getTextureSampler()->getBuffer(0, 0);
+        pbuffer->setSize(dimension[0], dimension[1], dimension[2]);
+        auto pbufmap = pbuffer->map();
+        memcpy(pbufmap, &data[0], data.size()*sizeof(float4));
+        m_translucentMaterial["transmission"]->setFloat(transmission);
+        pbuffer->unmap();
+    }
+
+    // :TODO: Mesh object
+    std::ifstream filestream("C:/Users/Lucas/Documents/Projects/voxrender/trunk/models/dragon.pbrt");
+
+    // Read vertices
+    std::vector<float3> vertices;
+    { std::string delim; filestream >> delim; }
+    while (filestream)
+    {
+        std::string x, y, z;
+        filestream >> x; if (x == "]") break;
+        filestream >> y; 
+        filestream >> z;
+        vertices.push_back(optix::make_float3(
+            boost::lexical_cast<float>(x),
+            boost::lexical_cast<float>(y),
+            boost::lexical_cast<float>(z)
+            ));
+    }
+
+    optix::Buffer vbuffer = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, vertices.size()); 
+    auto vbufmap = vbuffer->map();
+    memcpy(vbufmap, &vertices[0], vertices.size()*sizeof(float3));
+    translucentObj["vertex_buffer"]->setBuffer(vbuffer);
+    vbuffer->unmap();
+
+    // Read indices
+    std::vector<int3> indices;
+    { std::string delim; filestream >> delim; }
+    while (filestream)
+    {
+        std::string x, y, z;
+        filestream >> x; if (x == "]") break;
+        filestream >> y; 
+        filestream >> z;
+        indices.push_back(optix::make_int3(
+            boost::lexical_cast<int>(x),
+            boost::lexical_cast<int>(y),
+            boost::lexical_cast<int>(z)
+            ));
+    }
+    
+    translucentObj->setPrimitiveCount(indices.size());
+    optix::Buffer ibuffer = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_INT3, indices.size()); 
+    auto ibufmap = ibuffer->map();
+    memcpy(ibufmap, &indices[0], indices.size()*sizeof(int3));
+    ibuffer->unmap();
+    translucentObj["vindex_buffer"]->setBuffer(ibuffer);
+
+    // Read normals
+    std::vector<float3> normals;
+    { std::string delim; filestream >> delim; }
+    while (filestream)
+    {
+        std::string x, y, z;
+        filestream >> x; if (x == "]") break;
+        filestream >> y; 
+        filestream >> z;
+        normals.push_back(optix::make_float3(
+            boost::lexical_cast<float>(x),
+            boost::lexical_cast<float>(y),
+            boost::lexical_cast<float>(z)
+            ));
+    }
+    
+    optix::Buffer nbuffer = m_context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, normals.size()); 
+    auto nbufmap = nbuffer->map();
+    memcpy(nbufmap, &normals[0], normals.size()*sizeof(float3));
+    nbuffer->unmap();
+    translucentObj["normal_buffer"]->setBuffer(nbuffer);
+
+    filestream.close();
 
     // Construct floor geometry as a plane object
     optix::Geometry parallelogram = m_context->createGeometry();
     parallelogram->setPrimitiveCount(1u);
     parallelogram->setBoundingBoxProgram(m_context->createProgramFromPTXFile(pgramPtxFile, "bounds"));
     parallelogram->setIntersectionProgram(m_context->createProgramFromPTXFile(pgramPtxFile, "intersect"));
-    float3 anchor = optix::make_float3(0.0f, 0.0f, 0.0f);
+    float3 anchor = optix::make_float3(-64.0f, 0.0f, -64.0f);
     float3 v1 = optix::make_float3(0.0f, 0.0f, 128.0f);
     float3 v2 = optix::make_float3(128.0f, 0.0f, 0.0f);
     float3 normal = optix::cross(v1, v2);
@@ -348,7 +503,7 @@ void CudaRendererImpl::rebuildGeometry()
     geometrygroup->setChildCount( gis.size() );
     geometrygroup->setChild(0, gis[0]);
     geometrygroup->setChild(1, gis[1]);
-    geometrygroup->setAcceleration(m_context->createAcceleration("NoAccel","NoAccel"));
+    geometrygroup->setAcceleration(m_context->createAcceleration("Bvh","Bvh"));
     m_context["geometryRoot"]->set( geometrygroup );
 }
 

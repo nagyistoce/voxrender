@@ -39,27 +39,31 @@ namespace vox
 {
 
 /** Rendering Volume Class */
-class CVolume
+class CVolumeBuffer
 {
 public:
-    VOX_HOST_DEVICE CVolume() { }
+    void init();
+    void free();
 
     /** Synchronizes the camera */
     VOX_HOST void synchronize(std::shared_ptr<Volume> const& volume);
 
-    /** Returns the extent of the volume data */
-    VOX_HOST_DEVICE inline Vector3u const& extent() const { return m_extent; }
+    /** Returns the size of the volume data */
+    VOX_HOST_DEVICE inline Vector3f const& size() const { return m_size; }
 
-    /** Array style access element access */
-    /*VOX_HOST_DEVICE inline UInt8 const& operator[](Vector3u i) const 
-    { 
-        return coord[i]; 
-    }*/
+    /** Returns the inverse spacing of the volume data */
+    VOX_HOST_DEVICE inline Vector3f const& invSpacing() const { return m_invSpacing; }
+
+    /** Returns the cudaArray storing the volume data */
+    VOX_HOST inline cudaArray * handle() { return m_handle; }
+
+    /** Returns the volume format (bytes per voxel) */
 
 private:
-    Vector3u    m_extent;
-    Vector3f    m_spacing;
-    cudaArray * m_data;
+    Vector3f    m_size;
+    Vector3f    m_invSpacing;
+    cudaArray * m_handle;
+    size_t      m_format;
 };
 
 }

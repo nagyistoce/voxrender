@@ -86,8 +86,8 @@ VOX_HOST_DEVICE bool rayBoxIntersection(
 {
     Vector3f const invDir(1.0f / rayDir[0], 1.0f / rayDir[1], 1.0f / rayDir[2]);
 
-	Vector3f const tBMin = ( bmin - rayPos ) * invDir;
 	Vector3f const tBMax = ( bmax - rayPos ) * invDir;
+	Vector3f const tBMin = ( bmin - rayPos ) * invDir;
     
 	Vector3f const tNear( low(tBMin[0], tBMax[0]), 
                           low(tBMin[1], tBMax[1]), 
@@ -126,7 +126,7 @@ __global__ void renderKernel()
 
     // Clip the sample ray to the volume's bounding box
     Vector2f clipRange(0.0f, 5000.0f); //:TODO: float max
-    bool hit = rayBoxIntersection(
+    bool nhit = rayBoxIntersection(
         ray.pos, 
         ray.dir, 
         Vector3f(0.0f), 
@@ -134,16 +134,33 @@ __global__ void renderKernel()
         clipRange[0], 
         clipRange[1]);
 
-    if (hit) { gd_sampleBuffer.push(px, py, gd_backdropClr); return; }
+    ray.pos += ray.dir * clipRange[0];
 
     // Sample the volume for output radiance information
-	while (clipRange[0] > clipRange[2])
-	{
-		clipRange[0] += gd_rayStepSize;
-	}
+	if (!nhit) 
+    {
+        nhit = true;
+        while (clipRange[0] < clipRange[1])
+	    {
+            // Acquire an interpolated volume sample value at current position
+            float density = tex3D(gd_volumeTex, 
+                ray.pos[0]*gd_volumeBuffer.invSpacing()[0], 
+                ray.pos[1]*gd_volumeBuffer.invSpacing()[1],
+                ray.pos[2]*gd_volumeBuffer.invSpacing()[2]);
+
+            nhit = (density < 0.1f); if (!nhit) break;
+
+            // Increment the current sample position
+            ray.pos += ray.dir * gd_rayStepSize;
+		    clipRange[0] += 2.0f;
+	    }
+    }
+
+    __syncthreads();
 
     // :DEBUG: test output
-    gd_sampleBuffer.push(px, py, ColorLabxHdr(rng.sample1D(), rng.sample1D(), rng.sample1D())); 
+    if (nhit) gd_sampleBuffer.push(px, py, gd_backdropClr);
+    else gd_sampleBuffer.push(px, py, ColorLabxHdr(rng.sample1D(), rng.sample1D(), rng.sample1D())); 
 }
 
 // --------------------------------------------------------------------
@@ -170,7 +187,7 @@ void RenderKernel::setVolume(CVolumeBuffer const& volume)
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(gd_volumeBuffer, &volume, sizeof(volume)));
 
 	// Volume texture sampler settings
-	gd_volumeTex.normalized     = true;
+	gd_volumeTex.normalized     = false;
     gd_volumeTex.filterMode     = cudaFilterModeLinear; 
     gd_volumeTex.addressMode[0] = cudaAddressModeClamp;
     gd_volumeTex.addressMode[1] = cudaAddressModeClamp;

@@ -34,17 +34,29 @@
 using namespace optix;
 using namespace vox;
 
-rtDeclareVariable(float,  rayStepSize, , );   // Step size of the volume trace ray
-rtDeclareVariable(float,  reflectFactor, , ); // Percent specular reflectivity of the surface 
-rtDeclareVariable(float,  diffuseFactor, , ); // Percent diffuse reflectivity of the surface
-rtDeclareVariable(float3, volumeSpacing, , ); // Spacing between volume samples
+// =====================================
+//         GEOMETRY ATTRIBUTES
+// =====================================
 
-rtDeclareVariable(float3, texcoord,         attribute texcoord,         ); 
-rtDeclareVariable(float3, geometric_normal, attribute geometric_normal, ); 
-rtDeclareVariable(float3, shading_normal,   attribute shading_normal,   ); 
+rtDeclareVariable(float3, texcoord,         attribute texcoord,         ); ///< Geometry texture UV attribute
+rtDeclareVariable(float3, geometric_normal, attribute geometric_normal, ); ///< Geometry normal attribute
+rtDeclareVariable(float3, shading_normal,   attribute shading_normal,   ); ///< Geometry normal attribute
 
-rtTextureSampler<UInt8,3> volumeTexture;
-rtDeclareVariable(uint3, volumeExtent, , );
+// =====================================
+//          SHADER PARAMETERS
+// =====================================
+
+rtDeclareVariable(float,  rayStepSize, , );    ///< Step size of the volume trace ray
+rtDeclareVariable(float,  specularFactor, , ); ///< Percent specular reflectivity of the surface 
+rtDeclareVariable(float3, invSpacing, , );        ///< Inverse spacing between volume samples per dimension
+rtDeclareVariable(float3, anchor, , );         ///< Anchor position of volume in object space
+rtDeclareVariable(float3, transmission, , );   ///< Transmission coefficient of material
+rtDeclareVariable(uint3,  extent, , );         ///< Extent of volume data 
+
+rtTextureSampler<float4,3> volumeTexture;
+
+
+//rtTextureSampler<uchar4, 1, cudaReadModeNormalizedFloat> transferTexture;
 
 // ---------------------------------------------------------------------
 //  Optix Program for computing light attenuation for shadow rays 
@@ -76,7 +88,8 @@ RT_PROGRAM void closest_hit_radiance()
         
         // Initialize the reflection ray
         payloadRadiance.isInVolume = false;
-        payloadRadiance.color.x = t_hit; // :TODO: Use LAB and rename to closestHit
+        payloadRadiance.color.x = t_hit; // :TODO: Use LAB color member and create float member 'closestHit'
+                                         // :TODO: Ray refraction calculation on exiting the volume
 
         float3 pos = ray.origin + t_hit * ray.direction;
         optix::Ray selfRay = optix::make_Ray(pos, ray.direction, radianceRayType, sceneEpsilon, RT_DEFAULT_MAX);
@@ -108,9 +121,9 @@ RT_PROGRAM void closest_hit_radiance()
         optix::Ray reflRay = optix::make_Ray(pos, R, radianceRayType, sceneEpsilon, RT_DEFAULT_MAX);
         rtTrace(geometryRoot, reflRay, reflPayload);
             
-        payloadRadiance.color.l = reflPayload.color.l * 0.2f;
-        payloadRadiance.color.a = reflPayload.color.a * 0.2f;
-        payloadRadiance.color.b = reflPayload.color.b * 0.2f;
+        payloadRadiance.color.l = reflPayload.color.l * specularFactor;
+        payloadRadiance.color.a = reflPayload.color.a * specularFactor;
+        payloadRadiance.color.b = reflPayload.color.b * specularFactor;
         
         // --------------------------------------------------------------------
         //  Compute the radiance component of the ray along the incident ray 
@@ -128,44 +141,60 @@ RT_PROGRAM void closest_hit_radiance()
         // Compute the input radiance contribution from the volume and compute 
         // the light attenuation for the portion of the ray through the volume
         // --------------------------------------------------------------------
-        
-        unsigned int steps = reflPayload.color.x / 0.25f; // tmax / stepSize
 
-        // Compute volume-space trace ray     
-        pos -= make_float3(16.0f, 16.0f, 16.0f);  // Transform to object space :TODO:
-        float3 volSize = make_float3(volumeExtent.x, volumeExtent.y, volumeExtent.z);
-        float3 scale = volSize * 1 / 64.0f;             // Scale to volume space, Volume_Size / Mesh_AABox
-        pos.x *= scale.x; 
-        pos.y *= scale.y; 
-        pos.z *= scale.z;
+        // :TODO: ray step size should be modified based on scale factor so that actual
+        //        untransformed step is correct
 
-        bool hit = false;
-        for (unsigned int i = 0; i < steps; i++)
-        {
-            pos += ray.direction * 0.25f;
-            float sample = tex3D(volumeTexture, pos.x, pos.y, pos.z);
-            if (sample > 100)
-            {
-                hit = true;
-                break;
-            }
-        }
+        unsigned int steps = reflPayload.color.x / rayStepSize; // tmax / stepSize
+
+        // Compute the volume trace parameters 
+        pos = (pos - anchor) * invSpacing;      // Transform ray to object space
+                                                         // :TODO: sampleOne() offset computation to prvent aliasing
+        float3 radiance = make_float3(0.0f, 0.0f, 0.0f); // Color emitted by internal radiance 
+        float3 alpha    = make_float3(1.0f, 1.0f, 1.0f); // Transmission along the ray
+
+        float3 step     = ray.direction * rayStepSize * invSpacing;
+
+        // Trace the volume body and compute the internal radiance reflected through the surface hit point
+		for (unsigned int i = 0; i < steps; i++)
+		{ 
+			// Acquire interpolated sample intensity at current position
+            float4 density = tex3D(volumeTexture, pos.x, pos.y, pos.z);
+            
+            // Compute modified transmission coefficient
+            alpha *= transmission; // (transmission precomputed for rayStep)
+
+			// Composite the sample radiance contribution
+            radiance.x += density.x * alpha.x * 1.f; 
+            radiance.y += density.y * alpha.y * 1.f; 
+            radiance.z += density.z * alpha.z * 1.f; 
+                // :TODO: Adjust light scaling/tonemapping
+                // Also, actually    L{out} = density * transmission / sigma_absorption 
+                // or if sigma = 0,  L{out} = density * rayStepSize 
+                // (Verify these equations)
+
+            // Early termination check
+            if (alpha.x < 0.05 && 
+                alpha.y < 0.05 &&
+                alpha.z < 0.05
+                    ) 
+                { 
+                    alpha.x = 0.0f;
+                    alpha.y = 0.0f;
+                    alpha.z = 0.0f;
+                    break; 
+                }
+
+            // :TODO: Should possible recalc in case of small step size
+            pos += step; // Advance position
+		}
 
         // --------------------------------------------------------------------
         //  Compute the output radiance as a function of the volume trace info
         //  and the radiance incoming on the volumes opposite endpoint
         // --------------------------------------------------------------------
-        if (hit)
-        {
-            payloadRadiance.color.l += 0.0f;
-            payloadRadiance.color.a += 2.0f;
-            payloadRadiance.color.b += 0.0f;
-        }
-        else
-        {
-            payloadRadiance.color.l += reflPayload.color.l * 1.0f;
-            payloadRadiance.color.a += reflPayload.color.a * 1.0f;
-            payloadRadiance.color.b += reflPayload.color.b * 1.0f;
-        }
+        payloadRadiance.color.l += radiance.x + alpha.x * reflPayload.color.l;
+        payloadRadiance.color.a += radiance.y + alpha.y * reflPayload.color.a;
+        payloadRadiance.color.b += radiance.z + alpha.z * reflPayload.color.b;
     }
 }

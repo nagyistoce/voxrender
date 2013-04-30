@@ -36,6 +36,7 @@
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry.h"
+#include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Error/CudaError.h"
 #include "VoxLib/Scene/Camera.h"
@@ -93,13 +94,21 @@ public:
     // --------------------------------------------------------------------
     ~VolumeScatterRendererImpl()
     {
-        m_ldrBuffer.reset();
-        m_hdrBuffer.reset();
-        m_rndSeeds0.reset();
-        m_rndSeeds1.reset();
-        m_lightBuffer.reset();
-        m_transferBuffer.reset();
-        m_volumeBuffer.reset();
+        try
+        {
+            m_ldrBuffer.reset();
+            m_hdrBuffer.reset();
+            m_rndSeeds0.reset();
+            m_rndSeeds1.reset();
+            m_lightBuffer.reset();
+            m_transferBuffer.reset();
+            m_volumeBuffer.reset();
+        } 
+        catch(Error & error) 
+        {
+            error.message = "Error encountered during VolumeScatterRendererGPU shutdown >> " + error.message;
+            Logger::addEntry(error, Severity_Warning); // Probably not necessarily critical but could cause problems
+        }
     }
 
     // --------------------------------------------------------------------
@@ -176,7 +185,17 @@ public:
         // Light data synchronization
         if (scene.lightSet->isDirty())
         {
-            //RenderKernel::setLights(...);
+            // Construct an array of CUDA light objects
+            auto lights = scene.lightSet->lights();
+            std::vector<CLight> clights(lights.size());
+            BOOST_FOREACH(auto & light, lights)
+            {
+                clights.push_back( CLight(*light) );
+            }
+
+            m_lightBuffer.write(clights);
+
+            RenderKernel::setLights(m_lightBuffer);
         }
     }
 
