@@ -14,10 +14,12 @@
 		<FocalDistance>0</FocalDistance>
 		<Position>[32 32 -100]</Position>
 		<Target>[32 32 32]</Target>
+		<FilmHeight>256</FilmHeight>
+		<FilmWidth>256</FilmWidth>
 	</Camera>
 	<Film>
-		<Height>256</Height>
-		<Width>256</Width>
+		<Height>512</Height>
+		<Width>512</Width>
 	</Film>
 	<Volume>
 		<Import>
@@ -28,7 +30,7 @@
 				<Size>[64 64 64 1]</Size>
 			</Options>
 		</Import>
-		<Spacing>[1 1 1]</Spacing>
+		<Spacing>[1 1 1 1]</Spacing>
 	</Volume>
     <Lights>
         <Light>
@@ -37,10 +39,8 @@
         </Light>
     </Lights>
 	<Transfer>
-		<Node>[0 12 0 0 0]</Node>
-		<Node>[1 18 0 0 1]</Node>
-		<Node>[2 23 0 0 2]</Node>
-		<Node>[3 29 0 0 3]</Node>
-		<Node>[4 34 0 0 4]</Node>
+		<Import>
+			<Resource>Transfer.xml</Resource>
+		</Import>
 	</Transfer>
 </Scene>
