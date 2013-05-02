@@ -1,0 +1,68 @@
+<!-- 
+     Gradient dataset for testing transfer
+     function behavior. Consists of a single
+	 strip of 256 samples of decreasing 
+	 density 
+-->
+ 
+<Scene>
+	
+	<Version>
+		<Major>1</Major>
+		<Minor>0</Minor>
+	</Version>
+	
+	<Camera>
+		<FieldOfView>30</FieldOfView>
+		<ApertureSize>0</ApertureSize>
+		<FocalDistance>0</FocalDistance>
+		<Position>[32 32 -100]</Position>
+		<Target>[32 32 32]</Target>
+		<FilmWidth>512</FilmWidth>
+		<FilmHeight>512</FilmHeight>
+	</Camera>
+	
+	<Film>
+		<Height>512</Height>
+		<Width>512</Width>
+	</Film>
+	
+	<Volume>
+		<Import>
+			<Resource>gradient_256x1x1_zlib_8bit.raw</Resource>
+			<Options>
+				<BytesPerVoxel>1</BytesPerVoxel>
+				<Size>[256 1 1 1]</Size>
+			</Options>
+		</Import>
+		<Spacing>[1 8 64 1]</Spacing>
+	</Volume>
+	
+    <Lights>
+        <Light>
+            <Color>[1.0 1.0 1.0]</Color>
+            <Position>[0, 100, 0]</Position>
+        </Light>
+    </Lights>
+	
+	<Transfer>
+		<Resolution>256</Resolution>
+		<Materials>
+			<Empty></Empty>
+			<Solid>
+				
+			</Solid>
+		</Materials>
+		<Nodes>
+			<Empty>
+				<Material>Empty</Material>
+				<Density>0.0</Density>
+			</Empty>
+			<Solid>
+				<Material>Solid</Material>
+				<Density>1.0</Density>
+			</Solid>
+		</Nodes>
+	</Transfer>
+	
+</Scene>
