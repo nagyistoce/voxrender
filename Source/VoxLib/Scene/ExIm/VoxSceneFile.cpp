@@ -139,7 +139,6 @@ namespace
                     // Load scene components
                     scene.volume   = loadVolume();
                     scene.camera   = loadCamera();
-                    scene.film     = loadFilm();
                     scene.lightSet = loadLights();
                     scene.transfer = loadTransfer();
                 }
@@ -251,25 +250,6 @@ namespace
             }
 
             // --------------------------------------------------------------------
-            //  Creates a film object from the 'Film' node of a scene file
-            // --------------------------------------------------------------------
-            std::shared_ptr<Film> loadFilm()
-            {
-                if (!push("Film", Preferred)) return nullptr;
-                
-                  // Instantiate default film object
-                  auto filmPtr = std::make_shared<Film>();
-                  auto & film = *filmPtr;
-
-                  film.setHeight( m_node->get<size_t>("Height", 512) );
-                  film.setWidth( m_node->get<size_t>("Width", 512) );
-
-                pop();
-
-                return filmPtr;
-            }
-            
-            // --------------------------------------------------------------------
             //  Creates a lights vector object from the 'Lights' node of a scene file
             // --------------------------------------------------------------------
             std::shared_ptr<LightSet> loadLights()
@@ -313,8 +293,9 @@ namespace
                   // Read inline volume parameter specifications
                   volume.setSpacing(m_node->get("Spacing", volume.spacing()));
 
-                  // Do not allow other parameter specifications here as they will 
-                  // overwrite interdependent information (ie extent ties to data etc)
+                  // Do not allow any other parameter specifications here as they will 
+                  // overwrite interdependent information (ie extent relates to data etc)
+				  // and inline volume data specification is not supported
 
                 pop();
 
@@ -380,28 +361,6 @@ namespace
                           node->setPosition(0, region.second.get<float>("Density"));
                       }
                   }
-
-                  // Process transfer function nodes
-                  /*
-                  if (push("Regions", Preferred))
-                  {
-                      BOOST_FOREACH(auto & region, *m_node)
-                      {
-                          // :TODO: This is total BS
-                          std::istringstream input(region.second.data());
-                          size_t index; input >> index;
-                          uchar4 node;
-                          size_t temp;
-                          input >> temp; node.x = temp;
-                          input >> temp; node.y = temp;
-                          input >> temp; node.z = temp;
-                          input >> temp; node.w = temp;
-                          transfer.addDebugMap(index, node);
-                      }
-
-                      pop(); 
-                  }
-                  */
 
                 pop();
 

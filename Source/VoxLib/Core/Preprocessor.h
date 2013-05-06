@@ -28,13 +28,15 @@
 #define VOX_PREPROCESSOR_H
 
 // Boost Preprocessor Headers
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/enum_params.hpp>
-#include <boost/preprocessor/punctuation.hpp>
-#include <boost/preprocessor/repetition/enum.hpp>
-#include <boost/preprocessor/repetition/repeat.hpp>
-#include <boost/preprocessor/repetition/repeat_from_to.hpp>
-#include <boost/preprocessor/stringize.hpp>
+#ifndef Q_MOC_RUN
+#	include <boost/preprocessor/cat.hpp>
+#	include <boost/preprocessor/enum_params.hpp>
+#	include <boost/preprocessor/punctuation.hpp>
+#	include <boost/preprocessor/repetition/enum.hpp>
+#	include <boost/preprocessor/repetition/repeat.hpp>
+#	include <boost/preprocessor/repetition/repeat_from_to.hpp>
+#	include <boost/preprocessor/stringize.hpp>
+#endif // Q_MOC_RUN
 
 // Array initialization from enum parameters
 #define PP_ARRAY_ASSIGN_ELEM(z, n, data)                \

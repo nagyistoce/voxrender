@@ -32,11 +32,12 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Scene/Scene.h"
 
 // API namespace
 namespace vox
 {
+
+class Camera;
 
 /** Rendering Camera Class */
 class CCamera

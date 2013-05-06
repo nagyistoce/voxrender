@@ -56,7 +56,7 @@ namespace vox
 	{
     public:
         /** Initializes the seed values */
-        VOX_HOST_DEVICE void setSeeds(
+        VOX_HOST_DEVICE CRandomGenerator(
             unsigned int * pSeed0,
             unsigned int * pSeed1
             )

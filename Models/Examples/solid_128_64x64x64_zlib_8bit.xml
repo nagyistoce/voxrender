@@ -24,12 +24,12 @@
 	
 	<Volume>
 		<Import>
-			<Resource>gradient_256x1x1_zlib_8bit.raw</Resource>
+			<Resource>solid_128_64x64x64_zlib_8bit.raw</Resource>
 			<Options>
 				<Type>uint8</Type>
-				<Size>[256 1 1 1]</Size>
-				<Spacing>[1 8 64 1]</Spacing>
+				<Size>[64 64 64 1]</Size>
 				<Compression>zlib</Compression>
+				<Spacing>[1 1 1 1]</Spacing>
 			</Options>
 		</Import>
 	</Volume>

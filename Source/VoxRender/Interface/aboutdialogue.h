@@ -28,13 +28,13 @@
 #define ABOUTDIALOGUE_H
 
 // Qt4 Includes
-#include <QtGui/QDialog>
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsScene>
-#include <QtGui/QFrame>
-#include <QtGui/QImage>
-#include <QGraphicsTextItem>
 #include <QtCore/QTimer>
+#include <QtGui/QImage>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QGraphicsTextItem>
 
 namespace Ui { class AboutDialogue; }
 

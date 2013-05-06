@@ -29,8 +29,8 @@
 #define TRANSFER_ITEM_H
 
 // QT4 Dependencies
-#include <QtGui/QGraphicsRectItem>
-#include <QtGui/QGraphicsView>
+#include <QtWidgets/QGraphicsRectItem>
+#include <QtWidgets/QGraphicsView>
 
 // Include Dependencies
 #include "nodeitem.h"

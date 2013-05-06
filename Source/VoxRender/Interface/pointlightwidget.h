@@ -32,8 +32,11 @@
 #define POINT_LIGHT_WIDGET_H
 
 // QT4 Dependencies
-#include <QtGui/QWidget>
-#include <QtGui/QColorDialog>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QColorDialog>
+
+// Standard Library
+#include <memory>
 
 // Generated class
 namespace Ui { class PointLightWidget; }

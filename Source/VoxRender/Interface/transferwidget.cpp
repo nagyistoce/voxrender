@@ -33,7 +33,7 @@
 #include "utilities.h"
 
 // QT4 Includes
-#include <QtGui/QMessageBox>
+#include <QtWidgets/QMessageBox>
 
 // File scope namespace
 namespace 
@@ -306,7 +306,7 @@ void TransferWidget::on_pushButton_emission_clicked( )
 	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
 	ui->pushButton_emission->setStyleSheet( 
         vox::format( filescope::stylesheet, 
-            color.name().toAscii().data() ).c_str( ) );
+            color.name().toLatin1().data() ).c_str( ) );
 }
 
 // ----------------------------------------------------------------------------
@@ -317,7 +317,7 @@ void TransferWidget::on_pushButton_specular_clicked( )
 	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
 	ui->pushButton_specular->setStyleSheet( 
         vox::format( filescope::stylesheet, 
-            color.name().toAscii().data() ).c_str( ) );
+            color.name().toLatin1().data() ).c_str( ) );
 }
 
 // ----------------------------------------------------------------------------
@@ -328,7 +328,7 @@ void TransferWidget::on_pushButton_diffuse_clicked( )
 	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
 	ui->pushButton_diffuse->setStyleSheet( 
         vox::format( filescope::stylesheet, 
-            color.name().toAscii().data() ).c_str( ) );
+            color.name().toLatin1().data() ).c_str( ) );
 }
 
 // ----------------------------------------------------------------------------

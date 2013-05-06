@@ -50,8 +50,8 @@
 #include "mainwindow.h"
 #include "transferitem.h"
 
-// QT4 Dependencies
-#include <QtGui/QGraphicsSceneMouseEvent>
+// QT Dependencies
+#include <QtWidgets/QGraphicsSceneMouseEvent>
 
 // File scope namespace
 namespace

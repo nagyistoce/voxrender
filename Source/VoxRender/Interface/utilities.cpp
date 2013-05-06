@@ -27,8 +27,8 @@
 #include "utilities.h"
 
 // QT Includes
-#include <QtGui/QSpinBox>
-#include <QtGui/QSlider>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QSlider>
 
 // --------------------------------------------------------------------
 //  Updates a slider control to reflect the doubleSpinBox control's value

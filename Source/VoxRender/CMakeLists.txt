@@ -32,14 +32,19 @@ INCLUDE_DIRECTORIES(.)
 #                 QT4 Dependency                #
 #===============================================#
 
-FIND_PACKAGE(Qt4 4.8.0 COMPONENTS QtCore QtGui QtMain)
+# Find includes in corresponding build directories
+#set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# Instruct CMake to run moc automatically when needed.
+# set(CMAKE_AUTOMOC ON)
+# Find the QtWidgets library
+find_package(Qt5Widgets)
 
-IF(QT4_FOUND)
-    MESSAGE( STATUS "Qt library directory: " ${QT_LIBRARY_DIR} )
-    MESSAGE( STATUS "Qt include directory: " ${QT_INCLUDE_DIR} )
-    MESSAGE( STATUS "Qt binary directory: " ${QT_BINARY_DIR} )
-    INCLUDE(${QT_USE_FILE})
-
+IF(Qt5Widgets_FOUND)
+    MESSAGE( STATUS "Qt library directory: " ${Qt55Widgets_LIBRARY_DIR} )
+    MESSAGE( STATUS "Qt include directory: " ${Qt55Widgets_INCLUDE_DIR} )
+    MESSAGE( STATUS "Qt binary directory: " ${Qt55Widgets_BINARY_DIR} )
+    INCLUDE_DIRECTORIES(${QT_USE_FILE})
+	
     #===============================================#
     #                  Entry Point                  #
     #===============================================#
@@ -53,6 +58,7 @@ IF(QT4_FOUND)
         Interface/aboutdialogue.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
+        Interface/edgeitem.cpp
         Interface/griditem.cpp
         Interface/histogramitem.cpp
         Interface/histogramview.cpp
@@ -78,6 +84,7 @@ IF(QT4_FOUND)
         Interface/aboutdialogue.h
 	    Interface/arealightwidget.h
         Interface/camerawidget.h
+        Interface/edgeitem.h
         Interface/griditem.h
         Interface/histogramitem.h
         Interface/histogramview.h
@@ -127,9 +134,9 @@ IF(QT4_FOUND)
     #===============================================#
     #             QT GENERATED FILES                #
     #===============================================#
-    QT4_ADD_RESOURCES( VOXQTGUI_RC_SRCS ${VOXQTGUI_RCS} )
-    QT4_WRAP_UI( VOXQTGUI_UI_HDRS ${VOXQTGUI_UIS} )
-    QT4_WRAP_CPP( VOXQTGUI_MOC_SRCS ${VOXQTGUI_MOC} )
+    QT5_ADD_RESOURCES( VOXQTGUI_RC_SRCS ${VOXQTGUI_RCS} )
+    QT5_WRAP_UI( VOXQTGUI_UI_HDRS ${VOXQTGUI_UIS} )
+    QT5_WRAP_CPP( VOXQTGUI_MOC_SRCS ${VOXQTGUI_MOC} )
         
     SOURCE_GROUP("Resource Files\\Generated" FILES ${VOXQTGUI_RC_SRCS})
     SOURCE_GROUP("Header Files\\Generated"   FILES ${VOXQTGUI_UI_HDRS})
@@ -144,7 +151,7 @@ IF(QT4_FOUND)
         ${VOXQTGUI_MOC} ${VOXQTGUI_MOC_SRCS} ${VOXQTGUI_RC_SRCS} 
         ${VOXQTGUI_UI_HDRS} "interface/utilities.h" "interface/utilities.cpp")
 
-		INCLUDE_DIRECTORIES(../VoxLib)
+    INCLUDE_DIRECTORIES(../VoxLib)
 
     #===============================================#
     #               Qt DLL Dependency               #
@@ -154,25 +161,29 @@ IF(QT4_FOUND)
         POST_BUILD
 	
         COMMAND cmake -E echo "Copying Qt DLLs to build directory: " 
-        COMMAND cmake -E copy "${QT_BINARY_DIR}/QtCore4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-        COMMAND cmake -E copy "${QT_BINARY_DIR}/QtGui4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
+        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Widgets.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
+        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Core.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
+        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Gui.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
     )
 
     #===============================================#
+    #            QT5 Dependency Modules             #
+    #===============================================#
+	qt5_use_modules(VoxRender Widgets)
+	
+    #===============================================#
     #             Project Dependencies              #
     #===============================================#
-    ADD_DEPENDENCIES(VoxRender VoxLib CUDARenderer)
+    ADD_DEPENDENCIES(VoxRender VoxLib VolumeScatterRenderer)
 
     #===============================================#
     #            TARGET LINK LIBRARIES              #
     #===============================================#
+    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VSR_LIB} ${Boost_LIBRARIES})
 
-    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VSR_LIB} ${CR_LIB} ${QT_LIBRARIES} 
-                                    ${Boost_LIBRARIES} optix ${optix_rpath})
-
-ELSE(QT4_FOUND)
+ELSE(Qt5Widgets_FOUND)
 	MESSAGE( STATUS "Warning : could not find Qt - not building Qt GUI")
-ENDIF(QT4_FOUND)
+ENDIF(Qt5Widgets_FOUND)
 
 
 

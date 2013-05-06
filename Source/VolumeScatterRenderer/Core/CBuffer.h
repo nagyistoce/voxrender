@@ -52,7 +52,6 @@
 #include "VoxLib/Core/Geometry/Image.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Error/CudaError.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
 
 // API namespace
 namespace vox 

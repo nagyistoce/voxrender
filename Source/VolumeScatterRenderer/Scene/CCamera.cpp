@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "VoxLib/Scene/Camera.h"
 #include "VoxLib/Scene/Film.h"
+#include "VoxLib/Scene/Scene.h"
 
 // API namespace
 namespace vox

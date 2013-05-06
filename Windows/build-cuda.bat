@@ -1,13 +1,5 @@
 @Echo off
 
-:: This flag identifies the version of CUDA to
-:: be downloaded and built, you may change it but
-:: it could cause issues with altered ABIs, etc 
-:: NOTICE: This version flag does not alter the 
-::         download URL due to the odd archive 
-::         structure on the NVidia site. 
-set CUDA_VER=4.1.28
-
 :: Issue a message about the project and the use of 
 :: wget for fetching the project source+dependencies
 echo.
@@ -15,7 +7,7 @@ echo **************************************************************************
 echo *                             Startup                                    *
 echo **************************************************************************
 echo.
-echo NOTICE: You are about to download and download CUDA version %CUDA_VER%
+echo NOTICE: You are about to download and download CUDA version 5.0
 echo         from the NVidia website at http://developer.download.nvidia.com
 echo.
 echo This script will use the following pre-built binary to help build the project:
@@ -34,9 +26,9 @@ echo **************************************************************************
 echo.
 echo Please select which Cuda SDK you wish to use:
 echo.
-echo 1. NVIDIA CUDA ToolKit 4.1 for Win 32 bit
-echo 2. NVIDIA CUDA ToolKit 4.1 for Win 64 bit (also contains 32bit libs)
-echo N. I have already installed an NVIDIA CUDA 4.1 Toolkit
+echo 1. NVIDIA CUDA ToolKit 5.0 for Win 32 bit
+echo 2. NVIDIA CUDA ToolKit 5.0 for Win 64 bit (also contains 32bit libs)
+echo N. I have already installed an NVIDIA CUDA 5.0 Toolkit
 echo.
 set CUDA_CHOICE=0
 set /p CUDA_CHOICE="Selection? "
@@ -47,15 +39,15 @@ echo Invalid choice
 goto Choice
 
 :CUDA_32
-set CUDA_NAME=NVIDIA CUDA ToolKit 4.1 for Win 32 bit
-set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/4_1/rel/toolkit/
-set CUDA_PKG=cudatoolkit_4.1.28_win_32.msi
+set CUDA_NAME=NVIDIA CUDA ToolKit 5.0 for Win 32 bit
+set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_0/rel-update-1/installers/
+set CUDA_PKG=cuda_5.0.35_winvista_win7_win8_general_32-3.msi
 goto Install
 
 :CUDA_64
-set CUDA_NAME=NVIDIA CUDA ToolKit 4.1 for Win 64 bit
-set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/4_1/rel/toolkit/
-set CUDA_PKG=cudatoolkit_4.1.28_win_64.msi
+set CUDA_NAME=NVIDIA CUDA ToolKit 5.0 for Win 64 bit
+set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_0/rel-update-1/installers/
+set CUDA_PKG=cuda_5.0.35_winvista_win7_win8_general_64-3.msi
 goto Install
 
 :Install

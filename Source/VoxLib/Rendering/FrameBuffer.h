@@ -28,7 +28,7 @@
 #define VOX_FRAME_BUFFER_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry/Image.h"
 #include "VoxLib/Core/Geometry/Color.h"
 
@@ -64,9 +64,9 @@ namespace vox
 	private:
         friend class FrameBufferLock;
 
-        boost::cond_var m_cond;   ///< Lock synchronization condition
-        boost::mutex    m_mutex;  ///< Lock synchronization mutex
-        bool            m_locked; ///< Lock flag for image callback
+        boost::condition_variable m_cond;   ///< Lock synchronization condition
+        boost::mutex			  m_mutex;  ///< Lock synchronization mutex
+        bool					  m_locked; ///< Lock flag for image callback
 
         /** Locks the image buffer for the user callback */
         void lock() { m_locked = true; }

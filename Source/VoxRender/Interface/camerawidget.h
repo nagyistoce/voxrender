@@ -29,7 +29,7 @@
 #define CAMERA_WIDGET_H
 
 // QT Includes
-#include <QTGui/QWidget>
+#include <QtWidgets/QWidget>
 
 namespace Ui {
 class CameraWidget;

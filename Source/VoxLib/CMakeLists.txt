@@ -52,6 +52,7 @@ Set(VoxLib_HEADERS_CORE_GEOMETRY
     Core/Geometry/AABBox.h
     Core/Geometry/Color.h
     Core/Geometry/Image.h
+    Core/Geometry/Image3D.h
     Core/Geometry/Matrix.h
     Core/Geometry/Ray.h
     Core/Geometry/Vector.h
@@ -82,7 +83,6 @@ Set(VoxLib_HEADERS_PLUGIN
 
 Set(VoxLib_HEADERS_SCENE
     Scene/Camera.h
-    Scene/Film.h
     Scene/Light.h
     Scene/Material.h
     Scene/Scene.h
@@ -99,7 +99,6 @@ Set(VoxLib_HEADERS_RENDERING
 
 Set(VoxLib_HEADERS_SCENE_EXIM
     Scene/ExIm/VoxSceneFile.h
-    Scene/ExIm/VoxTransferFile.h
     Scene/ExIm/RawVolumeFile.h
 )
 
@@ -154,7 +153,6 @@ Set(VoxLib_SOURCES_PLUGIN
 
 Set(VoxLib_SOURCES_SCENE
     Scene/Camera.cpp
-    Scene/Film.cpp
     Scene/Light.cpp
     Scene/Scene.cpp
     Scene/Transfer.cpp
@@ -163,7 +161,6 @@ Set(VoxLib_SOURCES_SCENE
 
 Set(VoxLib_SOURCES_SCENE_EXIM
     Scene/Exim/VoxSceneFile.cpp
-    Scene/Exim/VoxTransferFile.cpp
     Scene/Exim/RawVolumeFile.cpp
 )
 
@@ -208,22 +205,6 @@ CUDA_ADD_LIBRARY(VoxLib ${Linkage}
                  ${VoxLib_HEADERS})
 
 TARGET_LINK_LIBRARIES(VoxLib ${Boost_LIBRARIES})
-									
-#===============================================#
-#             OptiX DLL Dependency              #
-#===============================================#
-
-ADD_CUSTOM_COMMAND( 
-    TARGET VoxLib
-    POST_BUILD
-	
-    COMMAND cmake -E echo "Copying NVidia OptiX DLLs to build directory: " 
-    COMMAND cmake -E copy "${optix_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-    COMMAND cmake -E copy "${optixu_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-)
-
-
-
 
 
 

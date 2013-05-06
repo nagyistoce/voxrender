@@ -43,9 +43,12 @@
 #define NODE_ITEM_H
 
 // QT4 Dependencies
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsEllipseItem>
-#include <QtGui/QGraphicsScene>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsEllipseItem>
+#include <QtWidgets/QGraphicsScene>
+
+// Include Dependencies
+#include <memory>
 
 // Parent graphics item class
 namespace vox { class Node; };

@@ -29,19 +29,67 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Format.h"
 #include "VoxLib/Core/Geometry.h"
+#include "VoxLib/Core/Types.h"
+#include "VoxLib/Error/Error.h"
 
 // API namespace
 namespace vox
 {
     
 class RenderController;
-    
+
 /** 3D/4D Volume Class */
 class VOX_EXPORT Volume
 {
 public:
-    typedef UInt8 ValueType; ///< Voxel value type
+    /** Volume data formats */
+    enum Type
+    {
+        Type_Begin,                   ///< Begin iterator for Format enumeration
+        Type_UInt8  = Type_Begin,     ///< Unsigned 8-bit integer
+        Type_Int8,                    ///< Signed 8-bit integer
+        Type_UInt16,                  ///< Unsigned 16-bit integer
+        Type_Int16,                   ///< Signed 16-bit integer
+        Type_Float32,                 ///< 32-bit floating point numeric
+        Type_Float64,                 ///< 64-bit floating point numeric
+        Type_End                      ///< End iterator for Format enumeration
+    };
+
+    /** Volume data format size conversion (runtime) */
+    static size_t typeToSize(Type const& type)
+    {
+        switch(type)
+        {
+        case Type_UInt8: case Type_Int8: return 1;
+        case Type_UInt16: case Type_Int16: return 2;
+        case Type_Float32: return 4;
+        case Type_Float64: return 8;
+        default: 
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                        format("Invalid volume data type (%1%)", type), 
+                        Error_Range);
+        }
+    }
+
+    /** Volume data format string conversion (runtime) */
+    static Char const* typeToString(Type const& type)
+    {
+        switch(type)
+        {
+        case Type_UInt8:   return "uint8";
+        case Type_Int8:    return "int8";
+        case Type_UInt16:  return "uint16";
+        case Type_Int16:   return "int16";
+        case Type_Float32: return "float32";
+        case Type_Float64: return "float64";
+        default: 
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                        format("Invalid volume data type (%1%)", type), 
+                        Error_Range);
+        }
+    }
 
 	/** 
      * Loads the given data set into the volume
@@ -50,23 +98,17 @@ public:
      * @param extent  Volume extent in x,y,z,t dimensions respectively
      * @param spacing Volume spacing in x,y,z,t dimensions respectively
      */
-    Volume(std::shared_ptr<UInt8> data    = std::shared_ptr<UInt8>(),
-           const Vector<size_t,4>&  extent  = Vector<size_t,4>(0),
-           const Vector<float,4>&   spacing = Vector<float,4>(0)
+    Volume(std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
+           const Vector<size_t,4>&  extent    = Vector<size_t,4>(0),
+           const Vector<float,4>&   spacing   = Vector<float,4>(0),
+		   Type                     type      = Type_UInt8 
           ) : 
-        m_data(data), m_extent(extent), m_spacing(spacing)
+        m_data(data), m_extent(extent), m_spacing(spacing), m_type(type)
     { 
-        m_voxelSize = 1; // :TODO:
     }
 
     /** Spacing modifier */     
     void setSpacing(Vector<float,4> const& spacing) { m_spacing = spacing; m_contextChanged = true; }
-
-    /** Extent modifier */     
-    void setExtent(Vector<size_t,4> const& extent) 
-    { 
-        m_extent = extent; m_contextChanged = true; 
-    }
 
     /** Spacing accessor */     
     Vector<float,4> const& spacing() const { return m_spacing; } 
@@ -75,23 +117,27 @@ public:
     Vector<size_t,4> const& extent() const { return m_extent; }  
     
     /** Raw voxel data accessor */
-    ValueType const& at(size_t x, size_t y, size_t z) const;
+    void* const& at(size_t x, size_t y, size_t z) const;
    
     /** Data modifier */ 
     void setData(std::shared_ptr<UInt8> const& data, 
-                 Vector<size_t,4> const& extent)
+                 Vector<size_t,4>       const& extent,
+				 Type                          type)
     {
-        m_data = data; m_extent = extent;
+        m_data = data; m_extent = extent; m_type = type;
     }
 
     /** Raw voxel data accessor */
-    ValueType * mutableData() { return m_data.get(); }
+    UInt8 * mutableData() { return m_data.get(); }
 
     /** Raw voxel data accessor */
-    ValueType const* data() const { return m_data.get(); }
+    UInt8 const* data() const { return m_data.get(); }
 
     /** Returns the format of the data (bytes per voxel) */
-    size_t voxelSize() const { return m_voxelSize; }
+    size_t voxelSize() const { return typeToSize(m_type); }
+
+    /** Returns the format of the data (type) */
+    Type type() const { return m_type; }
 
     /** Returns true if the volume was changed */
     bool isDirty() const { return m_contextChanged; }
@@ -105,7 +151,7 @@ private:
 
     Vector4f m_spacing;     ///< Spacing between voxels (mm)
     Vector4u m_extent;      ///< Size of volume in voxels
-    size_t   m_voxelSize;   ///< Volume voxel size (bytes per voxel)
+    Type     m_type;        ///< Volume data type
 };
 
 }

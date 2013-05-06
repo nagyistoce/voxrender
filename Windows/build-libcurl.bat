@@ -65,7 +65,7 @@ echo **************************************************************************
 echo.
 
 cd %DEPENDS%/curl-%CURL_VER%/winbuild
-nmake /f Makefile.vc VC=10 GEN_PDB=yes mode=dll MACHINE=%BUILD_PLATFORM% /S > %CURRENT%\Reports\curl-%CURL_VER%_%BUILD_PLATFORM%_build.txt
+nmake /f Makefile.vc VC=11 GEN_PDB=yes mode=dll MACHINE=%BUILD_PLATFORM% /S > %CURRENT%\Reports\curl-%CURL_VER%_%BUILD_PLATFORM%_build.txt
 cd %CURRENT%
 
 rmdir %INCLUDES%\%BUILD_PLATFORM%\curl > %CURRENT%\Reports\tmp.txt

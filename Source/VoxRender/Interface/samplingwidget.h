@@ -30,7 +30,7 @@
 #define SAMPLING_WIDGET_H
 
 // QT Includes
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 namespace Ui {
 	class SamplingWidget;

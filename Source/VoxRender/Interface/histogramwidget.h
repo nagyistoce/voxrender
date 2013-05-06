@@ -32,7 +32,7 @@
 #define HISTOGRAM_WIDGET_H
 
 // QT4 Dependencies
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 // Include dependencies
 #include "histogramview.h"

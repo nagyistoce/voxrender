@@ -16,8 +16,8 @@
 #define GRID_ITEM_H
 
 // QT4 Includes
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsRectItem>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsRectItem>
 
 // Labeled grid graphics item
 class GridItem : public QGraphicsRectItem

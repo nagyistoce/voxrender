@@ -65,10 +65,6 @@ void CameraWidget::synchronizeView()
     
     ui->doubleSpinBox_focal->setValue( camera.focalDistance() );
     ui->doubleSpinBox_aperture->setValue( camera.apertureSize() );
-
-    // Synchronize the film object controls
-    vox::Film & film = *MainWindow::instance->scene().film;
-
     ui->spinBox_filmWidth->setValue( camera.filmWidth() );
     ui->spinBox_filmHeight->setValue( camera.filmHeight() );
 

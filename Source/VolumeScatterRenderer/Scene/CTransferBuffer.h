@@ -45,29 +45,24 @@ public:
     /** Initializes the buffer for use */
     VOX_HOST void init() 
     {
-        m_emissionArray = nullptr; 
         m_diffuseArray  = nullptr;
-        m_specularArray = nullptr;
     }
 
     /** Deallocates the device memory buffer */
     VOX_HOST void reset();
 
     /** Sets the VolumeBuffer's data content */
-    VOX_HOST void setTransfer(std::shared_ptr<Transfer> transfer);
+    VOX_HOST void setTransfer(std::shared_ptr<TransferMap> transferMap);
 
-    /** Returns the cudaArray storing the transfer functions emmission information */
-    VOX_HOST inline cudaArray const* emissionHandle() const { return m_emissionArray; }
-
-    /** Returns the cudaArray storing the transfer functions absorption information (+ sigma_scattering) */
+    /** Returns the cudaArray storing the transfer function's diffuse characteristic */
     VOX_HOST inline cudaArray const* diffuseHandle() const { return m_diffuseArray; }
 
 private:
-    cudaExtent  m_extent; ///< Extent of the transfer function
+    /** Binds the diffuse transfer function data to the active device */
+    void bindDiffuseBuffer(std::shared_ptr<TransferMap> const& transfer);
 
-    cudaArray * m_emissionArray;    ///< Handle to emmission data array on device
+private:
     cudaArray * m_diffuseArray;     ///< Handle to diffuse data array on device
-    cudaArray * m_specularArray;    ///< Handle to specular data array on device
 };
 
 }

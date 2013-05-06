@@ -177,7 +177,7 @@ void ErrorPrint(char const* file, int line, int severity, int code,
     
     std::clog << message; 
    
-    std::clog << " <file=\"" << boost::filesystem3::basename(file) << "\",line=" << line << ">";
+    std::clog << " <file=\"" << boost::filesystem::basename(file) << "\",line=" << line << ">";
         
     std::clog << std::endl << std::flush;
 }

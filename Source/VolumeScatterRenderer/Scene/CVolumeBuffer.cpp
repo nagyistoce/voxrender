@@ -53,18 +53,12 @@ void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
 {
     reset(); // Ensure previous data is released
 
-    // Verify that the volume format is acceptable
-    m_voxelSize = volume->voxelSize();
-    if (m_voxelSize != sizeof(unsigned char))
-    {
-        throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
-            format("Unsupported volume voxel size (%1% bits)", m_voxelSize),
-            Error_BadFormat);
-    }
-    
     // Volume parameters
     auto spacing = volume->spacing();
     auto extent  = volume->extent();
+    m_type       = volume->type();
+
+    size_t voxelSize = volume->voxelSize();
 
     // Record volume extent 
     m_extent.width  = extent[0];
@@ -82,15 +76,29 @@ void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
     m_invSpacing[2] = 1.0f / spacing[2];
 
     // Specify the format for volume data access
-    auto texFormatDesc = cudaCreateChannelDesc(
-        m_voxelSize*8, 0, 0, 0, cudaChannelFormatKindUnsigned);
+    m_format = cudaCreateChannelDesc(voxelSize*8, 0, 0, 0, 
+        cudaChannelFormatKindUnsigned);
+
+    switch (m_type)
+    {
+    case Volume::Type_Float32: case Volume::Type_Float64: 
+        m_format.f = cudaChannelFormatKindFloat; break;
+    case Volume::Type_Int8: case Volume::Type_Int16:
+        m_format.f = cudaChannelFormatKindSigned; break;
+    case Volume::Type_UInt8: case Volume::Type_UInt16:
+        m_format.f = cudaChannelFormatKindUnsigned; break;
+    default:
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            format("Invalid volume data type specification (%1%)", 
+                Volume::typeToString(m_type)), Error_NotImplemented);
+    }
 
 	// Create a 3d array for volume data storage
-	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handle, &texFormatDesc, m_extent));
+	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handle, &m_format, m_extent));
 
     // Copy volume data to device
 	cudaMemcpy3DParms copyParams = {0};
-	copyParams.srcPtr.pitch	     = m_extent.width*m_voxelSize;
+	copyParams.srcPtr.pitch	     = m_extent.width*voxelSize;
     copyParams.srcPtr.ptr	     = (void*)volume->data();
     copyParams.dstArray	         = m_handle;
     copyParams.extent	         = m_extent;

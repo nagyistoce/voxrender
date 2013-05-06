@@ -28,16 +28,16 @@
 #define RENDERVIEW_H
 
 // Qt4 Dependencies
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsScene>
-#include <QtGui/QApplication>
 #include <QtCore/QEvent>
-#include <QtGui/QGraphicsPixmapItem>
+#include <QtCore/QPoint>
 #include <QtGui/QWheelEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMatrix>
-#include <QtCore/QPoint>
 #include <QtGui/QClipboard>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QGraphicsPixmapItem>
 
 // VoxRender Dependencies
 #include "VoxLib/Core/Geometry/Color.h"

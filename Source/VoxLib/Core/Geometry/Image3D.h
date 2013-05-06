@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Image class
+	Project: VoxRender - Image3D class
 
-	Description: Defines the image class for rendering operations
+	Description: Defines the 3D image class for rendering operations
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -24,8 +24,8 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_IMAGE_H
-#define VOX_IMAGE_H
+#ifndef VOX_IMAGE3D_H
+#define VOX_IMAGE3D_H
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -35,39 +35,25 @@
 namespace vox
 {
 	/** Rendering frame buffer class */
-    template<typename T> class Image
+    template<typename T> class Image3D
 	{
 	public:
 		/** Initializes an empty image structure */
-		Image() : m_width(0), m_height(0), m_stride(0), m_buffer(nullptr) { }
+		Image3D() : m_width(0), m_height(0), m_depth(0), m_buffer(nullptr) { }
 
         /** Constructs and image of the specified dimensions */
-		Image(size_t width, size_t height) :
-            m_width(width), m_height(height), 
-            m_stride(sizeof(T)*width),
-            m_buffer(new T[width*height]) 
+		Image3D(size_t width, size_t height, size_t depth) :
+            m_width(width), m_height(height), m_depth(depth),
+            m_buffer(reinterpret_cast<T*>(new UInt8[width*height*depth*sizeof(T)])) 
         { 
         }
 
-        /** Constructs and image of the specified dimensions */
-		Image(size_t width, size_t height, size_t stride) :
-            m_width(width), m_height(height), m_stride(stride),
-            m_buffer(reinterpret_cast<T*>(new UInt8[stride*height])) 
-        { 
-        }
-            
         /** Resizes the image to the specified dimensions */
-        void resize(size_t width, size_t height)
+        void resize(size_t width, size_t height, size_t depth)
         {
-            resize(width, height, width*sizeof(T));
-        }
+            m_width = width; m_height = height; m_depth = depth;
 
-        /** Resizes the image to the specified dimensions */
-        void resize(size_t width, size_t height, size_t stride)
-        {
-            m_width = width; m_height = height; m_stride = stride;
-
-            m_buffer = std::unique_ptr<T[]>(reinterpret_cast<T*>(new UInt8[stride*height]));
+            m_buffer = std::unique_ptr<T[]>(reinterpret_cast<T*>(new UInt8[width*depth*height*sizeof(T)]));
         }
 
         /** Image width accessor */
@@ -76,8 +62,8 @@ namespace vox
         /** Image height accessor */
         size_t height() const { return m_height; }
 
-        /** Image stride accessor */
-        size_t stride() const { return m_stride; }
+        /** Image depth accessor */
+        size_t depth() const { return m_depth; }
 
         /** Image buffer accessor for const data access */
         T const* data() const { return m_buffer.get(); }
@@ -88,49 +74,49 @@ namespace vox
         /** Returns the size of the image content */
         size_t size() const
         {
-            return m_stride*m_height;
+            return m_width*m_height*m_depth*sizeof(T);
         }
 
         /** Image copy constructor */
-        Image(Image const& other)
+        Image3D& operator=(Image3D const& other)
         {
-            resize(other.width(), other.height(), other.stride());
+            resize(other.height, other.m_width, other.m_depth);
 
-            memcpy(m_buffer.get(), other.data(), size());
-        }
-        
-        /** Image assignment operator */
-        Image& operator=(Image const& other)
-        {
-            resize(other.width(), other.height(), other.stride());
-
-            memcpy(m_buffer.get(), other.data(), size());
+            memcpy(m_buffer.get(), other.m_buffer.get(), size());
 
             return *this;
         }
 
+        /** Image assignment operator */
+        Image3D(Image3D const& other)
+        {
+            resize(other.m_height, other.m_width, other.m_depth);
+
+            memcpy(m_buffer.get(), other.m_buffer.get(), size());
+        }
+
         /** Image move constructor */
-        Image(Image && other)
+        Image3D(Image3D && other)
         {
             m_height = other.m_height;
             m_width  = other.m_width;
-            m_stride = other.m_stride;
+            m_depth  = other.m_depth;
             m_buffer = std::move(other.m_buffer);
 
             other.m_height = 0;
             other.m_width  = 0;
-            other.m_stride = 0;
+            other.m_depth  = 0;
             other.m_buffer.reset();
         }
 
 	private:
-        size_t m_height;  ///< Image height
+		size_t m_height;  ///< Image height
 		size_t m_width;   ///< Image width
-		size_t m_stride;  ///< Image stride
+        size_t m_depth;   ///< Image depth
 
         std::unique_ptr<T[]> m_buffer;  ///< Image buffer
 	};
 }
 
 // End definition
-#endif // VOX_IMAGE_H
+#endif // VOX_IMAGE3D_H

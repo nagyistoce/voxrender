@@ -40,6 +40,21 @@ namespace
 {
     namespace filescope
     {
+        // --------------------------------------------------------------------
+        //  Attempts to deduce a volume type from an input string
+        // --------------------------------------------------------------------
+        Volume::Type stringToType(String const& typeStr)
+        {
+            for (size_t t = Volume::Type_Begin; t != Volume::Type_End; t++)
+            {
+                if (typeStr == Volume::typeToString((Volume::Type)t)) return (Volume::Type)t;
+            }
+
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                format("Unrecognized volume data type (%1%)", typeStr),
+                Error_BadToken);
+        }
+
         // Export module implementation
         class RawExporter
         {
@@ -146,21 +161,25 @@ namespace
             // --------------------------------------------------------------------
             Scene readRawDataFile()
             {
-                // Construct the scene for the response
-                Scene scene;
-                scene.volume = std::make_shared<Volume>();
-                Volume & volume = *scene.volume.get();
-
                 // Extract the required volume data size parameters
-                auto bytesPerVoxel = m_options.lookup<size_t>("BytesPerVoxel");
-                auto size          = m_options.lookup<Vector4u>("Size");                       
+                auto typeStr = m_options.lookup<String>("Type");
+                auto size    = m_options.lookup<Vector4u>("Size"); 
+				auto spacing = m_options.lookup<Vector4f>("Spacing", 
+                                    Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+
+                // Determine the volume data type
+                boost::to_lower(typeStr);
+                Volume::Type type = stringToType(typeStr);
+                size_t bytesPerVoxel = Volume::typeToSize(type);
 
                 // Read the raw volume data from the filter chain
                 size_t voxels = size.fold<size_t>(1, &mul);
-                std::shared_ptr<UInt8> data(new UInt8[voxels], &arrayDeleter);
+                std::shared_ptr<UInt8> data(new UInt8[voxels*bytesPerVoxel], &arrayDeleter);
                 readInputData(bytesPerVoxel, voxels, data.get());
-
-                volume.setData(data, size);
+				
+                // Construct the volume object for the response
+                Scene scene;
+                scene.volume = std::make_shared<Volume>(data, size, spacing, type);
 
                 return scene;
             }

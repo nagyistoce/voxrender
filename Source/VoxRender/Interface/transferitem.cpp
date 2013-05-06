@@ -30,8 +30,8 @@
 // Include Dependencies
 #include "mainwindow.h"
 
-// QT4 Dependencies
-#include <QtGui/QGraphicsSceneMouseEvent>
+// QT Dependencies
+#include <QtWidgets/QGraphicsSceneMouseEvent>
 
 // ---------------------------------------------------------
 //  Constructor - Construct the transfer function editor

@@ -34,7 +34,7 @@
 #include "mainwindow.h"
 
 // QT4 Includes
-#include <QtGui/QApplication>
+#include <QtWidgets/QApplication>
 
 // VoxRender Application Class
 class VoxGuiApp : public QApplication

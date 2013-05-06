@@ -30,7 +30,7 @@
 # Default include directories from build scripts
 
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/boost)
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/qt-everywhere-opensource-src)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} C:/Qt/Qt5.0.2/5.0.2/msvc2010_opengl)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/glew-1.5.5)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl)
 
@@ -38,7 +38,9 @@ SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFO
 #                  NVIDIA CUDA                  #
 #===============================================#
 
+set(CUDA_NVCC_FLAGS "--cl-version 2010")
 FIND_PACKAGE(CUDA REQUIRED)
+set(CUDA_NVCC_FLAGS "--cl-version 2010")
 
 message(STATUS "Cuda include directory: " "${CUDA_INCLUDE_DIRS}")
 message(STATUS "Cuda library directory: " "${CUDA_LIBRARIES}")
@@ -48,10 +50,14 @@ INCLUDE_DIRECTORIES(SYSTEM ${CUDA_INCLUDE_DIRS})
 #                  NVIDIA OptiX                 #
 #===============================================#
 
-FIND_PACKAGE(OptiX REQUIRED)
+FIND_PACKAGE(OptiX)
 
-INCLUDE_DIRECTORIES("${OptiX_INCLUDE}")
-MESSAGE(STATUS "OptiX include directory: " "${OptiX_INCLUDE}")
+IF(OptiX_FOUND)
+    INCLUDE_DIRECTORIES("${OptiX_INCLUDE}")
+    MESSAGE(STATUS "OptiX include directory: " "${OptiX_INCLUDE}")
+ELSE(OptiX_FOUND)
+    MESSAGE(STATUS "OptiX not found")
+ENDIF(OptiX_FOUND)
 
 #===============================================#
 #                     OPENGL                    #
@@ -113,7 +119,7 @@ SET(Boost_ADDITIONAL_VERSIONS "1.49.0" "1.49" "1.46.2" "1.46.1" "1.46.0"
     "1.46" "1.45.0" "1.45" "1.44.0" "1.44" "1.43.0" "1.43")
 
 # Required Component Libraries
-SET(Boost_COMPONENTS thread program_options filesystem serialization 
+SET(Boost_COMPONENTS thread program_options filesystem serialization chrono
     iostreams regex system date_time unit_test_framework)
 
 # Set Library type

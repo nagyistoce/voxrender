@@ -31,7 +31,7 @@
 #include "VoxLib/Core/VoxRender.h"
 
 // Include dependencies
-#include <QtGui/QTreeWidget>
+#include <QtWidgets/QTreeWidget>
 #include <QWidget>
 
 namespace Ui 

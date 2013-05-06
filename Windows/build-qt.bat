@@ -3,7 +3,7 @@
 :: This flag identifies the version of qt to
 :: be downloaded and built, you may change it but
 :: it could cause issues with altered ABIs, etc 
-set QT_VER=4.8.0
+set QT_VER=5.0.2
 
 :: Issue a message about the project and the use of 
 :: wget for fetching the project source+dependencies

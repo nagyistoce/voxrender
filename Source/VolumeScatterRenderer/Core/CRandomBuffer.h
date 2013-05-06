@@ -76,7 +76,7 @@ public:
 
         std::unique_ptr<unsigned int> seeds(new unsigned int[bufSize]);
 
-        for (size_t i = 0; i < bufSize; i++) seeds.get()[i] = rand();
+        for (size_t i = 0; i < bufSize; i++) seeds.get()[i] = rand(); // :TODO: replace with thread safe rand alternative
 
         VOX_CUDA_CHECK(cudaMemcpy(m_pData, seeds.get(), bufSize, cudaMemcpyHostToDevice));
     }

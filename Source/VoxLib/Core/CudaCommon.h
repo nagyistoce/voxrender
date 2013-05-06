@@ -78,6 +78,9 @@ static char const* VOX_LOG_CATEGORY = "Vox";
 #   define VOXWARN(msg)
 #endif
 
+// VS2012 limitations
+#define _VARIADIC_MAX 10
+
 // Not really a great idea to include a bunch of headers here
 // but they are used so frequently that I deemed it worthwhile
 
@@ -103,20 +106,12 @@ static char const* VOX_LOG_CATEGORY = "Vox";
 #include <vector>
 
 // Boost Standard Includes
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/utility.hpp>
-
-// Boost condition_variable alias
-namespace boost 
-{ 
-    typedef condition_variable cond_var; 
-}
+#ifndef Q_MOC_RUN
+#	include <boost/algorithm/string.hpp>
+#	include <boost/foreach.hpp>
+#	include <boost/format.hpp>
+#	include <boost/utility.hpp>
+#endif // Q_MOC_RUN
 
 // End definition
 #endif // VOX_CUDA_COMMON_H

@@ -37,7 +37,6 @@ namespace vox
 {
     // Forward Decls
     class VOX_EXPORT Camera;
-    class VOX_EXPORT Film;
 	class VOX_EXPORT Scene;
     class VOX_EXPORT Transfer;
     class VOX_EXPORT Volume;
@@ -236,7 +235,6 @@ namespace vox
             transfer.reset(); 
             lightSet.reset(); 
             camera.reset();
-            film.reset();
         }
 
         /** Logs warning for missing scene components */
@@ -246,7 +244,6 @@ namespace vox
         std::shared_ptr<Transfer> transfer; ///< Transfer function
 		std::shared_ptr<Volume>   volume;	///< Volume data
 		std::shared_ptr<Camera>   camera;	///< Scene camera
-		std::shared_ptr<Film>     film;     ///< Render film
 	};
 }
 

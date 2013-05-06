@@ -62,8 +62,8 @@ void testVolumeExIm(Scene const& scene, String const& compression)
     out.close();
 
     // Import scene information
-    options.addOption("BytesPerVoxel", size_t(1));
-    options.addOption("Size",  Vector4u(256, 256, 256, 1));
+    options.addOption("Type", "UInt8");
+    options.addOption("Size", "[256 256 256 1]");
     Scene copy = Scene::imprt(identifier, options);
 
     // Ensure the volume data was imported sucessfully

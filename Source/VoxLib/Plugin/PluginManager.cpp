@@ -27,6 +27,7 @@
 #include "PluginManager.h"
 
 // Include Dependencies
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Plugin/Plugin.h"

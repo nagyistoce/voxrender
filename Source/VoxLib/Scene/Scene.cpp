@@ -147,7 +147,6 @@ void Scene::issueWarningsForMissingHandles() const
     if (!camera)   filescope::issueWarning("Camera");
     if (!volume)   filescope::issueWarning("Volume");
     if (!lightSet) filescope::issueWarning("LightSet");
-    if (!film)     filescope::issueWarning("Film");
     if (!transfer) filescope::issueWarning("Transfer Function");
 }
 

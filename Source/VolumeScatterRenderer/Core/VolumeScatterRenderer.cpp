@@ -96,13 +96,7 @@ public:
     {
         try
         {
-            m_ldrBuffer.reset();
-            m_hdrBuffer.reset();
-            m_rndSeeds0.reset();
-            m_rndSeeds1.reset();
-            m_lightBuffer.reset();
-            m_transferBuffer.reset();
-            m_volumeBuffer.reset();
+            shutdown();
         } 
         catch(Error & error) 
         {
@@ -116,9 +110,6 @@ public:
     // --------------------------------------------------------------------
     void startup() 
     { 
-        // :TODO: multiple devices cudaSetDevice(0); 
-        m_devices.push_back(0);
-
         // Reset the rand seed for seeding CUDA buffers
         srand(static_cast<unsigned int>(time(nullptr)));
     }
@@ -171,7 +162,9 @@ public:
         // Transfer function data synchronization
         if (scene.transfer->isDirty())
         {
-            m_transferBuffer.setTransfer(scene.transfer);
+            auto map = scene.transfer->generateMap();
+
+            m_transferBuffer.setTransfer(map);
 
             RenderKernel::setTransfer(m_transferBuffer);
         }
@@ -206,11 +199,11 @@ public:
     {
         // Generate new seeds for the CUDA RNG seed buffer
         m_rndSeeds0.randomize(); m_rndSeeds1.randomize();
-        
-        // :DEBUG: 
+
+        // Execute one cycle of the device rendering kernel
         RenderKernel::execute(0, 0, m_hdrBuffer.width(), m_hdrBuffer.height());
 
-        //
+        // Perform tonemapping on the HDR image buffer
         TonemapKernel::execute(m_hdrBuffer, m_ldrBuffer);
 
         m_frameBuffer->wait(); // Await user lock release
@@ -234,19 +227,34 @@ public:
     }
     
     // --------------------------------------------------------------------
-    // Exports the scene data to the output resource :TODO:
+    //  Exports the scene data to the output resource :TODO:
     // --------------------------------------------------------------------
     virtual void backupIpr(std::ostream & out) { } 
     
     // --------------------------------------------------------------------
-    // Merges the input image buffer with the internal one :TODO:
+    //  Merges the input image buffer with the internal one :TODO:
     // --------------------------------------------------------------------
     virtual void pushIpr(IprImage const& ipr, size_t const& samples) { }
 
     // --------------------------------------------------------------------
-    // Pulls the current in-progress-render buffer then clears it :TODO:
+    //  Pulls the current in-progress-render buffer then clears it :TODO:
     // --------------------------------------------------------------------
     virtual void pullIpr(IprImage & img, size_t & samples) { }
+
+    // --------------------------------------------------------------------
+    //  Terminates rendering operations and clears device data buffers
+    // --------------------------------------------------------------------
+	virtual void shutdown()
+	{
+		m_ldrBuffer.reset();
+		m_hdrBuffer.reset();
+		m_rndSeeds0.reset();
+		m_rndSeeds1.reset();
+		m_lightBuffer.reset();
+		m_transferBuffer.reset();
+		m_volumeBuffer.reset();
+		m_frameBuffer.reset();
+	}
 
 private:
     std::vector<int> m_devices; /// Authorized Device IDs

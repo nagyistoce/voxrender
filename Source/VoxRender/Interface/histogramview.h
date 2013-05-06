@@ -35,17 +35,17 @@
 #include "transferitem.h"
 
 // QT Dependencies
-#include <QtGui/QGraphicsView>
-#include <QtGui/QGraphicsScene>
-#include <QtGui/QApplication>
 #include <QtCore/QEvent>
-#include <QtGui/QGraphicsPixmapItem>
+#include <QtCore/QMargins>
+#include <QtCore/QPoint>
 #include <QtGui/QWheelEvent>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMatrix>
-#include <QtCore/QPoint>
 #include <QtGui/QClipboard>
-#include <QtCore/QMargins>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QGraphicsPixmapItem>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsView>
 
 /** Defines view options for VolumeHistogramView objects */
 enum VolHistoType

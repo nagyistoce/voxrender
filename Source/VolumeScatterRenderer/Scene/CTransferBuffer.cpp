@@ -38,59 +38,52 @@ namespace vox {
 // --------------------------------------------------------------------
 void CTransferBuffer::reset()
 {
-    if (m_emissionArray)
+    if (m_diffuseArray)
     {
-        VOX_CUDA_CHECK(cudaFreeArray(m_emissionArray));
         VOX_CUDA_CHECK(cudaFreeArray(m_diffuseArray));
 
-        m_emissionArray = nullptr;
         m_diffuseArray  = nullptr;
     }
 }
 
 // --------------------------------------------------------------------
-//  Binds the volume data to device buffers for use in rendering
+//  Binds the transfer data to device buffers for use in rendering
 // --------------------------------------------------------------------
-void CTransferBuffer::setTransfer(std::shared_ptr<Transfer> transfer)
+void CTransferBuffer::setTransfer(std::shared_ptr<TransferMap> transfer)
 {
     reset(); // Ensure previous data is released
-    
-    // Record transfer function resolution
-    auto resolution = transfer->resolution();
-    m_extent.width  = resolution[0];
-    m_extent.height = resolution[1];
-    m_extent.depth  = resolution[2];
-    /*
+ 
+    bindDiffuseBuffer(transfer);
+}
+
+// --------------------------------------------------------------------
+//  Binds the diffuse trasfer function buffer to a 3d cudaArray
+// --------------------------------------------------------------------
+void CTransferBuffer::bindDiffuseBuffer(std::shared_ptr<TransferMap> const& transfer)
+{
     // Specify the format for volume data access
     auto formatDesc = cudaCreateChannelDesc(
-        32, 32, 32, 32, cudaChannelFormatKindFloat);
+        8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
-	// Create a 3d array for volume data storage
-	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_emissionArray, &formatDesc, m_extent));
-	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_absorptionArray, &formatDesc, m_extent));
+    // Restructure buffer extent 
+    cudaExtent extent;
+    extent.width  = transfer->diffuse.width();
+    extent.height = transfer->diffuse.height();
+    extent.depth  = transfer->diffuse.depth();
 
-    // Copy emission data to device
+	// Create a 3d array for transfer function data storage
+	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_diffuseArray, &formatDesc, extent));
+
+    // Copy data to device
 	cudaMemcpy3DParms copyParams = {0};
-	copyParams.srcPtr.pitch	     = m_extent.width*sizeof(Vector3f);
-    copyParams.srcPtr.ptr	     = (void*);
-    copyParams.dstArray	         = m_emissionArray;
-    copyParams.extent	         = m_extent;
+	copyParams.srcPtr.pitch	     = extent.width*4;
+    copyParams.srcPtr.ptr	     = (void*)transfer->diffuse.data();
+    copyParams.dstArray	         = m_diffuseArray;
+    copyParams.extent	         = extent;
     copyParams.kind		         = cudaMemcpyHostToDevice;
-    copyParams.srcPtr.xsize	     = m_extent.width;
-    copyParams.srcPtr.ysize	     = m_extent.height;
+    copyParams.srcPtr.xsize	     = extent.width;
+    copyParams.srcPtr.ysize	     = extent.height;
     VOX_CUDA_CHECK(cudaMemcpy3D(&copyParams));
-    
-    // Copy emission data to device
-	cudaMemcpy3DParms copyParams = {0};
-	copyParams.srcPtr.pitch	     = m_extent.width*sizeof(Vector3f);
-    copyParams.srcPtr.ptr	     = (void*);
-    copyParams.dstArray	         = m_emissionArray;
-    copyParams.extent	         = m_extent;
-    copyParams.kind		         = cudaMemcpyHostToDevice;
-    copyParams.srcPtr.xsize	     = m_extent.width;
-    copyParams.srcPtr.ysize	     = m_extent.height;
-    VOX_CUDA_CHECK(cudaMemcpy3D(&copyParams));
-    */
 }
 
 } // namespace vox

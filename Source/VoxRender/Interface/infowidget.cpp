@@ -33,6 +33,8 @@
 // Include Dependencies
 #include "mainwindow.h"
 
+#define LEX_CAST(x) boost::lexical_cast<std::string>(x).c_str()
+
 // -------------------------------------------------
 //  Initializes the info widget UI
 // -------------------------------------------------
@@ -42,7 +44,7 @@ InfoWidget::InfoWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    // Connect scene change signal to the scene update slot
+    // Connect scene change signal to the scene update slot :TODO: Change to recurring onFrame Callback and run on Xth cycles
     connect( MainWindow::instance, SIGNAL(sceneChanged( )), 
 		this, SLOT(updateSceneStatistics( )) );
 }
@@ -82,13 +84,13 @@ void InfoWidget::updateSceneStatistics( )
         // Camera statistics
         auto cameraItem = sceneItem->child(1);
         auto const& camera = scene.camera.get( );
-        if( camera )
+        if (camera)
         {
-            cameraItem->child(0)->setText(1, "");
-            cameraItem->child(1)->setText(1, "");
-            cameraItem->child(2)->setText(1, vox::format( "%1%", camera->apertureSize( ) ).c_str( ) );
-            cameraItem->child(3)->setText(1, vox::format( "%1%", camera->focalDistance( ) ).c_str( ) );
-            cameraItem->child(4)->setText(1, vox::format( "%1%", camera->fieldOfView( ) ).c_str( ) );
+			cameraItem->child(0)->setText(1, LEX_CAST(camera->filmWidth()));
+            cameraItem->child(1)->setText(1, LEX_CAST(camera->filmHeight()));
+			cameraItem->child(2)->setText(1, LEX_CAST(camera->apertureSize()));
+			cameraItem->child(3)->setText(1, LEX_CAST(camera->focalDistance()));
+            cameraItem->child(4)->setText(1, LEX_CAST(camera->fieldOfView( )));
         }
         else
         {

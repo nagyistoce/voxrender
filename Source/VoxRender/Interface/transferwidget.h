@@ -35,8 +35,8 @@
 #include "VoxLib/Core/VoxRender.h"
 
 // QT Includes
-#include <QWidget>
-#include <QtGui/QColorDialog>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QColorDialog>
 
 namespace Ui { class TransferWidget; }
 

@@ -31,6 +31,8 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Geometry/Color.h"
+#include "VoxLib/Core/Geometry/Image.h"
+#include "VoxLib/Core/Geometry/Image3D.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Scene/Material.h"
@@ -78,12 +80,24 @@ namespace vox
         bool  m_contextChanged;  ///< Dirty flag
     };
 
+	/** 
+	 * Transfer Function Mapping 
+	 *
+	 * A transfer function mapping is a mapping structure used by renderers
+	 * for sampling the transfer function content. The resolution of the map
+	 * textures is determined by the transfer function which generates it.
+	 */
+    struct VOX_EXPORT TransferMap
+    {
+        Image3D<ColorRgbaLdr> diffuse;  ///< Diffuse transfer mapping
+    };
+
     /** Transfer Function */
     class VOX_EXPORT Transfer
     {
     public:
         /** Initializes a new transfer function object */
-        Transfer() : m_contextChanged(true) { }
+        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
 
         /** Sets the desired resolution of the transfer function */
         void setResolution(Vector3u const& resolution);
@@ -100,27 +114,16 @@ namespace vox
         /** Returns a linked list of the transfer function nodes */
         std::list<std::shared_ptr<Node>> nodes() { return m_nodes; }
 
-        /** 
-         * Returns a map of the transfer function content 
-         *
-         * The map is an array with the dimensions specified by the resolution member.
-         */
-        std::shared_ptr<Material> map();
-
-        uchar4 const* debugMap() { return m_debugMap; }
-        void addDebugMap(UInt8 const& density, uchar4 const& color) 
-        {
-            m_debugMap[density] = color;
-        }
+        /** Generates a map of the transfer function content */
+        std::shared_ptr<TransferMap> generateMap();
 
         /** Returns true if an unprocessed context change has occured */
         bool isDirty() const { return m_contextChanged; }
 
     private:
-        Vector3u m_resolution;
-        uchar4 m_debugMap[256];
+        Vector3u m_resolution; ///< Transfer function map resolution
 
-        std::list<std::shared_ptr<Node>> m_nodes;
+        std::list<std::shared_ptr<Node>> m_nodes; ///< List of transfer regions :TODO:
 
         bool m_contextChanged;
     };

@@ -61,14 +61,19 @@ public:
     VOX_HOST inline cudaArray const* handle() const { return m_handle; }
 
     /** Returns the volume format (bytes per voxel) */
-    VOX_HOST_DEVICE inline size_t voxelSize() const { return m_voxelSize; }
+    VOX_HOST_DEVICE inline Volume::Type type() const { return m_type; }
+
+    /** Returns the channel format descriptor */
+    cudaChannelFormatDesc const& formatDescriptor() const { return m_format; }
 
 private:
-    Vector3f    m_size;         ///< Size of the volume (mm)
-    Vector3f    m_invSpacing;   ///< Inverse of spacing between samples (/mm)
-    size_t      m_voxelSize;    ///< Size of volume voxels (bytes per voxel)
-    cudaExtent  m_extent;       ///< Extent of the volume data
-    cudaArray * m_handle;       ///< Handle to volume data array on device
+    Volume::Type   m_type;         ///< Format of volume data
+    Vector3f       m_size;         ///< Size of the volume (mm)
+    Vector3f       m_invSpacing;   ///< Inverse of spacing between samples (/mm)
+    cudaExtent     m_extent;       ///< Extent of the volume data
+    cudaArray *    m_handle;       ///< Handle to volume data array on device
+
+    cudaChannelFormatDesc m_format; ///< Texture channel format
 };
 
 }

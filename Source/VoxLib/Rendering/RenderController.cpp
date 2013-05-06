@@ -77,8 +77,8 @@ void RenderController::render(
     m_currIterations   = 0;
 
     // Launch the render control thread
-    m_controlThread = std::make_shared<boost::thread>(
-        std::bind(&RenderController::entryPoint, this));
+    m_controlThread = std::shared_ptr<boost::thread>( 
+        new boost::thread(std::bind(&RenderController::entryPoint, this)));
 }
 
 // ---------------------------------------------------------
@@ -185,8 +185,6 @@ void RenderController::entryPoint()
             
             controlSubroutine();         // General control checks
         }
-
-        m_masterRenderer->shutdown();
     }
     catch (boost::thread_interrupted &)
     {
@@ -204,10 +202,12 @@ void RenderController::entryPoint()
 }
 
 // ---------------------------------------------------------
-//  Terminate render threads
+//  Terminate render threads 
 // ---------------------------------------------------------
 void RenderController::terminateRenderThreads()
 {
+    m_masterRenderer->shutdown(); //:TODO: Handle exception
+
     BOOST_FOREACH (auto & thread, m_renderThreads)
     {
         thread->terminate();
@@ -248,12 +248,10 @@ void RenderController::managementSubroutine()
 void RenderController::synchronizationSubroutine()
 {
     if (m_scene.camera->isDirty() ||
-        m_scene.film->isDirty()   ||
         m_scene.lightSet->isContentDirty() )
     {
         m_masterRenderer->syncScene(m_scene);
 
-        m_scene.film->m_contextChanged     = false;
         m_scene.camera->m_contextChanged   = false;
         m_scene.camera->m_filmChanged      = false;
         m_scene.lightSet->m_contextChanged = false;

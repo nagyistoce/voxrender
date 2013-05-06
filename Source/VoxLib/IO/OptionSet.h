@@ -28,7 +28,7 @@
 #define VOX_OPTION_SET_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/ErrorCodes.h"
@@ -39,7 +39,7 @@ namespace vox
 
 /** Extended type-casting class inheriting from multi-map */
 // Developer note: DO NOT add member variables here, it inherits STL
-class OptionSet : public std::multimap<std::string, std::string>
+class VOX_EXPORT OptionSet : public std::multimap<std::string, std::string>
 {
 public:
     /** Map style access operator - returns value of one matched key */

@@ -40,25 +40,14 @@ SET(VOX_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VoxLib.lib
             debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VoxLib.lib)
 
 #===============================================#
-#                 CUDA RENDERER                 #
+#            VOLUME SCATTER RENDERER            #
 #===============================================#
 
-IF( CUDARenderer_SHARED )
-    ADD_DEFINITIONS(-DCUDARenderer_SHARED)
-ENDIF( )
-
-ADD_SUBDIRECTORY(CudaRenderer)
-
-SET(CR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/CudaRenderer.lib
-           debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/CudaRenderer.lib)
-
-#===============================================#
-#          SCATTERING VOLUME RENDERER           #
-#===============================================#
 ADD_SUBDIRECTORY(VolumeScatterRenderer)
+
 SET(VSR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VolumeScatterRenderer.lib
             debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VolumeScatterRenderer.lib)
-
+	
 #===============================================#
 #              VOXRENDER APPLICATION            #
 #===============================================#

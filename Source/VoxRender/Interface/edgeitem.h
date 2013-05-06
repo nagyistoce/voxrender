@@ -43,8 +43,11 @@
 #define EDGE_ITEM_H
 
 // Include Dependencies
-#include <QtGui/QGraphicsLineItem>
+#include <QtWidgets/QGraphicsLineItem>
 #include <QtGui/QPen>
+
+// Standard Library
+#include <memory>
 
 class NodeItem;
 

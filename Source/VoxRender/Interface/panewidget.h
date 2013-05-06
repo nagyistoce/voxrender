@@ -23,9 +23,9 @@
 #ifndef PANEWIDGET_H
 #define PANEWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 #include <QtGui/QPixmap>
-#include <QtGui/QLabel>
+#include <QtWidgets/QLabel>
 
 namespace Ui
 {

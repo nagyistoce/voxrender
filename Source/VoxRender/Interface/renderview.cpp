@@ -29,8 +29,6 @@
 // Include Dependencies
 #include "mainwindow.h"
 
-#include <QtOpenGL/QGLWidget>
-
 // VoxRender Dependencies
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Scene/Camera.h"
@@ -289,12 +287,21 @@ void RenderView::processSceneInteractions()
 // ------------------------------------------------------------
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
+    static vox::Image<ColorRgbaLdr> image; // :TODO: This was introduced during a bug fix, move to member
+
     vox::FrameBuffer & frame = *lock->framebuffer.get();
 
-    QImage image((unsigned char*)frame.data(),
-        (int)frame.width(), (int)frame.height(),
-        (int)frame.width()*4, QImage::Format_RGB32);
+    if (image.width() != frame.width() || image.height() != frame.height())
+    {
+        image = frame;
+    }
+    else memcpy(image.data(), frame.data(), frame.size());
 
-    //voxfb->pixmap().convertFromImage(image); :TODO:
-	m_voxfb->setPixmap(QPixmap::fromImage(image));
+    QImage qimage((unsigned char*)image.data(),
+        image.width(), image.height(),
+        image.stride(), QImage::Format_RGB32);
+
+    m_voxfb->pixmap().convertFromImage(qimage);
+
+    m_voxfb->update();
 }

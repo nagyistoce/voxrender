@@ -94,23 +94,15 @@ void Transfer::removeNode(std::shared_ptr<Node> node)
 //  Maps the transfer function to a texture of the specified resolution 
 //  :TEST: 1D transfer function
 // ----------------------------------------------------------------------------
-std::shared_ptr<Material> Transfer::map()
+std::shared_ptr<TransferMap> Transfer::generateMap()
 {
-    // Allocate memory for the transfer
-    auto size = m_resolution[0];
-    std::shared_ptr<Material> mapping = std::shared_ptr<Material>(
-        new Material[size], &arrayDeleter);
- 
-    // Sort the nodes to identify the control points for the interpolation
-    //std::sort(m_nodes.begin(), m_nodes.end(), filescope::slt<Node>);
+	std::shared_ptr<TransferMap> map = std::make_shared<TransferMap>();
 
-    // :TEST: Linear interpolation
-    for (size_t i = 0; i < size; i++)
-    {
-        Material & material = mapping.get()[i];
-    }
+	m_nodes.sort(filescope::slt<Node>);
 
-    return mapping;
+    map->diffuse.resize(m_resolution[0], m_resolution[1], m_resolution[2]);
+
+    return map;
 }
 
 } // namespace vox

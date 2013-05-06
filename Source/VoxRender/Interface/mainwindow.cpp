@@ -41,14 +41,13 @@
 // Abstract Scene File Import/Export Modules
 #include "VoxLib/Scene/ExIm/RawVolumeFile.h"
 #include "VoxLib/Scene/ExIm/VoxSceneFile.h"
-#include "VoxLib/Scene/ExIm/VoxTransferFile.h"
 
 // Qt4 Includes
 #include <QtCore/QDateTime>
 #include <QtCore/QTextStream>
 #include <QtGui/QStandardItemModel>
-#include <QtGui/QMessageBox>
-#include <QtGui/QFileDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QFileDialog>
 #include <QtGui/QTextLayout>
 #include <QtGui/QClipboard>
 #include <QSettings>
@@ -110,10 +109,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // Register the scene file import / export modules :TODO: Plugins
     vox::Scene::registerImportModule(".xml", &vox::VoxSceneFile::importer   );
     vox::Scene::registerImportModule(".raw", &vox::RawVolumeFile::importer  );
-    vox::Scene::registerImportModule(".vtf", &vox::VoxTransferFile::importer);
     vox::Scene::registerExportModule(".xml", &vox::VoxSceneFile::exporter   );
     vox::Scene::registerExportModule(".raw", &vox::RawVolumeFile::exporter  );
-    vox::Scene::registerExportModule(".vtf", &vox::VoxTransferFile::exporter);
 
     // Register the resource opener modules
     vox::Resource::registerModule("file", FilesystemIO::create());
@@ -146,7 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
     readSettings(); // Read in the application settings
 
     // Initialize the master renderer and register the callback
-    m_renderer = vox::CudaRenderer::create();
+    m_renderer = vox::VolumeScatterRenderer::create();
     m_renderer->setRenderEventCallback(
         [this] (std::shared_ptr<FrameBuffer> frame)
         {
@@ -215,9 +212,9 @@ void MainWindow::configureLoggingEnvironment()
                          ".log";
     
     // Ensure log directory exists for local filesystem 
-    if (!boost::filesystem3::exists(logLocation))
+    if (!boost::filesystem::exists(logLocation))
     {
-        boost::filesystem3::create_directory(logLocation);
+        boost::filesystem::create_directory(logLocation);
     }
 
     // :TODO: Allow log overrides in "settings.xml"
@@ -544,7 +541,7 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     //m_renderController.reset();
 
     // Get the base filename for logging purposes
-    std::string const file = boost::filesystem3::path(
+    std::string const file = boost::filesystem::path(
         filename.toUtf8().data()).filename().string();
 
     // New file loading info message

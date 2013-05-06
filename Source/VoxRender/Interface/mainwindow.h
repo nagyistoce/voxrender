@@ -31,7 +31,7 @@
 #include "VoxLib/Core/VoxRender.h"
 
 // Standard Renderers for the Application
-#include "CudaRenderer/Core/CudaRenderer.h"
+#include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
 
 // Include Dependencies
 #include "infowidget.h"
@@ -44,11 +44,11 @@
 #include "transferwidget.h"
 
 // QT4 Includes
-#include <QtGui/QFileDialog>
-#include <QtGui/QMainWindow.h>
-#include <QtGui/QProgressBar>
-#include <QtGui/QProgressDialog>
-#include <QtGui/QSpacerItem>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMainWindow.h>
+#include <QtWidgets/QProgressBar>
+#include <QtWidgets/QProgressDialog>
+#include <QtWidgets/QSpacerItem>
 #include <QtCore/QTimer.h>
 
 // Shared pointer MetaType declaration for QT signals/slots
@@ -87,7 +87,7 @@ public:
     vox::Scene & scene() { return activeScene; }
 
     /** CUDA renderer accessor */ 
-    vox::CudaRenderer & renderer() 
+    vox::VolumeScatterRenderer & renderer() 
     { 
         return *m_renderer; 
     }
@@ -118,7 +118,7 @@ signals:
 private:
     Ui::MainWindow *ui;
 
-    std::shared_ptr<vox::CudaRenderer> m_renderer; ///< CUDA device renderer
+    std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
     
     /** Vox GUI Error Handler - Logs to std::clog and log tab pane */
     void voxGuiErrorHandler(char const* file, int line, int severity, 

@@ -146,19 +146,18 @@ void PaneWidget::onoffClicked()
 }
 
 // --------------------------------------------------------------------
-// Toggle the panes state between expanded and collapsed
+//  Toggle the panes state between expanded and collapsed
 // --------------------------------------------------------------------
 void PaneWidget::expandClicked()
 {
 	if (expanded) collapse();
 	else expand();
-
 }
 
 // --------------------------------------------------------------------
 // 
 // --------------------------------------------------------------------
-void PaneWidget::showSoloButton( bool showbutton )
+void PaneWidget::showSoloButton(bool showbutton)
 {
 	if (sololabel == NULL) {
 		sololabel = new ClickableLabel("S", this);

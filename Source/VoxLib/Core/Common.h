@@ -38,24 +38,35 @@
 // Cuda Commons Header
 #include "VoxLib/Core/CudaCommon.h"
 
+#ifndef Q_MOC_RUN
+
 // Boost Standard Includes
-#include <boost/algorithm/string.hpp>
-#include <boost/any.hpp>
-#include <boost/date_time.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/regex.hpp>
-#include <boost/thread.hpp>
+#	include <boost/algorithm/string.hpp>
+#	include <boost/any.hpp>
+#	include <boost/date_time.hpp>
+#	include <boost/filesystem.hpp>
+#	include <boost/lexical_cast.hpp>
+#	include <boost/property_tree/ptree.hpp>
+#	include <boost/regex.hpp>
+#	include <boost/thread.hpp>
 
 // Boost IO Streams with Compression Filters
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/filter/bzip2.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/positioning.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/stream_buffer.hpp>
+#	include <boost/iostreams/copy.hpp>
+#	include <boost/iostreams/filtering_streambuf.hpp>
+#	include <boost/iostreams/filter/bzip2.hpp>
+#	include <boost/iostreams/filter/gzip.hpp>
+#	include <boost/iostreams/filter/zlib.hpp>
+#	include <boost/iostreams/positioning.hpp>
+#	include <boost/iostreams/stream.hpp>
+#	include <boost/iostreams/stream_buffer.hpp>
+
+// Boost condition_variable alias
+namespace boost 
+{ 
+    typedef condition_variable cond_var; 
+}
+
+#endif // Q_MOC_RUN
 
 // End definition
 #endif // VOX_COMMON_H
