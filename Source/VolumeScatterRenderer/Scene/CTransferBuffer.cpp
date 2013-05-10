@@ -38,12 +38,8 @@ namespace vox {
 // --------------------------------------------------------------------
 void CTransferBuffer::reset()
 {
-    if (m_diffuseArray)
-    {
-        VOX_CUDA_CHECK(cudaFreeArray(m_diffuseArray));
-
-        m_diffuseArray  = nullptr;
-    }
+    if (m_diffuseArray) { VOX_CUDA_CHECK(cudaFreeArray(m_diffuseArray)); m_diffuseArray = nullptr; }
+    if (m_opacityArray) { VOX_CUDA_CHECK(cudaFreeArray(m_opacityArray)); m_opacityArray = nullptr; }
 }
 
 // --------------------------------------------------------------------
@@ -54,6 +50,37 @@ void CTransferBuffer::setTransfer(std::shared_ptr<TransferMap> transfer)
     reset(); // Ensure previous data is released
  
     bindDiffuseBuffer(transfer);
+    bindOpacityBuffer(transfer);
+}
+
+// --------------------------------------------------------------------
+//  Binds the opacity trasfer function buffer to a 3d cudaArray
+// --------------------------------------------------------------------
+void CTransferBuffer::bindOpacityBuffer(std::shared_ptr<TransferMap> const& transfer)
+{
+    // Specify the format for volume data access
+    auto formatDesc = cudaCreateChannelDesc(
+        32, 0, 0, 0, cudaChannelFormatKindFloat);
+
+    // Restructure buffer extent 
+    cudaExtent extent;
+    extent.width  = transfer->opacity.width();
+    extent.height = transfer->opacity.height();
+    extent.depth  = transfer->opacity.depth();
+
+	// Create a 3d array for transfer function data storage
+	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_opacityArray, &formatDesc, extent));
+
+    // Copy data to device
+	cudaMemcpy3DParms copyParams = {0};
+	copyParams.srcPtr.pitch	     = extent.width*sizeof(float);
+    copyParams.srcPtr.ptr	     = (void*)transfer->opacity.data();
+    copyParams.dstArray	         = m_opacityArray;
+    copyParams.extent	         = extent;
+    copyParams.kind		         = cudaMemcpyHostToDevice;
+    copyParams.srcPtr.xsize	     = extent.width;
+    copyParams.srcPtr.ysize	     = extent.height;
+    VOX_CUDA_CHECK(cudaMemcpy3D(&copyParams));
 }
 
 // --------------------------------------------------------------------

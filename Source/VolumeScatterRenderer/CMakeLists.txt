@@ -50,9 +50,11 @@ Set(HEADERS_SCENE_IMPL
     Scene/CLight.h
     Scene/CTransferBuffer.h
     Scene/CVolumeBuffer.h
+	Scene/CRenderParams.h
 )
 
 Set(HEADERS_KERNELS
+    Kernels/VolumeHistogramKernel.h
     Kernels/RenderKernel.h
     Kernels/TonemapKernel.h
 )
@@ -85,6 +87,7 @@ Set(SOURCES_SCENE
 )
 
 Set(SOURCES_KERNELS
+    Kernels/VolumeHistogramKernel.cu
     Kernels/RenderKernel.cu
     Kernels/TonemapKernel.cu
 )

@@ -54,6 +54,7 @@
 #include "VolumeScatterRenderer/Scene/CLight.h"
 #include "VolumeScatterRenderer/Scene/CTransferBuffer.h"
 #include "VolumeScatterRenderer/Scene/CVolumeBuffer.h"
+#include "VolumeScatterRenderer/Scene/CRenderParams.h"
 
 // Interface for accessing device render kernels 
 #include "VolumeScatterRenderer/Kernels/RenderKernel.h"
@@ -169,6 +170,12 @@ public:
             RenderKernel::setTransfer(m_transferBuffer);
         }
 
+        // Render settings synchronization
+        if (scene.parameters->isDirty()) 
+        {
+            RenderKernel::setParameters(CRenderParams(scene.parameters));
+        }
+
         // Camera data synchronization 
         if (scene.camera->isDirty())
         {
@@ -180,12 +187,12 @@ public:
         {
             // Construct an array of CUDA light objects
             auto lights = scene.lightSet->lights();
-            std::vector<CLight> clights(lights.size());
+            std::vector<CLight> clights;
             BOOST_FOREACH(auto & light, lights)
             {
                 clights.push_back( CLight(*light) );
             }
-
+            
             m_lightBuffer.write(clights);
 
             RenderKernel::setLights(m_lightBuffer);

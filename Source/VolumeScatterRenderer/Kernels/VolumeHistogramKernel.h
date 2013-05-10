@@ -27,8 +27,9 @@
 #ifndef VSR_HISTOGRAM_KERNEL_H
 #define VSR_HISTOGRAM_KERNEL_H
 
-// Common Library Header
+// Include Headers
 #include "VolumeScatterRenderer/Core/Common.h"
+#include "VolumeScatterRenderer/Scene/CVolumeBuffer.h"
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry.h"
@@ -37,10 +38,15 @@
 namespace vox
 {
 
-/** Rendering Volume Class */
-class HistogramKernel
+/** Volume Histogram Class */
+class VolumeHistogramKernel
 {
 public:
+    /** Computes the range of data values present in the volume */
+    static Vector2f computeValueRange(std::shared_ptr<Volume> volume);
+
+    /** Generates histogram images for the volume dataset */
+    static void generateHistogramImages();
 };
 
 }

@@ -27,7 +27,11 @@
 #include "CVolumeBuffer.h"
 
 // Include Dependencies
+#include "VolumeScatterRenderer/Kernels/VolumeHistogramKernel.h"
+
+// VoxLib Dependencies
 #include "VoxLib/Core/Format.h"
+#include "VoxLib/Core/Logging.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/CudaError.h"
 
@@ -52,6 +56,13 @@ void CVolumeBuffer::reset()
 void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
 {
     reset(); // Ensure previous data is released
+
+    // Acquire volume data range for renormalization
+    Vector2f valueRange = VolumeHistogramKernel::computeValueRange(volume);
+    m_invRange          = 1.0f / (valueRange[1] - valueRange[0]);
+    m_dataMin           = valueRange[0];
+
+    VOX_LOGF(Severity_Info, Error_None, VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
 
     // Volume parameters
     auto spacing = volume->spacing();

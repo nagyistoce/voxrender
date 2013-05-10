@@ -38,6 +38,7 @@ namespace vox
 template<typename T> class CBuffer1D;
 template<typename T> class CImgBuffer2D;
 
+class CRenderParams;
 class CSampleBuffer2D;
 class CRandomBuffer2D;
 class CTransferBuffer;
@@ -62,6 +63,9 @@ public:
 
     /** Sets the transfer function to the specified buffer */
     static void setTransfer(CTransferBuffer const& transfer);
+
+    /** Sets the rendering parameters */
+    static void setParameters(CRenderParams const& settings);
 
     /** Sets the kernel frame buffers for the active device */
     static void setFrameBuffers(

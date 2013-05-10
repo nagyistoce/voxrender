@@ -41,6 +41,7 @@ namespace vox
     class VOX_EXPORT Transfer;
     class VOX_EXPORT Volume;
     class VOX_EXPORT LightSet;
+    class VOX_EXPORT RenderParams;
 
 	/** 
 	 * Scene File Importer
@@ -240,10 +241,11 @@ namespace vox
         /** Logs warning for missing scene components */
         void issueWarningsForMissingHandles() const;
 
-        std::shared_ptr<LightSet> lightSet; ///< Lighting Data
-        std::shared_ptr<Transfer> transfer; ///< Transfer function
-		std::shared_ptr<Volume>   volume;	///< Volume data
-		std::shared_ptr<Camera>   camera;	///< Scene camera
+        std::shared_ptr<RenderParams> parameters; ///< Rendering parameters
+        std::shared_ptr<LightSet>     lightSet;   ///< Lighting Data
+        std::shared_ptr<Transfer>     transfer;   ///< Transfer function
+		std::shared_ptr<Volume>       volume;	  ///< Volume data
+		std::shared_ptr<Camera>       camera;	  ///< Scene camera
 	};
 }
 

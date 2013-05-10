@@ -110,7 +110,7 @@ public:
     /** Writes data to the internal buffer from a standard vector, resizing as necessary */
     VOX_HOST void write(std::vector<T> const& data)
     {
-        if (m_size != data.size()) resize(m_size);
+        if (m_size != data.size()) resize(data.size());
 
         write(&data[0], cudaMemcpyHostToDevice);
     }

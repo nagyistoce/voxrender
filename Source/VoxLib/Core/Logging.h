@@ -272,7 +272,7 @@ namespace vox
 		static int          m_lastError;	///< Code of last error logged
 	};
 
-    // Logging macro for performing efficient filtered logging
+    // Logging macro for performing filtered logging
 #define VOX_LOGF(SEV, CODE, CAT, MSG)                                   \
     if (vox::Logger::getFilteringLevel() <= SEV)                        \
     {                                                                   \

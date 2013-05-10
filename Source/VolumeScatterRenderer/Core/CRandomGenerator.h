@@ -47,6 +47,11 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry/Vector.h"
+#include "VoxLib/Core/Functors.h"
+
+// Standard Library Includes
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 // API namespace
 namespace vox
@@ -66,25 +71,25 @@ namespace vox
         }
 
         /** Returns a single sample value */
-        VOX_HOST_DEVICE float sample1D() 
+        VOX_DEVICE float sample1D() 
         { 
             return rand(); 
         }
 
         /** Returns a Vector2 of sample values */
-        VOX_HOST_DEVICE Vector2f sample2D() 
+        VOX_DEVICE Vector2f sample2D() 
         {
             return Vector2f(rand(), rand());
         }
 
         /** Returns a Vector3 of sample values */
-        VOX_HOST_DEVICE Vector3f sample3D()
+        VOX_DEVICE Vector3f sample3D()
         {
             return Vector3f(rand(), rand(), rand());
         }
 
         /** Returns a cartesian coordinate disk sample */
-        VOX_HOST_DEVICE Vector2f sampleDisk()
+        VOX_DEVICE Vector2f sampleDisk()
         {
             Vector2f sample = sample2D();
 
@@ -92,6 +97,30 @@ namespace vox
             float theta = 2.0f * (float)M_PI * sample[1];
 
             return Vector2f(r*cosf(theta), r*sinf(theta));
+        }
+
+        /** Returns a uniform unit hemisphere sample */
+        VOX_DEVICE Vector3f sampleHemisphere()
+        {
+            float z = 1.f - 2.f * sample1D();
+            float r = sqrtf(high(0.f, 1.f - z*z));
+            float phi = 2.f * M_PI * sample1D();
+            float x = r * cosf(phi);
+            float y = r * sinf(phi);
+
+            return Vector3f(x, y, z);
+        }
+        
+        /** Returns a uniform unit sphere sample */
+        VOX_DEVICE Vector3f sampleSphere()
+        {
+            float z = sample1D();
+            float r = sqrtf(high(0.f, 1.f - z*z));
+            float phi = 2.f * M_PI * sample1D();
+            float x = r * cosf(phi);
+            float y = r * sinf(phi);
+
+            return Vector3f(x, y, z);
         }
 
     private:

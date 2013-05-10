@@ -31,142 +31,140 @@
 
 // Include Dependencies
 #include "mainwindow.h"
+#include "utilities.h"
 
-// Constuctor - Initialize widget slots and signals
-SamplingWidget::SamplingWidget( QWidget *parent ) : 
-	QWidget(parent), ui(new Ui::SamplingWidget)
+// VoxRender Dependencies
+#include "VoxLib/Scene/RenderParams.h"
+
+// ----------------------------------------------------------------------------
+//  Constuctor - Connect widget slots and signals
+// ----------------------------------------------------------------------------
+SamplingWidget::SamplingWidget(QWidget *parent) : 
+	QWidget(parent), 
+    ui(new Ui::SamplingWidget)
 {
 	ui->setupUi(this);
-
-	// Connect slider / spinBox widgets to appropriate slots
-	connect( ui->horizontalSlider_step1, SIGNAL(valueChanged(int)), 
-		this, SLOT(step1_changed(int)) );
-	connect( ui->doubleSpinBox_step1, SIGNAL(valueChanged(double)), 
-		this, SLOT(step1_changed(double)) );
-	connect( ui->horizontalSlider_step2, SIGNAL(valueChanged(int)), 
-		this, SLOT(step2_changed(int)) );
-	connect( ui->doubleSpinBox_step2, SIGNAL(valueChanged(double)), 
-		this, SLOT(step2_changed(double)) );
-	connect( ui->horizontalSlider_density, SIGNAL(valueChanged(int)), 
-		this, SLOT(density_changed(int)) );
-	connect( ui->doubleSpinBox_density, SIGNAL(valueChanged(double)), 
-		this, SLOT(density_changed(double)) );
-	connect( ui->horizontalSlider_gradient, SIGNAL(valueChanged(int)), 
-		this, SLOT(gradient_changed(int)) );
-	connect( ui->doubleSpinBox_gradient, SIGNAL(valueChanged(double)), 
-		this, SLOT(gradient_changed(double)) );
 }
-
-// Destructor - Delete histogram view
-SamplingWidget::~SamplingWidget( )
+    
+// ----------------------------------------------------------------------------
+//  Clear UI
+// ----------------------------------------------------------------------------
+SamplingWidget::~SamplingWidget()
 {
     delete ui;
 }
 
-// Primary step size slider changed
-void SamplingWidget::step1_changed(int value)
+// ----------------------------------------------------------------------------
+//  Synchronizes the widget controls with the current scene 
+// ----------------------------------------------------------------------------
+void SamplingWidget::synchronizeView()
 {
-	step1_changed
-	( 
-		(double)value / 
-			( (double)ui->horizontalSlider_step1->maximum( ) / 
-				ui->doubleSpinBox_step1->maximum( ) ) 
-	);
+    // Synchronize the camera object controls
+    vox::RenderParams & settings = *MainWindow::instance->scene().parameters;
+    
+    ui->doubleSpinBox_primaryStep->setValue( (double)settings.primaryStepSize() );
+    ui->doubleSpinBox_shadowStep->setValue ( (double)settings.shadowStepSize()  );
+    ui->doubleSpinBox_occludeStep->setValue( (double)settings.occludeStepSize() );
+    
+    ui->spinBox_occludeSamples->setValue( (int)settings.occludeSamples() );
+
+    m_dirty = false;
 }
 
-// Primary step size spinBox changed
-void SamplingWidget::step1_changed( double value )
+// ----------------------------------------------------------------------------
+//  Applies widget control changes to the scene 
+// ----------------------------------------------------------------------------
+void SamplingWidget::processInteractions()
 {
-	int sliderval = (int)(((double)ui->horizontalSlider_step1->maximum( ) 
-		/ ui->doubleSpinBox_step1->maximum( ) ) * value);
+    if (m_dirty)
+    {
+        m_dirty = false;
 
-	ui->horizontalSlider_step1->blockSignals( true );
-	ui->doubleSpinBox_step1->blockSignals( true );
-	ui->horizontalSlider_step1->setValue( sliderval );
-	ui->doubleSpinBox_step1->setValue( value );
-	ui->horizontalSlider_step1->blockSignals( false );
-	ui->doubleSpinBox_step1->blockSignals( false );
-
-	emit valuesChanged( );
+        vox::RenderParams & settings = *MainWindow::instance->scene().parameters;
+    
+        settings.setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
+        settings.setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
+        settings.setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
+        settings.setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
+    }
 }
 
-// Secondary step size slider changed
-void SamplingWidget::step2_changed(int value)
+// ----------------------------------------------------------------------------
+//                  Widget Value Change Detection
+// ----------------------------------------------------------------------------
+void SamplingWidget::on_horizontalSlider_primaryStep_valueChanged(int value)
 {
-	step2_changed
-	( 
-		(double)value / 
-			( (double)ui->horizontalSlider_step2->maximum( ) / 
-				ui->doubleSpinBox_step2->maximum( ) ) 
-	);
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_primaryStep,
+        ui->horizontalSlider_primaryStep,
+        value);
+    
+    m_dirty = true;
 }
-
-// Secondary step size spinBox changed
-void SamplingWidget::step2_changed( double value )
+void SamplingWidget::on_doubleSpinBox_primaryStep_valueChanged(double value)
 {
-	int sliderval = (int)(((double)ui->horizontalSlider_step2->maximum( ) 
-		/ ui->doubleSpinBox_step2->maximum( ) ) * value);
-
-	ui->horizontalSlider_step2->blockSignals( true );
-	ui->doubleSpinBox_step2->blockSignals( true );
-	ui->horizontalSlider_step2->setValue( sliderval );
-	ui->doubleSpinBox_step2->setValue( value );
-	ui->horizontalSlider_step2->blockSignals( false );
-	ui->doubleSpinBox_step2->blockSignals( false );
-
-	emit valuesChanged( );
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_primaryStep,
+        ui->doubleSpinBox_primaryStep,
+        value);
+    
+    m_dirty = true;
 }
-
-// Density scale slider changed
-void SamplingWidget::density_changed(int value)
+void SamplingWidget::on_horizontalSlider_shadowStep_valueChanged(int value)
 {
-	density_changed
-	( 
-		(double)value / 
-			( (double)ui->horizontalSlider_density->maximum( ) / 
-				ui->doubleSpinBox_density->maximum( ) ) 
-	);
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_shadowStep,
+        ui->horizontalSlider_shadowStep,
+        value);
+    
+    m_dirty = true;
 }
-
-// Density scale spinBox changed
-void SamplingWidget::density_changed( double value )
+void SamplingWidget::on_doubleSpinBox_shadowStep_valueChanged(double value)
 {
-	int sliderval = (int)(((double)ui->horizontalSlider_density->maximum( ) 
-		/ ui->doubleSpinBox_density->maximum( ) ) * value);
-
-	ui->horizontalSlider_density->blockSignals( true );
-	ui->doubleSpinBox_density->blockSignals( true );
-	ui->horizontalSlider_density->setValue( sliderval );
-	ui->doubleSpinBox_density->setValue( value );
-	ui->horizontalSlider_density->blockSignals( false );
-	ui->doubleSpinBox_density->blockSignals( false );
-
-	emit valuesChanged( );
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_shadowStep,
+        ui->doubleSpinBox_shadowStep,
+        value);
+    
+    m_dirty = true;
 }
-
-// Gradient cutoff slider changed
-void SamplingWidget::gradient_changed(int value)
+void SamplingWidget::on_horizontalSlider_occludeStep_valueChanged(int value)
 {
-	gradient_changed
-	( 
-		(double)value / 
-			( (double)ui->horizontalSlider_gradient->maximum( ) / 
-				ui->doubleSpinBox_gradient->maximum( ) ) 
-	);
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_occludeStep,
+        ui->horizontalSlider_occludeStep,
+        value);
+    
+    m_dirty = true;
 }
-
-// Gradient cutoff spinBox changed
-void SamplingWidget::gradient_changed( double value )
+void SamplingWidget::on_doubleSpinBox_occludeStep_valueChanged(double value)
 {
-	int sliderval = (int)(((double)ui->horizontalSlider_gradient->maximum( ) 
-		/ ui->doubleSpinBox_gradient->maximum( ) ) * value);
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_occludeStep,
+        ui->doubleSpinBox_occludeStep,
+        value);
+    
+    m_dirty = true;
+}
+void SamplingWidget::on_horizontalSlider_occludeSamples_valueChanged(int value) 
+{ 
+    m_dirty = true; 
+}
+void SamplingWidget::on_horizontalSlider_gradient_valueChanged(int value) 
+{ 
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_gradient,
+        ui->horizontalSlider_gradient,
+        value);
 
-	ui->horizontalSlider_gradient->blockSignals( true );
-	ui->doubleSpinBox_gradient->blockSignals( true );
-	ui->horizontalSlider_gradient->setValue( sliderval );
-	ui->doubleSpinBox_gradient->setValue( value );
-	ui->horizontalSlider_gradient->blockSignals( false );
-	ui->doubleSpinBox_gradient->blockSignals( false );
-
-	emit valuesChanged( );
+    m_dirty = true; 
+}
+void SamplingWidget::on_doubleSpinBox_gradient_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_gradient,
+        ui->doubleSpinBox_gradient,
+        value);
+    
+    m_dirty = true;
 }

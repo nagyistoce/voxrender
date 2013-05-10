@@ -31,10 +31,11 @@
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Scene/Film.h"
-#include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/Camera.h"
 #include "VoxLib/Scene/Light.h"
+#include "VoxLib/Scene/Transfer.h"
+#include "VoxLib/Scene/Volume.h"
+#include "VoxLib/Scene/RenderParams.h"
 
 // API namespace
 namespace vox
@@ -248,15 +249,18 @@ void RenderController::managementSubroutine()
 void RenderController::synchronizationSubroutine()
 {
     if (m_scene.camera->isDirty() ||
-        m_scene.lightSet->isContentDirty() )
+        m_scene.lightSet->isContentDirty() ||
+        m_scene.parameters->isDirty())
     {
         m_masterRenderer->syncScene(m_scene);
 
-        m_scene.camera->m_contextChanged   = false;
-        m_scene.camera->m_filmChanged      = false;
-        m_scene.lightSet->m_contextChanged = false;
-        m_scene.lightSet->m_contentChanged = false;
-        m_scene.volume->m_contextChanged   = false;
+        m_scene.camera->m_contextChanged     = false;
+        m_scene.camera->m_filmChanged        = false;
+        m_scene.lightSet->m_contextChanged   = false;
+        m_scene.lightSet->m_contentChanged   = false;
+        m_scene.volume->m_contextChanged     = false;
+        m_scene.transfer->m_contextChanged   = false;
+        m_scene.parameters->m_contextChanged = false;
     }
 }
 

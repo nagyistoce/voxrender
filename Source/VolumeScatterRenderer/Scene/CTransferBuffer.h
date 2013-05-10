@@ -45,7 +45,8 @@ public:
     /** Initializes the buffer for use */
     VOX_HOST void init() 
     {
-        m_diffuseArray  = nullptr;
+        m_diffuseArray = nullptr;
+        m_opacityArray = nullptr;
     }
 
     /** Deallocates the device memory buffer */
@@ -54,6 +55,9 @@ public:
     /** Sets the VolumeBuffer's data content */
     VOX_HOST void setTransfer(std::shared_ptr<TransferMap> transferMap);
 
+    /** Returns the cudaArray storing the transfer function's opacity characteristic */
+    VOX_HOST inline cudaArray const* opacityHandle() const { return m_opacityArray; }
+    
     /** Returns the cudaArray storing the transfer function's diffuse characteristic */
     VOX_HOST inline cudaArray const* diffuseHandle() const { return m_diffuseArray; }
 
@@ -61,8 +65,12 @@ private:
     /** Binds the diffuse transfer function data to the active device */
     void bindDiffuseBuffer(std::shared_ptr<TransferMap> const& transfer);
 
+    /** Binds the opacity transfer function data to the active device */
+    void bindOpacityBuffer(std::shared_ptr<TransferMap> const& transfer);
+    
 private:
     cudaArray * m_diffuseArray;     ///< Handle to diffuse data array on device
+    cudaArray * m_opacityArray;     ///< Handle to opacity data array on device
 };
 
 }

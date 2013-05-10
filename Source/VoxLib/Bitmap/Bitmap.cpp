@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: GPU based Volume Scatter Renderer
-    
-	Description: Generates histogram information for scene data structures
+	Project: VoxLib - Bitmap
+
+	Description: Defines a bitmap class for image import/export operations
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -24,4 +24,4 @@
 =========================================================================== */
 
 // Include Header
-#include "HistogramKernel.h"
+#include "Bitmap.h"

@@ -34,6 +34,7 @@
 #include "VoxLib/Scene/Camera.h"
 #include "VoxLib/Scene/Film.h"
 #include "VoxLib/Scene/Light.h"
+#include "VoxLib/Scene/RenderParams.h"
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/Material.h"
@@ -137,10 +138,11 @@ namespace
                     scene = executeImportDirectives();
 
                     // Load scene components
-                    scene.volume   = loadVolume();
-                    scene.camera   = loadCamera();
-                    scene.lightSet = loadLights();
-                    scene.transfer = loadTransfer();
+                    scene.volume     = loadVolume();
+                    scene.camera     = loadCamera();
+                    scene.lightSet   = loadLights();
+                    scene.transfer   = loadTransfer();
+                    scene.parameters = loadParams();
                 }
 
                 // Malformed data on a node read attempt
@@ -300,6 +302,28 @@ namespace
                 pop();
 
                 return volumePtr;
+            }
+
+            // --------------------------------------------------------------------
+            //  Creates a parameters object from the 'Settings' node of a scene file
+            // --------------------------------------------------------------------
+            std::shared_ptr<RenderParams> loadParams()
+            {
+                if (!push("Settings", Preferred)) return nullptr;
+
+                  // Instantiate default volume object
+                  auto paramPtr = executeImportDirectives().parameters;
+                  if (!paramPtr) paramPtr = std::make_shared<RenderParams>();
+                  auto & parameters = *paramPtr;
+        
+                  // Read inline parameter specifications
+                  parameters.setPrimaryStepSize(m_node->get("PrimaryStepSize", parameters.primaryStepSize()));
+                  parameters.setShadowStepSize(m_node->get("ShadowStepSize", parameters.shadowStepSize()));
+                  parameters.setOccludeStepSize(m_node->get("OccludeStepSize", parameters.occludeStepSize()));
+
+                pop();
+
+                return paramPtr;
             }
 
             // --------------------------------------------------------------------

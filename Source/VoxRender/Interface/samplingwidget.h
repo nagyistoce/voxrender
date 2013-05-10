@@ -45,25 +45,29 @@ public:
 	explicit SamplingWidget( QWidget *parent = 0 );
 	~SamplingWidget( );
 
-	void Update( );
-	void SetEnabled( bool enabled );
+	void setEnabled( bool enabled );
+
+    void processInteractions();
+    void synchronizeView();
 
 private:
 	Ui::SamplingWidget *ui;
+
+    bool m_dirty;
 
 signals:
 	void valuesChanged( );
 
 private slots:
-	void step1_changed( int value );
-	void step1_changed( double value );
-	void step2_changed( int value );
-	void step2_changed( double value );
-	void gradient_changed( int value );
-	void gradient_changed( double value );
-	void density_changed( int value );
-	void density_changed( double value );
-
+	void on_horizontalSlider_gradient_valueChanged(int value);
+	void on_doubleSpinBox_gradient_valueChanged(double value);
+	void on_horizontalSlider_primaryStep_valueChanged(int value);
+	void on_doubleSpinBox_primaryStep_valueChanged(double value);
+	void on_horizontalSlider_shadowStep_valueChanged(int value);
+	void on_doubleSpinBox_shadowStep_valueChanged(double value);
+	void on_horizontalSlider_occludeStep_valueChanged(int value);
+	void on_doubleSpinBox_occludeStep_valueChanged(double value);
+	void on_horizontalSlider_occludeSamples_valueChanged(int value);
 };
 
 // End definition

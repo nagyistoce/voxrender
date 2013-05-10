@@ -79,7 +79,7 @@ namespace vox
         }
 
         /** Returns true if the context change flag is set */
-        bool isDirty() const { return m_contextChanged; }
+        bool isDirty() const { return m_contextChanged || m_contentChanged; }
 
         /** Returns true if the internal content is dirty */
         bool isContentDirty() const

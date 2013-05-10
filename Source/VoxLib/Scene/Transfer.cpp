@@ -100,7 +100,15 @@ std::shared_ptr<TransferMap> Transfer::generateMap()
 
 	m_nodes.sort(filescope::slt<Node>);
 
-    map->diffuse.resize(m_resolution[0], m_resolution[1], m_resolution[2]);
+    map->diffuse.resize(128, 1, 1);
+    map->opacity.resize(128, 1, 1);
+
+    // :DEBUG: Linear mapping
+    auto opacityMap = map->opacity.data();
+    for (size_t i = 0; i < 128; i++)
+    {
+        opacityMap[i] = std::numeric_limits<float>::infinity();   
+    }
 
     return map;
 }

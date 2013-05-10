@@ -40,6 +40,7 @@
 // API Namespace
 namespace vox
 {
+    class RenderController;
     class Transfer;
 
     /** Transfer function node */
@@ -90,6 +91,7 @@ namespace vox
     struct VOX_EXPORT TransferMap
     {
         Image3D<ColorRgbaLdr> diffuse;  ///< Diffuse transfer mapping
+        Image3D<float>        opacity;   ///< Absorption coefficients
     };
 
     /** Transfer Function */
@@ -121,6 +123,8 @@ namespace vox
         bool isDirty() const { return m_contextChanged; }
 
     private:
+        friend RenderController;
+
         Vector3u m_resolution; ///< Transfer function map resolution
 
         std::list<std::shared_ptr<Node>> m_nodes; ///< List of transfer regions :TODO:

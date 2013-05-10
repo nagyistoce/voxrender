@@ -80,9 +80,9 @@ namespace vox
         /** Image copy constructor */
         Image3D& operator=(Image3D const& other)
         {
-            resize(other.height, other.m_width, other.m_depth);
+            resize(other.height(), other.width(), other.depth());
 
-            memcpy(m_buffer.get(), other.m_buffer.get(), size());
+            memcpy(m_buffer.get(), other.data(), size());
 
             return *this;
         }

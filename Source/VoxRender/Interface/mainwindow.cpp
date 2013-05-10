@@ -33,7 +33,8 @@
 #include "pointlightwidget.h"
 
 // VoxRender Includes
-#include "VoxLib/Core/VoxRender.h"
+#include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incude
+#include "VoxLib/Scene/RenderParams.h"
 
 // Abstract Resource IO Modules
 #include "VoxLib/IO/FilesystemIO.h"
@@ -94,9 +95,9 @@ namespace filescope
 } // namespace filescope
 } // namespace anonymous
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Setup the logging backend and instantiate the environment
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -164,6 +165,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 
                 // Process changes to the camera widget
                 camerawidget->processInteractions();
+                samplingwidget->processInteractions();
             }
 
             // Lock the framebuffer and issue the frameReady signal
@@ -175,9 +177,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //renderNewSceneFile( "" );
 }
     
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Write the application settings file and terminate the core library
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 MainWindow::~MainWindow()
 {
     writeSettings();
@@ -190,9 +192,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Configures the logging system, called immediately on startup
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::configureLoggingEnvironment()
 {
 	// Register the GUI logger backend with the frontend
@@ -236,9 +238,9 @@ void MainWindow::configureLoggingEnvironment()
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Loads and configures any detected plugins for IO and rendering
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::configurePlugins()
 {
     using namespace boost; using namespace boost::filesystem;
@@ -264,9 +266,9 @@ void MainWindow::configurePlugins()
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Outputs log entries to the log TextEdit and the logger backend
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::voxGuiErrorHandler(
     char const* file, int line, int severity, int code, 
     char const* category, char const* message)
@@ -278,9 +280,9 @@ void MainWindow::voxGuiErrorHandler(
     emit logEntrySignal(file, line, severity, code, category, message);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Outputs log entries to the log TextEdit 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::printLogEntry(
     char const* file, int line, int severity, int code, 
     char const* category, std::string message)
@@ -361,9 +363,9 @@ void MainWindow::printLogEntry(
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Reads the program settings file through the Qt4 library
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::readSettings()
 {
 	QSettings settings( "VoxRender", "VoxRender GUI");
@@ -379,9 +381,9 @@ void MainWindow::readSettings()
 	settings.endGroup( );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Writes the program settings file through the Qt4 library
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::writeSettings()
 {
 	QSettings settings("VoxRender", "VoxRender GUI");
@@ -398,9 +400,9 @@ void MainWindow::writeSettings()
 	settings.endGroup( );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Creates the open recent file action list
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::createRecentFileActions()
 {
     // Create actions for recent files listing
@@ -421,9 +423,9 @@ void MainWindow::createRecentFileActions()
 	}
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Updates the recent file actions listing
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::updateRecentFileActions()
 {
     // Refresh file listing and detect missing files
@@ -453,9 +455,9 @@ void MainWindow::updateRecentFileActions()
 	}
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Creates the application window status bar
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::createStatusBar()
 {
 	activityLabel   = new QLabel(tr("  Status:"));
@@ -487,9 +489,9 @@ void MainWindow::createStatusBar()
 	ui->statusBar->addPermanentWidget( statsMessage, 1 );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Updates the window with the current filename information 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::setCurrentFile(QString const& path)
 {
     QString showName;
@@ -531,9 +533,9 @@ void MainWindow::setCurrentFile(QString const& path)
 	setWindowTitle(tr("%1[*]").arg(showName));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Loads the specified scene file for rendering
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::renderNewSceneFile(QString const& filename) 
 {
     // Terminate the current render
@@ -562,6 +564,9 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     {
         // Attempt to parse the scene file content
         activeScene = vox::Scene::imprt(identifier);
+        if (!activeScene.parameters) activeScene.parameters = std::make_shared<vox::RenderParams>();
+        // :TODO: Default other parameters if unspecified (immediate)
+        // :TODO: Interactive option specification interface for import (long-term)
 
         // Synchronize the scene view
         synchronizeView();
@@ -603,9 +608,9 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     emit sceneChanged(); // Send the scene change signal
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Sets the Vox GUI render state
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::changeRenderState(RenderState state)
 {
 	switch (state) 
@@ -671,9 +676,9 @@ void MainWindow::changeRenderState(RenderState state)
 	m_guiRenderState = state;
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Returns true if the user allows termination
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 bool MainWindow::canStopRendering()
 {
 	if (m_guiRenderState == RenderState_Rendering) 
@@ -696,13 +701,13 @@ bool MainWindow::canStopRendering()
 	return true;
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Synchronizes the current scene 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::synchronizeView()
 {
     camerawidget->synchronizeView();
-
+    samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
     // Remove any light panes from the previous render
@@ -719,9 +724,9 @@ void MainWindow::synchronizeView()
     }
 }
 
-// --------------------------------------------------------------------
-// Creates the render tab panes
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Creates the render tab panes
+// ----------------------------------------------------------------------------
 void MainWindow::createRenderTabPanes()
 {
 	//
@@ -785,9 +790,9 @@ void MainWindow::createRenderTabPanes()
 		QSizePolicy::Minimum, QSizePolicy::Expanding) );
 }
 
-// --------------------------------------------------------------------
-// Creates the CUDA device table listings
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Creates the CUDA device table listings
+// ----------------------------------------------------------------------------
 void MainWindow::createDeviceTable()
 {
 	// CUDA enabled device info structures
@@ -857,9 +862,9 @@ void MainWindow::createDeviceTable()
 	ui->label_deviceCount_2->setText( QString("%1").arg(deviceCount) );
 }
 
-// --------------------------------------------------------------------
-// Adds a control widget for an existing light object 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Adds a control widget for an existing light object 
+// ----------------------------------------------------------------------------
 void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
 {
     // Remove spacer prior to pane insertion
@@ -888,9 +893,9 @@ void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
 	ui->lightsAreaLayout->addItem( m_spacer );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Flip-flops the blinking action on the log tab to indicate an error 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::blinkTrigger(bool active)
 {
 	if (active) 
@@ -919,17 +924,17 @@ void MainWindow::blinkTrigger(bool active)
 	}
 }
 
-// --------------------------------------------------------------------
-// Copies the current frame to the clipboard
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Copies the current frame to the clipboard
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_clipboard_clicked()
 {
 	m_renderView->copyToClipboard();
 }
 
-// --------------------------------------------------------------------
-// Opens the new light selection dialogue
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Opens the new light selection dialogue
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_addLight_clicked()
 { 
     static int numLights = -1; numLights++; // Light UID generator
@@ -941,9 +946,9 @@ void MainWindow::on_pushButton_addLight_clicked()
     else addLight(activeScene.lightSet->addLight(), lightDialogue.nameSelected( ));
 }
 
-// --------------------------------------------------------------------
-// Enables use of the selected device(s)
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Enables use of the selected device(s)
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_devicesAdd_clicked()
 {
     static Qt::GlobalColor const Color_Enabled = Qt::darkGreen;
@@ -970,9 +975,9 @@ void MainWindow::on_pushButton_devicesAdd_clicked()
 	ui->label_deviceCount_2->setText( QString("%1").arg(deviceCount) );
 }
 
-// --------------------------------------------------------------------
-// Disallows use of the selected device(s)
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Disallows use of the selected device(s)
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_devicesRemove_clicked()
 {
     static Qt::GlobalColor const Color_Disabled = Qt::darkRed;
@@ -999,9 +1004,9 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 	ui->label_deviceCount_2->setText( QString::fromUtf8("%1").arg(deviceCount) );
 }
 
-// --------------------------------------------------------------------
-// Opens a new volume data file for rendering
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Opens a new volume data file for rendering
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionOpen_triggered() 
 {
     if (!canStopRendering( )) return;
@@ -1013,9 +1018,9 @@ void MainWindow::on_actionOpen_triggered()
     if (!filename.isNull()) renderNewSceneFile(filename);
 }
 
-// --------------------------------------------------------------------
-// Opens a recent volume data file for viewing
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Opens a recent volume data file for viewing
+// ----------------------------------------------------------------------------
 void MainWindow::onActionOpenRecentFile() 
 {
 	if (!canStopRendering( )) return;
@@ -1027,34 +1032,34 @@ void MainWindow::onActionOpenRecentFile()
     renderNewSceneFile( action->data( ).toString( ) );
 }
 
-// --------------------------------------------------------------------
-// Displays the about info window
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Displays the about info window
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionAbout_triggered() 
 {
 	AboutDialogue dialogue;
 	dialogue.exec();
 }
 
-// --------------------------------------------------------------------
-// Exits the application without saving session data
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Exits the application without saving session data
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionExit_triggered() 
 {
 	qApp->exit( );
 }
 
-// --------------------------------------------------------------------
-// Exits the application after saving session data
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Exits the application after saving session data
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionSave_and_Exit_triggered() 
 { 
 	qApp->exit( );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Loads the panel settings from a specified file
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionLoad_Panel_Settings_triggered() 
 { 
 	QString fileName = QFileDialog::getOpenFileName( 
@@ -1069,9 +1074,9 @@ void MainWindow::on_actionLoad_Panel_Settings_triggered()
 	// :TODO:
 }
 
-// --------------------------------------------------------------------
-// Saves the panel settings to a specified file
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Saves the panel settings to a specified file
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionSave_Panel_Settings_triggered() 
 {
 	QString fileName = QFileDialog::getSaveFileName(
@@ -1086,9 +1091,9 @@ void MainWindow::on_actionSave_Panel_Settings_triggered()
 	// :TODO:
 }
 
-// --------------------------------------------------------------------
-// Returns the rendering to windowed mode
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Returns the rendering to windowed mode
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionNormal_Screen_triggered() 
 { 
 	if (m_renderView->isFullScreen()) 
@@ -1103,9 +1108,9 @@ void MainWindow::on_actionNormal_Screen_triggered()
 	}
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Toggles full-screen rendering mode
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionFull_Screen_triggered() 
 {
 	if (m_renderView->isFullScreen()) 
@@ -1129,35 +1134,35 @@ void MainWindow::on_actionFull_Screen_triggered()
 	}
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Clears the log information from textEdit_log
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionClear_Log_triggered() 
 {
 	ui->textEdit_log->setPlainText("");
     blinkTrigger( false );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Copies the log information from textEdit_log
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionCopy_Log_triggered() 
 {
 	QClipboard *clipboard = QApplication::clipboard();
 	clipboard->setText(ui->textEdit_log->toPlainText());
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Toggles the side panel in the render tab window
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_actionShow_Side_Panel_triggered(bool checked)
 {
 	ui->tabWidget_render->setVisible( checked );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Check for user acknowledgment of new warning/error log entry
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_tabWidget_main_currentChanged(int tabId)
 {
     if( tabId == filescope::logTabId ) 
@@ -1169,9 +1174,9 @@ void MainWindow::on_tabWidget_main_currentChanged(int tabId)
 	}
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Check for user acknowledgment of new warning/error log entry
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_stop_clicked()
 {
     m_renderController.stop();
@@ -1179,9 +1184,9 @@ void MainWindow::on_pushButton_stop_clicked()
     changeRenderState(RenderState_Stopped);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Check for user acknowledgment of new warning/error log entry
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_resume_clicked()
 {
     m_renderController.unpause();
@@ -1189,9 +1194,9 @@ void MainWindow::on_pushButton_resume_clicked()
     changeRenderState(RenderState_Rendering);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Check for user acknowledgment of new warning/error log entry
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_pause_clicked()
 {
     m_renderController.pause();
@@ -1199,9 +1204,9 @@ void MainWindow::on_pushButton_pause_clicked()
     changeRenderState(RenderState_Paused);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Flag to perform an image update for the next render callback
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_imagingApply_clicked()
 {
     m_imagingUpdate = true;

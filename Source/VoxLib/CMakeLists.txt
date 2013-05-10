@@ -85,6 +85,7 @@ Set(VoxLib_HEADERS_SCENE
     Scene/Camera.h
     Scene/Light.h
     Scene/Material.h
+    Scene/RenderParams.h
     Scene/Scene.h
     Scene/Transfer.h
     Scene/Volume.h

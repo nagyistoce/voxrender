@@ -39,8 +39,8 @@ void Utilities::forceSbToSl(QDoubleSpinBox * spinBox, QSlider * slider, int valu
     auto smin = slider->minimum();
     auto bmax = spinBox->maximum();
     auto bmin = spinBox->minimum();
-
-    auto transfer = (smax - smin) / (bmax - bmin);
+    
+    auto transfer = (bmax - bmin) / (smax - smin);
 
     double bvalue = static_cast<double>(bmin + (value - smin) * transfer);
 
@@ -59,7 +59,7 @@ void Utilities::forceSlToSb(QSlider * slider, QDoubleSpinBox * spinBox, double v
     auto bmax = spinBox->maximum();
     auto bmin = spinBox->minimum();
     
-    auto transfer = (bmax - bmin) / (smax - smin);
+    auto transfer = (smax - smin) / (bmax - bmin);
 
     int svalue = static_cast<int>(smin + (value - bmin) * transfer);
 

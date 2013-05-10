@@ -64,7 +64,13 @@ public:
     VOX_HOST_DEVICE inline Volume::Type type() const { return m_type; }
 
     /** Returns the channel format descriptor */
-    cudaChannelFormatDesc const& formatDescriptor() const { return m_format; }
+    VOX_HOST cudaChannelFormatDesc const& formatDescriptor() const { return m_format; }
+
+    /** Normalizes a data value based on the volume data range */
+    VOX_HOST_DEVICE float normalizeSample(float sample)
+    {
+        return (sample - m_dataMin) * m_invRange;
+    }
 
 private:
     Volume::Type   m_type;         ///< Format of volume data
@@ -72,6 +78,8 @@ private:
     Vector3f       m_invSpacing;   ///< Inverse of spacing between samples (/mm)
     cudaExtent     m_extent;       ///< Extent of the volume data
     cudaArray *    m_handle;       ///< Handle to volume data array on device
+    float          m_invRange;     ///< The range of the volume data values (for normalization)
+    float          m_dataMin;      ///< The minimum of the volume data values (for normalization)
 
     cudaChannelFormatDesc m_format; ///< Texture channel format
 };
