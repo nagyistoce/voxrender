@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>501</width>
-    <height>206</height>
+    <height>263</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -144,28 +144,21 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout_3">
-     <item row="2" column="1">
-      <widget class="QSlider" name="horizontalSlider_aperture">
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="maximum">
-        <number>25</number>
-       </property>
+     <item row="3" column="1">
+      <spacer name="verticalSpacer_3">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Vertical</enum>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_camFov">
-       <property name="toolTip">
-        <string>The horizontal field of view angle</string>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
        </property>
-       <property name="text">
-        <string>Field of View</string>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>15</height>
+        </size>
        </property>
-      </widget>
+      </spacer>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_aperture">
@@ -205,25 +198,26 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_aperture">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_camFov">
+       <property name="toolTip">
+        <string>The horizontal field of view angle</string>
+       </property>
+       <property name="text">
+        <string>Field of View</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSlider" name="horizontalSlider_aperture">
        <property name="toolTip">
         <string/>
        </property>
-       <property name="keyboardTracking">
-        <bool>false</bool>
-       </property>
-       <property name="suffix">
-        <string> mm</string>
-       </property>
-       <property name="decimals">
-        <number>3</number>
-       </property>
        <property name="maximum">
-        <double>50.000000000000000</double>
+        <number>25</number>
        </property>
-       <property name="singleStep">
-        <double>0.250000000000000</double>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -243,21 +237,24 @@
        </property>
       </spacer>
      </item>
-     <item row="3" column="1">
-      <spacer name="verticalSpacer_3">
+     <item row="0" column="1">
+      <widget class="QSlider" name="horizontalSlider_camFov">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="minimum">
+        <number>10</number>
+       </property>
+       <property name="maximum">
+        <number>125</number>
+       </property>
+       <property name="value">
+        <number>90</number>
+       </property>
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>15</height>
-        </size>
-       </property>
-      </spacer>
+      </widget>
      </item>
      <item row="4" column="0">
       <widget class="QLabel" name="label_focal">
@@ -300,22 +297,25 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QSlider" name="horizontalSlider_camFov">
+     <item row="2" column="2">
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_aperture">
        <property name="toolTip">
         <string/>
        </property>
-       <property name="minimum">
-        <number>10</number>
+       <property name="keyboardTracking">
+        <bool>false</bool>
+       </property>
+       <property name="suffix">
+        <string> mm</string>
+       </property>
+       <property name="decimals">
+        <number>3</number>
        </property>
        <property name="maximum">
-        <number>125</number>
+        <double>50.000000000000000</double>
        </property>
-       <property name="value">
-        <number>90</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+       <property name="singleStep">
+        <double>0.250000000000000</double>
        </property>
       </widget>
      </item>
@@ -338,7 +338,47 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Exposure</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>15</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="6" column="2">
+      <widget class="QDoubleSpinBox" name="doubleSpinBox">
+       <property name="maximum">
+        <double>100.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QSlider" name="horizontalSlider">
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="2">
       <widget class="QCheckBox" name="checkBox_autoFocus">
        <property name="toolTip">
         <string>Check to automatically focus the camera on the center of the dataset</string>

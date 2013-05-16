@@ -43,6 +43,7 @@ Set(HEADERS_CORE_IMPL
     Core/CRandomBuffer.h
     Core/CRandomGenerator.h
     Core/CSampleBuffer.h
+	Core/Intersect.h
 )
 
 Set(HEADERS_SCENE_IMPL

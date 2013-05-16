@@ -68,6 +68,7 @@ IF(Qt5Widgets_FOUND)
         Interface/mainwindow.cpp
         Interface/nodeitem.cpp
         Interface/panewidget.cpp
+		Interface/ambientlightwidget.cpp
         Interface/pointlightwidget.cpp
         Interface/renderview.cpp
         Interface/samplingwidget.cpp
@@ -94,6 +95,7 @@ IF(Qt5Widgets_FOUND)
         Interface/mainwindow.h
         Interface/nodeitem.h
         Interface/panewidget.h
+		Interface/ambientlightwidget.h
         Interface/pointlightwidget.h
         Interface/renderview.h
         Interface/samplingwidget.h
@@ -115,6 +117,7 @@ IF(Qt5Widgets_FOUND)
         Interface/lightdialogue.ui
         Interface/mainwindow.ui
         Interface/panewidget.ui
+		Interface/ambientlightwidget.ui
         Interface/pointlightwidget.ui
         Interface/samplingwidget.ui
         Interface/transferwidget.ui

@@ -163,7 +163,7 @@ MainWindow::MainWindow(QWidget *parent) :
                     widget->processInteractions();
                 }
                 
-                // Process changes to the camera widget
+                static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->processInteractions();
                 camerawidget->processInteractions();
                 samplingwidget->processInteractions();
             }
@@ -710,6 +710,8 @@ void MainWindow::synchronizeView()
     samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
+    static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->synchronizeView();
+
     // Remove any light panes from the previous render
     BOOST_FOREACH (auto & pane, m_lightPanes)
     {
@@ -720,7 +722,7 @@ void MainWindow::synchronizeView()
     // Create light panes for loaded lights
     BOOST_FOREACH (auto & light, activeScene.lightSet->lights())
     {
-        addLight(light, "EMBEDED");
+        addLight(light, "EMBEDED :TODO: NAME");
     }
 }
 
@@ -769,6 +771,19 @@ void MainWindow::createRenderTabPanes()
 	ui->lightsAreaLayout->setAlignment( Qt::AlignTop );
     m_spacer = new QSpacerItem( 20, 20, 
         QSizePolicy::Minimum, QSizePolicy::Expanding );
+
+    // Create new pane for the ambient light setting widget
+    m_ambientPane = new PaneWidget(ui->lightsAreaContents);
+    QWidget * currWidget = new AmbientLightWidget(m_ambientPane); 
+
+    m_ambientPane->setTitle("Environment");
+    m_ambientPane->setIcon(":/icons/lightgroupsicon.png");
+    m_ambientPane->setWidget(currWidget);
+    m_ambientPane->expand();
+
+    ui->lightsAreaLayout->addWidget(m_ambientPane);
+
+    // Reinsert spacer following new pane
 	ui->lightsAreaLayout->addItem( m_spacer );
 
 	// 

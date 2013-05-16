@@ -74,15 +74,15 @@ namespace vox
         /** Returns the size of the image content */
         size_t size() const
         {
-            return m_width*m_height*m_depth*sizeof(T);
+            return m_width*m_height*m_depth;
         }
 
         /** Image copy constructor */
         Image3D& operator=(Image3D const& other)
         {
-            resize(other.height(), other.width(), other.depth());
+            resize(other.width(), other.height(), other.depth());
 
-            memcpy(m_buffer.get(), other.data(), size());
+            memcpy(m_buffer.get(), other.data(), size()*sizeof(T));
 
             return *this;
         }
@@ -90,9 +90,9 @@ namespace vox
         /** Image assignment operator */
         Image3D(Image3D const& other)
         {
-            resize(other.m_height, other.m_width, other.m_depth);
+            resize(other.m_width, other.m_height, other.m_depth);
 
-            memcpy(m_buffer.get(), other.m_buffer.get(), size());
+            memcpy(m_buffer.get(), other.m_buffer.get(), size()*sizeof(T));
         }
 
         /** Image move constructor */
@@ -110,8 +110,8 @@ namespace vox
         }
 
 	private:
-		size_t m_height;  ///< Image height
 		size_t m_width;   ///< Image width
+		size_t m_height;  ///< Image height
         size_t m_depth;   ///< Image depth
 
         std::unique_ptr<T[]> m_buffer;  ///< Image buffer

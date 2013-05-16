@@ -29,6 +29,7 @@
 
 // Common Library Header
 #include "VolumeScatterRenderer/Core/Common.h"
+#include "VoxLib/Core/Geometry/Vector.h"
 
 // API namespace
 namespace vox 
@@ -56,7 +57,7 @@ public:
     static void setCamera(CCamera const& camera);
     
     /** Sets the scene lightbuffer to the specified buffer */
-    static void setLights(CBuffer1D<CLight> const& lights);
+    static void setLights(CBuffer1D<CLight> const& lights, Vector3f const& ambient);
 
     /** Sets the volume data set to the specified buffer */
     static void setVolume(CVolumeBuffer const& volume);

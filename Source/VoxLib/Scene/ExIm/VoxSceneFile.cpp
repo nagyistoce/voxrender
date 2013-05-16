@@ -262,13 +262,16 @@ namespace
                   auto lightSetPtr = std::make_shared<LightSet>();
                   auto & lightSet = *lightSetPtr;
 
-                  // Process stanard light elements of the lighting subtree
+                  // Check for ambient level specification
+                  lightSet.setAmbientLight( m_node->get<Vector3f>("Ambient", Vector3f(0.0f, 0.0f, 0.0f)) );
+
+                  // Process standard light elements of the lighting subtree
                   auto bounds = m_node->equal_range("Light");
                   for (auto it = bounds.first; it != bounds.second; ++it)
                   {
                       auto & node = (*it).second;
                       
-                      Vector3f color    = node.get<Vector3f>("Color");
+                      Vector3f color = node.get<Vector3f>("Color");
 
                       auto light = lightSet.addLight();
                       light->setColor( ColorLabHdr(color[0], color[1], color[2]) );

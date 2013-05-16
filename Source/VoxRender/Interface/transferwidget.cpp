@@ -32,8 +32,13 @@
 #include "mainwindow.h"
 #include "utilities.h"
 
+// VoxLib Dependencies
+#include "VoxLib/Core/Geometry/Vector.h"
+
 // QT4 Includes
 #include <QtWidgets/QMessageBox>
+
+using namespace vox;
 
 // File scope namespace
 namespace 
@@ -86,11 +91,11 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
     auto material = node->material();
 
     // Update all of the widget controls
-    ui->doubleSpinBox_density->setValue(node->position(0));
-    ui->doubleSpinBox_gradient->setValue(node->position(1));
-    ui->doubleSpinBox_gradient2->setValue(node->position(2));
-    ui->doubleSpinBox_gloss->setValue(material->glossiness());
-    ui->doubleSpinBox_opacity->setValue(material->opticalThickness());
+    ui->doubleSpinBox_density->setValue(node->position(0)*100.0f);
+    ui->doubleSpinBox_gradient->setValue(node->position(1)*100.0f);
+    ui->doubleSpinBox_gradient2->setValue(node->position(2)*100.0f);
+    ui->doubleSpinBox_gloss->setValue(material->glossiness()*100.0f);
+    ui->doubleSpinBox_opacity->setValue(material->opticalThickness()*100.0f);
     ui->checkBox_visible->setChecked(true);
 
     m_currentNode = node;
@@ -318,6 +323,10 @@ void TransferWidget::on_pushButton_specular_clicked( )
 	ui->pushButton_specular->setStyleSheet( 
         vox::format( filescope::stylesheet, 
             color.name().toLatin1().data() ).c_str( ) );
+
+    if (m_currentNode)
+    {
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -325,10 +334,15 @@ void TransferWidget::on_pushButton_specular_clicked( )
 // ----------------------------------------------------------------------------
 void TransferWidget::on_pushButton_diffuse_clicked( )
 {
-	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
+	QColor color = colorPicker.getColor( Qt::white ); // :TODO: currNode->getColor( );
 	ui->pushButton_diffuse->setStyleSheet( 
         vox::format( filescope::stylesheet, 
             color.name().toLatin1().data() ).c_str( ) );
+    
+    if (m_currentNode)
+    {
+        m_currentNode->material()->setDiffuse( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -343,7 +357,7 @@ void TransferWidget::on_horizontalSlider_density_valueChanged(int value)
 
     if (m_currentNode)
     {
-        auto value = ui->doubleSpinBox_density->value();
+        auto value = ui->doubleSpinBox_density->value() / 100.0f;
         m_currentNode->setPosition(0, value);
     }
 }
@@ -360,7 +374,7 @@ void TransferWidget::on_doubleSpinBox_density_valueChanged(double value)
 
     if (m_currentNode)
     {
-        auto value = ui->doubleSpinBox_density->value();
+        auto value = ui->doubleSpinBox_density->value() / 100.0f;
         m_currentNode->setPosition(0, value);
     }
 }
@@ -377,7 +391,7 @@ void TransferWidget::on_horizontalSlider_gloss_valueChanged(int value)
 
     if (m_currentNode)
     {
-        auto value = ui->doubleSpinBox_gloss->value();
+        auto value = ui->doubleSpinBox_gloss->value() / 100.0f;
         m_currentNode->material()->setGlossiness(value);
     }
 }
@@ -394,7 +408,7 @@ void TransferWidget::on_doubleSpinBox_gloss_valueChanged(double value)
     
     if (m_currentNode)
     {
-        auto value = ui->doubleSpinBox_gloss->value();
+        auto value = ui->doubleSpinBox_gloss->value() / 100.0f;
         m_currentNode->material()->setGlossiness(value);
     }
 }
@@ -411,8 +425,8 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
 
     if (m_currentNode)
     {
-        //auto value = ui->doubleSpinBox_opacity->value();
-        //m_currentNode->material()->setOpticalThickness(value);
+        auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
+        m_currentNode->material()->setOpticalThickness(value);
     }
 }
 
@@ -428,8 +442,8 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
 
     if (m_currentNode)
     {
-        //auto value = ui->doubleSpinBox_opacity->value();
-        //m_currentNode->material()->setOpticalThickness(value);
+        auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
+        m_currentNode->material()->setOpticalThickness(value);
     }
 }
 

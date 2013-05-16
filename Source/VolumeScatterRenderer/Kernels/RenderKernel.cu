@@ -31,6 +31,7 @@
 #include "VolumeScatterRenderer/Core/CRandomBuffer.h"
 #include "VolumeScatterRenderer/Core/CSampleBuffer.h"
 #include "VolumeScatterRenderer/Core/CRandomGenerator.h"
+#include "VolumeScatterRenderer/Core/Intersect.h"
 #include "VolumeScatterRenderer/Scene/CCamera.h"
 #include "VolumeScatterRenderer/Scene/CLight.h"
 #include "VolumeScatterRenderer/Scene/CTransferBuffer.h"
@@ -59,6 +60,7 @@ namespace filescope {
     __constant__ CTransferBuffer   gd_transferBuffer;   ///< Transfer function info
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
+    __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light
 
     __constant__ ColorLabxHdr gd_backdropClr;       ///< Color of the backdrop for the volume
 
@@ -69,43 +71,17 @@ namespace filescope {
     texture<UInt8,3,cudaReadModeNormalizedFloat>  gd_volumeTex_UInt8;     ///< Volume data texture
     texture<UInt16,3,cudaReadModeNormalizedFloat> gd_volumeTex_UInt16;    ///< Volume data texture
 
-    texture<float,3,cudaReadModeNormalizedFloat>  gd_opacityTex;  // Opacity data texture
+    texture<float,3,cudaReadModeElementType>      gd_opacityTex;  // Opacity data texture
     texture<uchar4,3,cudaReadModeNormalizedFloat> gd_diffuseTex;  // Diffuse data texture
+    texture<float4,3,cudaReadModeElementType>     gd_specularTex; // Specular data texture
 
-    // --------------------------------------------------------------------
-    //	Clips the input ray to the specified bounding box
-    // --------------------------------------------------------------------
-    VOX_HOST_DEVICE inline void rayBoxIntersection( 
-        const Vector3f &rayPos, 
-        const Vector3f &rayDir, 
-        const Vector3f &bmin, 
-        const Vector3f &bmax, 
-	    float &rayMin, 
-        float &rayMax)
-    {
-        Vector3f const invDir(1.0f / rayDir[0], 1.0f / rayDir[1], 1.0f / rayDir[2]);
-
-	    Vector3f const tBMax = ( bmax - rayPos ) * invDir;
-	    Vector3f const tBMin = ( bmin - rayPos ) * invDir;
-    
-	    Vector3f const tNear( low(tBMin[0], tBMax[0]), 
-                              low(tBMin[1], tBMax[1]), 
-                              low(tBMin[2], tBMax[2]) );
-
-	    Vector3f const tFar ( high(tBMin[0], tBMax[0]), 
-                              high(tBMin[1], tBMax[1]), 
-                              high(tBMin[2], tBMax[2]) );
-    
-	    rayMin = high(rayMin, high(tNear[0], high(tNear[1], tNear[2])));
-	    rayMax = low(rayMax, low(tFar[0], low(tFar[1], tFar[2])));
-    }
-    
     // --------------------------------------------------------------------
     //  Uses the appropriate texture sampler to acquire a density value
     //  The return result is the normalized density of the specified point
     //  :TODO: Implement in templatized kernel and check efficiency
+    //  :TODO: Pretransform by invSpacing during tracers
     // --------------------------------------------------------------------
-    VOX_DEVICE inline float sampleDensity(float x, float y, float z)
+    VOX_DEVICE float sampleDensity(float x, float y, float z)
     {
         float density;
 
@@ -132,7 +108,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Computes the gradient at a specified location using central diffs
     // --------------------------------------------------------------------
-    VOX_DEVICE inline Vector3f sampleGradient(Vector3f const& location)
+    VOX_DEVICE Vector3f sampleGradient(Vector3f const& location)
     {
         float const& x = location[0];
         float const& y = location[1];
@@ -152,18 +128,70 @@ namespace filescope {
     {
         float density = sampleDensity(location[0], location[1], location[2]);
 
-        return density < 0.3 ? 0.0f : -log(0.0f);
-        //return tex3D(gd_opacityTex, sampleDensity(location), 0.0f, 0.0f);
+        return tex3D(gd_opacityTex, density, 0.0f, 0.0f);
+    }
+
+    // --------------------------------------------------------------------
+    //  Computes attenuation of light along the specified ray
+    // --------------------------------------------------------------------
+    VOX_DEVICE inline float computeTransmission(
+        CRandomGenerator & rng,
+        Vector3f const& pos, 
+        Vector3f const& dir,
+        float rayStepSize,
+        float maxDistance
+        )
+    {
+        // Determine the maximum ray extent
+        float rayMin = 0.0f, rayMax = maxDistance;
+        Intersect::rayBoxIntersection(pos, dir, Vector3f(0.0f), 
+            gd_volumeBuffer.size(), rayMin, rayMax);
+        
+        // Offset the ray origin by a fraction of step size
+        rayMin += rng.sample1D() * rayStepSize;
+
+        // Perform ray marching until the sample depth is reached
+        float opacity = 0.0f;
+        while (rayMin < rayMax)
+        {
+            float absorption = sampleAbsorption(pos + dir * rayMin);
+
+            opacity += absorption * rayStepSize;
+
+            rayMin += rayStepSize;
+            
+            if (rayMin > rayMax) break;
+        }
+
+        return max(1.0f - opacity, 0.0f);
     }
 
     // --------------------------------------------------------------------
     //  Computes the ambient occlusion for the specified sample point
-    //  This is done by casting rays out in the hemisphere about the
-    //  normal and evaluating the opacity of nearby voxels
+    //  This is done by casting rays out around the sample point and 
+    //  computing the average attenuation over a short distance.
     // --------------------------------------------------------------------
     VOX_DEVICE float computeAmbientOcclusion(
-        Vector3f & sampleLocation, Vector3f normal)
+        CRandomGenerator & rng, Vector3f const& pos)
     {
+        unsigned int samples = gd_renderParams.occludeSamples();
+
+        // Compute ambient occlusion if specified
+        if (samples != 0)
+        {
+            float transmission = 0.0f;
+            for (unsigned int i = 0; i < samples; i++)
+            {
+                transmission += computeTransmission(rng, pos, rng.sampleSphere(), 
+                    gd_renderParams.occludeStepSize(), 5.0f);/*:TODO:*/
+            }
+
+            return transmission / (float)samples;
+        }
+        else // Otherwise return full ambient
+        {
+            return 1.0f;
+        }
     }
     
     // --------------------------------------------------------------------
@@ -184,10 +212,23 @@ namespace filescope {
 
             Vector3f lightEmission(1.0f, 1.0f, 1.0f);
             Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
-            
-            // :TODO: Compute attenuation
 
-            Vector3f Lv = lightEmission * high(Vector3f::dot(gradient, lightDirection), 0.0f);
+            // Compute the attenuated light reaching the selected scattering point
+            float transmission = computeTransmission(rng, location.pos, lightDirection,
+                                    gd_renderParams.shadowStepSize(), 1000.0f);
+            lightEmission *= transmission;
+
+            // Compute the diffuse component of the reflectance function
+            float4 diffuse = tex3D(gd_diffuseTex, sampleDensity(location.pos[0], location.pos[1], location.pos[2]), 0.0f, 0.0f); // :TODO: Carry density forward with location
+            lightEmission[0] *= diffuse.x;
+            lightEmission[1] *= diffuse.y;
+            lightEmission[2] *= diffuse.z;
+            Vector3f Lv = lightEmission * abs(Vector3f::dot(gradient, lightDirection)); 
+
+            // Compute the specular component of the reflectance function
+
+            // Compute the ambient lighting using the specified params
+            Lv += Vector3f(diffuse.x, diffuse.y, diffuse.z) * gd_ambient * computeAmbientOcclusion(rng, location.pos);
 
             return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
         }
@@ -195,7 +236,7 @@ namespace filescope {
     }
 
     // --------------------------------------------------------------------
-    //  Uses the appropriate texture sampler to acquire a density value
+    //  Performs ray marching to locate a sample point at the selected opacity
     // --------------------------------------------------------------------
     VOX_DEVICE bool selectVolumeSamplePoint(
         int px, int py,
@@ -210,7 +251,7 @@ namespace filescope {
 
         // Clip the sample ray to the volume's bounding box
         float rayMin = 0.0f, rayMax = 100000.0f;
-        rayBoxIntersection(sampleLocation.pos, sampleLocation.dir, 
+        Intersect::rayBoxIntersection(sampleLocation.pos, sampleLocation.dir, 
             Vector3f(0.0f), gd_volumeBuffer.size(), rayMin, rayMax);
 
         // Offset the ray origin by a fraction of step size
@@ -294,9 +335,10 @@ void RenderKernel::setParameters(CRenderParams const& settings)
 // --------------------------------------------------------------------
 //  Sets the lighting arrangement for the active device
 // --------------------------------------------------------------------
-void RenderKernel::setLights(CBuffer1D<CLight> const& lights)
+void RenderKernel::setLights(CBuffer1D<CLight> const& lights, Vector3f const& ambient)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_lights, &lights, sizeof(lights)));
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_ambient, &ambient, sizeof(ambient)));
 }
 
 // --------------------------------------------------------------------
@@ -367,6 +409,8 @@ void RenderKernel::setTransfer(CTransferBuffer const& transfer)
     VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_diffuseTex, 
       transfer.diffuseHandle(), texFormatDescDiffuse));
     
+
+
 	// Opacity texture sampler settings
 	filescope::gd_opacityTex.normalized     = true;
     filescope::gd_opacityTex.filterMode     = cudaFilterModeLinear; 
@@ -381,6 +425,23 @@ void RenderKernel::setTransfer(CTransferBuffer const& transfer)
 	// Bind the volume handle to a texture for sampling
     VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_opacityTex, 
       transfer.opacityHandle(), texFormatDescOpacity));
+
+
+
+	// Specular texture sampler settings
+	filescope::gd_specularTex.normalized     = true;
+    filescope::gd_specularTex.filterMode     = cudaFilterModeLinear; 
+    filescope::gd_specularTex.addressMode[0] = cudaAddressModeClamp;
+    filescope::gd_specularTex.addressMode[1] = cudaAddressModeClamp;
+    filescope::gd_specularTex.addressMode[2] = cudaAddressModeClamp;
+    
+    // Specify the format for volume data access
+    auto texFormatDescSpecular = cudaCreateChannelDesc(
+        32, 32, 32, 32, cudaChannelFormatKindFloat);
+
+	// Bind the volume handle to a texture for sampling
+    VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_specularTex, 
+      transfer.specularHandle(), texFormatDescSpecular));
 }
 
 // --------------------------------------------------------------------

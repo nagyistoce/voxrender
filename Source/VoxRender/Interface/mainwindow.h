@@ -42,6 +42,7 @@
 #include "renderview.h"
 #include "samplingwidget.h"
 #include "transferwidget.h"
+#include "ambientlightwidget.h"
 
 // QT4 Includes
 #include <QtWidgets/QFileDialog>
@@ -184,8 +185,10 @@ private:
 	enum { NumTransferPanes = 0 };
 	TransferWidget* transferwidget;
 
+    // Light panel panes
+    PaneWidget *         m_ambientPane;
 	QVector<PaneWidget*> m_lightPanes;
-    QSpacerItem* m_spacer;
+    QSpacerItem *        m_spacer;
 
     bool m_imagingUpdate;   ///< Flags a image update signal
     

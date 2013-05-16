@@ -45,7 +45,7 @@ namespace vox
           m_opticalThickness(0.0f),
           m_glossiness(0.0f),
           m_emissive(0.0f, 0.0f, 0.0f),
-          m_diffuse(0.0f, 0.0f, 0.0f),
+          m_diffuse(255, 255, 255),
           m_specular(0.0f, 0.0f, 0.0f),
           m_dirty(true)
         {
@@ -80,10 +80,10 @@ namespace vox
         }
         
         /** Returns the emissive properties of the material */
-        ColorLabHdr emissive() const { return m_emissive; }
+        Vector3f emissive() const { return m_emissive; }
         
         /** Sets the emissive properties of the material */
-        void setEmissive(ColorLabHdr const& emissive)
+        void setEmissive(Vector3f const& emissive)
         {
             if (m_emissive != emissive)
             {
@@ -94,10 +94,10 @@ namespace vox
         }
         
         /** Returns the diffuse properties of the material */
-        ColorLabHdr diffuse() const { return m_diffuse; }
+        Vector<UInt8,3> diffuse() const { return m_diffuse; }
         
         /** Sets the diffuse properties of the material */
-        void setDiffuse(ColorLabHdr const& diffuse)
+        void setDiffuse(Vector<UInt8,3> const& diffuse)
         {
             if (m_diffuse != diffuse)
             {
@@ -108,10 +108,10 @@ namespace vox
         }
         
         /** Returns the specular properties of the material */
-        ColorLabHdr specular() const { return m_specular; }
+        Vector3f specular() const { return m_specular; }
         
         /** Sets the specular properties of the material */
-        void setSpecular(ColorLabHdr const& specular)
+        void setSpecular(Vector3f const& specular)
         {
             if (m_specular != specular)
             {
@@ -125,9 +125,9 @@ namespace vox
         float m_opticalThickness; ///< Optical thickness of material (-INF, INF)
         float m_glossiness;       ///< Glossiness factor
 
-        ColorLabHdr m_emissive;   ///< Emmissive properties of material 
-        ColorLabHdr m_diffuse;    ///< Diffuse reflective properties of material 
-        ColorLabHdr m_specular;   ///< Specular reflective properties of material 
+        Vector3f        m_emissive;   ///< Emmissive properties of material 
+        Vector<UInt8,3> m_diffuse;    ///< Diffuse reflective properties of material 
+        Vector3f m_specular;          ///< Specular reflective properties of material 
 
         bool m_dirty; ///< Dirty flag for interactive rendering
     };

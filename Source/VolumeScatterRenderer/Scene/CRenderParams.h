@@ -57,7 +57,7 @@ public:
     VOX_HOST_DEVICE float primaryStepSize() const { return m_primaryStep; }
     VOX_HOST_DEVICE float shadowStepSize() const { return m_shadowStep; }
     VOX_HOST_DEVICE float occludeStepSize() const { return m_occludeStep; }
-    VOX_HOST_DEVICE float occludeSamples() const { return m_occludeSamples; }
+    VOX_HOST_DEVICE unsigned int occludeSamples() const { return m_occludeSamples; }
 
 private:
     Vector3f m_backdropColor; ///< Background color/radiance (non-reflecting)

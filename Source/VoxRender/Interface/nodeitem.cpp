@@ -218,7 +218,7 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
         // :TODO: LOCKING MECHANISM (to prevent changes while mapping transfer) //
         
         float xNorm = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
-        float yNorm = (position.y() - m_parent->rect().y()) / m_parent->rect().height();
+        float yNorm = 1.f - (position.y() - m_parent->rect().y()) / m_parent->rect().height();
         
         // :TODO: Adjust parameter corresponding to parent transfer item's view 
         if (true) // Density + Opacity
@@ -276,7 +276,7 @@ void NodeItem::sceneRectangleChanged(QRectF rectangle)
     if (true)  // :TODO: Analyze parent transfer's typee
     {
         normPos.setX(m_pNode->position(0));
-        normPos.setY(m_pNode->material()->opticalThickness());
+        normPos.setY(1.f-m_pNode->material()->opticalThickness());
     }
     else if (false)
     {

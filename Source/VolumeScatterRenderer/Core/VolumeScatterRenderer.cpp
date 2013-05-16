@@ -161,7 +161,7 @@ public:
         }
 
         // Transfer function data synchronization
-        if (scene.transfer->isDirty())
+        if (scene.transfer->isDirty() || scene.camera->isDirty())
         {
             auto map = scene.transfer->generateMap();
 
@@ -195,7 +195,7 @@ public:
             
             m_lightBuffer.write(clights);
 
-            RenderKernel::setLights(m_lightBuffer);
+            RenderKernel::setLights(m_lightBuffer, scene.lightSet->ambientLight());
         }
     }
 

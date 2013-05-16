@@ -45,7 +45,7 @@ namespace vox
         LightSet() : m_contextChanged(true) { }
 
         /** Sets the ambient lighting conditions */
-        void setAmbientLight(ColorLabHdr const& light)
+        void setAmbientLight(Vector3f const& light)
         {
             m_ambientLight = light;
 
@@ -53,7 +53,7 @@ namespace vox
         }
 
         /** Returns the ambient lighting conditions */
-        ColorLabHdr const& ambientLight()
+        Vector3f const& ambientLight()
         {
             return m_ambientLight;
         }
@@ -98,7 +98,7 @@ namespace vox
         bool m_contentChanged;
         bool m_ambientChanged;
 
-        ColorLabHdr m_ambientLight;
+        Vector3f m_ambientLight;
 
         std::list<std::shared_ptr<Light>> m_lights;
     };

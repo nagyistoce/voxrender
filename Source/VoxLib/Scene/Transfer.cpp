@@ -26,20 +26,104 @@
 // Include Header
 #include "Transfer.h"
 
+// Include Dependencies
+#include "VoxLib/Core/Functors.h"
+
 // API namespace
 namespace vox
 {
     
 namespace {
 namespace filescope {
-
-    /** Shared_ptr sorting operator */
+    
+    // ----------------------------------------------------------------------------
+    //  Shared_ptr sorting operator
+    // ----------------------------------------------------------------------------
     template<typename T> bool slt(
         const std::shared_ptr<T>& left,
         const std::shared_ptr<T>& right
         )
     {
        return (*left.get() < *right.get());
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Generates a diffuse map from the transfer function specification
+    // ----------------------------------------------------------------------------
+    void mapDiffuse(Image3D<Vector<UInt8,4>> & map, std::list<std::shared_ptr<Node>> transfer)
+    {
+        float samples = static_cast<float>(map.width()) - 1;
+        auto buffer = map.data();
+
+        memset(buffer, 0, map.size()*sizeof(float));
+
+        auto iter = transfer.begin();
+        auto curr = *iter; 
+        iter++;
+        
+        while (iter != transfer.end())
+        {
+            auto next = *iter;
+
+            size_t x1 = static_cast<size_t>(curr->position(0) * samples);
+            if (x1 >= map.width()) x1 = map.width()-1;
+            size_t x2 = static_cast<size_t>(next->position(0) * samples);
+            if (x2 >= map.width()) x2 = map.width()-1;
+            Vector3f s1 = curr->material()->diffuse();
+            Vector3f s2 = next->material()->diffuse();
+            Vector4f y1(s1[0], s1[1], s1[2], 0.0f);
+            Vector4f y2(s2[0], s2[1], s2[2], 0.0f);
+
+            for (size_t i = x1; i <= x2; i++)
+            {
+                float px = i / samples - curr->position(0);
+                float py = next->position(0) - curr->position(0);
+                float part = low( high(px / py, 0.0f), 1.0f );
+                buffer[i] = static_cast<Vector<UInt8,4>>(y1*(1.f - part) + y2*part);
+            }
+
+            curr = next;
+            iter++;
+        }
+
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Generates a opacity map from the transfer function specification
+    // ----------------------------------------------------------------------------
+    void mapOpacity(Image3D<float> & map, std::list<std::shared_ptr<Node>> transfer)
+    {
+        float samples = static_cast<float>(map.width()) - 1;
+        auto buffer = map.data();
+
+        memset(buffer, 0, map.size()*sizeof(float));
+
+        auto iter = transfer.begin();
+        auto curr = *iter; 
+        iter++;
+
+        while (iter != transfer.end())
+        {
+            auto next = *iter;
+
+            size_t x1 = static_cast<size_t>(curr->position(0) * samples);
+            if (x1 >= map.width()) x1 = map.width()-1;
+            size_t x2 = static_cast<size_t>(next->position(0) * samples);
+            if (x2 >= map.width()) x2 = map.width()-1;
+            float  y1 = curr->material()->opticalThickness();
+            float  y2 = next->material()->opticalThickness();
+
+            for (size_t i = x1; i <= x2; i++)
+            {
+                float px = i / samples - curr->position(0);
+                float py = next->position(0) - curr->position(0);
+                float part = low( high(px / py, 0.0f), 1.0f );
+                buffer[i] = - logf( 1.f - (1.f - part) * y1 - part * y2 );
+            }
+
+            curr = next;
+            iter++;
+        }
     }
 
 } // namespace filescope
@@ -100,15 +184,15 @@ std::shared_ptr<TransferMap> Transfer::generateMap()
 
 	m_nodes.sort(filescope::slt<Node>);
 
+    // Resize the maps to match requested resolution
     map->diffuse.resize(128, 1, 1);
     map->opacity.resize(128, 1, 1);
+    map->specular.resize(128, 1, 1);
 
-    // :DEBUG: Linear mapping
-    auto opacityMap = map->opacity.data();
-    for (size_t i = 0; i < 128; i++)
-    {
-        opacityMap[i] = std::numeric_limits<float>::infinity();   
-    }
+    // Generate the opacity mapping
+    filescope::mapOpacity(map->opacity, m_nodes);
+    filescope::mapDiffuse(map->diffuse, m_nodes);
+    //filescope::mapSpecular(map->specular, m_nodes);
 
     return map;
 }
