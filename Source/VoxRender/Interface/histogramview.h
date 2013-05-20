@@ -47,25 +47,30 @@
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsView>
 
-/** Defines view options for VolumeHistogramView objects */
-enum VolHistoType
-{
-    VolHistoType_Begin,                        ///< Begin iterator for VolHistoType enumeration
-    VolHistoType_Density = VolHistoType_Begin, ///< Density magnitude view of volume data
-    VolHistoType_DensityGrad,                  ///< Density vs Gradient view of volume data
-    VolHistoType_DensityLap,                   ///< Density vs Laplacian view of volume data
-    VolHistoType_End                           ///< End iterator for VolHistoType enumeration
-};
-
 /** Implements a QT graphics view for volume histogram data and transfer functions */
 class HistogramView : public QGraphicsView
 {
 	Q_OBJECT
 
 public:
-	HistogramView(QWidget *parent = 0);
+    /** Defines views for histograms and transfer functions */
+    enum DataType
+    {
+        DataType_Begin,                   ///< Begin iterator for VolHistoType enumeration
+        DataType_Density =DataType_Begin, ///< Density magnitude view of volume data
+        DataType_DensityGrad,             ///< Density vs Gradient magnitude view of volume data
+        DataType_DensityLap,              ///< Density vs Laplacian view of volume data
+        DataType_End                      ///< End iterator for VolHistoType enumeration
+    };
 
+public:
     ~HistogramView();
+
+    /** Constructs a new HistogramView with an option transfer function editor */
+	HistogramView(QWidget *parent = 0, bool createTransferView = false);
+
+    /** Updates the transfer function views */
+    void updateTransfer();
 
     /** Enables log scaling of the density magnitude component of the histogram view */
 	void setLogEnabled(bool enabled) 
@@ -101,20 +106,20 @@ private:
     // Updates the drawing canvas bounds
     void updateCanvas();
 
-    VolHistoType m_type; ///< The type of the histogram display
-
     std::vector<size_t> m_bins;
     size_t m_binMax;
 
     unsigned char* m_imagebuffer;
 	unsigned int m_options;
 
-	void wheelEvent( QWheelEvent *event );
-	void resizeEvent( QResizeEvent *event );
+	void wheelEvent(QWheelEvent *event);
+	void resizeEvent(QResizeEvent *event);
 	
 	float zoomfactor;   ///< Current zoom level on histogram display
     
 	TransferItem* m_transferItem; ///< Optional transfer function interaction item
+
+    DataType m_type;
 
 	QGraphicsScene      m_scene;            ///< Histogram view scene handle
 	QGraphicsPixmapItem m_histogramItem;    ///< Histogram image

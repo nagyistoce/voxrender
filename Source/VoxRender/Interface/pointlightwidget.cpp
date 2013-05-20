@@ -2,13 +2,10 @@
 
 	Project: VoxRender - Point Light Interface
 
-	Based on luxrender light group widget class.
-	Lux Renderer website : http://www.luxrender.net 
-
 	Description:
 	 Implements the interface for point light source settings
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -36,8 +33,20 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Scene/Light.h"
+#include "VoxLib/Core/format.h"
+
+// QT Includes
+#include <QtWidgets/QMessageBox>
 
 using namespace vox;
+
+// File scope namespace
+namespace {
+namespace filescope {
+    // :TODO: Use a color selector item
+    char const* stylesheet = "background-color: %1%";
+}
+}
 
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
@@ -46,7 +55,8 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
     QWidget(parent), 
     ui(new Ui::PointLightWidget),
     m_title("Point Light"),
-    m_light(light)
+    m_light(light),
+    m_colorButton(new QColorPushButton())
 {
 	ui->setupUi(this);
 
@@ -60,6 +70,14 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
     ui->doubleSpinBox_distance->setValue( distance );
     ui->doubleSpinBox_latitude->setValue( phi );
     ui->doubleSpinBox_longitude->setValue( theta );
+    ui->doubleSpinBox_intensity->setValue( light->intensity() );
+
+    m_colorButton = new QColorPushButton();
+    Vector3f color = light->color();
+    m_colorButton->setColor(QColor(color[0]*255, color[1]*255, color[2]*255), true); 
+    ui->layout_colorButton->addWidget(m_colorButton);
+
+    connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
 
     m_dirty = false;
 }
@@ -69,6 +87,7 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 // --------------------------------------------------------------------
 PointLightWidget::~PointLightWidget()
 {
+    delete m_colorButton;
     delete ui;
 }
 
@@ -91,7 +110,12 @@ void PointLightWidget::processInteractions()
         m_light->setPositionY(sin(latitude)       * distance);
         m_light->setPositionZ(cl * sin(longitude) * distance);
 
-        // m_light->setColor(ui-> ... ); // :TODO: 
+        m_light->setIntensity( ui->doubleSpinBox_intensity->value() );
+
+        QColor color = m_colorButton->getColor();
+        m_light->setColor( Vector3f(color.red()  /255.0f, 
+                                    color.green()/255.0f, 
+                                    color.blue() /255.0f) );
     }
 }
 
@@ -195,6 +219,14 @@ void PointLightWidget::on_doubleSpinBox_distance_valueChanged(double value)
         ui->horizontalSlider_distance,
         ui->doubleSpinBox_distance,
         value);
-    
+  
+    m_dirty = true;
+}
+
+// --------------------------------------------------------------------
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void PointLightWidget::colorChanged(QColor const& color)
+{
     m_dirty = true;
 }

@@ -102,13 +102,11 @@ NodeItem::NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node) :
     m_pNode(node),
     m_ignorePosChange(false)
 {
-	setFlag( QGraphicsItem::ItemIsMovable );
-	setFlag( QGraphicsItem::ItemSendsGeometryChanges );
-	setFlag( QGraphicsItem::ItemIsSelectable );
+	setFlag(QGraphicsItem::ItemIsMovable);
+	setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+	setFlag(QGraphicsItem::ItemIsSelectable);
 
-    // Perform the initial scene rectangle update connection
-    connect(parentItem()->scene(), SIGNAL(sceneRectChanged(QRectF)),
-                this, SLOT(sceneRectangleChanged(QRectF)));
+    updatePosition();
 
     // Update the tooltip
     setToolTip( vox::format( filescope::toolTipTemplate, 
@@ -118,9 +116,11 @@ NodeItem::NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node) :
 // --------------------------------------------------------------------
 //  Draws the node item graphic
 // --------------------------------------------------------------------
-void NodeItem::paint( QPainter* pPainter, 
+void NodeItem::paint( 
+    QPainter* pPainter, 
 	const QStyleOptionGraphicsItem* pOption, 
-    QWidget* pWidget )
+    QWidget* pWidget 
+    )
 {
 	QBrush Brush; QPen Pen;
 
@@ -160,24 +160,6 @@ void NodeItem::paint( QPainter* pPainter,
 }
 
 // --------------------------------------------------------------------
-//  Sets the position of the node item
-// --------------------------------------------------------------------
-void NodeItem::setPos(const QPointF& newPos)
-{
-    if (newPos == this->pos()) return;
-
-    QGraphicsEllipseItem::setPos(newPos);
-
-    QRectF ellipseRect;
-
-    ellipseRect.setTopLeft( QPointF(-filescope::radius, -filescope::radius) );
-    ellipseRect.setWidth( 2.0f * filescope::radius );
-    ellipseRect.setHeight( 2.0f * filescope::radius );
-
-    setRect( ellipseRect );
-}
-
-// --------------------------------------------------------------------
 //  Maintain link between node display item and actual node
 // --------------------------------------------------------------------
 QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
@@ -190,14 +172,7 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
         bool selected = this->isSelected();
 
         if (!selected) MainWindow::instance->setTransferNode(m_pNode);
-    }
-
-    // Register a rectangle resize callback with the parent scene to 
-    // ensure proper node positioning within the view
-    if (change == QGraphicsItem::ItemSceneChange)
-    {
-        connect(parentItem()->scene(), SIGNAL(sceneRectChanged(QRectF)),
-                this, SLOT(sceneRectangleChanged(QRectF)));
+        else MainWindow::instance->setTransferNode(nullptr);
     }
 
     // Ensure the node remains within the parent boundaries
@@ -216,7 +191,7 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     if (change == QGraphicsItem::ItemPositionHasChanged && !m_ignorePosChange)
     {
         // :TODO: LOCKING MECHANISM (to prevent changes while mapping transfer) //
-        
+
         float xNorm = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
         float yNorm = 1.f - (position.y() - m_parent->rect().y()) / m_parent->rect().height();
         
@@ -236,6 +211,8 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
             m_pNode->setPosition(0, xNorm);
             m_pNode->setPosition(2, yNorm);
         }
+
+        MainWindow::instance->transferWidget()->setSelectedNode(m_pNode);
 
         return position;
     }
@@ -266,14 +243,14 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 }
 
 // --------------------------------------------------------------------
-//  Updates the node item position when the parent scene
+//  Updates the position of the node item 
 // --------------------------------------------------------------------
-void NodeItem::sceneRectangleChanged(QRectF rectangle)
+void NodeItem::updatePosition()
 {
     QPointF normPos;
 
     // Determine the normalized view position based on transfer type
-    if (true)  // :TODO: Analyze parent transfer's typee
+    if (true)  // :TODO: Analyze parent transfer's type
     {
         normPos.setX(m_pNode->position(0));
         normPos.setY(1.f-m_pNode->material()->opticalThickness());
@@ -294,7 +271,17 @@ void NodeItem::sceneRectangleChanged(QRectF rectangle)
         );
 
     // Issue the position update
+    if (newPos == this->pos()) return;
+    
     m_ignorePosChange = true;
-    setPos(newPos); 
+    QGraphicsEllipseItem::setPos(newPos);
     m_ignorePosChange = false;
+
+    QRectF ellipseRect;
+
+    ellipseRect.setTopLeft( QPointF(-filescope::radius, -filescope::radius) );
+    ellipseRect.setWidth( 2.0f * filescope::radius );
+    ellipseRect.setHeight( 2.0f * filescope::radius );
+
+    setRect(ellipseRect);
 }

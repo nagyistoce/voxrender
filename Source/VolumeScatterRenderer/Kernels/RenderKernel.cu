@@ -130,6 +130,26 @@ namespace filescope {
 
         return tex3D(gd_opacityTex, density, 0.0f, 0.0f);
     }
+    
+    // --------------------------------------------------------------------
+    //  Computes the ray intersection with the volume, taking into account
+    //  any bounding volumes etc...
+    // --------------------------------------------------------------------
+    VOX_DEVICE void intersectVolume(
+        const Vector3f &rayPos, 
+        const Vector3f &rayDir, 
+	    float &rayMin, 
+        float &rayMax
+        )
+    {
+        // Compute the intersection of the ray with the volume's outer bounding box
+        Intersect::rayBoxIntersection(rayPos, rayDir, 
+            Vector3f(0.0f), gd_volumeBuffer.size(), rayMin, rayMax);
+
+        // Compute the intersection of the ray with clipping planes (:DEBUG:)
+        //Intersect::rayPlaneIntersection(rayPos, rayDir, 
+        //    Vector3f(0.0f, 1.0f, 0.0f), 150.0f, rayMin, rayMax);
+    }
 
     // --------------------------------------------------------------------
     //  Computes attenuation of light along the specified ray
@@ -144,8 +164,7 @@ namespace filescope {
     {
         // Determine the maximum ray extent
         float rayMin = 0.0f, rayMax = maxDistance;
-        Intersect::rayBoxIntersection(pos, dir, Vector3f(0.0f), 
-            gd_volumeBuffer.size(), rayMin, rayMax);
+        intersectVolume(pos, dir, rayMin, rayMax);
         
         // Offset the ray origin by a fraction of step size
         rayMin += rng.sample1D() * rayStepSize;
@@ -183,12 +202,12 @@ namespace filescope {
             for (unsigned int i = 0; i < samples; i++)
             {
                 transmission += computeTransmission(rng, pos, rng.sampleSphere(), 
-                    gd_renderParams.occludeStepSize(), 5.0f);/*:TODO:*/
+                    gd_renderParams.occludeStepSize(), 5.0f);/*:TODO: occlude distance*/
             }
 
             return transmission / (float)samples;
         }
-        else // Otherwise return full ambient
+        else // Otherwise return no attenuation
         {
             return 1.0f;
         }
@@ -202,37 +221,50 @@ namespace filescope {
     {
         // Sample the gradient at the point of interest
         Vector3f gradient = sampleGradient(location.pos);
+        if (Vector3f::dot(gradient, location.dir) > 0)
+        {
+            gradient = -gradient;
+        }
+
+        // Determine the diffuse characteristic of the sample point 
+        float4 sampleDiffuse = tex3D(gd_diffuseTex, sampleDensity(
+            location.pos[0], location.pos[1], location.pos[2]), 
+            0.0f, 0.0f); // :TODO: Carry density forward with location
+        Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
 
         // Compute the ambient occlusion index
+        Vector3f Lv = diffuse * gd_ambient * computeAmbientOcclusion(rng, location.pos);
 
         // Sample the scene lighting
         if (gd_lights.size() != 0)
         {
             gradient.normalize();
 
-            Vector3f lightEmission(1.0f, 1.0f, 1.0f);
+            // Sample the scene lighting for this iteration
+            Vector3f lightEmission  = gd_lights[0].color();
             Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
 
             // Compute the attenuated light reaching the selected scattering point
-            float transmission = computeTransmission(rng, location.pos, lightDirection,
+            lightEmission *= computeTransmission(rng, location.pos, lightDirection,
                                     gd_renderParams.shadowStepSize(), 1000.0f);
-            lightEmission *= transmission;
 
             // Compute the diffuse component of the reflectance function
-            float4 diffuse = tex3D(gd_diffuseTex, sampleDensity(location.pos[0], location.pos[1], location.pos[2]), 0.0f, 0.0f); // :TODO: Carry density forward with location
-            lightEmission[0] *= diffuse.x;
-            lightEmission[1] *= diffuse.y;
-            lightEmission[2] *= diffuse.z;
-            Vector3f Lv = lightEmission * abs(Vector3f::dot(gradient, lightDirection)); 
+                Lv += lightEmission * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
 
             // Compute the specular component of the reflectance function
 
-            // Compute the ambient lighting using the specified params
-            Lv += Vector3f(diffuse.x, diffuse.y, diffuse.z) * gd_ambient * computeAmbientOcclusion(rng, location.pos);
-
-            return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
+                // Calculate the half vector between the light and view
+                Vector3f H = (lightDirection - location.dir).normalized();
+ 
+                //Intensity of the specular light
+                float NdotH = Vector3f::dot(gradient, H);
+                float intensity = pow(saturate( NdotH ), 80.f);
+ 
+                //Sum up the specular light factoring
+                Lv += Vector3f(1.0f, 1.0f, 1.0f) * lightEmission * intensity; 
         }
-        else return ColorLabxHdr(0.0f, 0.0f, 0.0f);
+
+        return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
     }
 
     // --------------------------------------------------------------------
@@ -251,8 +283,7 @@ namespace filescope {
 
         // Clip the sample ray to the volume's bounding box
         float rayMin = 0.0f, rayMax = 100000.0f;
-        Intersect::rayBoxIntersection(sampleLocation.pos, sampleLocation.dir, 
-            Vector3f(0.0f), gd_volumeBuffer.size(), rayMin, rayMax);
+        intersectVolume(sampleLocation.pos, sampleLocation.dir, rayMin, rayMax);
 
         // Offset the ray origin by a fraction of step size
         float rayStepSize = gd_renderParams.primaryStepSize();
@@ -298,12 +329,11 @@ namespace filescope {
         // Construct the thread's random number generator
         CRandomGenerator rng(&gd_rndBuffer0.at(px, py), 
                              &gd_rndBuffer1.at(px, py));
-
-        // Select a sampling point for the volume for this iteration
-        Ray3f sampleLocation; bool hit = selectVolumeSamplePoint(px, py, rng, sampleLocation);
+        
+        Ray3f sampleLocation;
 
         // Evaluate the shading at the sample point
-        if (hit)
+        if (selectVolumeSamplePoint(px, py, rng, sampleLocation))
         {
             gd_sampleBuffer.push(px, py, estimateRadiance(rng, sampleLocation));
         }

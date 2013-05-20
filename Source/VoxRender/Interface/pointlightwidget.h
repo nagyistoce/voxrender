@@ -31,9 +31,11 @@
 #ifndef POINT_LIGHT_WIDGET_H
 #define POINT_LIGHT_WIDGET_H
 
-// QT4 Dependencies
+// QT Dependencies
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QColorDialog>
+
+#include "Extensions/QColorPushButton.h"
 
 // Standard Library
 #include <memory>
@@ -71,6 +73,8 @@ private:
 	int m_index;
     bool m_dirty;
 
+    QColorPushButton * m_colorButton;
+
 private slots:
 	void on_horizontalSlider_intensity_valueChanged(int value);
 	void on_doubleSpinBox_intensity_valueChanged(double value);
@@ -80,6 +84,8 @@ private slots:
 	void on_doubleSpinBox_longitude_valueChanged(double value);
 	void on_horizontalSlider_distance_valueChanged(int value);
 	void on_doubleSpinBox_distance_valueChanged(double value);
+    
+    void colorChanged(QColor const& color);
 };
 
 #endif // POINT_LIGHT_WIDGET_H

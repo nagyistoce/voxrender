@@ -1,11 +1,10 @@
 /* ===========================================================================
 
 	Project: TransferItem - Transfer function display widget
+    
+	Description: Displays a transfer function mapping
 
-	Description:
-	 Displays an n-dimensional set of transfer function nodes.
-
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -30,24 +29,30 @@
 // Include Dependencies
 #include "mainwindow.h"
 
+// VoxLib Dependencies
+#include "VoxLib/Scene/Transfer.h"
+
 // QT Dependencies
 #include <QtWidgets/QGraphicsSceneMouseEvent>
 
-// ---------------------------------------------------------
+using namespace vox;
+
+// ----------------------------------------------------------------------------
 //  Constructor - Construct the transfer function editor
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 TransferItem::TransferItem(QGraphicsItem* parent)
 	: QGraphicsRectItem(parent)
 {
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(synchronizeView()));
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Regenerates the transfer function display nodes
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void TransferItem::synchronizeView()
 {
     m_nodes.clear();
+    m_edges.clear();
 
     if (auto transfer = MainWindow::instance->activeScene.transfer)
     {
@@ -75,5 +80,37 @@ void TransferItem::synchronizeView()
         }
 
         // Update transfer function edges
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Deselects or creates new nodes within the transfer function on right click 
+//  events
+// ----------------------------------------------------------------------------
+void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
+{
+    QGraphicsRectItem::mousePressEvent(pEvent);
+
+    if (pEvent->button() == Qt::LeftButton) return;
+
+    auto transfer = MainWindow::instance->scene().transfer;
+
+    auto node = std::make_shared<Node>();
+
+    transfer->addNode(node);
+
+    MainWindow::instance->setTransferNode(node);
+
+    MainWindow::instance->transferWidget()->onTransferFunctionChanged();
+}
+
+// ----------------------------------------------------------------------------
+//  Recalculates the transfer node positions following a scene rect resize
+// ----------------------------------------------------------------------------
+void TransferItem::onResizeEvent()
+{
+    BOOST_FOREACH(auto & node, m_nodes)
+    {
+        node->updatePosition();
     }
 }

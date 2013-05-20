@@ -35,50 +35,76 @@
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry/Vector.h"
 
-// QT4 Includes
+// QT Includes
 #include <QtWidgets/QMessageBox>
 
 using namespace vox;
 
 // File scope namespace
-namespace 
-{
-    namespace filescope
+namespace {
+namespace filescope {
+    
+    // ----------------------------------------------------------------------------
+    //  Converts a Vec3 Color RGB normalized to a QColor
+    // ----------------------------------------------------------------------------
+    QColor toQColor(Vector<UInt8,3> rgbColor)
     {
-        // :TODO: Use a color selector item
-        char const* stylesheet = "background-color: %1%";
+        return QColor( rgbColor[0], rgbColor[1], rgbColor[2]);
     }
-}
+
+} // namespace filescope
+} // namespace anonymous
 
 // ----------------------------------------------------------------------------
 // Constructor - Initialize widget slots and signals
 // ----------------------------------------------------------------------------
 TransferWidget::TransferWidget( QWidget *parent ) :
     QWidget( parent ),
-    ui( new Ui::TransferWidget )
+    ui( new Ui::TransferWidget ),
+    m_colorDiffuse(new QColorPushButton()),
+    m_colorEmissive(new QColorPushButton()),
+    m_colorSpecular(new QColorPushButton())
 {
     ui->setupUi(this);
 
-	// Transfer function views
-	m_primaryView = new HistogramView( ui->transferPrimary );
-	ui->gridLayout_transferPrimary->addWidget( m_primaryView, 0, 0, 1, 1 );
-	m_secondaryView = new HistogramView( ui->transferSecondary );
-	ui->gridLayout_transferSecondary->addWidget( m_secondaryView, 0, 0, 1, 1 );
+	// Transfer function view elements (with histogram underlay)
+	m_primaryView   = new HistogramView(ui->transferPrimary,   true);
+	m_secondaryView = new HistogramView(ui->transferSecondary, true);
+	ui->gridLayout_transferPrimary->addWidget(  m_primaryView,   0, 0, 1, 1);
+	ui->gridLayout_transferSecondary->addWidget(m_secondaryView, 0, 0, 1, 1);
 
-	// Default transfer function
-	switchDimensions( 1 );
+	switchDimensions(1); // Default to 1D transfer function mode
+
+    // Add the color selection widgets to the layout
+    ui->layout_diffuseColor->addWidget(m_colorDiffuse);
+    ui->layout_emissiveColor->addWidget(m_colorEmissive);
+    ui->layout_specularColor->addWidget(m_colorSpecular);
+
+    connect(m_colorDiffuse, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorDiffuseChanged(const QColor&)));
+    connect(m_colorEmissive, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorEmissiveChanged(const QColor&)));
+    connect(m_colorSpecular, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorSpecularChanged(const QColor&)));
 
     // Ensure transfer node selection is detected 
     connect(MainWindow::instance, SIGNAL(transferNodeSelected(std::shared_ptr<vox::Node>)),
         this, SLOT(setSelectedNode(std::shared_ptr<vox::Node>)));
+
+    setSelectedNode(nullptr); // Initialize the widget to no curr node settings
 }
     
 // ----------------------------------------------------------------------------
-// Destructor - Delete transfer views
+//  Destructor - Delete transfer views
 // ----------------------------------------------------------------------------
-TransferWidget::~TransferWidget( )
+TransferWidget::~TransferWidget()
 {
     delete ui;
+}
+
+// ----------------------------------------------------------------------------
+//  Returns the currently selected transfer function node
+// ----------------------------------------------------------------------------
+std::shared_ptr<Node> TransferWidget::selectedNode()
+{
+    return m_currentNode;
 }
 
 // ----------------------------------------------------------------------------
@@ -86,19 +112,37 @@ TransferWidget::~TransferWidget( )
 // ----------------------------------------------------------------------------
 void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 {
-    m_currentNode.reset();
-    
-    auto material = node->material();
-
-    // Update all of the widget controls
-    ui->doubleSpinBox_density->setValue(node->position(0)*100.0f);
-    ui->doubleSpinBox_gradient->setValue(node->position(1)*100.0f);
-    ui->doubleSpinBox_gradient2->setValue(node->position(2)*100.0f);
-    ui->doubleSpinBox_gloss->setValue(material->glossiness()*100.0f);
-    ui->doubleSpinBox_opacity->setValue(material->opticalThickness()*100.0f);
-    ui->checkBox_visible->setChecked(true);
-
     m_currentNode = node;
+    
+    if (node)
+    {
+        auto material = m_currentNode->material();
+        
+        // Enable all off the active node controls
+        ui->groupBox_currNode->setDisabled(false);
+        ui->groupBox_nodePos->setDisabled(false);
+        ui->groupBox_material->setDisabled(false);
+
+        // Update all of the active node controls
+        ui->doubleSpinBox_density->setValue(m_currentNode->position(0)*100.0f);
+        ui->doubleSpinBox_gradient->setValue(m_currentNode->position(1)*100.0f);
+        ui->doubleSpinBox_gradient2->setValue(m_currentNode->position(2)*100.0f);
+        ui->doubleSpinBox_gloss->setValue(material->glossiness()*100.0f);
+        ui->doubleSpinBox_opacity->setValue(material->opticalThickness()*100.0f);
+        ui->checkBox_visible->setChecked(true);
+
+        m_colorDiffuse->setColor(filescope::toQColor(material->diffuse()), true);
+        m_colorEmissive->setColor(filescope::toQColor(material->emissive()), true);
+        m_colorSpecular->setColor(filescope::toQColor(material->specular()), true);
+    }
+    else
+    {
+        // Disable all of the active node controls
+        ui->groupBox_currNode->setDisabled(true);
+        ui->groupBox_nodePos->setDisabled(true);
+        ui->groupBox_material->setDisabled(true);
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -118,6 +162,17 @@ void TransferWidget::synchronizeView()
 // ----------------------------------------------------------------------------
 void TransferWidget::processInteractions()
 {
+}
+
+// ----------------------------------------------------------------------------
+//  Tracks scene interaction through key event input
+// ----------------------------------------------------------------------------
+void TransferWidget::keyPressEvent(QKeyEvent * event)
+{
+    switch (event->key())
+    {
+    case Qt::Key_Delete: on_pushButton_delete_clicked(); break;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -293,56 +348,18 @@ void TransferWidget::on_pushButton_last_clicked( )
 // ----------------------------------------------------------------------------
 //  Delete selected node
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_delete_clicked( )
+void TransferWidget::on_pushButton_delete_clicked()
 {
     if (m_currentNode)
     {
         m_transfer->removeNode(m_currentNode);
     }
 
-    on_pushButton_first_clicked();
-}
+    onTransferFunctionChanged();
 
-// ----------------------------------------------------------------------------
-//  Select local emission transfer
-// ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_emission_clicked( )
-{
-	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
-	ui->pushButton_emission->setStyleSheet( 
-        vox::format( filescope::stylesheet, 
-            color.name().toLatin1().data() ).c_str( ) );
-}
+    setSelectedNode(nullptr);
 
-// ----------------------------------------------------------------------------
-// Select local specular transfer
-// ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_specular_clicked( )
-{
-	QColor color = colorPicker.getColor( Qt::white ); /* currNode->getColor( ); */
-	ui->pushButton_specular->setStyleSheet( 
-        vox::format( filescope::stylesheet, 
-            color.name().toLatin1().data() ).c_str( ) );
-
-    if (m_currentNode)
-    {
-    }
-}
-
-// ----------------------------------------------------------------------------
-// Select local diffuse transfer
-// ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_diffuse_clicked( )
-{
-	QColor color = colorPicker.getColor( Qt::white ); // :TODO: currNode->getColor( );
-	ui->pushButton_diffuse->setStyleSheet( 
-        vox::format( filescope::stylesheet, 
-            color.name().toLatin1().data() ).c_str( ) );
-    
-    if (m_currentNode)
-    {
-        m_currentNode->material()->setDiffuse( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
-    }
+    //on_pushButton_first_clicked();
 }
 
 // ----------------------------------------------------------------------------
@@ -447,3 +464,26 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
     }
 }
 
+// --------------------------------------------------------------------
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void TransferWidget::colorDiffuseChanged(QColor const& color)
+{
+    m_currentNode->material()->setDiffuse( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+}
+
+// --------------------------------------------------------------------
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void TransferWidget::colorEmissiveChanged(QColor const& color)
+{
+    m_currentNode->material()->setEmissive( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+}
+
+// --------------------------------------------------------------------
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void TransferWidget::colorSpecularChanged(QColor const& color)
+{
+    m_currentNode->material()->setSpecular( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+}

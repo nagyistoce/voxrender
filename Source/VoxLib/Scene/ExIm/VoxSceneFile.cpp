@@ -59,6 +59,13 @@ namespace
             Optional,   ///< Node is optional 
         };
 
+        // --------------------------------------------------------------------
+        //  Reads a vector of unknown or variable length
+        // --------------------------------------------------------------------
+        template<typename T> std::vector<T> parseNVector(String const& vector)
+        {
+        }
+
         // Export module implementation
         class SceneExporter
         {
@@ -271,11 +278,10 @@ namespace
                   {
                       auto & node = (*it).second;
                       
-                      Vector3f color = node.get<Vector3f>("Color");
-
                       auto light = lightSet.addLight();
-                      light->setColor( ColorLabHdr(color[0], color[1], color[2]) );
+                      light->setColor( node.get<Vector3f>("Color") );
                       light->setPosition( node.get<Vector3f>("Position") );
+                      light->setIntensity( node.get("Intensity", 1.0f) );
                   }
 
                 pop();

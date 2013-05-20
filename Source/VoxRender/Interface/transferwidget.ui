@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>389</width>
-    <height>1075</height>
+    <height>1085</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -158,7 +158,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="groupBox_currNode">
      <property name="title">
       <string>Current Node</string>
      </property>
@@ -242,7 +242,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="groupBox_nodePos">
      <property name="title">
       <string>Node Position</string>
      </property>
@@ -336,7 +336,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_localNode">
+    <widget class="QGroupBox" name="groupBox_material">
      <property name="title">
       <string>Material Properties</string>
      </property>
@@ -422,11 +422,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_diffuse">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="layout_diffuseColor"/>
         </item>
         <item>
          <spacer name="horizontalSpacer_3">
@@ -449,11 +445,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_specular">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="layout_specularColor"/>
         </item>
         <item>
          <spacer name="horizontalSpacer_2">
@@ -476,11 +468,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_emission">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="layout_emissiveColor"/>
         </item>
         <item>
          <spacer name="horizontalSpacer_emission">

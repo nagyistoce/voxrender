@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>459</width>
-    <height>142</height>
+    <height>151</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -222,11 +222,7 @@
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QPushButton" name="pushButton_color">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
+      <layout class="QVBoxLayout" name="layout_colorButton"/>
      </item>
     </layout>
    </item>

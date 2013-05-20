@@ -46,21 +46,22 @@ namespace vox
         
         /** Constructs a device light for the specified light */
         VOX_HOST CLight(Light & light) : 
-            m_color(light.color()), m_position(light.position())
+            m_position(light.position())
         {
+            m_color = light.color() * light.intensity();
         }
 
         /** Light position accessor */
         VOX_HOST_DEVICE Vector3f const& position() const { return m_position; }
         
         /** Light color accessor */
-        VOX_HOST_DEVICE ColorLabHdr const& color() const { return m_color; }
+        VOX_HOST_DEVICE Vector3f const& color() const { return m_color; }
 
     private:
-        Vector3f     m_position;  ///< Light position
-        float        m_packing1;  ///< Alignment component
-        ColorLabHdr  m_color;     ///< Light color
-        float        m_packing2;  ///< Alignment component
+        Vector3f  m_position;  ///< Light position
+        float     m_packing1;  ///< Alignment component
+        Vector3f  m_color;     ///< Light color
+        float     m_packing2;  ///< Alignment component
     };
 }
 

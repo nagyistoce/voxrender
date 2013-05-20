@@ -61,7 +61,9 @@ AboutDialogue::~AboutDialogue( )
 // ---------------------------------------------------------
 AboutImage::AboutImage( QWidget *parent ) : 
     QGraphicsView(parent),
-    m_authors("The VoxRender Qt QUI is based on LuxRender."),
+    m_authors("The VoxRender Qt QUI is based on LuxRender.         "
+              "Visit the website at http://code.google.com/p/voxrender/.         "
+              "VoxRender is an open source development project."),
     m_version(vox::format("Version %1%", VOX_VERSION_STRING).c_str( ))
 {
 	setBackgroundBrush( QImage(":/images/splash.png") );

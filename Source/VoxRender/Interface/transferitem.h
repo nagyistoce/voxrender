@@ -2,10 +2,9 @@
 
 	Project: TransferItem - Transfer function display widget
 
-	Description:
-	 Displays an n-dimensional set of transfer function nodes.
+	Description: Displays a transfer function mapping
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -54,8 +53,13 @@ public:
     /** Detaches the transfer function display from the scene object */
 	~TransferItem() { }
     
+    /** Recalculates relative positions */
+    void onResizeEvent();
+
 public slots:
     void synchronizeView();
+
+    void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 
 private:
     std::list<std::shared_ptr<NodeItem>> m_nodes; ///< Graphics items for transfer nodes

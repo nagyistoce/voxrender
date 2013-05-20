@@ -249,7 +249,7 @@ void RenderController::managementSubroutine()
 void RenderController::synchronizationSubroutine()
 {
     if (m_scene.camera->isDirty() ||
-        m_scene.lightSet->isContentDirty() ||
+        m_scene.lightSet->isDirty() ||
         m_scene.parameters->isDirty())
     {
         m_masterRenderer->syncScene(m_scene);
@@ -258,6 +258,7 @@ void RenderController::synchronizationSubroutine()
         m_scene.camera->m_filmChanged        = false;
         m_scene.lightSet->m_contextChanged   = false;
         m_scene.lightSet->m_contentChanged   = false;
+        m_scene.lightSet->m_ambientChanged   = false;
         m_scene.volume->m_contextChanged     = false;
         m_scene.transfer->m_contextChanged   = false;
         m_scene.parameters->m_contextChanged = false;

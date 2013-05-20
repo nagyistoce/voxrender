@@ -40,9 +40,9 @@ INCLUDE_DIRECTORIES(.)
 find_package(Qt5Widgets)
 
 IF(Qt5Widgets_FOUND)
-    MESSAGE( STATUS "Qt library directory: " ${Qt55Widgets_LIBRARY_DIR} )
-    MESSAGE( STATUS "Qt include directory: " ${Qt55Widgets_INCLUDE_DIR} )
-    MESSAGE( STATUS "Qt binary directory: " ${Qt55Widgets_BINARY_DIR} )
+    MESSAGE( STATUS "Qt library directory: " ${Qt5Widgets_LIBRARY_DIR} )
+    MESSAGE( STATUS "Qt include directory: " ${Qt5Widgets_INCLUDE_DIR} )
+    MESSAGE( STATUS "Qt binary directory: " ${Qt5Widgets_BINARY_DIR} )
     INCLUDE_DIRECTORIES(${QT_USE_FILE})
 	
     #===============================================#
@@ -55,6 +55,7 @@ IF(Qt5Widgets_FOUND)
     #                 Source Files                  #
     #===============================================#
     SET(VOXQTGUI_SRCS
+        Extensions/QColorPushButton.cpp
         Interface/aboutdialogue.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
@@ -82,6 +83,7 @@ IF(Qt5Widgets_FOUND)
     #                 HEADER FILES                  #
     #===============================================#
     SET(VOXQTGUI_MOC
+        Extensions/QColorPushButton.h
         Interface/aboutdialogue.h
 	    Interface/arealightwidget.h
         Interface/camerawidget.h

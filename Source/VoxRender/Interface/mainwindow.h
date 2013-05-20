@@ -87,13 +87,17 @@ public:
     /** Current scene accessor */
     vox::Scene & scene() { return activeScene; }
 
-    /** CUDA renderer accessor */ 
+    /** Returns the currently active renderer */ 
     vox::VolumeScatterRenderer & renderer() 
     { 
         return *m_renderer; 
     }
 
+    /** Returns the transfer widget object handle */
+    TransferWidget * transferWidget() { return transferwidget; }
+
     /** Sets the working transfer node for global editing */
+    // :TODO: Move to TransferWidget class
     void setTransferNode(std::shared_ptr<vox::Node> node)
     {
         emit transferNodeSelected(node);

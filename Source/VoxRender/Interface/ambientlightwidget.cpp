@@ -50,6 +50,12 @@ AmbientLightWidget::AmbientLightWidget(QWidget * parent) :
 {
 	ui->setupUi(this);
 
+    m_colorButton = new QColorPushButton();
+    m_colorButton->setColor(Qt::white, true); 
+    ui->layout_colorButton->addWidget(m_colorButton);
+
+    connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
+
     m_dirty = false;
 }
 
@@ -68,8 +74,12 @@ void AmbientLightWidget::processInteractions()
 {
     if (m_dirty)
     {
-        Vector3f intensity(ui->doubleSpinBox_intensity->value() / 50.0f);
-        MainWindow::instance->scene().lightSet->setAmbientLight( intensity );
+        QColor color = m_colorButton->getColor();
+        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * 
+                            (ui->doubleSpinBox_intensity->value() / 50.0f);
+        MainWindow::instance->scene().lightSet->setAmbientLight( light );
+
+        m_dirty = false;
     }
 }
 
@@ -103,5 +113,13 @@ void AmbientLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
         ui->doubleSpinBox_intensity,
         value);
 
+    m_dirty = true;
+}
+
+// --------------------------------------------------------------------
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void AmbientLightWidget::colorChanged(QColor const& color)
+{
     m_dirty = true;
 }

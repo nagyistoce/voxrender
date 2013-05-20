@@ -77,6 +77,13 @@ BOOST_AUTO_TEST_SUITE( Vector )
         BOOST_CHECK(vec1+vec2 == Vector3f(1.0f, 6.0, 1.0f));
         BOOST_CHECK(Vector3f::dot(vec1, vec2) == 8.0f);
         }
+
+        {
+        Vector3 vec1(0, 2, 0);
+        Vector3 vec2(1, 4, 1);
+        BOOST_CHECK( -vec1 == Vector3(0, -2, 0) );
+        BOOST_CHECK( -vec2 == Vector3(-1, -4, -1) );
+        }
     }
 
     // Some helper functions for testing map and fold

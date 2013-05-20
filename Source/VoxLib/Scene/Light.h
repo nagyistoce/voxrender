@@ -79,7 +79,7 @@ namespace vox
         }
 
         /** Returns true if the context change flag is set */
-        bool isDirty() const { return m_contextChanged || m_contentChanged; }
+        bool isDirty() const { return m_contextChanged || m_contentChanged || m_ambientChanged; }
 
         /** Returns true if the internal content is dirty */
         bool isContentDirty() const
@@ -117,7 +117,10 @@ namespace vox
         float positionZ() const { return m_position[2]; }
         
         /** Light color accessor */
-        ColorLabHdr const& color() const { return m_color; }
+        Vector3f const& color() const { return m_color; }
+
+        /** Light intensity accessor */
+        float intensity() const { return m_intensity; }
 
         /** Light position modifiers */
         void setPosition(Vector3f const& position) { m_position = position; VOX_CC }
@@ -126,7 +129,10 @@ namespace vox
         void setPositionZ(float pos) { m_position[2] = pos; VOX_CC }
 
         /** Light color modifier */
-        void setColor(ColorLabHdr const& color) { m_color = color; VOX_CC }
+        void setColor(Vector3f const& color) { m_color = color; VOX_CC }
+
+        /** Light intensity modifier */
+        void setIntensity(float intensity) { m_intensity = intensity; VOX_CC }
 
     private:
         friend LightSet;
@@ -135,8 +141,9 @@ namespace vox
 
         bool m_contextChanged;
 
-        Vector3f     m_position;  ///< Light position
-        ColorLabHdr  m_color;     ///< Light color 
+        Vector3f m_position;  ///< Light position
+        Vector3f m_color;     ///< Light color 
+        float    m_intensity; ///< Light intensity
 
         std::shared_ptr<LightSet> m_parent; ///< Parent light set
     };

@@ -42,7 +42,8 @@ namespace vox
     /** 
      * Computes the intesection of a ray and a box.
      *
-     * Following the execution of this function
+     * Following the execution of this function rayMin and rayMax will be
+     * clipped to the extent of the specified ray which intersects the box
      *
      * @param [in]      rayPos The origin of the ray
      * @param [in]      rayDir The direction vector of the ray
@@ -50,6 +51,8 @@ namespace vox
      * @param [in]      bmax   Second point defining bounding box
      * @param [in][out] rayMin Indicates the minimum extent of the ray
      * @param [in][out] rayMax Indicates the maximum extent of the ray
+     *
+     * @returns true if an intersection occured
      */
     static VOX_HOST_DEVICE bool rayBoxIntersection( 
         const Vector3f &rayPos, 
@@ -75,6 +78,71 @@ namespace vox
 	    rayMin = high(rayMin, high(tNear[0], high(tNear[1], tNear[2])));
 	    rayMax = low(rayMax, low(tFar[0], low(tFar[1], tFar[2])));
 
+        return rayMin > rayMax;
+    }
+
+    /** 
+     * Computes the intesection of a ray and a plane.
+     *
+     * Following the execution of this function rayMin and rayMax will be
+     * clipped to the extent of the specified ray which intersects the plane
+     *
+     * @param [in]      rayPos   The origin of the ray
+     * @param [in]      rayDir   The direction vector of the ray
+     * @param [in]      normal   The normal vector of the plane
+     * @param [in]      distance The distance from the origin to the plane
+     * @param [in][out] rayMin   Indicates the minimum extent of the ray
+     * @param [in][out] rayMax   Indicates the maximum extent of the ray
+     *
+     * @returns true if an intersection occured
+     */
+    static VOX_HOST_DEVICE bool rayPlaneIntersection( 
+        const Vector3f &rayPos, 
+        const Vector3f &rayDir, 
+        const Vector3f &normal, 
+        float distance,
+	    float &rayMin, 
+        float &rayMax)
+    {
+        float dt = Vector3f::dot(rayDir, normal);
+        float t  = (distance - Vector3f::dot(rayPos, normal)) / dt;
+
+        // Cull outwards from normal
+        if (dt < 0)
+        {
+            if (t > rayMin) rayMin = t;
+        }
+        else
+        {
+            if (t < rayMax) rayMax = t;
+        }
+
+        return rayMin > rayMax;
+    }
+
+    /** 
+     * Computes the intesection of a ray and a sphere.
+     *
+     * Following the execution of this function rayMin and rayMax will be
+     * clipped to the extent of the specified ray which intersects the plane
+     *
+     * @param [in]      rayPos The origin of the ray
+     * @param [in]      rayDir The direction vector of the ray
+     * @param [in]      origin The origin of the sphere
+     * @param [in]      radius The radius of the sphere
+     * @param [in][out] rayMin Indicates the minimum extent of the ray
+     * @param [in][out] rayMax Indicates the maximum extent of the ray
+     *
+     * @returns true if an intersection occured
+     */
+    static VOX_HOST_DEVICE bool raySphereIntersection( 
+        const Vector3f &rayPos, 
+        const Vector3f &rayDir, 
+        const Vector3f &origin, 
+        float radius, 
+	    float &rayMin, 
+        float &rayMax)
+    {
         return rayMin > rayMax;
     }
 

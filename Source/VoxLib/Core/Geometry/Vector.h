@@ -249,7 +249,18 @@ namespace vox
 		VOX_HOST_DEVICE inline Vector& normalize() { return *this /= length(); }
 
         /** Returns a normalized copy of the vector */
-		VOX_HOST_DEVICE inline const Vector normalized() const { return *this / length(); }
+		VOX_HOST_DEVICE inline Vector normalized() const { return *this / length(); }
+
+        /** Unary subtraction operator */
+        VOX_HOST_DEVICE Vector operator-()
+        {
+            Vector<T,N> result;
+            for (size_t i = 0; i < N; i++)
+            {
+                result[i] = - coord[i];
+            }
+            return result;
+        }
 
 		/** Assignment Operator **/
 		template< int M >

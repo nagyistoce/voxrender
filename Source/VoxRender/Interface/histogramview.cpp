@@ -34,14 +34,14 @@ using namespace vox;
 // ---------------------------------------------------------
 // Constructor - Initialize display scene and view parameters
 // ---------------------------------------------------------
-HistogramView::HistogramView( QWidget *parent ) : 
+HistogramView::HistogramView(QWidget *parent, bool createTransferView) : 
     QGraphicsView(parent),
-    //m_type( RenderController::VolumeHistogramType_Density ),
-	m_margins( 30, 20, -20, -30 ),
-    m_imagebuffer( nullptr), 
-    m_transferItem( nullptr ),
-    m_histogramItem( nullptr ),
-    m_gridItem( nullptr ),
+    m_type(DataType_Density),
+	m_margins(30, 20, -20, -30),
+    m_imagebuffer(nullptr), 
+    m_transferItem(nullptr),
+    m_histogramItem(nullptr),
+    m_gridItem(nullptr),
     m_options( 0 ),
     m_binMax( 0 )
 {
@@ -70,7 +70,7 @@ HistogramView::HistogramView( QWidget *parent ) :
 	m_histogramItem.setZValue( 1 );
     
     // Transfer function item is optional...
-    if (true)
+    if (createTransferView)
     {
         m_transferItem = new TransferItem();
         m_scene.addItem( m_transferItem );
@@ -91,7 +91,7 @@ HistogramView::~HistogramView( )
 // ---------------------------------------------------------
 // Zoom in/out on mouse wheel event
 // ---------------------------------------------------------
-void HistogramView::wheelEvent( QWheelEvent* event ) 
+void HistogramView::wheelEvent(QWheelEvent* event) 
 {
 	const float zoomsteps[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
@@ -108,10 +108,10 @@ void HistogramView::wheelEvent( QWheelEvent* event )
 	scale( zoomfactor, zoomfactor );
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Histogram view resize event
-// ---------------------------------------------------------
-void HistogramView::resizeEvent( QResizeEvent *event ) 
+// ----------------------------------------------------------------------------
+void HistogramView::resizeEvent(QResizeEvent *event) 
 {	
     // Resize the canvas rectangle and compute margins
 	m_canvasRectangle = rect();
@@ -119,19 +119,39 @@ void HistogramView::resizeEvent( QResizeEvent *event )
 	m_scene.setSceneRect(m_canvasRectangle);
 
 	m_canvasRectangle.adjust( 
-        m_margins.left( ), m_margins.top( ), 
-		m_margins.right( ), m_margins.bottom( ) );
+        m_margins.left(), m_margins.top(), 
+		m_margins.right(), m_margins.bottom() 
+        );
 
-    if (m_transferItem) m_transferItem->setRect( m_canvasRectangle );
+    if (m_transferItem) 
+    {
+        m_transferItem->setRect(m_canvasRectangle);
 
-	m_gridItem.setRect( m_canvasRectangle );
+        m_transferItem->onResizeEvent();
+    }
+
+	m_gridItem.setRect(m_canvasRectangle);
 
     // Regenerate the background image
-    updateImage( );
+    updateImage();
 
-	QGraphicsView::resizeEvent( event );
+	QGraphicsView::resizeEvent(event);
 }
 
+// ----------------------------------------------------------------------------
+//  Updates the transfer function item for this view (if enabled)
+// ----------------------------------------------------------------------------
+void HistogramView::updateTransfer() 
+{ 
+    if (m_transferItem) 
+    { 
+        m_transferItem->synchronizeView(); 
+    }
+}
+
+// ---------------------------------------------------------
+//  
+// ---------------------------------------------------------
 void HistogramView::updateCanvas()
 {
 }

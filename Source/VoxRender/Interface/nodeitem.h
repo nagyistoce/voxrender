@@ -55,29 +55,26 @@ namespace vox { class Node; };
 class TransferItem;
 
 /** Graphics item representing a transfer function node */
-class NodeItem : public QObject, public QGraphicsEllipseItem
+class NodeItem : public QGraphicsEllipseItem
 {
-    Q_OBJECT
-
 public:
     /** Constructs a new NodeItem for the specified transfer node */
 	NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node);
 
-	void setPos( const QPointF& pos );
-
-signals:
-    /** Signal which indicates the position changed */
-    void nodeChanged();
+    /** Updates the position of the node item */
+    void updatePosition();
 
 protected:
-	virtual void mousePressEvent( QGraphicsSceneMouseEvent* pEvent );
-	virtual void mouseReleaseEvent( QGraphicsSceneMouseEvent* pEvent );
+	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
+	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent);
 
-	virtual void paint( QPainter* pPainter, 
+	virtual void paint( 
+        QPainter* pPainter, 
 		const QStyleOptionGraphicsItem* pOption, 
-		QWidget* pWidget );
+		QWidget* pWidget 
+        );
 
-    virtual QVariant itemChange( GraphicsItemChange Change, const QVariant& Value );
+    virtual QVariant itemChange(GraphicsItemChange Change, const QVariant& Value);
 
 private:
     TransferItem* m_parent; ///< Handle to parent 
@@ -85,9 +82,6 @@ private:
     std::shared_ptr<vox::Node> m_pNode;   ///< Associated transfer node
     
     bool m_ignorePosChange; ///< Indicates lock for synchronizing node attributes
-
-private slots:
-    void sceneRectangleChanged(QRectF rectangle);
 };
 
 // End definition

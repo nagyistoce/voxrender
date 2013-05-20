@@ -28,8 +28,11 @@
 #ifndef TRANSFERWIDGET_H
 #define TRANSFERWIDGET_H
 
+// :TODO: Singleton instance for subwidgets to use
+
 // Include Dependencies
 #include "histogramview.h"
+#include "Extensions/QColorPushButton.h"
 
 // VoxLib Includes
 #include "VoxLib/Core/VoxRender.h"
@@ -51,12 +54,23 @@ public:
     
     void synchronizeView();
     void processInteractions();
+    
+    /** Returns the currently selected transfer function node */
+    std::shared_ptr<vox::Node> selectedNode();
+
+    void onTransferFunctionChanged() 
+    { 
+        m_primaryView->updateTransfer();
+        m_secondaryView->updateTransfer();
+    }
 
 private:
     Ui::TransferWidget *ui;
 
 	// Color Selection Dialogue
-	QColorDialog colorPicker;
+    QColorPushButton * m_colorDiffuse;
+    QColorPushButton * m_colorEmissive;
+    QColorPushButton * m_colorSpecular;
 
 	// Transfer function view
 	HistogramView* m_primaryView;
@@ -73,29 +87,27 @@ private:
 	void switchDimensions( int nDims );
 	bool canSwitchDimensions( );
 
+    
+    void keyPressEvent(QKeyEvent * event);
+
 signals:
-	void transferChanged( );
+	void transferChanged();
 
 public slots:
     void setSelectedNode(std::shared_ptr<vox::Node> node);
 
 private slots:
 	// Node selection group box
-	void on_pushButton_delete_clicked( );
-	void on_pushButton_next_clicked( );
-	void on_pushButton_prev_clicked( );
-	void on_pushButton_first_clicked( );
-	void on_pushButton_last_clicked( );
-
-	// Local transfer group box
-	void on_pushButton_emission_clicked( );
-	void on_pushButton_specular_clicked( );
-	void on_pushButton_diffuse_clicked( );
+	void on_pushButton_delete_clicked();
+	void on_pushButton_next_clicked();
+	void on_pushButton_prev_clicked();
+	void on_pushButton_first_clicked();
+	void on_pushButton_last_clicked();
 
 	// Dimension selection group box
-	void on_radioButton_1_toggled( bool checked );
-	void on_radioButton_2_toggled( bool checked );
-	void on_radioButton_3_toggled( bool checked );
+	void on_radioButton_1_toggled(bool checked);
+	void on_radioButton_2_toggled(bool checked);
+	void on_radioButton_3_toggled(bool checked);
 
     // Slider/SpinBox connections
     void on_doubleSpinBox_opacity_valueChanged(double value);
@@ -104,6 +116,11 @@ private slots:
     void on_horizontalSlider_opacity_valueChanged(int value);
     void on_horizontalSlider_density_valueChanged(int value);
     void on_horizontalSlider_gloss_valueChanged(int value);
+
+    // Color selection widgets
+    void colorDiffuseChanged(QColor const& color);
+    void colorEmissiveChanged(QColor const& color);
+    void colorSpecularChanged(QColor const& color);
 };
 
 #endif // TRANSFERWIDGET_H
