@@ -99,29 +99,36 @@ public:
      * @param spacing Volume spacing in x,y,z,t dimensions respectively
      */
     Volume(std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
-           const Vector<size_t,4>&  extent    = Vector<size_t,4>(0),
-           const Vector<float,4>&   spacing   = Vector<float,4>(0),
+           Vector4u const&          extent    = Vector4u(0),
+           Vector4f const&          spacing   = Vector4f(0.0f),
+           Vector3f const&          offset    = Vector3f(0.0f),
 		   Type                     type      = Type_UInt8 
           ) : 
-        m_data(data), m_extent(extent), m_spacing(spacing), m_type(type)
+        m_data(data), m_extent(extent), m_spacing(spacing), m_type(type), m_offset(offset)
     { 
     }
 
     /** Spacing modifier */     
-    void setSpacing(Vector<float,4> const& spacing) { m_spacing = spacing; m_contextChanged = true; }
+    void setSpacing(Vector4f const& spacing) { m_spacing = spacing; m_contextChanged = true; }
+
+    /** Offset modifier */
+    void setOffset(Vector3f const& offset) { m_offset = offset; m_contextChanged = true; }
 
     /** Spacing accessor */     
-    Vector<float,4> const& spacing() const { return m_spacing; } 
+    Vector4f const& spacing() const { return m_spacing; } 
 
     /** Extent accessor */      
-    Vector<size_t,4> const& extent() const { return m_extent; }  
+    Vector4u const& extent() const { return m_extent; }  
     
+    /** Offset accessor */
+    Vector3f const& offset() const { return m_offset; }
+
     /** Raw voxel data accessor */
     void* const& at(size_t x, size_t y, size_t z) const;
    
     /** Data modifier */ 
     void setData(std::shared_ptr<UInt8> const& data, 
-                 Vector<size_t,4>       const& extent,
+                 Vector4u               const& extent,
 				 Type                          type)
     {
         m_data = data; m_extent = extent; m_type = type;
@@ -149,6 +156,7 @@ private:
 
     std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
 
+    Vector3f m_offset;      ///< Volume offset (mm)
     Vector4f m_spacing;     ///< Spacing between voxels (mm)
     Vector4u m_extent;      ///< Size of volume in voxels
     Type     m_type;        ///< Volume data type

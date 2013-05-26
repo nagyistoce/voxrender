@@ -41,6 +41,7 @@ void CTransferBuffer::reset()
     if (m_diffuseArray)  { VOX_CUDA_CHECK(cudaFreeArray(m_diffuseArray)); m_diffuseArray = nullptr; }
     if (m_opacityArray)  { VOX_CUDA_CHECK(cudaFreeArray(m_opacityArray)); m_opacityArray = nullptr; }
     if (m_specularArray) { VOX_CUDA_CHECK(cudaFreeArray(m_specularArray)); m_specularArray = nullptr; }
+    if (m_emissiveArray) { VOX_CUDA_CHECK(cudaFreeArray(m_emissiveArray)); m_emissiveArray = nullptr; }
 }
 
 // --------------------------------------------------------------------
@@ -53,6 +54,7 @@ void CTransferBuffer::setTransfer(std::shared_ptr<TransferMap> transfer)
     bindDiffuseBuffer(transfer);
     bindOpacityBuffer(transfer);
     bindSpecularBuffer(transfer);
+    bindEmissiveBuffer(transfer);
 }
 
 // --------------------------------------------------------------------
@@ -86,7 +88,7 @@ void CTransferBuffer::bindOpacityBuffer(std::shared_ptr<TransferMap> const& tran
 }
 
 // --------------------------------------------------------------------
-//  Binds the diffuse trannsfer function buffer to a 3d cudaArray
+//  Binds the diffuse transfer function buffer to a 3d cudaArray
 // --------------------------------------------------------------------
 void CTransferBuffer::bindDiffuseBuffer(std::shared_ptr<TransferMap> const& transfer)
 {
@@ -116,13 +118,13 @@ void CTransferBuffer::bindDiffuseBuffer(std::shared_ptr<TransferMap> const& tran
 }
 
 // --------------------------------------------------------------------
-//  Binds the diffuse trasfer function buffer to a 3d cudaArray
+//  Binds the diffuse transfer function buffer to a 3d cudaArray
 // --------------------------------------------------------------------
 void CTransferBuffer::bindSpecularBuffer(std::shared_ptr<TransferMap> const& transfer)
 {
     // Specify the format for volume data access
     auto formatDesc = cudaCreateChannelDesc(
-        32, 32, 32, 32, cudaChannelFormatKindFloat);
+        8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
     // Restructure buffer extent 
     cudaExtent extent;
@@ -135,9 +137,39 @@ void CTransferBuffer::bindSpecularBuffer(std::shared_ptr<TransferMap> const& tra
 
     // Copy data to device
 	cudaMemcpy3DParms copyParams = {0};
-	copyParams.srcPtr.pitch	     = extent.width*sizeof(Vector4f);
+	copyParams.srcPtr.pitch	     = extent.width*4;
     copyParams.srcPtr.ptr	     = (void*)transfer->specular.data();
     copyParams.dstArray	         = m_specularArray;
+    copyParams.extent	         = extent;
+    copyParams.kind		         = cudaMemcpyHostToDevice;
+    copyParams.srcPtr.xsize	     = extent.width;
+    copyParams.srcPtr.ysize	     = extent.height;
+    VOX_CUDA_CHECK(cudaMemcpy3D(&copyParams));
+}
+
+// --------------------------------------------------------------------
+//  Binds the emissive transfer function buffer to a 3d cudaArray
+// --------------------------------------------------------------------
+void CTransferBuffer::bindEmissiveBuffer(std::shared_ptr<TransferMap> const& transfer)
+{
+    // Specify the format for volume data access
+    auto formatDesc = cudaCreateChannelDesc(
+        32, 32, 32, 32, cudaChannelFormatKindUnsigned);
+
+    // Restructure buffer extent 
+    cudaExtent extent;
+    extent.width  = transfer->emissive.width();
+    extent.height = transfer->emissive.height();
+    extent.depth  = transfer->emissive.depth();
+
+	// Create a 3d array for transfer function data storage
+	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_emissiveArray, &formatDesc, extent));
+
+    // Copy data to device
+	cudaMemcpy3DParms copyParams = {0};
+	copyParams.srcPtr.pitch	     = extent.width*sizeof(Vector4f);
+    copyParams.srcPtr.ptr	     = (void*)transfer->emissive.data();
+    copyParams.dstArray	         = m_emissiveArray;
     copyParams.extent	         = extent;
     copyParams.kind		         = cudaMemcpyHostToDevice;
     copyParams.srcPtr.xsize	     = extent.width;

@@ -58,9 +58,9 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 // Constructor - Initialize widget slots and signals
 // ----------------------------------------------------------------------------
-TransferWidget::TransferWidget( QWidget *parent ) :
-    QWidget( parent ),
-    ui( new Ui::TransferWidget ),
+TransferWidget::TransferWidget(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::TransferWidget),
     m_colorDiffuse(new QColorPushButton()),
     m_colorEmissive(new QColorPushButton()),
     m_colorSpecular(new QColorPushButton())
@@ -70,6 +70,7 @@ TransferWidget::TransferWidget( QWidget *parent ) :
 	// Transfer function view elements (with histogram underlay)
 	m_primaryView   = new HistogramView(ui->transferPrimary,   true);
 	m_secondaryView = new HistogramView(ui->transferSecondary, true);
+    m_primaryView->setLogEnabled(true); m_secondaryView->setLogEnabled(true);
 	ui->gridLayout_transferPrimary->addWidget(  m_primaryView,   0, 0, 1, 1);
 	ui->gridLayout_transferSecondary->addWidget(m_secondaryView, 0, 0, 1, 1);
 
@@ -154,6 +155,8 @@ void TransferWidget::synchronizeView()
     m_transfer    = MainWindow::instance->scene().transfer;
     m_currentNode = m_transfer->nodes().empty() ? 
         nullptr : m_transfer->nodes().front();
+
+    onTransferFunctionChanged();
 }
 
 // ----------------------------------------------------------------------------
@@ -448,7 +451,7 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
 }
 
 // ----------------------------------------------------------------------------
-//  Modifies the intensity component of the light's emissions
+//  Modifies the opacity of the transfer node
 // ----------------------------------------------------------------------------
 void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
 {
@@ -461,6 +464,38 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
     {
         auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
         m_currentNode->material()->setOpticalThickness(value);
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Modifies the emissive strength of the transfer node
+// ----------------------------------------------------------------------------
+void TransferWidget::on_horizontalSlider_emissiveStr_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_emissiveStr,
+        ui->horizontalSlider_emissiveStr,
+        value);
+
+    if (m_currentNode)
+    {
+        m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Modifies the emissive strength of the transfer node
+// ----------------------------------------------------------------------------
+void TransferWidget::on_doubleSpinBox_emissiveStr_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_emissiveStr,
+        ui->doubleSpinBox_emissiveStr,
+        value);
+
+    if (m_currentNode)
+    {
+        m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
     }
 }
 

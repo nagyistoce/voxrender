@@ -43,10 +43,11 @@ namespace vox
         /** Initializes a standard default material */
         Material() :
           m_opticalThickness(0.0f),
-          m_glossiness(0.0f),
-          m_emissive(0.0f, 0.0f, 0.0f),
+          m_glossiness(80.0f),
+          m_emissiveStrength(0.0f),
+          m_emissive(0, 0, 0),
           m_diffuse(255, 255, 255),
-          m_specular(0.0f, 0.0f, 0.0f),
+          m_specular(0, 0, 0.),
           m_dirty(true)
         {
         }
@@ -64,10 +65,10 @@ namespace vox
                 m_dirty = true;
             }
         }
-        
+
         /** Returns the glossiness factor of the material */
         float glossiness() const { return m_glossiness; }
-        
+
         /** Sets the glossiness factor of the material */
         void setGlossiness(float glossiness)
         {
@@ -79,11 +80,17 @@ namespace vox
             }
         }
         
+        /** Emissive light intensity */
+        float emissiveStrength() const { return m_emissiveStrength; }
+
+        /** Sets the emissive light intensity */
+        void setEmissiveStrength(float intensity) { m_emissiveStrength = intensity; }
+
         /** Returns the emissive properties of the material */
-        Vector3f emissive() const { return m_emissive; }
-        
+        Vector<UInt8,3> emissive() const { return m_emissive; }
+
         /** Sets the emissive properties of the material */
-        void setEmissive(Vector3f const& emissive)
+        void setEmissive(Vector<UInt8,3> const& emissive)
         {
             if (m_emissive != emissive)
             {
@@ -92,10 +99,10 @@ namespace vox
                 m_dirty = true;
             }
         }
-        
+
         /** Returns the diffuse properties of the material */
-        Vector<UInt8,3> diffuse() const { return m_diffuse; }
-        
+        Vector<UInt8,3> const& diffuse() const { return m_diffuse; }
+
         /** Sets the diffuse properties of the material */
         void setDiffuse(Vector<UInt8,3> const& diffuse)
         {
@@ -106,12 +113,12 @@ namespace vox
                 m_dirty = true;
             }
         }
-        
+
         /** Returns the specular properties of the material */
-        Vector3f specular() const { return m_specular; }
-        
+        Vector<UInt8,3> const& specular() const { return m_specular; }
+
         /** Sets the specular properties of the material */
-        void setSpecular(Vector3f const& specular)
+        void setSpecular(Vector<UInt8,3> const& specular)
         {
             if (m_specular != specular)
             {
@@ -124,10 +131,11 @@ namespace vox
     private:
         float m_opticalThickness; ///< Optical thickness of material (-INF, INF)
         float m_glossiness;       ///< Glossiness factor
+        float m_emissiveStrength; ///< Emissive light intensity
 
-        Vector3f        m_emissive;   ///< Emmissive properties of material 
-        Vector<UInt8,3> m_diffuse;    ///< Diffuse reflective properties of material 
-        Vector3f m_specular;          ///< Specular reflective properties of material 
+        Vector<UInt8,3> m_emissive;         ///< Emissive color
+        Vector<UInt8,3> m_diffuse;          ///< Diffuse reflection color
+        Vector<UInt8,3> m_specular;         ///< Specular reflection color
 
         bool m_dirty; ///< Dirty flag for interactive rendering
     };

@@ -91,7 +91,8 @@ namespace vox
     struct VOX_EXPORT TransferMap
     {
         Image3D<Vector<UInt8,4>> diffuse;  ///< Diffuse transfer mapping [RGBX]
-        Image3D<Vector4f>        specular; ///< Specular transfer mapping [Reflectance3f - Roughnessf]
+        Image3D<Vector<UInt8,4>> specular; ///< Specular transfer mapping [Reflectance + Roughness]
+        Image3D<Vector4f>        emissive; ///< Emissive transfer mapping
         Image3D<float>           opacity;  ///< Absorption coefficient
     };
 

@@ -72,6 +72,31 @@ namespace filescope {
 
         return result;
     }
+    
+    // --------------------------------------------------------------------
+    // :TODO:
+    // --------------------------------------------------------------------
+    template<typename T> std::vector<size_t> generateHistogramBins(size_t nBins, size_t elements, UInt8 const* raw)
+    {
+        Vector2f range = maxValueRange<T>(elements, raw);
+
+        std::vector<size_t> bins(nBins, 0);
+
+        T const* data = reinterpret_cast<T const*>(raw);
+        float    max  = static_cast<float>(std::numeric_limits<T>::max());
+
+        for (size_t i = 0; i < elements; i++)
+        {
+            float  sample           = static_cast<float>(data[i]) / max;
+            float  normalizedSample = (sample - range[0]) / (range[1] - range[0]);
+
+            size_t bin = clamp<size_t>(static_cast<size_t>(normalizedSample*nBins), 0, nBins);
+
+            bins[bin]++;
+        }
+
+        return bins;
+    }
 
 } // namespace filescope
 } // namespace anonymous
@@ -88,6 +113,26 @@ Vector2f VolumeHistogramKernel::computeValueRange(std::shared_ptr<Volume> volume
     {
         case Volume::Type_UInt8:  return filescope::maxValueRange<UInt8>(elements, data);
         case Volume::Type_UInt16: return filescope::maxValueRange<UInt16>(elements, data);
+        default:
+            throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
+                format("Unsupported volume data type (%1%)", 
+                       Volume::typeToString(volume->type())),
+                Error_NotImplemented);
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Generates histogram information for the volume
+// ----------------------------------------------------------------------------
+std::vector<size_t> VolumeHistogramKernel::generateHistogramImages(size_t nBins, std::shared_ptr<Volume> volume)
+{
+    size_t elements   = volume->extent().fold<size_t>(1, &mul);
+    UInt8 const* data = volume->data();
+
+    switch (volume->type())
+    {
+        case Volume::Type_UInt8:  return filescope::generateHistogramBins<UInt8>(nBins, elements, data);
+        case Volume::Type_UInt16: return filescope::generateHistogramBins<UInt16>(nBins, elements, data);
         default:
             throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", 

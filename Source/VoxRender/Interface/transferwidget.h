@@ -58,6 +58,7 @@ public:
     /** Returns the currently selected transfer function node */
     std::shared_ptr<vox::Node> selectedNode();
 
+    /** Regenerates the transfer function displays */
     void onTransferFunctionChanged() 
     { 
         m_primaryView->updateTransfer();
@@ -77,16 +78,14 @@ private:
 	HistogramView* m_secondaryView;
 	int            m_dimensions;
 
-	// Current nodes
+	// Transfer function information
     std::shared_ptr<vox::Transfer> m_transfer;
     std::shared_ptr<vox::Node>     m_currentNode;
 	//vox::Transfer::Region* m_currentRegion;
-    //vox::Node*             m_currentNode;
 
-	// Dimensions switching
-	void switchDimensions( int nDims );
-	bool canSwitchDimensions( );
-
+	// Dimension selection
+	void switchDimensions(int nDims);
+	bool canSwitchDimensions();
     
     void keyPressEvent(QKeyEvent * event);
 
@@ -113,9 +112,11 @@ private slots:
     void on_doubleSpinBox_opacity_valueChanged(double value);
     void on_doubleSpinBox_density_valueChanged(double value);
     void on_doubleSpinBox_gloss_valueChanged(double value);
+    void on_doubleSpinBox_emissiveStr_valueChanged(double value);
     void on_horizontalSlider_opacity_valueChanged(int value);
     void on_horizontalSlider_density_valueChanged(int value);
     void on_horizontalSlider_gloss_valueChanged(int value);
+    void on_horizontalSlider_emissiveStr_valueChanged(int value);
 
     // Color selection widgets
     void colorDiffuseChanged(QColor const& color);

@@ -4,7 +4,7 @@
     
 	Description: Wraps the management of a CUDA 3D volume buffer
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -54,6 +54,9 @@ public:
     /** Returns the size of the volume data */
     VOX_HOST_DEVICE inline Vector3f const& size() const { return m_size; }
 
+    /** Returns the offset of the volume data */
+    VOX_HOST_DEVICE inline Vector3f const& offset() const { return m_offset; }
+
     /** Returns the inverse spacing of the volume data */
     VOX_HOST_DEVICE inline Vector3f const& invSpacing() const { return m_invSpacing; }
 
@@ -76,10 +79,13 @@ private:
     Volume::Type   m_type;         ///< Format of volume data
     Vector3f       m_size;         ///< Size of the volume (mm)
     Vector3f       m_invSpacing;   ///< Inverse of spacing between samples (/mm)
+    Vector3f       m_offset;       ///< Volume position offset (mm)
     cudaExtent     m_extent;       ///< Extent of the volume data
     cudaArray *    m_handle;       ///< Handle to volume data array on device
     float          m_invRange;     ///< The range of the volume data values (for normalization)
     float          m_dataMin;      ///< The minimum of the volume data values (for normalization)
+
+    // :TODO: Store affine transform from world->volume for volume trace Ray3f
 
     cudaChannelFormatDesc m_format; ///< Texture channel format
 };

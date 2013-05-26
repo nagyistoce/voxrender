@@ -303,6 +303,7 @@ namespace
         
                   // Read inline volume parameter specifications
                   volume.setSpacing(m_node->get("Spacing", volume.spacing()));
+                  volume.setOffset(m_node->get("Offset", volume.offset()));
 
                   // Do not allow any other parameter specifications here as they will 
                   // overwrite interdependent information (ie extent relates to data etc)

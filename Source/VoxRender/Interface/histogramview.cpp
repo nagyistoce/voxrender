@@ -31,6 +31,80 @@
 
 using namespace vox;
 
+namespace {
+namespace filescope {
+
+    // --------------------------------------------------------------------
+    // :TODO:
+    // --------------------------------------------------------------------
+    template<typename T> Vector2f maxValueRange(size_t elements, UInt8 const* raw)
+    {
+        Vector<T,2> minMax(std::numeric_limits<T>::max(), static_cast<T>(0));
+
+        T const* data = reinterpret_cast<T const*>(raw);
+
+        for (size_t i = 0; i < elements; i++)
+        {
+            if (minMax[0] > *data) minMax[0] = *data;
+            else if (minMax[1] < *data) minMax[1] = *data;
+
+            data++;
+        }
+
+        Vector2f result = static_cast<Vector2f>(minMax) / 
+            static_cast<float>(std::numeric_limits<T>::max());
+
+        return result;
+    }
+    
+    // --------------------------------------------------------------------
+    // :TODO:
+    // --------------------------------------------------------------------
+    template<typename T> std::vector<size_t> generateHistogramBins(size_t nBins, size_t elements, UInt8 const* raw)
+    {
+        Vector2f range = maxValueRange<T>(elements, raw);
+
+        std::vector<size_t> bins(nBins, 0);
+
+        T const* data = reinterpret_cast<T const*>(raw);
+        float    max  = static_cast<float>(std::numeric_limits<T>::max());
+
+        for (size_t i = 0; i < elements; i++)
+        {
+            float  sample           = static_cast<float>(data[i]) / max;
+            float  normalizedSample = (sample - range[0]) / (range[1] - range[0]);
+
+            size_t bin = clamp<size_t>(static_cast<size_t>(normalizedSample*nBins), 0, nBins-1);
+
+            bins[bin]++;
+        }
+
+        return bins;
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Generates histogram information for the volume
+    // ----------------------------------------------------------------------------
+    std::vector<size_t> generateHistogram(size_t nBins, std::shared_ptr<Volume> volume)
+    {
+        size_t elements   = volume->extent().fold<size_t>(1, &mul);
+        UInt8 const* data = volume->data();
+
+        switch (volume->type())
+        {
+            case Volume::Type_UInt8:  return filescope::generateHistogramBins<UInt8>(nBins, elements, data);
+            case Volume::Type_UInt16: return filescope::generateHistogramBins<UInt16>(nBins, elements, data);
+            default:
+                throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
+                    format("Unsupported volume data type (%1%)", 
+                           Volume::typeToString(volume->type())),
+                    Error_NotImplemented);
+        }
+    }
+
+} // namespace filescope
+} // namespace anonymous
+
 // ---------------------------------------------------------
 // Constructor - Initialize display scene and view parameters
 // ---------------------------------------------------------
@@ -83,7 +157,7 @@ HistogramView::HistogramView(QWidget *parent, bool createTransferView) :
 // ---------------------------------------------------------
 // Destructor - Frees the image buffer
 // ---------------------------------------------------------
-HistogramView::~HistogramView( )
+HistogramView::~HistogramView()
 {
     delete m_imagebuffer;
 }
@@ -161,7 +235,6 @@ void HistogramView::updateCanvas()
 // ---------------------------------------------------------
 void HistogramView::updateImage( )
 {
-    /*
     size_t memSize = 4 * m_canvasRectangle.width( ) * m_canvasRectangle.height( );
 
     // Create the new image buffer
@@ -171,18 +244,7 @@ void HistogramView::updateImage( )
     // Create the new image
     if( m_binMax != 0 )
     {
-        switch(m_type)
-        {
-        case RenderController::VolumeHistogramType_Density:
-            makeDensityHistogram( );
-            break;
-
-        case RenderController::VolumeHistogramType_Gradient1:
-            break;
-
-        case RenderController::VolumeHistogramType_Gradient2:
-            break;
-        }
+        makeDensityHistogram( );
     }
 
     // Convert the raw image for display
@@ -194,20 +256,21 @@ void HistogramView::updateImage( )
     // Position the histogram image within the margins
     m_histogramItem.setOffset( m_canvasRectangle.left( ), 
         m_canvasRectangle.top( ) );
-    */
 }
 
 // ---------------------------------------------------------
 // Updates the histogram data buffer
 // ---------------------------------------------------------
-void HistogramView::updateHistogramData( )
+void HistogramView::updateHistogramData()
 {
     // Update the volume histogram bin data
     try
     {
         auto & renderer = MainWindow::instance->m_renderController;
-        //m_bins = renderer.makeVolumeHistogram( m_type );
-        //m_binMax = std::max( m_bins.front( ), m_bins.back( ) );
+
+        m_bins = filescope::generateHistogram(256, MainWindow::instance->scene().volume);
+
+        m_binMax = std::max(m_bins.front(), m_bins.back());
     }
     catch( vox::Error const& )
     {
@@ -220,15 +283,15 @@ void HistogramView::updateHistogramData( )
 }
 
 // ---------------------------------------------------------
-// Generates a density histogram volume data set
+//  Generates a density histogram volume data set
 // ---------------------------------------------------------
-void HistogramView::makeDensityHistogram( )
+void HistogramView::makeDensityHistogram()
 {
     auto const scale   = m_options & HistogramOptionF_LogScale;
-    auto const max     = scale ? logf( 1.0f+m_binMax ) : m_binMax;
-    auto const height  = m_canvasRectangle.height( );
-    auto const width   = m_canvasRectangle.width( );
-	auto const wscalar = height / width;
+    auto const max     = scale ? logf(1.0f+m_binMax) : m_binMax;
+    auto const height  = m_canvasRectangle.height();
+    auto const width   = m_canvasRectangle.width();
+	auto const wscalar = m_bins.size() / width;
     auto const hscalar = height / max;
 
 	// Draw histogram image

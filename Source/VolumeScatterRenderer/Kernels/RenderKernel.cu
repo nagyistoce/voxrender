@@ -73,7 +73,8 @@ namespace filescope {
 
     texture<float,3,cudaReadModeElementType>      gd_opacityTex;  // Opacity data texture
     texture<uchar4,3,cudaReadModeNormalizedFloat> gd_diffuseTex;  // Diffuse data texture
-    texture<float4,3,cudaReadModeElementType>     gd_specularTex; // Specular data texture
+    texture<uchar4,3,cudaReadModeNormalizedFloat> gd_specularTex; // Specular data texture
+    texture<float4,3,cudaReadModeElementType>     gd_emissiveTex; // Emission data texture
 
     // --------------------------------------------------------------------
     //  Uses the appropriate texture sampler to acquire a density value
@@ -219,27 +220,27 @@ namespace filescope {
     VOX_DEVICE ColorLabxHdr estimateRadiance(
         CRandomGenerator & rng, Ray3f const& location)
     {
-        // Sample the gradient at the point of interest
+        float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
+
+        // Compute the gradient at the point of interest
         Vector3f gradient = sampleGradient(location.pos);
         if (Vector3f::dot(gradient, location.dir) > 0)
         {
             gradient = -gradient;
         }
+        float gradMag = gradient.length();
+        gradient = gradient * 1.0f / gradMag;
 
         // Determine the diffuse characteristic of the sample point 
-        float4 sampleDiffuse = tex3D(gd_diffuseTex, sampleDensity(
-            location.pos[0], location.pos[1], location.pos[2]), 
-            0.0f, 0.0f); // :TODO: Carry density forward with location
+        float4 sampleDiffuse = tex3D(gd_diffuseTex, density, 0.0f, 0.0f); 
         Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
 
-        // Compute the ambient occlusion index
+        // Compute the ambient component of the scene lighting
         Vector3f Lv = diffuse * gd_ambient * computeAmbientOcclusion(rng, location.pos);
 
         // Sample the scene lighting
         if (gd_lights.size() != 0)
         {
-            gradient.normalize();
-
             // Sample the scene lighting for this iteration
             Vector3f lightEmission  = gd_lights[0].color();
             Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
@@ -255,13 +256,15 @@ namespace filescope {
 
                 // Calculate the half vector between the light and view
                 Vector3f H = (lightDirection - location.dir).normalized();
- 
+
+                float4 specularData = tex3D(gd_specularTex, density, 0.0f, 0.0f);
+
                 //Intensity of the specular light
                 float NdotH = Vector3f::dot(gradient, H);
-                float intensity = pow(saturate( NdotH ), 80.f);
+                float intensity = pow(saturate( NdotH ), specularData.w*100.0f + 2.0f);
  
-                //Sum up the specular light factoring
-                Lv += Vector3f(1.0f, 1.0f, 1.0f) * lightEmission * intensity; 
+                // Compute the resulting specular strength
+                Lv += Vector3f(specularData.x, specularData.y, specularData.z) * lightEmission * intensity; 
         }
 
         return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
@@ -467,11 +470,28 @@ void RenderKernel::setTransfer(CTransferBuffer const& transfer)
     
     // Specify the format for volume data access
     auto texFormatDescSpecular = cudaCreateChannelDesc(
-        32, 32, 32, 32, cudaChannelFormatKindFloat);
+        8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
 	// Bind the volume handle to a texture for sampling
     VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_specularTex, 
       transfer.specularHandle(), texFormatDescSpecular));
+
+
+
+	// Emissive texture sampler settings
+	filescope::gd_emissiveTex.normalized     = true;
+    filescope::gd_emissiveTex.filterMode     = cudaFilterModeLinear; 
+    filescope::gd_emissiveTex.addressMode[0] = cudaAddressModeClamp;
+    filescope::gd_emissiveTex.addressMode[1] = cudaAddressModeClamp;
+    filescope::gd_emissiveTex.addressMode[2] = cudaAddressModeClamp;
+    
+    // Specify the format for volume data access
+    auto texFormatDescEmissive = cudaCreateChannelDesc(
+        32, 32, 32, 32, cudaChannelFormatKindFloat);
+
+	// Bind the volume handle to a texture for sampling
+    VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_emissiveTex, 
+      transfer.emissiveHandle(), texFormatDescEmissive));
 }
 
 // --------------------------------------------------------------------

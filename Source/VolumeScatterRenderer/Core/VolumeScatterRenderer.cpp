@@ -161,7 +161,7 @@ public:
         }
 
         // Transfer function data synchronization
-        if (scene.transfer->isDirty() || scene.camera->isDirty())
+        if (scene.transfer->isDirty())
         {
             auto map = scene.transfer->generateMap();
 

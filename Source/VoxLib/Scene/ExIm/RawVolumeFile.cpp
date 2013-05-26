@@ -4,7 +4,7 @@
     
 	Description: Raw volume file import/export module
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -164,8 +164,8 @@ namespace
                 // Extract the required volume data size parameters
                 auto typeStr = m_options.lookup<String>("Type");
                 auto size    = m_options.lookup<Vector4u>("Size"); 
-				auto spacing = m_options.lookup<Vector4f>("Spacing", 
-                                    Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+				auto spacing = m_options.lookup("Spacing", Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+                auto offset  = m_options.lookup("Offset", Vector3f(0.0f, 0.0f, 0.0f));
 
                 // Determine the volume data type
                 boost::to_lower(typeStr);
@@ -179,7 +179,7 @@ namespace
 				
                 // Construct the volume object for the response
                 Scene scene;
-                scene.volume = std::make_shared<Volume>(data, size, spacing, type);
+                scene.volume = std::make_shared<Volume>(data, size, spacing, offset, type);
 
                 return scene;
             }

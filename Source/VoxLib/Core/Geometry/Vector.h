@@ -112,6 +112,15 @@ namespace vox
 
 #undef VOX_VECTOR_CONSTRUCTOR
 
+        /** Constructs a type casted vector */
+        template<typename S> explicit Vector(Vector<S,N> const& base)
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                coord[i] = static_cast<T>(base[i]);
+            }
+        }
+
         /**
          * Fold operator
          *

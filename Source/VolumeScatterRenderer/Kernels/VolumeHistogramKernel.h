@@ -46,7 +46,7 @@ public:
     static Vector2f computeValueRange(std::shared_ptr<Volume> volume);
 
     /** Generates histogram images for the volume dataset */
-    static void generateHistogramImages();
+    static std::vector<size_t> generateHistogramImages(size_t nBins, std::shared_ptr<Volume> volume);
 };
 
 }

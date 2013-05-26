@@ -56,9 +56,9 @@ public:
     /** Recalculates relative positions */
     void onResizeEvent();
 
-public slots:
     void synchronizeView();
 
+public slots:
     void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 
 private:

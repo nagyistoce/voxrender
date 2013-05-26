@@ -48,6 +48,86 @@ namespace filescope {
     }
     
     // ----------------------------------------------------------------------------
+    //  Generates an emissive map from the tranfer specification
+    // ----------------------------------------------------------------------------
+    void mapEmissive(Image3D<Vector4f> & map, std::list<std::shared_ptr<Node>> transfer)
+    {
+        float samples = static_cast<float>(map.width()) - 1;
+        auto buffer = map.data();
+
+        memset(buffer, 0, map.size()*sizeof(Vector4f));
+
+        auto iter = transfer.begin();
+        auto curr = *iter; 
+        iter++;
+        
+        while (iter != transfer.end())
+        {
+            auto next = *iter;
+
+            size_t x1 = static_cast<size_t>(curr->position(0) * samples);
+            if (x1 >= map.width()) x1 = map.width()-1;
+            size_t x2 = static_cast<size_t>(next->position(0) * samples);
+            if (x2 >= map.width()) x2 = map.width()-1;                
+            Vector3f s1 = Vector3f(curr->material()->emissive()) / 255.0f * curr->material()->emissiveStrength();
+            Vector3f s2 = Vector3f(next->material()->emissive()) / 255.0f * curr->material()->emissiveStrength();
+            Vector4f y1(s1[0], s1[1], s1[2], 0.0f);
+            Vector4f y2(s2[0], s2[1], s2[2], 0.0f);
+
+            for (size_t i = x1; i <= x2; i++)
+            {
+                float px = i / samples - curr->position(0);
+                float py = next->position(0) - curr->position(0);
+                float part = low( high(px / py, 0.0f), 1.0f );
+                buffer[i] = y1*(1.f - part) + y2*part;
+            }
+
+            curr = next;
+            iter++;
+        }
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Generates a diffuse map from the transfer function specification
+    // ----------------------------------------------------------------------------
+    void mapSpecular(Image3D<Vector<UInt8,4>> & map, std::list<std::shared_ptr<Node>> transfer)
+    {
+        float samples = static_cast<float>(map.width()) - 1;
+        auto buffer = map.data();
+
+        memset(buffer, 0, map.size()*sizeof(Vector<UInt8,4>));
+
+        auto iter = transfer.begin();
+        auto curr = *iter; 
+        iter++;
+        
+        while (iter != transfer.end())
+        {
+            auto next = *iter;
+
+            size_t x1 = static_cast<size_t>(curr->position(0) * samples);
+            if (x1 >= map.width()) x1 = map.width()-1;
+            size_t x2 = static_cast<size_t>(next->position(0) * samples);
+            if (x2 >= map.width()) x2 = map.width()-1;                
+            Vector3f s1(curr->material()->specular());
+            Vector3f s2(next->material()->specular());
+            Vector4f y1(s1[0], s1[1], s1[2], curr->material()->glossiness()*255.0f);
+            Vector4f y2(s2[0], s2[1], s2[2], next->material()->glossiness()*255.0f);
+
+            for (size_t i = x1; i <= x2; i++)
+            {
+                float px = i / samples - curr->position(0);
+                float py = next->position(0) - curr->position(0);
+                float part = low( high(px / py, 0.0f), 1.0f );
+                buffer[i] = static_cast<Vector<UInt8,4>>(y1*(1.f - part) + y2*part);
+            }
+
+            curr = next;
+            iter++;
+        }
+    }
+
+    // ----------------------------------------------------------------------------
     //  Generates a diffuse map from the transfer function specification
     // ----------------------------------------------------------------------------
     void mapDiffuse(Image3D<Vector<UInt8,4>> & map, std::list<std::shared_ptr<Node>> transfer)
@@ -55,7 +135,7 @@ namespace filescope {
         float samples = static_cast<float>(map.width()) - 1;
         auto buffer = map.data();
 
-        memset(buffer, 0, map.size()*sizeof(float));
+        memset(buffer, 0, map.size()*sizeof(Vector<UInt8,4>));
 
         auto iter = transfer.begin();
         auto curr = *iter; 
@@ -69,8 +149,8 @@ namespace filescope {
             if (x1 >= map.width()) x1 = map.width()-1;
             size_t x2 = static_cast<size_t>(next->position(0) * samples);
             if (x2 >= map.width()) x2 = map.width()-1;
-            Vector3f s1 = curr->material()->diffuse();
-            Vector3f s2 = next->material()->diffuse();
+            Vector3f s1(curr->material()->diffuse());
+            Vector3f s2(next->material()->diffuse());
             Vector4f y1(s1[0], s1[1], s1[2], 0.0f);
             Vector4f y2(s2[0], s2[1], s2[2], 0.0f);
 
@@ -85,7 +165,6 @@ namespace filescope {
             curr = next;
             iter++;
         }
-
     }
 
     // ----------------------------------------------------------------------------
@@ -163,6 +242,8 @@ void Transfer::setResolution(Vector3u const& resolution)
 // ----------------------------------------------------------------------------
 void Transfer::addNode(std::shared_ptr<Node> node)
 {
+    m_contextChanged = true;
+
     m_nodes.push_back(node);
 }
 
@@ -171,6 +252,8 @@ void Transfer::addNode(std::shared_ptr<Node> node)
 // ----------------------------------------------------------------------------
 void Transfer::removeNode(std::shared_ptr<Node> node)
 {
+    m_contextChanged = true;
+
     m_nodes.remove(node);
 }
 
@@ -188,11 +271,13 @@ std::shared_ptr<TransferMap> Transfer::generateMap()
     map->diffuse.resize(128, 1, 1);
     map->opacity.resize(128, 1, 1);
     map->specular.resize(128, 1, 1);
+    map->emissive.resize(64, 1, 1);
 
     // Generate the opacity mapping
     filescope::mapOpacity(map->opacity, m_nodes);
     filescope::mapDiffuse(map->diffuse, m_nodes);
-    //filescope::mapSpecular(map->specular, m_nodes);
+    filescope::mapSpecular(map->specular, m_nodes);
+    filescope::mapEmissive(map->emissive, m_nodes);
 
     return map;
 }

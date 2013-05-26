@@ -4,7 +4,7 @@
     
 	Description: Wraps the management of a CUDA 3D volume buffer
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -65,6 +65,7 @@ void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
     VOX_LOGF(Severity_Info, Error_None, VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
 
     // Volume parameters
+    m_offset     = volume->offset();
     auto spacing = volume->spacing();
     auto extent  = volume->extent();
     m_type       = volume->type();

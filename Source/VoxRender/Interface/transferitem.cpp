@@ -43,7 +43,6 @@ using namespace vox;
 TransferItem::TransferItem(QGraphicsItem* parent)
 	: QGraphicsRectItem(parent)
 {
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(synchronizeView()));
 }
 
 // ----------------------------------------------------------------------------
