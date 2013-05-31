@@ -28,7 +28,7 @@
 #define SIO_STANDARD_IO_H
 
 // Include Dependencies
-#include "StandardIO/Common.h"
+#include "Plugins/StandardIO/Common.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceModule.h"
@@ -43,7 +43,7 @@ namespace vox
  * Provides a resource retrieval module for accessing files using a variety 
  * of common protocols supported by libcurl. http://curl.haxx.se/libcurl/
  */
-class StandardIO : public ResourceModule
+class SIO_EXPORT StandardIO : public ResourceModule
 {
 public:
     /**
@@ -56,13 +56,13 @@ public:
      * @returns A handle to the streambuffer associated with the file
      */
     virtual std::shared_ptr<std::streambuf> access(
-        ResourceId &     identifier, 
+        ResourceId &     identifier,
         OptionSet const& options,
-        unsigned int &   openMode
-        );
+        unsigned int     openMode
+    );
 
     /** 
-     * Removes a filesystem resource
+     * Removes a resource
      *
      * @param identifier The resource identifier (can be a directory)
      * @param options    Remove options
@@ -80,7 +80,7 @@ public:
      *
      * @return The rdf format query response
      */
-    virtual QueryResultH query(
+    virtual std::shared_ptr<QueryResult> query(
         ResourceId const& identifier, 
         OptionSet const&  options
         );

@@ -1,6 +1,6 @@
 /* ===========================================================================
 
-    Project: StandardIO - Module definition for exported interface
+    Project: StandardIO - Standard IO protocols for VoxIO
 
     Description: A libcurl wrapper compatible with the VoxIO library
 
@@ -28,7 +28,8 @@
 
 // Include Dependencies
 #include "StandardIO/CurlStreamBuf.h"
-#include "VoxLib/Error/Error.h"
+#include "VoxLib/Error/PluginError.h"
+#include "VoxLib/Core/Logging.h"
 
 // 3rd Party Dependencies
 #include "boost/property_tree/ptree.hpp"
@@ -47,9 +48,29 @@ namespace vox {
 std::shared_ptr<std::streambuf> StandardIO::access(
     ResourceId &     identifier, 
     OptionSet const& options,
-    unsigned int &   openMode)
+    unsigned int     openMode)
 {
-    return std::make_shared<CurlStreamBuf>();
+    // Input and Output mode are not supported simultaneously for libcurl protocols
+    if ( (openMode&Resource::Mode_Input) && (openMode&Resource::Mode_Output) )
+    {
+        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
+            "Invalid openMode: Input and Output not supported",
+            Error_NotImplemented);
+    }
+
+    // Return the proper (input / output) streambuffer wrapper
+    if (openMode&Resource::Mode_Input)
+    {
+        return std::make_shared<vox::CurlIStreamBuf>(identifier, options);
+    }
+    else if (openMode&Resource::Mode_Output)
+    {
+        return nullptr;
+    }
+    else throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, 
+        "Invalid access flags (must specify read or write)", Error_Bug);
+
+    return nullptr; // Satisfy less intelligent compilers
 }
 
 // --------------------------------------------------------------------
@@ -66,8 +87,7 @@ void StandardIO::remove(
     auto curl = curl_easy_init();
     if (!curl)
     {
-        throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY,
-                    "curl_easy_init has returned invalid");
+        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, "curl_easy_init has failed");
     }
 
     // Configure the request for a protocol specific deletion
@@ -77,9 +97,9 @@ void StandardIO::remove(
     }
     else if (identifier.scheme == "ftp" || identifier.scheme == "sftp")
     {
-
+        // :TODO:
     }
-    else throw vox::Error(__FILE__, __LINE__, SIO_LOG_CATEGORY,
+    else throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
         format("Unsupported scheme: %1%", url), Error_NotAllowed);
 
     // Perform the request and ensure successful execution
@@ -94,9 +114,9 @@ void StandardIO::remove(
 }
 
 // --------------------------------------------------------------------
-//  Issues a synchronous delete request through the easy interface
+//  Queries for information depending on the specified scheme
 // --------------------------------------------------------------------
-QueryResultH StandardIO::query(
+std::shared_ptr<QueryResult> StandardIO::query(
     ResourceId const& identifier, 
     OptionSet  const& options)
 {

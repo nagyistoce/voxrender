@@ -37,6 +37,7 @@ IF(LIBCURL_LIB_FOUND)
             "Version.h"
 			"Plugin.h"
         SOURCES
+            "CurlStreamBuf.cpp"
             "StandardIO.cpp"
 			"Plugin.cpp"
         DEPENDENCIES

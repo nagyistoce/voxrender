@@ -1,6 +1,6 @@
 /* ===========================================================================
 
-	Project: LibCurl IO Library Wrapper
+    Project: StandardIO - Standard IO protocols for VoxIO
     
 	Description: Defines a VoxIO compatible plugin interface
 
@@ -53,7 +53,7 @@ char const* version() { return SIO_VERSION_STRING; }
 // --------------------------------------------------------------------
 //  Returns a reference URL for the plugin
 // --------------------------------------------------------------------
-char const* referenceUrl() { return ""; }
+char const* referenceUrl() { return "http://code.google.com/p/voxrender/"; }
 
 // --------------------------------------------------------------------
 //  Returns the minimum compatible version of the plugin API
@@ -80,7 +80,7 @@ char const* vendor() { return "vox"; }
 // --------------------------------------------------------------------
 void enable() 
 {  
-    VOX_LOGF(vox::Severity_Info, vox::Error_None, SIO_LOG_CATEGORY, "TEST vox.standard_io");
+    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Enabling the vox.standard_io plugin");
 }
 
 // --------------------------------------------------------------------
@@ -88,4 +88,5 @@ void enable()
 // --------------------------------------------------------------------
 void disable() 
 { 
+    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Disabling the vox.standard_io plugin");
 }

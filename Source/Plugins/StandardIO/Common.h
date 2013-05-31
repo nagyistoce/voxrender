@@ -27,8 +27,12 @@
 #ifndef SIO_COMMON_H
 #define SIO_COMMON_H
 
-// Export configurations
-#define SIO_EXPORT __declspec(dllexport)
+// Export configurations (for debugging)
+#ifdef StandardIO_EXPORTS
+#   define SIO_EXPORT __declspec(dllexport)
+#else
+#   define SIO_EXPORT __declspec(dllimport)
+#endif
 
 // VoxRender log category
 static char const* SIO_LOG_CATEGORY = "SIO";
