@@ -76,6 +76,9 @@ void Resource::registerModule(
     ResourceModuleH module
     )
 { 
+    if (!module) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+        "registerModule requires valid handle", vox::Error_Range);
+
     // Acquire a read-lock on the modules for thread safe removal support
     boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
@@ -208,6 +211,21 @@ void Resource::removeModule(ResourceModuleH module)
             ++iter;
         }
     }
+}
+
+// --------------------------------------------------------------------
+//  Returns the number of bytes remaining in the stream (if seekable)
+// --------------------------------------------------------------------
+std::streamsize ResourceIStream::remaining()
+{
+    // :TODO: Check seekable
+
+    std::streamsize pos = tellg();
+    seekg(std::ios::end);
+    std::streamsize end = tellg();
+    seekg(pos);
+
+    return end-pos;
 }
 
 } // namespace vox

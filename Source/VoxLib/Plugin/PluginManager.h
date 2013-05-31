@@ -98,6 +98,7 @@ namespace vox
     struct PluginInfo
     {
         // :TODO: Make sure these are copied out of DLL memory
+        // :TODO: External xml option to specify plugin info
         String path;           ///< Path to location of plugin 
         String apiVersionMax;  ///< Maximum supported API version (dot delimited)
         String apiVersionMin;  ///< Minimum supported API version (dot delimited) 

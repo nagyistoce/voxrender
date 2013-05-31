@@ -42,9 +42,6 @@ namespace vox
 /** Resource Query Result Structure : PTree embedded RDF?:TODO: tree */
 typedef boost::property_tree::basic_ptree<String,String,std::less<String>> QueryResult;
 
-/** Convenience typdef for QueryResult handle */
-typedef std::shared_ptr<QueryResult> QueryResultH;
-
 /**
  * Resource module concept used for abstract IO
  *
@@ -92,7 +89,7 @@ public:
      * Queries and returns information concerning the specified URI. The return tree should conform
      * to the rdf+xml encoding standard. (Available at http://www.w3.org/TR/REC-rdf-syntax/)
      */
-    virtual QueryResultH query(
+    virtual std::shared_ptr<QueryResult> query(
         ResourceId const& identifier, ///< The resource identifier
         OptionSet const&  options     ///< The advanced query options
     ) = 0;

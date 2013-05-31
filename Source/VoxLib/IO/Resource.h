@@ -234,17 +234,7 @@ public:
     inline std::streamsize available() const { return m_buffer->in_avail(); }
 
     /** Returns the remaining length of the stream if seekable */
-/*
-    inline std::streamsize remaining() const
-    {
-        std::streamsize pos = tellg();
-        seekg(std::ios::end);
-        std::streamsize end = tellg();
-        seekg(pos);
-
-        return end-pos;
-    }
-*/
+    std::streamsize remaining();
 };
 
 /**

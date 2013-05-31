@@ -4,7 +4,7 @@
 
 	Description: Defines a bitmap class for image import/export operations
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 

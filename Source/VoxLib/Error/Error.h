@@ -25,8 +25,8 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_ERROR
-#define VOX_ERROR
+#ifndef VOX_ERROR_H
+#define VOX_ERROR_H
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -75,8 +75,7 @@ namespace vox
         const char* file;       ///< Originating file
         int         line;       ///< Originating line
     };
-
 }
 
 // End definition
-#endif // VOX_ERROR
+#endif // VOX_ERROR_H

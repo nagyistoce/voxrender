@@ -28,17 +28,22 @@
 #define VOX_OPTION_SET_H
 
 // Include Dependencies
-#include "VoxLib/Core/Common.h"
+#include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
-#include "VoxLib/Error/ErrorCodes.h"
+
+// 3rd Party Dependencies
+#include <boost/lexical_cast.hpp>
 
 // API Namespace
 namespace vox
 {
 
+// Developer note: DO NOT add member variables here, it inherits STL.
+// The purpose of the class is simply to provide more advanced access
+// to the mapped content by using boost::lexical_cast<>.
+
 /** Extended type-casting class inheriting from multi-map */
-// Developer note: DO NOT add member variables here, it inherits STL
 class VOX_EXPORT OptionSet : public std::multimap<std::string, std::string>
 {
 public:
@@ -107,8 +112,7 @@ public:
         }
         else
         {
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                       "Missing Key", Error_NotFound);
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Missing Key", Error_NotFound);
         }
     }
 
@@ -136,8 +140,7 @@ public:
         }
         else
         {
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                        "Key not found", Error_NotFound);
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Key not found", Error_NotFound);
         }
     }
 };

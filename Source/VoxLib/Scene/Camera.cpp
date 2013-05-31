@@ -43,6 +43,7 @@ Camera::Camera() :
     m_focalDistance  (0.0f),
     m_apertureSize   (0.0f),
     m_fieldOfView    (60.0f),
+    m_eyeDistance    (0.0f),
     m_contextChanged (false)
 { 
 }

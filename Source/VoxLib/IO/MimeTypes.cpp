@@ -29,18 +29,29 @@
 // Include Dependencies
 #include "VoxLib/IO/Resource.h"
 
+// 3rd Party Dependencies
+#include <boost/thread.hpp>
+
 // API Namespace
 namespace vox {
 
-// Static member variable initialization
-std::map<String, String>            MimeTypes::m_types;
-std::map<String, std::list<String>> MimeTypes::m_suffixes;
+namespace {
+namespace filescope {
+
+    std::map<String, String>            types;
+    std::map<String, std::list<String>> suffixes;
+    boost::shared_mutex                 mutex;
+
+}
+}
 
 // --------------------------------------------------------------------
 //  Reads in mime-types information from the specified resource
 // --------------------------------------------------------------------
 void MimeTypes::readMimeTypes(IStream & input)
 {
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::mutex)> lock(filescope::mutex);
 }
 
 // --------------------------------------------------------------------
@@ -51,6 +62,28 @@ void MimeTypes::readMimeTypes(ResourceId const& identifier, OptionSet const& opt
     ResourceIStream istream(identifier, options);
 
     readMimeTypes(istream);
+}
+
+// --------------------------------------------------------------------
+//  Adds a new association between an extension and a mime type
+// --------------------------------------------------------------------
+void MimeTypes::addExtension(String const& extension, String const& type)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::mutex)> lock(filescope::mutex);
+
+    filescope::types.insert( std::make_pair(extension, type) );
+}
+
+// --------------------------------------------------------------------
+//  Returns the type associated with an extension 
+// --------------------------------------------------------------------
+String const& MimeTypes::getType(String const& extension)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::mutex)> lock(filescope::mutex);
+
+    return filescope::types[extension];
 }
 
 } // namespace vox

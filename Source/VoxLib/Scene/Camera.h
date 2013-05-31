@@ -184,6 +184,7 @@ private:
     float m_focalDistance;  ///< Focal distance (mm)
 	float m_apertureSize;   ///< Aperture size  (mm)
     float m_fieldOfView;    ///< Field of view  (radians)
+    float m_eyeDistance;    ///< Distance between eyes (mm)
 
     // Film dimensions
     size_t m_filmWidth;  ///< Film width  (pixels)

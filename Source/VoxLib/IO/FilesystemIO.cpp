@@ -30,6 +30,7 @@
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/FileError.h"
+#include "VoxLib/Error/PluginError.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
 

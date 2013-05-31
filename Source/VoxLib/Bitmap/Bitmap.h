@@ -4,7 +4,7 @@
 
 	Description: Defines a bitmap class for image import/export operations
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -38,8 +38,34 @@ namespace vox
 
 class VOX_EXPORT Bitmap;
 
+/** 
+ * Bitmap Importer
+ *
+ * This typedef specifies the format of a bitmap file importer. The VoxLib
+ * library offers a built in system for controlling the import of bitmap information. 
+ * Bitmap import/export modules are registered with the Bitmap class through a static
+ * interface and associated with a file type. When an attempt is made to 
+ * import a Bitmap file through the Bitmap::imprt method, the BitmapImporter whose
+ * type matches the provided file type will be executed.
+ *
+ * @sa
+ *  ::BitmapExporter
+ */      
 typedef std::function<Bitmap(ResourceIStream & data, OptionSet const& options)> BitmapImporter;
 
+/** 
+ * Bitmap Exporter
+ *
+ * This typedef specifies the format of a bitmap file exporter. The VoxLib
+ * library offers a built in system for controlling the export of bitmap information. 
+ * Bitmap import/export modules are registered with the Bitmap class through a static
+ * interface and associated with a file type. When an attempt is made to 
+ * export a Bitmap file through the Bitmap::exprt method, the BitmapExporter whose
+ * type matches the provided file type will be executed.
+ *
+ * @sa
+ *  ::BitmapExporter
+ */      
 typedef std::function<void(ResourceOStream & data, OptionSet const& options, Bitmap const& bitmap)> BitmapExporter;
 
 
@@ -53,6 +79,7 @@ public:
         Type_Begin,                  ///< Begin iterator for Type enumeration
         Type_A8R8G8B8 = Type_Begin,  ///< 8 bit per channel ARGB
         Type_R8G8B8,                 ///< 8 bit per channel RGB
+        Type_RgbHdr,                 ///< 32 bit floating point RGB
         Type_Gray8,                  ///< 8 bit grayscale
         Type_Gray12,                 ///< 12 bit grayscale
         Type_Gray16,                 ///< 16 bit grayscale

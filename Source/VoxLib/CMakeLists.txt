@@ -32,6 +32,10 @@ INCLUDE_DIRECTORIES(.)
 #                  HEADER FILES                 #
 #===============================================#
 
+Set(VoxLib_HEADERS_BITMAP
+    Bitmap/Bitmap.h
+)
+
 Set(VoxLib_HEADERS_CORE
     Core/Common.h
     Core/CudaCommon.h
@@ -63,13 +67,14 @@ Set(VoxLib_HEADERS_ERROR
     Error/Error.h
     Error/ErrorCodes.h
     Error/FileError.h
+    Error/PluginError.h
     Error/SystemError.h
 )
 
 Set(VoxLib_HEADERS_IO
     IO/FilesystemIO.h
-	IO/MimeTypes.h
-	IO/OptionSet.h
+    IO/MimeTypes.h
+    IO/OptionSet.h
     IO/Resource.h
     IO/ResourceId.h
     IO/ResourceModule.h
@@ -95,7 +100,7 @@ Set(VoxLib_HEADERS_RENDERING
     Rendering/FrameBuffer.h
     Rendering/Renderer.h
     Rendering/RenderController.h
-	Rendering/RenderThread.h
+    Rendering/RenderThread.h
 )
 
 Set(VoxLib_HEADERS_SCENE_EXIM
@@ -104,6 +109,7 @@ Set(VoxLib_HEADERS_SCENE_EXIM
 )
 
 set(VoxLib_HEADERS
+    ${VoxLib_HEADERS_BITMAP}
     ${VoxLib_HEADERS_CORE}
     ${VoxLib_HEADERS_CORE_GEOMETRY}
     ${VoxLib_HEADERS_ERROR}
@@ -114,6 +120,7 @@ set(VoxLib_HEADERS
     ${VoxLib_HEADERS_RENDERING}
 )
 
+SOURCE_GROUP("Header Files\\Bitmap"                         FILES ${VoxLib_HEADERS_BITMAP})
 SOURCE_GROUP("Header Files\\Core"                           FILES ${VoxLib_HEADERS_CORE})
 SOURCE_GROUP("Header Files\\Core\\Geometry"                 FILES ${VoxLib_HEADERS_CORE_GEOMETRY})
 SOURCE_GROUP("Header Files\\Error"                          FILES ${VoxLib_HEADERS_ERROR})
@@ -126,6 +133,10 @@ SOURCE_GROUP("Header Files\\Scene\\Exim"                    FILES ${VoxLib_HEADE
 #===============================================#
 #                  SOURCE FILES                 #
 #===============================================#
+
+Set(VoxLib_SOURCES_BITMAP
+    Bitmap/Bitmap.cpp
+)
 
 Set(VoxLib_SOURCES_CORE
     Core/Devices.cpp
@@ -142,7 +153,7 @@ Set(VoxLib_SOURCES_ERROR
 
 Set(VoxLib_SOURCES_IO
     IO/FilesystemIO.cpp
-	IO/MimeTypes.cpp
+    IO/MimeTypes.cpp
     IO/Resource.cpp
     IO/ResourceId.cpp
 )
@@ -168,10 +179,11 @@ Set(VoxLib_SOURCES_SCENE_EXIM
 Set(VoxLib_SOURCES_RENDERING
     Rendering/RenderController.cpp
     Rendering/Renderer.cpp
-	Rendering/RenderThread.cpp
+    Rendering/RenderThread.cpp
 )
 
 set(VoxLib_SOURCES
+    ${VoxLib_SOURCES_BITMAP}
     ${VoxLib_SOURCES_CORE}
     ${VoxLib_SOURCES_CORE_GEOMETRY}
     ${VoxLib_SOURCES_ERROR}
@@ -182,6 +194,7 @@ set(VoxLib_SOURCES
     ${VoxLib_SOURCES_RENDERING}
 )
 
+SOURCE_GROUP("Source Files\\Bitmap"                         FILES ${VoxLib_SOURCES_BITMAP})
 SOURCE_GROUP("Source Files\\Core"                           FILES ${VoxLib_SOURCES_CORE})
 SOURCE_GROUP("Source Files\\Core\\Geometry"                 FILES ${VoxLib_SOURCES_CORE_GEOMETRY})
 SOURCE_GROUP("Source Files\\Plugin"                         FILES ${VoxLib_SOURCES_PLUGIN})

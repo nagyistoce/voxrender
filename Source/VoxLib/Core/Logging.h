@@ -253,7 +253,9 @@ namespace vox
 		inline static int getLastError() { return m_lastError; }
 
 		/** 
-		 * Sets the filtering level of the logging system.
+		 * Sets the filtering level of the logging system. If you wish to 
+         * filter user code messages as well, you must use the VOX_LOG_... format
+         * macros which operate filtering efficiently.
 		 *
 		 * @param filter The minumum severity level to log
 		 */
@@ -272,12 +274,19 @@ namespace vox
 		static int          m_lastError;	///< Code of last error logged
 	};
 
-    // Logging macro for performing filtered logging
+    // Logging macro 
 #define VOX_LOGF(SEV, CODE, CAT, MSG)                                   \
     if (vox::Logger::getFilteringLevel() <= SEV)                        \
     {                                                                   \
         vox::Logger::addEntry(SEV, CODE, CAT, MSG, __FILE__, __LINE__); \
     }
+
+    // Logging macros for specific filter levels
+#define VOX_LOG_INFO(CAT, MSG)                                                          \
+    if (vox::Logger::getFilteringLevel() <= Severity_Info)                              \
+    {                                                                                   \
+        vox::Logger::addEntry(Severity_Info, Error_None, CAT, MSG, __FILE__, __LINE__); \
+    }                                                                                   \
 
 } // namespace vox
 

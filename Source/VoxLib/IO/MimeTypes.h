@@ -67,12 +67,6 @@ public:
      */
     VOX_HOST static void readMimeTypes(IStream & input);
 
-    /** String based overload for readMimeTypes */
-    VOX_HOST static void readMimeTypes(String const& data)
-    {
-        readMimeTypes( IStringStream(data) );
-    }
-
     /** URI reference based overload for readMimeTypes */
     VOX_HOST static void readMimeTypes(ResourceId const& identifier, 
                                        OptionSet const& options = OptionSet());
@@ -83,10 +77,7 @@ public:
      * @param type       The mime-type (type/sub-type)
      * @param extenstion The associated file extension
      */
-    VOX_HOST static void addExtension(String const& extension, String const& type)
-    {
-        m_types.insert( std::make_pair(extension, type) );
-    }
+    VOX_HOST static void addExtension(String const& extension, String const& type);
 
     /** Returns an extension associated with the mime-type */
     VOX_HOST static String const& guessExtension(String const& type, bool resolveAlias);
@@ -95,10 +86,7 @@ public:
     VOX_HOST static std::vector<String const&> getAllExtensions(String const& type);
     
     /** Returns the mime-type associated with this extension */
-    VOX_HOST static String const& getType(String const& extension)
-    {
-        return m_types[extension];
-    }
+    VOX_HOST static String const& getType(String const& extension);
 
     /** Verifies the mime-type and extension are a matched pair */
     VOX_HOST static bool equal(String const& extension, String const& type);
@@ -108,10 +96,6 @@ public:
 
     /** Adds an alias name for a given extension */
     VOX_HOST static void addExtensionAlias(String const& alias, String const& extension);
-
-private:
-    static std::map<String, String>            m_types;    ///< extension to Mime-Type
-    static std::map<String, std::list<String>> m_suffixes; ///< extension to alias
 };
 
 }
