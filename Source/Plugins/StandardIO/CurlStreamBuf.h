@@ -88,7 +88,15 @@ public:
         ResourceId &     identifier, ///< The resource identifier
         OptionSet const& options     ///< The advanced access options
         );
-    
+
+    ~CurlIStreamBuf();
+
+    /** Returns the curl handle associated with the request */
+    CURL * handle() { return m_easyhandle; }
+
+    /** Completes the request and releases the handle */
+    void complete(std::exception_ptr ex);
+
 protected:
 
     virtual int underflow();
@@ -113,8 +121,9 @@ private:
 private:
     CURL * m_easyhandle; ///< Session easy handle
 
-    std::list<DataBuffer>   m_data;      ///< Internal data buffers
-    boost::mutex            m_mutex;     ///< Data buffer mutex
+    std::exception_ptr    m_error;     ///< Internal exception buffer
+    std::list<DataBuffer> m_data;      ///< Internal data buffers
+    boost::mutex          m_mutex;     ///< Data buffer mutex
 
     boost::condition_variable m_cond;   ///< Data buffer empty condition
 

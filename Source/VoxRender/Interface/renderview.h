@@ -43,6 +43,9 @@
 #include "VoxLib/Core/Geometry/Color.h"
 #include "VoxLib/Rendering/FrameBuffer.h"
 
+// 3rd party dependencies
+#include <boost/chrono.hpp>
+
 /** View portal for in progress render */
 class RenderView : public QGraphicsView
 {
@@ -99,6 +102,8 @@ private:
     void keyPressEvent(QKeyEvent * event);    ///< Detects keyboard-scene interaction
     void keyReleaseEvent(QKeyEvent * event);  ///< Detects release of interaction keys
     void focusOutEvent(QFocusEvent * event);  ///< Releases any held keys
+
+    boost::chrono::high_resolution_clock::time_point m_lastTime; ///< Timepoint for latency calculation
 
     unsigned int m_ioFlags;     ///< Bitset for io tracking
     QPoint       m_prevPos;     ///< Mouse position after last event

@@ -37,21 +37,27 @@
 namespace vox
 {
 
-// :TODO: Name resolution
-
-/**
- * Supported Options
- *
- * ConnectTimeout:  unsigned int (seconds)          [default='300']
- * MinimumTransfer: unsigned int (bytes / second)   [default='300']
- * MaxRedirects:    unsigned int                    [default='5']
- */
-
 /**
  * Standard IO interface
  *
  * Provides a resource retrieval module for accessing files using a variety 
  * of common protocols supported by libcurl. http://curl.haxx.se/libcurl/
+ *
+ * <b>Supported Protocols<b>
+ *
+ * HTTP(S): [access remove query]
+ * FTP(S):  [access remove query]
+ * DICT:    [access remove query]
+ * LDAP:    [access remove query]
+ * IMAP:    [access remove query]
+ * POP3:    [access remove query]
+ * SMTP:    [access remove query]
+ *
+ * <b>Supported Options<b>
+ *
+ * ConnectTimeout:  unsigned int (seconds)          [default='300']
+ * MinimumTransfer: unsigned int (bytes / second)   [default='300']
+ * MaxRedirects:    unsigned int                    [default='5']
  */
 class SIO_EXPORT StandardIO : public ResourceModule
 {

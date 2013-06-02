@@ -69,7 +69,7 @@ std::shared_ptr<std::streambuf> StandardIO::access(
     }
     
     throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, 
-        "Invalid access flags (must specify read or write)", Error_Bug);
+        "Invalid access flags (must specify read or write)", Error_Range);
 
     return nullptr; // Satisfy less intelligent compilers
 }

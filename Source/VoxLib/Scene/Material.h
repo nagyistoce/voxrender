@@ -47,7 +47,7 @@ namespace vox
           m_emissiveStrength(0.0f),
           m_emissive(0, 0, 0),
           m_diffuse(255, 255, 255),
-          m_specular(0, 0, 0.),
+          m_specular(0, 0, 0),
           m_dirty(true)
         {
         }
@@ -129,6 +129,8 @@ namespace vox
         }
 
     private:
+        //class Impl; std::unique_ptr<Impl> m_pImpl;
+
         float m_opticalThickness; ///< Optical thickness of material (-INF, INF)
         float m_glossiness;       ///< Glossiness factor
         float m_emissiveStrength; ///< Emissive light intensity

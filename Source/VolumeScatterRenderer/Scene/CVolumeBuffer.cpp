@@ -62,7 +62,7 @@ void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
     m_invRange          = 1.0f / (valueRange[1] - valueRange[0]);
     m_dataMin           = valueRange[0];
 
-    VOX_LOGF(Severity_Info, Error_None, VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
+    VOX_LOG_INFO(VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
 
     // Volume parameters
     m_offset     = volume->offset();

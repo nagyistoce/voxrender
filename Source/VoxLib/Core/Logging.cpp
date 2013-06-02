@@ -44,27 +44,36 @@
 #   include <windows.h>
 #   include <stdio.h>
 #   include <wincon.h>
-#   define FOREGROUND_YELLOW (FOREGROUND_RED | FOREGROUND_GREEN)
-#   define FOREGROUND_WHITE (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
+#   define YELLOW (FOREGROUND_RED | FOREGROUND_GREEN)
+#   define WHITE  (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
+#   define RED    FOREGROUND_RED
+#   define GREEN  FOREGROUND_GREEN
+#   define BLUE   FOREGROUND_BLUE
+#else
+#   define YELLOW 0
+#   define WHITE  0
+#   define RED    0
+#   define GREEN  0
+#   define BLUE   0
 #endif
 
 // Filescope namespace
 namespace {
 namespace filescope {
         
-        // -----------------------------------------------------
-        //  Sets the current console color
-        // -----------------------------------------------------
-#ifdef _WIN32
-    inline void changeConsoleColor( WORD col )
+    // --------------------------------------------------------------------
+    //  Sets the current console color
+    // --------------------------------------------------------------------
+    void changeConsoleColor(unsigned short col)
 	{
+#ifdef _WIN32
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 		GetConsoleScreenBufferInfo( hConsole, &screenBufferInfo );
 		col |= screenBufferInfo.wAttributes & static_cast<WORD>(FOREGROUND_INTENSITY | BACKGROUND_INTENSITY);
 		SetConsoleTextAttribute( hConsole, col );
-	}
 #endif
+	}
 
 } // namespace filescope
 } // namespace anonymous
@@ -73,30 +82,33 @@ namespace filescope {
 namespace vox {
 
 //  Static member initialization
+std::list<String> Logger::m_catFilters;
+boost::mutex      Logger::m_catMutex;
+
 ErrorHandler Logger::m_errorHandler = ErrorPrint;
 int Logger::m_filter                = Severity_Info;
 int Logger::m_lastError             = Error_None;
 
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 //  Dispatches a log entry to the logger backend
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 LogEntry::~LogEntry()
 { 
     Logger::addEntry(m_severity, m_code, m_category, 
                      str().c_str(), m_file, m_line); 
 }
 
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 //  Ignores any errors regardless of severity
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 void ErrorIgnore(char const* file, int line, int severity, int code,
                  char const* category, char const* message)
 {
 }
 
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 //  Aborts the program if an error occurs
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 void ErrorAbort(char const* file, int line, int severity, int code,
                 char const* category, char const* message)
 {
@@ -104,40 +116,38 @@ void ErrorAbort(char const* file, int line, int severity, int code,
 	if (severity >= Severity_Error) exit(code);
 }
 
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 //  Outputs a log message to the std::clog stream
-// -----------------------------------------------------
+// --------------------------------------------------------------------
 void ErrorPrint(char const* file, int line, int severity, int code,
                      char const* category, char const* message)
 {
 	std::clog << "[";
 
-#ifdef _WIN32
 	switch (severity) 
 	{
     case Severity_Trace:
-        filescope::changeConsoleColor( FOREGROUND_WHITE );
+        filescope::changeConsoleColor( WHITE );
         break;
 	case Severity_Info:
-		filescope::changeConsoleColor( FOREGROUND_GREEN );
+		filescope::changeConsoleColor( GREEN );
 		break;
 	case Severity_Warning:
-		filescope::changeConsoleColor( FOREGROUND_YELLOW );
+		filescope::changeConsoleColor( YELLOW );
 		break;
 	case Severity_Error:
-		filescope::changeConsoleColor( FOREGROUND_RED );
+		filescope::changeConsoleColor( RED );
 		break;
 	case Severity_Fatal:
-		filescope::changeConsoleColor( FOREGROUND_RED );
+		filescope::changeConsoleColor( RED );
 		break;
 	case Severity_Debug:
-		filescope::changeConsoleColor( FOREGROUND_BLUE );
+		filescope::changeConsoleColor( BLUE );
 		break;
     default:
         // Unknown severity level //
         break;
 	}
-#endif
 
     std::clog << boost::local_time::local_sec_clock::local_time(
         boost::local_time::time_zone_ptr( ) ) << " ";
@@ -163,9 +173,7 @@ void ErrorPrint(char const* file, int line, int severity, int code,
 	std::clog << " " << code;
 
     // Restore default previous console color :TODO: restore previous
-#ifdef _WIN32
-	filescope::changeConsoleColor( FOREGROUND_WHITE );
-#endif
+	filescope::changeConsoleColor( WHITE );
 
 	std::clog << "] "; 
     
@@ -179,7 +187,7 @@ void ErrorPrint(char const* file, int line, int severity, int code,
    
     std::clog << " <file=\"" << boost::filesystem::basename(file) << "\",line=" << line << ">";
         
-    std::clog << std::endl << std::flush;
+    std::clog << std::endl;
 }
 
 } // namespace vox

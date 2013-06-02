@@ -4,7 +4,7 @@
 
 	Description: Implements a front-end for run-time logging
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,6 +23,9 @@
 
 =========================================================================== */
 
+// :TODO: Alot of implementation here should be moved to the source file or a hidden header
+// :TODO: The category list should use a sorting scheme to reduce lookup time
+
 // Begin definition
 #ifndef VOX_LOGGING_H
 #define VOX_LOGGING_H
@@ -30,6 +33,9 @@
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Error/Error.h"
+
+// Boost Dependencies
+#include <boost/thread.hpp>
 
 // API namespace
 namespace vox
@@ -112,10 +118,11 @@ namespace vox
 	/** 
 	 * VoxRender logging interface
      * 
-     * The logger class interface allows user access to the VoxRender logging system. The base class 
+     * The logger class interface allows user access to the VoxLib logging system. The base class 
      * associated with logging is the Logger class. In addition to containing the members which modify 
-     * the log filtering level, the logger backend can be replaced with a user defined handler function.
-     * 
+     * the log filtering level, the logger backend can be replaced with a user defined handler function
+     * through the interface provided here. 
+     *
      * \section Logger Backends
      * The logger backend is a function which takes in the log entry content as parameters and performs 
      * the desired logging operation with them. Several log backends are provided internally:
@@ -159,7 +166,7 @@ namespace vox
      *
      * \code
      *
-     *  /// Logging an info string
+     *  // Logging an info string
      *  char const* myCategory = "category";
      * 
      *  auto logEntry = vox::Logger::addEntry( 
@@ -173,8 +180,7 @@ namespace vox
      * \section Filtering
      *
      * The logging system provides functionality for controlling the log entries
-     * which are filtered out from processing both during runtime and during 
-     * compilation. 
+     * which are filtered out during runtime.
 	 */
 	class VOX_EXPORT Logger
 	{
@@ -242,8 +248,7 @@ namespace vox
 		 *
 		 * @param errorHandler The backend function to be called for logging
 		 */
-		inline static void setHandler(vox::ErrorHandler errorHandler) 
-			{ m_errorHandler = errorHandler; }
+		inline static void setHandler(vox::ErrorHandler errorHandler) { m_errorHandler = errorHandler; }
 
 		/** 
 		 * Sets the error handler used by the logging system.
@@ -262,6 +267,49 @@ namespace vox
 		inline static void setFilteringLevel(int filter) { m_filter = filter; }
 
 		/** 
+		 * Adds an additional category to the list of filtered log categories.
+         *
+         * Filtered log categories are category strings which will be ignored
+         * when determining whether to dispatch a log entry to the backend.
+		 *
+		 * @param category The name of the category
+		 */
+        static void addCategoryFilter(Char const* category)
+        {
+            boost::mutex::scoped_lock lock(m_catMutex);
+
+            m_catFilters.push_back(category);
+        }
+
+		/** 
+		 * Removes a category from the list of filtered log categories
+         *
+         * Filtered log categories are category strings which will be ignored
+         * when determining whether to dispatch a log entry to the backend.
+		 *
+		 * @param category The name of the category
+		 */
+        static void removeCategoryFilter(Char const* category)
+        {
+            boost::mutex::scoped_lock lock(m_catMutex);
+
+            m_catFilters.remove(category);
+        }
+
+		/** 
+		 * Returns true if a category is in the list of filtered categories
+         *
+         * Filtered log categories are category strings which will be ignored
+         * when determining whether to dispatch a log entry to the backend.
+		 *
+		 * @param category The name of the category
+		 */
+        static bool isCategoryFiltered(Char const* category)
+        {
+            return std::find(m_catFilters.begin(), m_catFilters.end(), category) != m_catFilters.end();
+        }
+
+		/** 
 		 * Gets the filtering level of the logging system.
 		 *
 		 * @return The minumum severity level being logged
@@ -269,24 +317,47 @@ namespace vox
 		inline static int getFilteringLevel() { return m_filter; }
 
 	private:
+        static std::list<String> m_catFilters; ///< Filtered log categories
+        static boost::mutex      m_catMutex;   ///< Cat filters mutex 
+
 		static ErrorHandler m_errorHandler;	///< Error handler for logging
 		static int          m_filter;		///< Filter level for log entries
 		static int          m_lastError;	///< Code of last error logged
 	};
 
-    // Logging macro 
-#define VOX_LOGF(SEV, CODE, CAT, MSG)                                   \
+    // Logging macro incorperating user defined severity levels
+#define VOX_LOG(SEV, CODE, CAT, MSG)                                    \
     if (vox::Logger::getFilteringLevel() <= SEV)                        \
     {                                                                   \
         vox::Logger::addEntry(SEV, CODE, CAT, MSG, __FILE__, __LINE__); \
     }
 
-    // Logging macros for specific filter levels
-#define VOX_LOG_INFO(CAT, MSG)                                                          \
-    if (vox::Logger::getFilteringLevel() <= Severity_Info)                              \
+    // Logging macros for api specific filter levels
+#define VOX_LOG_TRACE(CAT, MSG)                                                                    \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Trace)                                   \
+    {                                                                                              \
+        vox::Logger::addEntry(vox::Severity_Trace, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+    }
+#define VOX_LOG_INFO(CAT, MSG)                                                                    \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Info)                                   \
+    {                                                                                             \
+        vox::Logger::addEntry(vox::Severity_Info, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+    }
+#define VOX_LOG_DEBUG(CAT, MSG)                                                                    \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Debug)                                   \
+    {                                                                                              \
+        vox::Logger::addEntry(vox::Severity_Debug, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+    }
+#define VOX_LOG_ERROR(CODE, CAT, MSG)                                                   \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Error)                        \
     {                                                                                   \
-        vox::Logger::addEntry(Severity_Info, Error_None, CAT, MSG, __FILE__, __LINE__); \
-    }                                                                                   \
+        vox::Logger::addEntry(vox::Severity_Error, CODE, CAT, MSG, __FILE__, __LINE__); \
+    } 
+#define VOX_LOG_WARNING(CAT, MSG)                                                                    \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Warning)                                   \
+    {                                                                                                \
+        vox::Logger::addEntry(vox::Severity_Warning, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+    } 
 
 } // namespace vox
 

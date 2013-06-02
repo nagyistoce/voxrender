@@ -137,6 +137,8 @@ void RenderView::setLogoMode()
 // ------------------------------------------------------------
 void RenderView::setViewMode() 
 {
+    m_lastTime = boost::chrono::high_resolution_clock::now();
+
     resetTransform();
 
     if (!m_voxfb->isVisible()) m_voxfb->show();
@@ -300,6 +302,24 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     QImage qimage((unsigned char*)image.data(),
         image.width(), image.height(),
         image.stride(), QImage::Format_RGB32);
+
+    // Compute the performance statistics for this frame
+    auto curr    = boost::chrono::high_resolution_clock::now();
+    auto elapsed = curr - m_lastTime; m_lastTime = curr;
+
+    auto fps = 1.0f / (static_cast<float>(elapsed.count()) / 1000.0f / 1000.0f / 1000.0f);
+
+    // Draws the statistical information overlay
+    {
+        QPainter painter;
+        painter.begin(&qimage);
+        painter.setPen(Qt::black);
+        painter.setCompositionMode(QPainter::CompositionMode_Source);
+ 
+        painter.drawText(2, 10, format("%1%",fps).c_str());  // Draw a number on the image
+ 
+        painter.end();
+    }
 
     m_voxfb->pixmap().convertFromImage(qimage);
 
