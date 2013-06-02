@@ -37,6 +37,16 @@
 namespace vox
 {
 
+// :TODO: Name resolution
+
+/**
+ * Supported Options
+ *
+ * ConnectTimeout:  unsigned int (seconds)          [default='300']
+ * MinimumTransfer: unsigned int (bytes / second)   [default='300']
+ * MaxRedirects:    unsigned int                    [default='5']
+ */
+
 /**
  * Standard IO interface
  *

@@ -89,14 +89,6 @@ public:
         OptionSet const& options     ///< The advanced access options
         );
     
-    /** Terminates the libcurl session */
-    ~CurlIStreamBuf() { cleanup(); }
-
-    /** */
-
-    /** Performs unload cleanup for the DLL */
-    static void onUnload();
-
 protected:
 
     virtual int underflow();
@@ -121,7 +113,6 @@ private:
 private:
     CURL * m_easyhandle; ///< Session easy handle
 
-    std::exception_ptr      m_exception; ///< Pointer to internal exception
     std::list<DataBuffer>   m_data;      ///< Internal data buffers
     boost::mutex            m_mutex;     ///< Data buffer mutex
 
@@ -129,9 +120,6 @@ private:
 
     /** Recieves downloaded data from the Resource */
     size_t onDataReady(char * ptr, size_t bytes);
-
-    /** Terminates the session and closes active handles */
-    void cleanup();
 
     /** Callback function for the libcurl library which redirects to onData */
     static size_t onDataReadyCallback(char * ptr, size_t size, size_t nmemb, void * buf);
