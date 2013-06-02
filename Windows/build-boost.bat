@@ -3,8 +3,8 @@
 :: This flag identifies the version of boost to
 :: be downloaded and built, you may change it but
 :: it could cause issues with altered ABIs
-set BOOST_VER=1.52.0
-set BOOST_VER_U=1_52_0
+set BOOST_VER=1.53.0
+set BOOST_VER_U=1_53_0
 
 :: Issue a message about the project and the use of 
 :: wget for fetching the project source+dependencies
@@ -95,11 +95,11 @@ echo *          Boost::Unit_Test_Framework                                    *
 echo *          Boost::Chrono                                                 *
 echo **************************************************************************
 if %BUILD_PLATFORM%==x86 (
-	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug   link=static threading=multi runtime-link=shared -a --with-test --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_d_build.txt
-	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared -a --with-test --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_build.txt
+	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug   link=static threading=multi runtime-link=shared -a --with-test --with-atomic --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_d_build.txt
+	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared -a --with-test --with-atomic --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x86/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x86_build.txt
 ) else (
-	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_d_build.txt
-	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_build.txt
+	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=debug   link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-atomic --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost debug stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_d_build.txt
+	bjam.exe -j%BOOST_JOBS% toolset=msvc-10.0 variant=release link=static threading=multi runtime-link=shared address-model=64 -a --with-test --with-atomic --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-thread --stagedir=%INCLUDES%/x64/boost --build-dir=bin/boost stage > %CURRENT%\Reports\boost-%BOOST_VER%_x64_build.txt
 )
 	
 rmdir %INCLUDES%\%BUILD_PLATFORM%\boost\include > %CURRENT%\Reports\tmp.txt

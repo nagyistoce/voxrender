@@ -119,7 +119,7 @@ SET(Boost_ADDITIONAL_VERSIONS "1.49.0" "1.49" "1.46.2" "1.46.1" "1.46.0"
     "1.46" "1.45.0" "1.45" "1.44.0" "1.44" "1.43.0" "1.43")
 
 # Required Component Libraries
-SET(Boost_COMPONENTS thread program_options filesystem serialization chrono
+SET(Boost_COMPONENTS atomic thread program_options filesystem serialization chrono
     iostreams regex system date_time unit_test_framework)
 
 # Set Library type
