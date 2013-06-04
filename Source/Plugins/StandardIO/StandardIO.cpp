@@ -65,7 +65,7 @@ std::shared_ptr<std::streambuf> StandardIO::access(
     }
     else if (openMode&Resource::Mode_Output)
     {
-        return nullptr;
+        return std::make_shared<vox::CurlOStreamBuf>(identifier, options);
     }
     
     throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, 

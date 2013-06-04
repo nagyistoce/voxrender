@@ -27,14 +27,14 @@
 #include "CurlStreamBuf.h"
 
 // Include Dependencies
-#include "VoxLib/Error/PluginError.h"
+#include "VoxLib/Error/Error.h"
 #include "VoxLib/Core/Logging.h"
 
 // 3rd Party Includes
 #include <boost/lockfree/queue.hpp>
 #include <boost/asio.hpp>
 
-#define CHECK_CURL(x) if ((x) != CURLE_OK) { throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, "call to libcurl api has returned error"); }
+#define CHECK_CURL(x) if ((x) != CURLE_OK) { throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY, "call to libcurl api has returned error"); }
 
 namespace vox {
 
@@ -42,22 +42,23 @@ namespace {
 namespace filescope {
     
     // ----------------------------------------------------------------------------
-    //  Helper class which encapsulates curl multihandle as an io service
+    //  IO service class which encapsulates the curl multi interface with asio
     // ----------------------------------------------------------------------------
-    class MultiWrapper
+    class CurlAsyncIOService
     {
     public:
         // ----------------------------------------------------------------------------
         //  Creates a multi handle and initializes the io service and socket callbacks 
         // ----------------------------------------------------------------------------
-        MultiWrapper() : 
+        CurlAsyncIOService() : 
           m_running(0), 
-          m_handle(curl_multi_init()), 
           m_timer(m_ioService), 
           m_work(m_ioService), 
-          m_serviceThread(boost::bind(&MultiWrapper::ioServiceLoop, this))
+          m_serviceThread(boost::bind(&CurlAsyncIOService::ioServiceLoop, this))
         {
-            if (!m_handle) // Ensure proper initialization
+            // Initialize the multihandle
+            m_handle = curl_multi_init();
+            if (!m_handle)
             {  
                 throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY, "curl_multi_init failed");
             }
@@ -72,10 +73,12 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         //  Ensures cleanup of the multi handle
         // ----------------------------------------------------------------------------
-        ~MultiWrapper()
+        ~CurlAsyncIOService()
         {
             if (m_handle) 
             {
+                // :TODO: Make sure cancels are issued
+
                 // Ensure termination of IO services
                 m_ioService.stop(); m_serviceThread.join();
 
@@ -96,65 +99,71 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         void ioServiceLoop()
         {
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, "Entering new IO service thread");
+
             try
             {
                 m_ioService.run();
             }
-            catch (Error &)
+            catch (Error & error)
             {
-                // :TODO: VOX_LOG_EXCEPTION(e)
+                VOX_LOG_EXCEPTION(Severity_Error, error);
             }
             catch (...)
             {
-                // CONSUME!!! :o  :|  :o  :| :)
+                VOX_LOG_ERROR(Error_Unknown, SIO_LOG_CATEGORY, "IO Service thread has failed");
             }
-        }
 
-        // ----------------------------------------------------------------------------
-        //  Returns the multi handle underlying this wrapper
-        // ----------------------------------------------------------------------------
-        CURLM * handle() 
-        {
-            return m_handle;
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, "Exiting IO service thread");
         }
 
         // ----------------------------------------------------------------------------
         //  Adds a new easy handle to the multihandle 
         // ----------------------------------------------------------------------------
-        void addRequest(CurlIStreamBuf * request)
+        void addRequest(CurlAsyncRequest * request)
         {
-            auto easyhandle = request->handle();
+            CURL* easyhandle = request->handle();
 
             CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_OPENSOCKETDATA, this));
             CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_CLOSESOCKETDATA, this));
 
             CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_OPENSOCKETFUNCTION,  openSocketRedirect));
             CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_CLOSESOCKETFUNCTION, closeSocketRedirect));
-
-            if (!m_unservicedRequests.push(request))
-            {
-                throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY, "Unable to add request to service queue");
-            }
             
-            // :DEBUG:
-            CHECK_CURL(curl_multi_add_handle(m_handle, easyhandle));
+            m_ioService.post(boost::bind(&CurlAsyncIOService::addRequestHandler, this, request));
         }
 
         // ----------------------------------------------------------------------------
         //  Cancels an in-progress request, terminating the transfer prematurely
         // ----------------------------------------------------------------------------
-        void cancelRequest(CurlIStreamBuf * request)
+        void cancelRequest(CurlAsyncRequest * request)
         {
+            m_ioService.post(boost::bind(&CurlAsyncIOService::cancelRequestHandler, this, request));
         }
 
     private:
+        // ----------------------------------------------------------------------------
+        //  Checks the queue and extracts a pending request if possible
+        // ----------------------------------------------------------------------------
+        void addRequestHandler(CurlAsyncRequest * request)
+        {
+            CURL* easyhandle = request->handle();
+
+            CHECK_CURL(curl_multi_add_handle(m_handle, easyhandle));
+        }
+        
+        // ----------------------------------------------------------------------------
+        //  Checks the queue and extracts a pending request if possible
+        // ----------------------------------------------------------------------------
+        void cancelRequestHandler(CurlAsyncRequest * request)
+        {
+        }
+
         // ----------------------------------------------------------------------------
         //  Opens a socket for libcurl (CURLOPT_OPENSOCKETFUNCTION)
         // ----------------------------------------------------------------------------
         curl_socket_t openSocket(curlsocktype purpose, struct curl_sockaddr * address)
         {
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, "Opening socket");
- 
             curl_socket_t sockfd = CURL_SOCKET_BAD;
 
             // Restriction to IPv4 for now
@@ -164,13 +173,10 @@ namespace filescope {
                 boost::asio::ip::tcp::socket * tcp_socket = new boost::asio::ip::tcp::socket(m_ioService);
  
                 // Open to acquire a native handle for libcurl
-                boost::system::error_code ec;
-                tcp_socket->open(boost::asio::ip::tcp::v4(), ec);
- 
-                if (ec)
+                boost::system::error_code ec; // Don't let an exception through
+                if (tcp_socket->open(boost::asio::ip::tcp::v4(), ec))
                 {
-                    VOX_LOG(Severity_Error, Error_Unknown, SIO_LOG_CATEGORY, 
-                        format("Failed to open socket: %1%", ec.message()));
+                    VOX_LOG_ERROR(Error_Unknown, SIO_LOG_CATEGORY, format("Failed to open socket: %1%", ec.message()));
                 }
                 else
                 {
@@ -178,10 +184,12 @@ namespace filescope {
  
                     m_sockets.insert(std::pair<curl_socket_t, boost::asio::ip::tcp::socket *>(sockfd, tcp_socket));
                 }
+                
+                VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Opening socket: socket=%1%", sockfd));
             }
             else
             {
-                VOX_LOG(Severity_Error, Error_Unknown, SIO_LOG_CATEGORY, "Failed to open socket: IPv6 not supported");
+                VOX_LOG_ERROR(Error_Range, SIO_LOG_CATEGORY, "Failed to open socket: IPv6 not supported");
             }
 
             return sockfd;
@@ -192,7 +200,7 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         int closeSocket(curl_socket_t item)
         {
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, format("Closing socket: %1%", item));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Closing socket: %1%", item));
 
             auto iter = m_sockets.find(item);
             if (iter != m_sockets.end())
@@ -202,8 +210,7 @@ namespace filescope {
             }
             else
             {
-                VOX_LOG(Severity_Error, Error_Bug, VOX_LOG_CATEGORY, 
-                    format("libcurl requested closure of unknown socket: %1%", item));
+                VOX_LOG_ERROR(Error_Bug, SIO_LOG_CATEGORY, format("libcurl requested closure of unrecognized socket: %1%", item));
             }
 
             return 0;
@@ -214,7 +221,7 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         void checkInfo()
         {
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, format("Requests remaining: %1%", m_running));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Requests remaining: %1%", m_running));
 
             int messages; ///< Message count
 
@@ -225,14 +232,17 @@ namespace filescope {
                     auto easyhandle = msg->easy_handle;
                     auto result     = msg->data.result;
 
-                    CurlIStreamBuf * request;
+                    if (curl_multi_remove_handle(m_handle, easyhandle) != CURLM_OK)
+                    {
+                        VOX_LOG_ERROR(Error_Unknown, SIO_LOG_CATEGORY, "Error calling curl_multi_remove_handle");
+                    }
+
+                    CurlAsyncRequest * request;
                     curl_easy_getinfo(easyhandle, CURLINFO_PRIVATE, &request);
 
                     char * effectiveUrl;
                     curl_easy_getinfo(easyhandle, CURLINFO_EFFECTIVE_URL, &effectiveUrl);
                     // :TODO: Feed this back to the user somehow
-
-                    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Request complete: ");
 
                     request->complete(nullptr);
                 }
@@ -244,6 +254,8 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         void timerCallback(boost::system::error_code const& error)
         {
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, "Timeout: Calling curl_multi_socket_action");
+
             if (!error)
             {
                 auto code = curl_multi_socket_action(m_handle, CURL_SOCKET_TIMEOUT, 0, &m_running);
@@ -267,21 +279,20 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         int multiTimerCallback(long timeoutMs)
         {
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, format("MultiTimer Callback: %1% ms", timeoutMs));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("MultiTimer Callback: %1% ms", timeoutMs));
 
             m_timer.cancel();
- 
+
             if (timeoutMs > 0)
             {
                 // Reset the timer to the specified timeout 
                 m_timer.expires_from_now(boost::posix_time::milliseconds(timeoutMs));
-                m_timer.async_wait(boost::bind(&MultiWrapper::timerCallback, this, _1));
+                m_timer.async_wait(boost::bind(&CurlAsyncIOService::timerCallback, this, _1));
             }
             else
             {
                 // Call timeout function immediately 
-                auto e = boost::system::error_code();
-                timerCallback(e);
+                timerCallback(boost::system::error_code());
             }
 
             return 0;
@@ -290,11 +301,11 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         //  Event callback from asio on socket event completion
         // ----------------------------------------------------------------------------
-        void eventCallback(boost::asio::ip::tcp::socket * tcpSocket, int action)
+        void eventCallback(curl_socket_t fd, int action)
         {
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, format("Socket ready: socket=%1%", tcpSocket->native_handle()));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Socket ready: socket=%1%", fd));
 
-            auto code = curl_multi_socket_action(m_handle, tcpSocket->native_handle(), action, &m_running);
+            auto code = curl_multi_socket_action(m_handle, fd, action, &m_running);
             if (code != CURLM_OK)
             {
                 VOX_LOG(Severity_Error, Error_Unknown, SIO_LOG_CATEGORY, 
@@ -309,37 +320,45 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         //  Waits for the specified option on the socket specified by libcurl
         // ----------------------------------------------------------------------------
-        void socketCallback(curl_socket_t s, int action)
+        void socketCallback(curl_socket_t s, int action, boost::asio::ip::tcp::socket * socketHandle)
         {
-            // Acquire the handle to the overhead asio tcp socket
-            auto iter = m_sockets.find(s);
-            if (iter == m_sockets.end())
-            {
-                VOX_LOG_INFO(SIO_LOG_CATEGORY, "Socket is c-ares socket; ignoring.");
+            boost::asio::ip::tcp::socket * tcpSocket = socketHandle;
 
-                return;
+            // Acquire the handle to the overhead asio tcp socket
+            if (tcpSocket == nullptr)
+            {
+                auto iter = m_sockets.find(s);
+                if (iter == m_sockets.end())
+                {
+                    VOX_LOG_WARNING(SIO_LOG_CATEGORY, "Socket callback on presumed c-ares socket; ignoring.");
+             
+                    return;
+                }
+                tcpSocket = iter->second;
+
+                curl_multi_assign(m_handle, s, tcpSocket); // Cache a private handle to the socket
             }
-            auto * tcpSocket = iter->second;
- 
+
             // Wait on the socket for the specified action/event/status
             switch (action)
             {
             case CURL_POLL_IN:
-                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&MultiWrapper::eventCallback, this, tcpSocket, action));
+                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
                 break;
                 
             case CURL_POLL_OUT:
-                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&MultiWrapper::eventCallback, this, tcpSocket, action));
+                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
                 break;
                 
             case CURL_POLL_INOUT:
-                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&MultiWrapper::eventCallback, this, tcpSocket, action));
-                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&MultiWrapper::eventCallback, this, tcpSocket, action));
+                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
+                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
                 break;
 
             default:
                 VOX_LOG(Severity_Error, Error_Bug, SIO_LOG_CATEGORY, 
                     format("Unrecognized action requested on libcurl socket: %1%", action));
+                break;
             }
         }
 
@@ -350,7 +369,7 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         static int multiTimerCallbackRedirect(CURLM *multihandle, long timeoutMs, void * userp)
         {
-            return reinterpret_cast<MultiWrapper*>(userp)->multiTimerCallback(timeoutMs);
+            return reinterpret_cast<CurlAsyncIOService*>(userp)->multiTimerCallback(timeoutMs);
         }
 
         // ----------------------------------------------------------------------------
@@ -358,7 +377,7 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         static int closeSocketRedirect(void * clientp, curl_socket_t item)
         {
-            return reinterpret_cast<MultiWrapper*>(clientp)->closeSocket(item);
+            return reinterpret_cast<CurlAsyncIOService*>(clientp)->closeSocket(item);
         }
         
         // ----------------------------------------------------------------------------
@@ -366,7 +385,7 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         static curl_socket_t openSocketRedirect(void * clientp, curlsocktype purpose, struct curl_sockaddr * address)
         {
-            return reinterpret_cast<MultiWrapper*>(clientp)->openSocket(purpose, address);
+            return reinterpret_cast<CurlAsyncIOService*>(clientp)->openSocket(purpose, address);
         }
 
         // ----------------------------------------------------------------------------
@@ -376,18 +395,16 @@ namespace filescope {
         {
             static const char * actionStr[] = {"none", "IN", "OUT", "INOUT", "REMOVE"};
 
-            VOX_LOG_INFO(SIO_LOG_CATEGORY, format("Socket callback: socket=%1%, action=%2%", s, actionStr[action]));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Socket callback: socket=%1%, action=%2%", s, actionStr[action]));
 
             if (action == CURL_POLL_REMOVE) return 0;
 
-            reinterpret_cast<MultiWrapper*>(userp)->socketCallback(s, action);
+            reinterpret_cast<CurlAsyncIOService*>(userp)->socketCallback(s, action, reinterpret_cast<boost::asio::ip::tcp::socket*>(sockp));
 
             return 0;
         }
 
-    private: // DON'T move these around, the some variables initiate on partial construction
-
-        static boost::lockfree::queue<CurlIStreamBuf*> m_unservicedRequests;
+    private: // DON'T move these around, the some variables have construction dependencies
 
         std::map<curl_socket_t, boost::asio::ip::tcp::socket *> m_sockets;
 
@@ -402,21 +419,19 @@ namespace filescope {
         int     m_running;    ///< Active requests
     };
 
-    boost::lockfree::queue<CurlIStreamBuf*> MultiWrapper::m_unservicedRequests(128);
-
-    std::unique_ptr<MultiWrapper> multiWrapper; ///< This will be a service pool at some point 
+    std::unique_ptr<CurlAsyncIOService> asyncIOService; ///< This will be a service pool at some point 
     
     void initThreadPool() // :DEBUG:
     {
         static boost::mutex mutex;
 
-        if (!multiWrapper)
+        if (!asyncIOService)
         {
             boost::mutex::scoped_lock lock(mutex);
 
-            if (!multiWrapper)
+            if (!asyncIOService)
             {
-                multiWrapper.reset(new MultiWrapper());            
+                asyncIOService.reset(new CurlAsyncIOService());            
             }
         }
     }
@@ -425,43 +440,110 @@ namespace filescope {
 } // namespace anonymous
 
 // ----------------------------------------------------------------------------
+//  Initializes a libcurl easy handle for use by the AsyncIO service
+// ----------------------------------------------------------------------------
+CurlAsyncRequest::CurlAsyncRequest(
+    ResourceId &     identifier, ///< The resource identifier
+    OptionSet const& options     ///< The advanced access options
+    )
+{
+    curl_global_init(CURL_GLOBAL_ALL);
+    filescope::initThreadPool();
+
+    VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Initiating CurlAsyncRequest: url=%1% id=%2%", identifier.asString(), (void*)this));
+
+    CURL * easyhandle; // Request handle
+
+    // Create the libcurl request handle
+    if (!(easyhandle = curl_easy_init()))
+    {
+        throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY,
+            "Failed to initialize handle for libCurl session");
+    }
+    m_handle = easyhandle;
+
+    // Set the global request options using the libcurl client API (see http://curl.haxx.se/libcurl/c/curl_easy_setopt.html)
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_USERAGENT,       "voxlib-agent/" SIO_VERSION_STRING));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_URL,             identifier.asString().c_str()));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_FOLLOWLOCATION,  1L));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_PRIVATE,         this));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_TIME,  3L));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_LIMIT, 10L));
+    curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+}
+
+// ----------------------------------------------------------------------------
+//  Terminates an async request if necessary
+// ----------------------------------------------------------------------------
+CurlAsyncRequest::~CurlAsyncRequest()
+{
+    if (m_handle)
+    {
+        filescope::asyncIOService->cancelRequest(this);
+
+        // :TODO: Wait on completion
+    }
+}
+
+// ---------------------------------------------------------------------------- 
+//  Cleans up the libcurl request handle
+// ----------------------------------------------------------------------------
+void CurlAsyncRequest::complete(std::exception_ptr ex)
+{
+    curl_easy_cleanup(reinterpret_cast<CURL*>(m_handle));
+}
+
+// ----------------------------------------------------------------------------
 //  Initializes a request, creating and registering the curl handle
 // ----------------------------------------------------------------------------
 CurlOStreamBuf::CurlOStreamBuf(
     ResourceId &     identifier,
     OptionSet const& options
-    )
+    ) :
+    CurlAsyncRequest(identifier, options),
+    m_error(nullptr)
 {
-    // Create the libcurl request handle
-    if (!(m_easyhandle = curl_easy_init()))
-    {
-        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
-            "Failed to initialize handle for libCurl session");
-    }
+    // Initialize the buf ptrs to ensure immediate underflow/overflow 
+    setg(nullptr, nullptr, nullptr); 
+    setp(nullptr, nullptr, nullptr);
     
+    CURL * easyhandle = reinterpret_cast<CURL*>(m_handle);
+
     // Set the request options using the libcurl client API (see http://curl.haxx.se/libcurl/c/curl_easy_setopt.html)
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_USERAGENT,      "voxlib-agent/" SIO_VERSION_STRING));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_URL,            identifier.asString())); 
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_FOLLOWLOCATION, 1L));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_UPLOAD,         1L));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_READDATA,       this));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_READFUNCTION,   &CurlOStreamBuf::onGetDataCallback));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_PRIVATE,        this));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_UPLOAD,         1L));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_READDATA,       this));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_READFUNCTION,   &CurlOStreamBuf::onGetDataCallback));
+
+    // The BufSize option is a generic option across all protocols
+    auto bufSizeIter = options.find("BufSize");
+    if (bufSizeIter != options.end())
+    {
+        auto size = boost::lexical_cast<size_t>(bufSizeIter->second);
+        m_buffer.resize(size);
+    }
+    else m_buffer.resize(512);
 
     // The Size option is a generic option across all protocols
     auto sizeIter = options.find("Size");
     if (sizeIter != options.end())
     {
         auto size = boost::lexical_cast<size_t>(sizeIter->second);
-        CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_INFILESIZE_LARGE, size));
+        CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_INFILESIZE_LARGE, size));
     }
-}
 
+    // Issue the request to the Multi-Interface wrapper
+    filescope::asyncIOService->addRequest(this);
+}
+    
 // ----------------------------------------------------------------------------
-//  Terminates the session if it is still active
+//  Recieves notification of request completion from the io service thread
+//  This includes completion by failure
 // ----------------------------------------------------------------------------
-void CurlOStreamBuf::cleanup()
+void CurlOStreamBuf::complete(std::exception_ptr ex)
 {
+    VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Completing request: id=%1%", (void*)this));
+
+    CurlAsyncRequest::complete(ex);
 }
 
 // ----------------------------------------------------------------------------
@@ -469,6 +551,10 @@ void CurlOStreamBuf::cleanup()
 // ----------------------------------------------------------------------------
 size_t CurlOStreamBuf::onGetData(void * ptr, size_t maxBytes)
 {
+    VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Awaiting upload of request content: id=%1%", (void*)this));
+
+    // :TODO: PAUSE_IF_NECESSARY for data upload waiting, prevent hang on service thread
+
     return 0;
 }
 
@@ -487,39 +573,24 @@ CurlIStreamBuf::CurlIStreamBuf(
     ResourceId &     identifier,
     OptionSet const& options
     )  :
+    CurlAsyncRequest(identifier, options),
     m_error(nullptr)
 {
-    filescope::initThreadPool();
-
     // Initialize the buf ptrs to ensure immediate underflow/overflow 
     setg(nullptr, nullptr, nullptr); 
     setp(nullptr, nullptr, nullptr);
 
-    // Create the libcurl request handle
-    if (!(m_easyhandle = curl_easy_init()))
-    {
-        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
-            "Failed to initialize handle for libCurl session");
-    }
+    CURL * easyhandle = reinterpret_cast<CURL*>(m_handle);
 
     // Set the request options using the libcurl client API (see http://curl.haxx.se/libcurl/c/curl_easy_setopt.html)
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_USERAGENT,        "voxlib-agent/" SIO_VERSION_STRING));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_URL,              identifier.asString().c_str()));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_FOLLOWLOCATION,   1L));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_WRITEDATA,        this));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_WRITEFUNCTION,    &CurlIStreamBuf::onDataReadyCallback));
-    CHECK_CURL(curl_easy_setopt(m_easyhandle, CURLOPT_PRIVATE,          this));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA,        this));
+    CHECK_CURL(curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION,    &CurlIStreamBuf::onDataReadyCallback));
 
     // Issue the request to the Multi-Interface wrapper
-    filescope::multiWrapper->addRequest(this);
-}
-    
-// ----------------------------------------------------------------------------
-//  Ensures cancellation of the request before destruction
-// ----------------------------------------------------------------------------
-CurlIStreamBuf::~CurlIStreamBuf()
-{
-    filescope::multiWrapper->cancelRequest(this);
+    filescope::asyncIOService->addRequest(this);
+    //curl_easy_perform(easyhandle);
+    //complete(nullptr);
+    //filescope::asyncIOService.reset();
 }
 
 // ----------------------------------------------------------------------------
@@ -560,6 +631,10 @@ int CurlIStreamBuf::underflow()
 // ----------------------------------------------------------------------------
 void CurlIStreamBuf::complete(std::exception_ptr ex)
 {
+    VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Completing request: id=%1%", (void*)this));
+
+    CurlAsyncRequest::complete(ex);
+
     boost::mutex::scoped_lock lock(m_mutex);
 
     m_error = ex; // Copy potential exception
@@ -567,8 +642,6 @@ void CurlIStreamBuf::complete(std::exception_ptr ex)
     m_data.push_back( DataBuffer(nullptr, 0) );
 
     m_cond.notify_all();
-
-    curl_easy_cleanup(m_easyhandle);
 }
 
 // ----------------------------------------------------------------------------
@@ -576,6 +649,8 @@ void CurlIStreamBuf::complete(std::exception_ptr ex)
 // ----------------------------------------------------------------------------
 size_t CurlIStreamBuf::onDataReady(char * ptr, size_t bytes)
 {
+    VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Receiving request content: id=%1%", (void*)this));
+
     boost::mutex::scoped_lock lock(m_mutex);
 
     m_data.push_back( DataBuffer(ptr, bytes) );

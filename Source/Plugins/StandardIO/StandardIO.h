@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: LibCurl IO Library Wrapper
+	Project: VoxLib IO Library Plugin
     
-	Description: Wraps libcurl in a VoxIO compatible module
+	Description: Standard IO Plugin for VoxLib IO library
 
     Copyright (C) 2013 Lucas Sherman
 
@@ -40,21 +40,29 @@ namespace vox
 /**
  * Standard IO interface
  *
- * Provides a resource retrieval module for accessing files using a variety 
- * of common protocols supported by libcurl. http://curl.haxx.se/libcurl/
+ * Provides a resource retrieval module for accessing files using a variety of common protocols.
  *
  * <b>Supported Protocols<b>
  *
- * HTTP(S): [access remove query]
- * FTP(S):  [access remove query]
- * DICT:    [access remove query]
- * LDAP:    [access remove query]
- * IMAP:    [access remove query]
- * POP3:    [access remove query]
- * SMTP:    [access remove query]
+ * HTTP(S):  [access remove query]
+ * FTP(S):   [access remove query]
+ * DICT:     [access remove query]
+ * LDAP(S):  [access remove query]
+ * IMAP(S):  [access remove query]
+ * POP3(S):  [access remove query]
+ * SMTP(S):  [access remove query]
+ * FILE:     [access remove query]
+ * GOPHER:   [access remove query]
+ * TELNET:   [access remove query]
+ * TFTP:     [access remove query]
+ * SFTP:     [access remove query]
+ * RTMP:     [access remove query]
+ * RTSP:     [access remove query]
+ * SCP:      [access remove query]
  *
  * <b>Supported Options<b>
  *
+ * UserAgent:       string                          [default='voxlib-agent/' SIO_VERSION_STRING]
  * ConnectTimeout:  unsigned int (seconds)          [default='300']
  * MinimumTransfer: unsigned int (bytes / second)   [default='300']
  * MaxRedirects:    unsigned int                    [default='5']
@@ -80,7 +88,7 @@ public:
     /** 
      * Removes a resource
      *
-     * @param identifier The resource identifier (can be a directory)
+     * @param identifier The resource identifier
      * @param options    Remove options
      */
     virtual void remove(

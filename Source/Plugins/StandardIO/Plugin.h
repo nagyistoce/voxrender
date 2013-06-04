@@ -44,6 +44,7 @@ extern "C"
     SIO_EXPORT char const*  version();          ///< Returns the version tag of the plugin (dot delimited)
     SIO_EXPORT void         enable();           ///< Enables a plugin / signals application OK to run plugin
     SIO_EXPORT void         disable();          ///< Disables an enabled plugin
+    SIO_EXPORT bool         canUnload();        ///< Indicates whether the plugin is ready to unload safely
 }
 
 // End definition

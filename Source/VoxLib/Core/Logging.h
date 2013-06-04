@@ -348,15 +348,20 @@ namespace vox
     {                                                                                              \
         vox::Logger::addEntry(vox::Severity_Debug, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
     }
+#define VOX_LOG_WARNING(CAT, MSG)                                                                    \
+    if (vox::Logger::getFilteringLevel() <= vox::Severity_Warning)                                   \
+    {                                                                                                \
+        vox::Logger::addEntry(vox::Severity_Warning, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+    } 
 #define VOX_LOG_ERROR(CODE, CAT, MSG)                                                   \
     if (vox::Logger::getFilteringLevel() <= vox::Severity_Error)                        \
     {                                                                                   \
         vox::Logger::addEntry(vox::Severity_Error, CODE, CAT, MSG, __FILE__, __LINE__); \
     } 
-#define VOX_LOG_WARNING(CAT, MSG)                                                                    \
-    if (vox::Logger::getFilteringLevel() <= vox::Severity_Warning)                                   \
+#define VOX_LOG_EXCEPTION(SEV, EXC)                                                                  \
+    if (vox::Logger::getFilteringLevel() <= SEV)                                                     \
     {                                                                                                \
-        vox::Logger::addEntry(vox::Severity_Warning, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+        vox::Logger::addEntry(EXC, SEV);                                                             \
     } 
 
 } // namespace vox

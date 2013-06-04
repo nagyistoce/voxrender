@@ -35,6 +35,14 @@
 // LibCurl Library
 #include <curl/curl.h>
 
+namespace {
+namespace filescope {
+
+    static std::shared_ptr<vox::StandardIO> io;
+
+} // namespace filescope
+} // namespace anonymous
+
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
@@ -81,6 +89,31 @@ char const* vendor() { return "vox"; }
 void enable() 
 {  
     VOX_LOG_INFO(SIO_LOG_CATEGORY, "Enabling the vox.standard_io plugin");
+
+    std::shared_ptr<vox::StandardIO> io(new vox::StandardIO());
+
+    vox::Resource::registerModule("http",   io);
+    vox::Resource::registerModule("https",  io);
+    vox::Resource::registerModule("ftp",    io);
+    vox::Resource::registerModule("ftps",   io);
+    vox::Resource::registerModule("sftp",   io);
+    vox::Resource::registerModule("tftp",   io);
+    vox::Resource::registerModule("rtmp",   io);
+    vox::Resource::registerModule("rtsp",   io);
+    vox::Resource::registerModule("smtp",   io);
+    vox::Resource::registerModule("smtps",  io);
+    vox::Resource::registerModule("dict",   io);
+    vox::Resource::registerModule("scp",    io);
+    vox::Resource::registerModule("imap",   io);
+    vox::Resource::registerModule("imaps",  io);
+    vox::Resource::registerModule("pop3",   io);
+    vox::Resource::registerModule("pop3s",  io);
+    vox::Resource::registerModule("ldap",   io);
+    vox::Resource::registerModule("ldaps",  io);
+    vox::Resource::registerModule("gopher", io);
+    vox::Resource::registerModule("telnet", io);
+
+    filescope::io = io;
 }
 
 // --------------------------------------------------------------------
@@ -89,4 +122,8 @@ void enable()
 void disable() 
 { 
     VOX_LOG_INFO(SIO_LOG_CATEGORY, "Disabling the vox.standard_io plugin");
+
+    vox::Resource::removeModule(filescope::io);
+
+    filescope::io.reset();
 }

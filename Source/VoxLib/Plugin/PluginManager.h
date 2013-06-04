@@ -49,6 +49,8 @@
  * char const* apiVersionMax()   <<< Returns the maximum supported API version
  * char const* version()         <<< Returns the version of the plugin
  *
+ * bool canFree()                <<< Return true if the plugin is safe to free
+ *
  * <b>Reference URL</b>
  *
  * A method of the format
@@ -97,8 +99,6 @@ namespace vox
     /** Information structure describing a loaded plugin */
     struct PluginInfo
     {
-        // :TODO: Make sure these are copied out of DLL memory
-        // :TODO: External xml option to specify plugin info
         String path;           ///< Path to location of plugin 
         String apiVersionMax;  ///< Maximum supported API version (dot delimited)
         String apiVersionMin;  ///< Minimum supported API version (dot delimited) 
@@ -106,6 +106,7 @@ namespace vox
         String vendor;         ///< The plugin vendor
         String version;        ///< The plugin version (dot delimited)
         String url;            ///< Reference URL for vender/plugin info
+        String description;    ///< Description of the plugin
     };
 
 	/** 

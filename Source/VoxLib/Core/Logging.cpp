@@ -154,6 +154,9 @@ void ErrorPrint(char const* file, int line, int severity, int code,
 
 	switch (severity) 
 	{
+    case Severity_Trace:
+        std::clog << "TRACE";
+        break;
 	case Severity_Debug:
 		std::clog << "DEBUG";
 		break;

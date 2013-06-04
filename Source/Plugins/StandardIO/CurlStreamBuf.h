@@ -42,34 +42,61 @@
 namespace vox {
 
 /**
+ * Request interface used by CurlAsyncIOService :TODO: Move to seperate library
+ *
+ * This interface provides a low level method of sending requests to the CurlAsyncIOService library.
+ * Libraries that provide more specific libraries on top of this (HttpClient, FtpClient, StandardIO module)
+ * will implement classes which derive from or utilize the CurlAsyncRequest and utilize the 
+ * CurlAsyncIOService pool to complete their requests.
+ */
+class CurlAsyncRequest
+{
+public:
+    /** Initializes a new async request */
+    CurlAsyncRequest(
+        ResourceId &     identifier, ///< The resource identifier
+        OptionSet const& options     ///< The advanced access options
+        );
+
+    /** Ensures any necessary cancellations are made */
+    virtual ~CurlAsyncRequest();
+
+    /** Returns the curl handle associated with the request */
+    void * handle() { return m_handle; }
+
+    /** Called upon completion of a request */
+    virtual void complete(std::exception_ptr ex);
+
+protected:
+    void * m_handle; ///< Libcurl request handle
+};
+
+/**
  * Output oriented StreamBuf which wraps libcurl requests
  *
  * An implementation of std::streambuf which provides access to the libcurl request for data upload.
  */
-class CurlOStreamBuf : public std::streambuf
+class CurlOStreamBuf : public std::streambuf, CurlAsyncRequest
 {
 public:
-    /** Initializes a new libcurl session */
+    /** Dispatches the modify request to the io service */
     CurlOStreamBuf(
         ResourceId &     identifier, ///< The resource identifier
         OptionSet const& options     ///< The advanced access options
         );
     
-    /** Terminates the libcurl session */
-    ~CurlOStreamBuf() { cleanup(); }
-
-    /** */
+    /** Marks the request completed */
+    virtual void complete(std::exception_ptr ex);
 
 private:
-    CURL * m_easyhandle; ///< Session easy handle
-
+    std::exception_ptr m_error;  ///< Internal exception buffer
     std::vector<UInt8> m_buffer; ///< Output data buffer
+    boost::mutex       m_mutex;  ///< Data buffer mutex
+
+    boost::condition_variable m_cond;   ///< Data buffer empty condition
 
     /** Provides upload data to libcurl */
     size_t onGetData(void * ptr, size_t maxBytes);
-
-    /** Terminates the session and closes active handles */
-    void cleanup();
 
     /** Callback function for the libcurl library which redirects to onData */
     static size_t onGetDataCallback(void * ptr, size_t size, size_t nmemb, void * buf);
@@ -78,27 +105,21 @@ private:
 /**
  * Input oriented StreamBuf which wraps libcurl requests
  *
- * An implementation of std::streambuf which provides access to the libcurl request for data download.
+ * An implementation of std::streambuf which provides access to the contents of a data request
  */
-class CurlIStreamBuf : public std::streambuf
+class CurlIStreamBuf : public std::streambuf, CurlAsyncRequest
 {
 public:
-    /** Initializes a new libcurl session */
+    /** Dispatches the access request to the io service */
     CurlIStreamBuf(
         ResourceId &     identifier, ///< The resource identifier
         OptionSet const& options     ///< The advanced access options
         );
 
-    ~CurlIStreamBuf();
-
-    /** Returns the curl handle associated with the request */
-    CURL * handle() { return m_easyhandle; }
-
     /** Completes the request and releases the handle */
-    void complete(std::exception_ptr ex);
+    virtual void complete(std::exception_ptr ex);
 
 protected:
-
     virtual int underflow();
 
 private:
@@ -119,8 +140,6 @@ private:
     };
 
 private:
-    CURL * m_easyhandle; ///< Session easy handle
-
     std::exception_ptr    m_error;     ///< Internal exception buffer
     std::list<DataBuffer> m_data;      ///< Internal data buffers
     boost::mutex          m_mutex;     ///< Data buffer mutex
