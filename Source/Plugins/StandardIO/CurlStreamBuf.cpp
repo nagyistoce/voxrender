@@ -301,15 +301,24 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         //  Event callback from asio on socket event completion
         // ----------------------------------------------------------------------------
-        void eventCallback(curl_socket_t fd, int action)
+        void eventCallback(curl_socket_t fd, int action, int * actionHandle)
         {
             VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Socket ready: socket=%1%", fd));
 
+            // Issue another call to curl multi now that we can perform on the socket
             auto code = curl_multi_socket_action(m_handle, fd, action, &m_running);
             if (code != CURLM_OK)
             {
                 VOX_LOG(Severity_Error, Error_Unknown, SIO_LOG_CATEGORY, 
                     format("Call to curl_multi_socket_action failed: %1%", curl_multi_strerror(code)));
+            }
+
+            // Check if we need to resume the previous action (ie action handle is not changed)
+            if (action == *actionHandle)
+            {
+                VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("No change in socket action, resuming wait: socket=%1% action=%2%", fd, action));
+
+                socketCallback(fd, action, actionHandle);
             }
 
             checkInfo(); ///< Process request completions
@@ -320,39 +329,45 @@ namespace filescope {
         // ----------------------------------------------------------------------------
         //  Waits for the specified option on the socket specified by libcurl
         // ----------------------------------------------------------------------------
-        void socketCallback(curl_socket_t s, int action, boost::asio::ip::tcp::socket * socketHandle)
+        void socketCallback(curl_socket_t s, int action, int * previousAction)
         {
-            boost::asio::ip::tcp::socket * tcpSocket = socketHandle;
-
             // Acquire the handle to the overhead asio tcp socket
-            if (tcpSocket == nullptr)
+            auto iter = m_sockets.find(s);
+            if (iter == m_sockets.end())
             {
-                auto iter = m_sockets.find(s);
-                if (iter == m_sockets.end())
-                {
-                    VOX_LOG_WARNING(SIO_LOG_CATEGORY, "Socket callback on presumed c-ares socket; ignoring.");
+                VOX_LOG_WARNING(SIO_LOG_CATEGORY, "Socket callback on presumed c-ares socket; ignoring.");
              
-                    return;
-                }
-                tcpSocket = iter->second;
+                return;
+            }
+            auto tcpSocket = iter->second;
 
-                curl_multi_assign(m_handle, s, tcpSocket); // Cache a private handle to the socket
+            // Store the action handle for reference in eventCallback
+            int * actionHandle = previousAction;
+            if (actionHandle == nullptr)
+            {
+                actionHandle = new int(action);
+
+                curl_multi_assign(m_handle, s, actionHandle);
+            }
+            else
+            {
+                *actionHandle = action;
             }
 
             // Wait on the socket for the specified action/event/status
             switch (action)
             {
             case CURL_POLL_IN:
-                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
+                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action, actionHandle));
                 break;
                 
             case CURL_POLL_OUT:
-                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
+                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action, actionHandle));
                 break;
                 
             case CURL_POLL_INOUT:
-                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
-                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action));
+                tcpSocket->async_read_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action, actionHandle));
+                tcpSocket->async_write_some(boost::asio::null_buffers(), boost::bind(&CurlAsyncIOService::eventCallback, this, s, action, actionHandle));
                 break;
 
             default:
@@ -395,11 +410,12 @@ namespace filescope {
         {
             static const char * actionStr[] = {"none", "IN", "OUT", "INOUT", "REMOVE"};
 
-            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Socket callback: socket=%1%, action=%2%", s, actionStr[action]));
+            VOX_LOG_TRACE(SIO_LOG_CATEGORY, format("Socket callback: socket=%1%, action=%2% previous_action=%3%", 
+                s, actionStr[action], actionStr[(sockp ? *(int*)sockp : 0)]));
 
-            if (action == CURL_POLL_REMOVE) return 0;
+            if (action == CURL_POLL_REMOVE) { delete sockp; return 0; }
 
-            reinterpret_cast<CurlAsyncIOService*>(userp)->socketCallback(s, action, reinterpret_cast<boost::asio::ip::tcp::socket*>(sockp));
+            reinterpret_cast<CurlAsyncIOService*>(userp)->socketCallback(s, action, reinterpret_cast<int*>(sockp));
 
             return 0;
         }
