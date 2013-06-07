@@ -76,6 +76,7 @@ Set(VoxLib_HEADERS_IO
     IO/MimeTypes.h
     IO/OptionSet.h
     IO/Resource.h
+    IO/ResourceHelper.h
     IO/ResourceId.h
     IO/ResourceModule.h
 )
@@ -155,6 +156,7 @@ Set(VoxLib_SOURCES_IO
     IO/FilesystemIO.cpp
     IO/MimeTypes.cpp
     IO/Resource.cpp
+    IO/ResourceHelper.cpp
     IO/ResourceId.cpp
 )
 

@@ -46,12 +46,12 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void initPlugin() { curl_global_init(CURL_GLOBAL_ALL); }
+void initPlugin() { }
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void freePlugin() { curl_global_cleanup(); }
+void freePlugin() { }
 
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build

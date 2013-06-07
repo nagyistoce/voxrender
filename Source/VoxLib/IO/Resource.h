@@ -132,7 +132,7 @@ public:
             m_openMode = 0;
         }
     }
-    
+
     /** Returns The resource identifier associated with this stream */
     inline ResourceId const& identifier() const throw() { return m_identifier; }
 

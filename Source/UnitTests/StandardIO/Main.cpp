@@ -36,6 +36,7 @@
 #include "VoxLib/Plugin/Plugin.h"
 #include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/Resource.h"
+#include "VoxLib/IO/ResourceHelper.h"
 
 // Standard IO Header
 #include "Plugins/StandardIO/StandardIO.h"
@@ -90,15 +91,19 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
         // http://www.example.com
         // dict://dict.org/m:curl
         // gopher://gopher.quux.org:70/About%20This%20Server.txt
+        // https://svn.boost.org/htdocs/site/boost.png
 
-        ResourceId example("imaps://LucasASherman@imap.gmail.com");
-        ResourceIStream webpageStream(example);
+        ResourceId example("ftp://ftp.funet.fi/README");
+        for (size_t i = 0; i < 20; i++)
+        {
+            ResourceIStream webpageStream(example);
+        }
 
-        //std::ofstream os(example.extractFileName()); os << webpageStream.rdbuf();
+        //std::ofstream os(example.extractFileName(), std::ios::binary); os << webpageStream.rdbuf();
 
         // Logging to console using rdbuf locks the output stream (used for internal logging)
-        OStringStream os; os << webpageStream.rdbuf();
-        std::cout << os.str();
+        //OStringStream os; os << webpageStream.rdbuf();
+        //std::cout << os.str();
     }
 
 BOOST_AUTO_TEST_SUITE_END()
