@@ -337,7 +337,7 @@ namespace filescope {
             auto iter = m_sockets.find(s);
             if (iter == m_sockets.end())
             {
-                VOX_LOG_WARNING(SIO_LOG_CATEGORY, "Socket callback on presumed c-ares socket; ignoring.");
+                VOX_LOG_WARNING(Error_Range, SIO_LOG_CATEGORY, "Socket callback on presumed c-ares socket; ignoring.");
              
                 return;
             }

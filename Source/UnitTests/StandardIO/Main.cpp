@@ -61,6 +61,7 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
     {
         std::cout << "**** This test requires an external network connection. ****" << std::endl;
 
+        /*
         vox::Logger::setFilteringLevel(Severity_Trace);
 
         auto io = std::shared_ptr<StandardIO>(new StandardIO());
@@ -86,6 +87,10 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
         Resource::registerModule("ldaps",  io);
         Resource::registerModule("gopher", io);
         Resource::registerModule("telnet", io);
+        
+        */
+
+
 
         // ftp://ftp.funet.fi/README
         // http://www.example.com
@@ -101,9 +106,7 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
 
         //std::ofstream os(example.extractFileName(), std::ios::binary); os << webpageStream.rdbuf();
 
-        // Logging to console using rdbuf locks the output stream (used for internal logging)
-        //OStringStream os; os << webpageStream.rdbuf();
-        //std::cout << os.str();
+        std::cout << ResourceHelper::pull(example);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

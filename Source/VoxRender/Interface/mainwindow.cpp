@@ -34,6 +34,7 @@
 
 // VoxRender Includes
 #include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incude
+#include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Scene/RenderParams.h"
 
 // Abstract Resource IO Modules
@@ -107,13 +108,16 @@ MainWindow::MainWindow(QWidget *parent) :
     QMetaTypeId<std::shared_ptr<vox::FrameBufferLock>>::qt_metatype_id();
     QMetaTypeId<std::string>::qt_metatype_id();
 
+    // Load the configuration file from the current directory
+    vox::ResourceHelper::loadConfigFile("VoxRender.config");
+
     // Register the scene file import / export modules :TODO: Plugins
     vox::Scene::registerImportModule(".xml", &vox::VoxSceneFile::importer   );
     vox::Scene::registerImportModule(".raw", &vox::RawVolumeFile::importer  );
     vox::Scene::registerExportModule(".xml", &vox::VoxSceneFile::exporter   );
     vox::Scene::registerExportModule(".raw", &vox::RawVolumeFile::exporter  );
 
-    // Register the resource opener modules
+    // Register the resource opener modules :TODO: Plugins
     vox::Resource::registerModule("file", FilesystemIO::create());
 
     // VoxRender log configuration
@@ -218,8 +222,6 @@ void MainWindow::configureLoggingEnvironment()
     {
         boost::filesystem::create_directory(logLocation);
     }
-
-    // :TODO: Allow log overrides in "settings.xml"
 
     // Create log file for this session 
     m_logFileStream.open(logLocation + logFilename, std::ios_base::app);

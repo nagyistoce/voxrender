@@ -1,0 +1,42 @@
+<!-- Plugin metainfo file for core VoxLib plugins -->
+
+<Plugins>
+
+<Plugin>
+	<File>FileIO.dll</File>
+	<Name>file_io</Name>
+	<Vender>vox</Vendor>
+	<Version>1.0.0</Version>
+	<Url>http://code.google.com/p/voxrender/</Url>
+	<ApiVersionMin>000.000.000</ApiVersionMin>
+	<ApiVersionMax>999.999.999</ApiVersionMax>
+	<Description>
+		The FileIO plugin provides a resource module for VoxIO for the file protocol.
+	</Description>
+</Plugin>
+
+<Plugin>
+	<File>StandardIO.dll</File>
+	<Name>standard_io</Name>
+	<Vender>vox</Vendor>
+	<Version>1.0.0</Version>
+	<Url>http://code.google.com/p/voxrender/</Url>
+	<ApiVersionMin>000.000.000</ApiVersionMin>
+	<ApiVersionMax>999.999.999</ApiVersionMax>
+	<Description>
+		The StandardIO plugin provides asynchronous resource modules for VoxIO for 
+		the following schemes:
+		
+		  HTTP, HTTPS, FTP, FTPS, DICT, LDAP, LDAPS, IMAP, IMAPS, POP3, POP3S, SMTP, SMTPS, GOPHER, 
+		  TELNET, TFTP, SFTP, RTMP, FILE, RTSP, and SCP.
+		  
+		Individual protocols can be suppressed by editing the StandardIO.pin XML file's restrict
+		attribute. The FILE protocol is suppressed by default as the same functionality is 
+		provided by the FileIO plugin.
+	</Description>
+	<Exclude>
+		FILE
+	</Exclude>
+</Plugin>
+
+</Plugins>

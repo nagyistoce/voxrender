@@ -274,7 +274,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static void addCategoryFilter(Char const* category)
+        static void addCategoryFilter(String const& category)
         {
             boost::mutex::scoped_lock lock(m_catMutex);
 
@@ -289,7 +289,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static void removeCategoryFilter(Char const* category)
+        static void removeCategoryFilter(String const& category)
         {
             boost::mutex::scoped_lock lock(m_catMutex);
 
@@ -304,7 +304,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static bool isCategoryFiltered(Char const* category)
+        static bool isCategoryFiltered(String const& category)
         {
             return std::find(m_catFilters.begin(), m_catFilters.end(), category) != m_catFilters.end();
         }
@@ -326,6 +326,7 @@ namespace vox
 	};
 
     // Logging macro incorperating user defined severity levels
+    /// :TODO: Check category map
 #define VOX_LOG(SEV, CODE, CAT, MSG)                                    \
     if (vox::Logger::getFilteringLevel() <= SEV)                        \
     {                                                                   \
@@ -348,10 +349,10 @@ namespace vox
     {                                                                                              \
         vox::Logger::addEntry(vox::Severity_Debug, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
     }
-#define VOX_LOG_WARNING(CAT, MSG)                                                                    \
+#define VOX_LOG_WARNING(CODE, CAT, MSG)                                                              \
     if (vox::Logger::getFilteringLevel() <= vox::Severity_Warning)                                   \
     {                                                                                                \
-        vox::Logger::addEntry(vox::Severity_Warning, vox::Error_None, CAT, MSG, __FILE__, __LINE__); \
+        vox::Logger::addEntry(vox::Severity_Warning, CODE, CAT, MSG, __FILE__, __LINE__);            \
     } 
 #define VOX_LOG_ERROR(CODE, CAT, MSG)                                                   \
     if (vox::Logger::getFilteringLevel() <= vox::Severity_Error)                        \

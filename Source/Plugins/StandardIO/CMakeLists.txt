@@ -31,12 +31,14 @@ IF(LIBCURL_LIB_FOUND)
         TARGET "StandardIO" SHARED
         FOLDER "Plugins"
 		HEADERS
+            "AsioService.h"   
             "Common.h"
             "CurlStreamBuf.h"
             "StandardIO.h"
             "Version.h"
 			"Plugin.h"
         SOURCES
+            "AsioService.cpp"
             "CurlStreamBuf.cpp"
             "StandardIO.cpp"
 			"Plugin.cpp"

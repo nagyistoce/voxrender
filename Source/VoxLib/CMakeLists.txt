@@ -32,6 +32,11 @@ INCLUDE_DIRECTORIES(.)
 #                  HEADER FILES                 #
 #===============================================#
 
+Set(VoxLib_HEADERS_ACTION
+    Action/Action.h
+    Action/ActionManager.h
+)
+
 Set(VoxLib_HEADERS_BITMAP
     Bitmap/Bitmap.h
 )
@@ -110,6 +115,7 @@ Set(VoxLib_HEADERS_SCENE_EXIM
 )
 
 set(VoxLib_HEADERS
+    ${VoxLib_HEADERS_ACTION}
     ${VoxLib_HEADERS_BITMAP}
     ${VoxLib_HEADERS_CORE}
     ${VoxLib_HEADERS_CORE_GEOMETRY}
@@ -121,6 +127,7 @@ set(VoxLib_HEADERS
     ${VoxLib_HEADERS_RENDERING}
 )
 
+SOURCE_GROUP("Header Files\\Action"                         FILES ${VoxLib_HEADERS_ACTION})
 SOURCE_GROUP("Header Files\\Bitmap"                         FILES ${VoxLib_HEADERS_BITMAP})
 SOURCE_GROUP("Header Files\\Core"                           FILES ${VoxLib_HEADERS_CORE})
 SOURCE_GROUP("Header Files\\Core\\Geometry"                 FILES ${VoxLib_HEADERS_CORE_GEOMETRY})
@@ -134,6 +141,11 @@ SOURCE_GROUP("Header Files\\Scene\\Exim"                    FILES ${VoxLib_HEADE
 #===============================================#
 #                  SOURCE FILES                 #
 #===============================================#
+
+Set(VoxLib_SOURCES_ACTION
+    Action/Action.cpp
+    Action/ActionManager.cpp
+)
 
 Set(VoxLib_SOURCES_BITMAP
     Bitmap/Bitmap.cpp
@@ -185,6 +197,7 @@ Set(VoxLib_SOURCES_RENDERING
 )
 
 set(VoxLib_SOURCES
+    ${VoxLib_SOURCES_ACTION}
     ${VoxLib_SOURCES_BITMAP}
     ${VoxLib_SOURCES_CORE}
     ${VoxLib_SOURCES_CORE_GEOMETRY}
@@ -196,6 +209,7 @@ set(VoxLib_SOURCES
     ${VoxLib_SOURCES_RENDERING}
 )
 
+SOURCE_GROUP("Source Files\\Action"                         FILES ${VoxLib_SOURCES_ACTION})
 SOURCE_GROUP("Source Files\\Bitmap"                         FILES ${VoxLib_SOURCES_BITMAP})
 SOURCE_GROUP("Source Files\\Core"                           FILES ${VoxLib_SOURCES_CORE})
 SOURCE_GROUP("Source Files\\Core\\Geometry"                 FILES ${VoxLib_SOURCES_CORE_GEOMETRY})

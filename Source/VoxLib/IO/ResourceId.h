@@ -344,6 +344,17 @@ private:
     void delegatedConstructor(String const& string);
 };
 
+/** 
+ * Formatted stream insertion overload for ResourceId 
+ *
+ * This function outputs the ResourceId formatted as an escaped URL string 
+ * to the output stream.
+ */
+ inline std::ostream & operator<<(std::ostream & os, ResourceId const& id)
+ {
+     return os << id.asString();
+ }
+
 }
 
 // End definition

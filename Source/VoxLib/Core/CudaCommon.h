@@ -2,9 +2,10 @@
 
 	Project: VoxRender - CudaCommon
 
-	Includes common headers used by most classes. This header is used by NVCC
-    compiled source files and only includes headers which NVCC can properly 
-    handle.
+	Includes common headers used by most classes. This header is intended to be
+    capable of compilation by NVCC and should only includes headers which NVCC 
+    can properly handle. (Really it shouldn't include any headers but some of
+    the std library stuff is literally used everywhere and its a pain. 
 
     Copyright (C) 2013 Lucas Sherman
 
