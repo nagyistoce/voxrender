@@ -66,6 +66,8 @@ void SamplingWidget::synchronizeView()
     ui->doubleSpinBox_shadowStep->setValue ( (double)settings.shadowStepSize()  );
     ui->doubleSpinBox_occludeStep->setValue( (double)settings.occludeStepSize() );
     
+    ui->doubleSpinBox_gradient->setValue( (double)settings.gradientCutoff() );
+
     ui->spinBox_occludeSamples->setValue( (int)settings.occludeSamples() );
 
     m_dirty = false;
@@ -86,6 +88,8 @@ void SamplingWidget::processInteractions()
         settings.setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
         settings.setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
         settings.setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
+
+        settings.setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
     }
 }
 

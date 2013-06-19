@@ -33,12 +33,10 @@
 #include "pointlightwidget.h"
 
 // VoxRender Includes
-#include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incude
+#include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
 #include "VoxLib/IO/ResourceHelper.h"
+#include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Scene/RenderParams.h"
-
-// Abstract Resource IO Modules
-#include "VoxLib/IO/FilesystemIO.h"
 
 // Abstract Scene File Import/Export Modules
 #include "VoxLib/Scene/ExIm/RawVolumeFile.h"
@@ -117,9 +115,6 @@ MainWindow::MainWindow(QWidget *parent) :
     vox::Scene::registerExportModule(".xml", &vox::VoxSceneFile::exporter   );
     vox::Scene::registerExportModule(".raw", &vox::RawVolumeFile::exporter  );
 
-    // Register the resource opener modules :TODO: Plugins
-    vox::Resource::registerModule("file", FilesystemIO::create());
-
     // VoxRender log configuration
     configureLoggingEnvironment();
 
@@ -191,6 +186,8 @@ MainWindow::~MainWindow()
     m_renderController.stop();
     m_renderer.reset();
 
+    vox::PluginManager::instance().unloadAll();
+
     delete transferwidget;
 	delete m_renderView;
     delete ui;
@@ -241,31 +238,41 @@ void MainWindow::configureLoggingEnvironment()
 }
 
 // ----------------------------------------------------------------------------
-//  Loads and configures any detected plugins for IO and rendering
+//  Enumerates the available plugins in the plugin window for user selection
 // ----------------------------------------------------------------------------
 void MainWindow::configurePlugins()
 {
-    using namespace boost; using namespace boost::filesystem;
+    m_pluginSpacer = new QSpacerItem( 20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding );
+	ui->pluginsAreaLayout->addItem(m_pluginSpacer);
 
-    path p = current_path() / "Plugins";
+    // Enumerate all available plugins and add them to the display panel
+    vox::PluginManager::instance().findAll(boost::bind(&MainWindow::registerPlugin, this, _1), false, true);
+}
 
-    // Search the plugins directory and attempt to load any available plugins
-    if (exists(p))
-    {
-        BOOST_FOREACH (auto & entry, make_iterator_range(directory_iterator(p), 
-                                                         directory_iterator()))
-        {
-            try
-            {
-            }
-            catch(...)
-            {
-                Logger::addEntry(Severity_Error, Error_Unknown, "GUI",
-                    vox::format("Unable to load plugin <%1%>", entry.path()),
-                    __FILE__, __LINE__);
-            }
-        }
-    }
+// ----------------------------------------------------------------------------
+//  Adds a new plugin pane to the list of available plugins
+// ----------------------------------------------------------------------------
+void MainWindow::registerPlugin(std::shared_ptr<PluginInfo> info)
+{    
+    // Remove spacer prior to pane insertion
+    ui->pluginsAreaLayout->removeItem(m_pluginSpacer);
+
+    // Create new pane for the plugin widget
+    PaneWidget *pane = new PaneWidget(ui->pluginsAreaContents);
+    pane->showOnOffButton();
+    pane->setTitle(QString::fromLatin1(info->name.c_str()));
+    // :TODO: allow custom icons in plugin specification -- pane->setIcon(":/icons/lightgroupsicon.png");
+    
+    // Create the plugin widget
+    QWidget * newPluginWidget = new PluginWidget(pane, info); 
+    pane->setWidget(newPluginWidget);
+
+    ui->pluginsAreaLayout->addWidget(pane);
+
+    m_pluginPanes.push_back(pane);
+
+    // Reinsert spacer following new pane
+	ui->pluginsAreaLayout->addItem(m_pluginSpacer);
 }
 
 // ----------------------------------------------------------------------------
@@ -1227,4 +1234,30 @@ void MainWindow::on_pushButton_pause_clicked()
 void MainWindow::on_pushButton_imagingApply_clicked()
 {
     m_imagingUpdate = true;
+}
+
+// ----------------------------------------------------------------------------
+//  Opens a file selection dialogue and attempts to load a new plugin
+// ----------------------------------------------------------------------------
+void MainWindow::on_pushButton_loadPlugin_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName( 
+        this, tr("Choose a scene file to open"), 
+        m_lastOpenDir);
+    
+    if (!filename.isNull()) 
+    {
+        auto & pm = PluginManager::instance();
+
+        try
+        {
+            auto info = pm.loadFromFile(filename.toLatin1().data());
+
+            registerPlugin(info);
+        }
+        catch (Error & error)
+        {
+            VOX_LOG_EXCEPTION(vox::Severity_Error, error);
+        }
+    }
 }

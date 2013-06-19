@@ -268,13 +268,21 @@ void HistogramView::updateHistogramData()
     {
         auto & renderer = MainWindow::instance->m_renderController;
 
-        m_bins = filescope::generateHistogram(256, MainWindow::instance->scene().volume);
+        auto volume = MainWindow::instance->scene().volume;
+
+        if (volume) m_bins = filescope::generateHistogram(256, volume);
+        else
+        {
+            m_bins.clear();
+            m_binMax = 0;
+            return;
+        }
 
         m_binMax = std::max(m_bins.front(), m_bins.back());
     }
-    catch( vox::Error const& )
+    catch (vox::Error &)
     {
-        m_bins.clear( );
+        m_bins.clear();
         m_binMax = 0;
     }
 

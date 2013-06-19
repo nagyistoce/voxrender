@@ -57,6 +57,7 @@ IF(Qt5Widgets_FOUND)
     SET(VOXQTGUI_SRCS
         Extensions/QColorPushButton.cpp
         Interface/aboutdialogue.cpp
+        Interface/ambientlightwidget.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
         Interface/edgeitem.cpp
@@ -65,11 +66,11 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramview.cpp
         Interface/histogramwidget.cpp
         Interface/infowidget.cpp
-		Interface/lightdialogue.cpp
+        Interface/lightdialogue.cpp
         Interface/mainwindow.cpp
         Interface/nodeitem.cpp
         Interface/panewidget.cpp
-		Interface/ambientlightwidget.cpp
+        Interface/pluginwidget.cpp
         Interface/pointlightwidget.cpp
         Interface/renderview.cpp
         Interface/samplingwidget.cpp
@@ -85,7 +86,8 @@ IF(Qt5Widgets_FOUND)
     SET(VOXQTGUI_MOC
         Extensions/QColorPushButton.h
         Interface/aboutdialogue.h
-	    Interface/arealightwidget.h
+        Interface/ambientlightwidget.h
+        Interface/arealightwidget.h
         Interface/camerawidget.h
         Interface/edgeitem.h
         Interface/griditem.h
@@ -93,11 +95,11 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramview.h
         Interface/histogramwidget.h
         Interface/infowidget.h
-		Interface/lightdialogue.h
+        Interface/lightdialogue.h
         Interface/mainwindow.h
         Interface/nodeitem.h
         Interface/panewidget.h
-		Interface/ambientlightwidget.h
+        Interface/pluginwidget.h
         Interface/pointlightwidget.h
         Interface/renderview.h
         Interface/samplingwidget.h
@@ -112,14 +114,15 @@ IF(Qt5Widgets_FOUND)
     #===============================================#
     SET(VOXQTGUI_UIS
         Interface/aboutdialogue.ui
-	    Interface/arealightwidget.ui
+        Interface/ambientlightwidget.ui
+        Interface/arealightwidget.ui
         Interface/camerawidget.ui
         Interface/histogramwidget.ui
         Interface/infowidget.ui
         Interface/lightdialogue.ui
         Interface/mainwindow.ui
         Interface/panewidget.ui
-		Interface/ambientlightwidget.ui
+        Interface/pluginwidget.ui
         Interface/pointlightwidget.ui
         Interface/samplingwidget.ui
         Interface/transferwidget.ui

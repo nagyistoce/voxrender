@@ -1,11 +1,10 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
+#   Project: FileIO                                                         #
 #                                                                           #
-#   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#   Description: Provides an IO module for VoxIO implementing file protocol #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#   Copyright (C) 2013 Lucas Sherman                                        #
 #                                                                           #
 #   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
@@ -26,10 +25,19 @@
 
 INCLUDE_DIRECTORIES(.)
 
-#===============================================#
-#           INCLUDE DESIRED PLUGINS             #
-#===============================================#
-
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(FileIO)
-
+VOX_PROJECT(
+    TARGET "FileIO" SHARED
+    FOLDER "Plugins"
+    HEADERS
+        "Common.h"
+        "FileIO.h"
+        "Plugin.h"
+        "Version.h"
+    SOURCES
+        "FileIO.cpp"
+        "Plugin.cpp"
+    DEPENDENCIES
+        VoxLib
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

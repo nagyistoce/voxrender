@@ -1,25 +1,31 @@
-/***************************************************************************
- *   Copyright (C) 1998-2009 by authors (see AUTHORS.txt )                 *
- *                                                                         *
- *   This file is part of LuxRender.                                       *
- *                                                                         *
- *   Lux Renderer is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   Lux Renderer is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
- *                                                                         *
- *   This project is based on PBRT ; see http://www.pbrt.org               *
- *   Lux Renderer website : http://www.luxrender.net                       *
- ***************************************************************************/
+/* ===========================================================================
 
+    Project: VoxRender
+    
+	Description: Implements an accordion style pane widgeth
+
+    Copyright (C) 2013 Lucas Sherman
+
+    MODIFIED FROM LUXRENDER'S 'panewidget.cpp'
+
+	Lucas Sherman, email: LucasASherman@gmail.com
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+=========================================================================== */
+
+// Begin definition
 #ifndef PANEWIDGET_H
 #define PANEWIDGET_H
 
@@ -68,10 +74,15 @@ public:
 	PaneWidget( QWidget *parent, const QString& label = "", 
 		const QString& icon = "", bool onoffbutton=false, 
 		bool solobutton=false );
-	~PaneWidget( );
 
-	void setTitle( const QString& title );
-	void setIcon( const QString& icon );
+    /** Sets the title which appears in the bar of the pane */
+	void setTitle(QString const& title);
+
+    /** Returns the title of the pane */
+    QString const& title();
+
+    /** Sets the icon in the upper left corner of the pane */
+	void setIcon(QString const& icon);
 
 	void setWidget( QWidget *widget );
 	QWidget *getWidget( );
@@ -97,9 +108,9 @@ private:
 
 	QWidget *mainwidget;
 	QPixmap expandedicon, collapsedicon;
-	ClickableLabel *expandlabel;
-	ClickableLabel *onofflabel;
-	ClickableLabel *sololabel;
+	std::unique_ptr<ClickableLabel> expandlabel;
+	std::unique_ptr<ClickableLabel> onofflabel;
+	std::unique_ptr<ClickableLabel> sololabel;
 
 	bool expanded;
 
@@ -107,8 +118,8 @@ signals:
 
 	void valuesChanged( );
 
-	void turnedOn( );
-	void turnedOff( );
+	void turnedOn();
+	void turnedOff();
 
 	void signalLightGroupSolo( int index );
 
@@ -120,5 +131,6 @@ private slots:
   
 };
 
+// End definition
 #endif // PANEWIDGET_H
 

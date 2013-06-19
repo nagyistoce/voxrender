@@ -29,6 +29,7 @@
 
 // API Header
 #include "VoxLib/Core/VoxRender.h"
+#include "VoxLib/Plugin/PluginManager.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
@@ -43,6 +44,7 @@
 #include "samplingwidget.h"
 #include "transferwidget.h"
 #include "ambientlightwidget.h"
+#include "pluginwidget.h"
 
 // QT4 Includes
 #include <QtWidgets/QFileDialog>
@@ -135,6 +137,9 @@ private:
     /** Configures the available plugins */
     void configurePlugins();
 
+    /** Adds a newly detected plugin to the available plugins */
+    void registerPlugin(std::shared_ptr<vox::PluginInfo> plugin);
+
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
 
@@ -194,6 +199,10 @@ private:
 	QVector<PaneWidget*> m_lightPanes;
     QSpacerItem *        m_spacer;
 
+    // Plugin panes
+    QVector<PaneWidget*> m_pluginPanes;
+    QSpacerItem *        m_pluginSpacer;
+
     bool m_imagingUpdate;   ///< Flags a image update signal
     
     // --------------------------------------------------------------------
@@ -227,6 +236,9 @@ private slots:
     void on_pushButton_stop_clicked();
     void on_pushButton_resume_clicked();
     void on_pushButton_pause_clicked();
+
+    void on_pushButton_refreshPlugins_clicked() { }
+    void on_pushButton_loadPlugin_clicked();
 
     void on_pushButton_imagingApply_clicked();
 

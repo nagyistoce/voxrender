@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Version Info
+	Project: VoxRender - Render Parameters
 
-	Description: Defines VoxRender version info macros
+	Description: Encapsulates various render parameters for a scene
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,24 +23,5 @@
 
 =========================================================================== */
 
-// Begin definition
-#ifndef VOX_VERSION_H
-#define VOX_VERSION_H
-
-// Stringify macro
-#define VOX_XSTR(v) #v
-#define VOX_STR(v) VOX_XSTR(v)
-
-// VoxRender version
-#define VOX_VERSION_POSTFIX " (dev)"
-#define VOX_VERSION_MAJOR 1
-#define VOX_VERSION_MINOR 0
-#define VOX_VERSION_PATCH 0
-
-// VoxRender version string
-#define VOX_VERSION_STRING VOX_STR(VOX_VERSION_MAJOR) \
-	"." VOX_STR(VOX_VERSION_MINOR) "."                \
-    VOX_STR(VOX_VERSION_PATCH) VOX_VERSION_POSTFIX
-
-// End definition
-#endif // VOX_VERSION_H
+// Include Header
+#include "RenderParams.h"

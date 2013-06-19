@@ -24,8 +24,8 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_FILESYSTEM_IO_H
-#define VOX_FILESYSTEM_IO_H
+#ifndef VOX_FILE_IO_H
+#define VOX_FILE_IO_H
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -43,16 +43,10 @@ namespace vox
  * Provides a resource retrieval module for accessing files using the 'file' 
  * protocol as outline in RFC-1738 http://www.rfc-editor.org/rfc/rfc1738.txt
  */
-class VOX_EXPORT FilesystemIO : public ResourceModule
+class FileIO : public ResourceModule
 {
 public:
-    FilesystemIO() { }
-
-    /** FilesystemIO factory function */
-    static std::shared_ptr<FilesystemIO> create() 
-    {
-        return std::make_shared<FilesystemIO>();
-    }
+    FileIO() { }
 
     /**
      * Provides filesystem access capabilities 
@@ -97,4 +91,4 @@ public:
 }
 
 // End definition
-#endif // VOX_FILESYSTEM_IO_H
+#endif // VOX_FILE_IO_H

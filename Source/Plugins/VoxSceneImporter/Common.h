@@ -1,12 +1,12 @@
 /* ===========================================================================
 
-	Project: VoxRender - Version Info
+    Project: FileIO - Module definition for exported interface
 
-	Description: Defines VoxRender version info macros
+    Description: A boost::filesystem wrapper compatible with the VoxIO library
 
     Copyright (C) 2012-2013 Lucas Sherman
 
-	Lucas Sherman, email: LucasASherman@gmail.com
+    Lucas Sherman, email: LucasASherman@gmail.com
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,23 +24,17 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_VERSION_H
-#define VOX_VERSION_H
+#ifndef FIO_COMMON_H
+#define FIO_COMMON_H
 
-// Stringify macro
-#define VOX_XSTR(v) #v
-#define VOX_STR(v) VOX_XSTR(v)
+// VoxRender log category
+static char const* FIO_LOG_CATEGORY = "FIO";
 
-// VoxRender version
-#define VOX_VERSION_POSTFIX " (dev)"
-#define VOX_VERSION_MAJOR 1
-#define VOX_VERSION_MINOR 0
-#define VOX_VERSION_PATCH 0
+// Export macro
+#define FIO_EXPORT __declspec(dllexport)
 
-// VoxRender version string
-#define VOX_VERSION_STRING VOX_STR(VOX_VERSION_MAJOR) \
-	"." VOX_STR(VOX_VERSION_MINOR) "."                \
-    VOX_STR(VOX_VERSION_PATCH) VOX_VERSION_POSTFIX
+// Version info
+#include "Version.h"
 
 // End definition
-#endif // VOX_VERSION_H
+#endif // FIO_COMMON_H

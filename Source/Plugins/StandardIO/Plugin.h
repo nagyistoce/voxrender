@@ -40,6 +40,7 @@ extern "C"
     SIO_EXPORT char const*  apiVersionMax();    ///< Returns the maximum plugin API version supported
     SIO_EXPORT char const*  name();             ///< Returns the name of the plugin
     SIO_EXPORT char const*  vendor();           ///< Returns the creator of the plugin
+    SIO_EXPORT char const*  description();       ///< Returns a description of what the plugin does
     SIO_EXPORT char const*  referenceUrl();     ///< Returns a plugin reference URL
     SIO_EXPORT char const*  version();          ///< Returns the version tag of the plugin (dot delimited)
     SIO_EXPORT void         enable();           ///< Enables a plugin / signals application OK to run plugin

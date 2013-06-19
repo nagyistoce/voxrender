@@ -204,7 +204,7 @@ void Resource::removeModule(ResourceModuleH module)
         if (iter->second == module)
         {
             auto old = iter; ++iter;
-            filescope::modules.erase(iter);
+            filescope::modules.erase(old);
         }
         else
         {

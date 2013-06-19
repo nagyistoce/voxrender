@@ -24,6 +24,8 @@
 
 =========================================================================== */
 
+// :TODO: Need to copy any raw ptr across plugin boundaries
+
 // Begin definition
 #ifndef VOX_ERROR_H
 #define VOX_ERROR_H

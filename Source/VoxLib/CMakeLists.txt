@@ -77,7 +77,6 @@ Set(VoxLib_HEADERS_ERROR
 )
 
 Set(VoxLib_HEADERS_IO
-    IO/FilesystemIO.h
     IO/MimeTypes.h
     IO/OptionSet.h
     IO/Resource.h
@@ -165,7 +164,6 @@ Set(VoxLib_SOURCES_ERROR
 )
 
 Set(VoxLib_SOURCES_IO
-    IO/FilesystemIO.cpp
     IO/MimeTypes.cpp
     IO/Resource.cpp
     IO/ResourceHelper.cpp

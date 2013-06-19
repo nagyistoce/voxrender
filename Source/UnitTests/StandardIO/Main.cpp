@@ -37,9 +37,7 @@
 #include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceHelper.h"
-
-// Standard IO Header
-#include "Plugins/StandardIO/StandardIO.h"
+#include "VoxLib/Plugin/PluginManager.h"
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
@@ -61,36 +59,9 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
     {
         std::cout << "**** This test requires an external network connection. ****" << std::endl;
 
-        /*
-        vox::Logger::setFilteringLevel(Severity_Trace);
-
-        auto io = std::shared_ptr<StandardIO>(new StandardIO());
-
-        // LibCurl supported protocols suite
-        Resource::registerModule("http",   io);
-        Resource::registerModule("https",  io);
-        Resource::registerModule("ftp",    io);
-        Resource::registerModule("ftps",   io);
-        Resource::registerModule("sftp",   io);
-        Resource::registerModule("tftp",   io);
-        Resource::registerModule("rtmp",   io);
-        Resource::registerModule("rtsp",   io);
-        Resource::registerModule("smtp",   io);
-        Resource::registerModule("smtps",  io);
-        Resource::registerModule("dict",   io);
-        Resource::registerModule("scp",    io);
-        Resource::registerModule("imap",   io);
-        Resource::registerModule("imaps",  io);
-        Resource::registerModule("pop3",   io);
-        Resource::registerModule("pop3s",  io);
-        Resource::registerModule("ldap",   io);
-        Resource::registerModule("ldaps",  io);
-        Resource::registerModule("gopher", io);
-        Resource::registerModule("telnet", io);
-        
-        */
-
-
+        // Load the vox.standard_io plugin
+        auto & pluginManager = PluginManager::instance();
+        pluginManager.loadFromFile("StandardIO.dll");
 
         // ftp://ftp.funet.fi/README
         // http://www.example.com
@@ -99,10 +70,6 @@ BOOST_AUTO_TEST_SUITE( StandardIOSuite )
         // https://svn.boost.org/htdocs/site/boost.png
 
         ResourceId example("ftp://ftp.funet.fi/README");
-        for (size_t i = 0; i < 20; i++)
-        {
-            ResourceIStream webpageStream(example);
-        }
 
         //std::ofstream os(example.extractFileName(), std::ios::binary); os << webpageStream.rdbuf();
 

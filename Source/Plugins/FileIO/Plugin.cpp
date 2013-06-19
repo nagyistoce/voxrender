@@ -1,6 +1,6 @@
 /* ===========================================================================
 
-    Project: StandardIO - Standard IO protocols for VoxIO
+    Project: FileIO - File IO protocol for VoxIO
     
 	Description: Defines a VoxIO compatible plugin interface
 
@@ -27,18 +27,14 @@
 #include "Plugin.h"
 
 // Include Dependencies
-#include "StandardIO/Common.h"
-#include "StandardIO/StandardIO.h"
-#include "VoxLib/Core/CudaCommon.h"
+#include "FileIO/Common.h"
+#include "FileIO/FileIO.h"
 #include "VoxLib/Core/Logging.h"
-
-// LibCurl Library
-#include <curl/curl.h>
 
 namespace {
 namespace filescope {
 
-    static std::shared_ptr<vox::StandardIO> io;
+    static std::shared_ptr<vox::FileIO> io;
 
 } // namespace filescope
 } // namespace anonymous
@@ -56,7 +52,7 @@ void freePlugin() { }
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
 // --------------------------------------------------------------------
-char const* version() { return SIO_VERSION_STRING; }
+char const* version() { return FIO_VERSION_STRING; }
 
 // --------------------------------------------------------------------
 //  Returns a reference URL for the plugin
@@ -66,17 +62,17 @@ char const* referenceUrl() { return "http://code.google.com/p/voxrender/"; }
 // --------------------------------------------------------------------
 //  Returns the minimum compatible version of the plugin API
 // --------------------------------------------------------------------
-char const* apiVersionMin() { return SIO_API_VERSION_MIN_STR; }
+char const* apiVersionMin() { return FIO_API_VERSION_MIN_STR; }
 
 // --------------------------------------------------------------------
 //  Returns the minimum compatible version of the plugin API
 // --------------------------------------------------------------------
-char const* apiVersionMax() { return SIO_API_VERSION_MAX_STR; }
+char const* apiVersionMax() { return FIO_API_VERSION_MAX_STR; }
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-char const* name() { return "Standard IO"; }
+char const* name() { return "File IO"; }
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
@@ -88,12 +84,10 @@ char const* vendor() { return "Vox"; }
 // --------------------------------------------------------------------
 char const* description() 
 {
-    return  "The StandardIO plugin provides resource modules for the following internet protocols:\n\n"
-		
-		    "HTTP, HTTPS, FTP, FTPS, DICT, LDAP, LDAPS, IMAP, IMAPS, POP3, POP3S, SMTP, SMTPS, GOPHER, TELNET, TFTP, SFTP, RTMP, RTSP, and SCP.\n\n"
-		  
-		    "Individual protocols can be suppressed by editing the StandardIO.pin XML file's restrict attribute."
-        ;
+    return  "The FileIO plugin provides a resource module which implements the file protocol. It can be "
+		    "used to load resources from a local filesystem or using a UNC path to a remote filesystem. "
+            "Symbolic links and directories are also supported."
+            ;
 }
 
 // --------------------------------------------------------------------
@@ -101,30 +95,11 @@ char const* description()
 // --------------------------------------------------------------------
 void enable() 
 {  
-    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Enabling the 'Vox.Standard IO' plugin");
+    VOX_LOG_INFO(FIO_LOG_CATEGORY, "Enabling the 'Vox.File IO' plugin");
 
-    std::shared_ptr<vox::StandardIO> io(new vox::StandardIO());
+    std::shared_ptr<vox::FileIO> io(new vox::FileIO());
 
-    vox::Resource::registerModule("http",   io);
-    vox::Resource::registerModule("https",  io);
-    vox::Resource::registerModule("ftp",    io);
-    vox::Resource::registerModule("ftps",   io);
-    vox::Resource::registerModule("sftp",   io);
-    vox::Resource::registerModule("tftp",   io);
-    vox::Resource::registerModule("rtmp",   io);
-    vox::Resource::registerModule("rtsp",   io);
-    vox::Resource::registerModule("smtp",   io);
-    vox::Resource::registerModule("smtps",  io);
-    vox::Resource::registerModule("dict",   io);
-    vox::Resource::registerModule("scp",    io);
-    vox::Resource::registerModule("imap",   io);
-    vox::Resource::registerModule("imaps",  io);
-    vox::Resource::registerModule("pop3",   io);
-    vox::Resource::registerModule("pop3s",  io);
-    vox::Resource::registerModule("ldap",   io);
-    vox::Resource::registerModule("ldaps",  io);
-    vox::Resource::registerModule("gopher", io);
-    vox::Resource::registerModule("telnet", io);
+    vox::Resource::registerModule("file", io);
 
     filescope::io = io;
 }
@@ -134,7 +109,7 @@ void enable()
 // --------------------------------------------------------------------
 void disable() 
 { 
-    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Disabling the 'Vox.Standard IO' plugin");
+    VOX_LOG_INFO(FIO_LOG_CATEGORY, "Disabling the 'Vox.File IO' plugin");
 
     vox::Resource::removeModule(filescope::io);
 

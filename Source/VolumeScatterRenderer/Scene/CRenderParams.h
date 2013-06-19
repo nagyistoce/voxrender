@@ -50,6 +50,7 @@ public:
         m_shadowStep( settings->shadowStepSize() ),
         m_occludeStep( settings->occludeStepSize() ),
         m_occludeSamples( settings->occludeSamples() ),
+        m_gradientCutoff( settings->gradientCutoff() ),
         m_backdropColor(1.0f, 1.0f, 1.0f)
     {
     }
@@ -58,6 +59,7 @@ public:
     VOX_HOST_DEVICE float shadowStepSize() const { return m_shadowStep; }
     VOX_HOST_DEVICE float occludeStepSize() const { return m_occludeStep; }
     VOX_HOST_DEVICE unsigned int occludeSamples() const { return m_occludeSamples; }
+    VOX_HOST_DEVICE float gradientCutoff() const { return m_gradientCutoff; }
 
 private:
     Vector3f m_backdropColor; ///< Background color/radiance (non-reflecting)
@@ -65,6 +67,8 @@ private:
     float m_primaryStep;    ///< Step size for primary volume trace
     float m_shadowStep;     ///< Step size for shadow ray trace
     float m_occludeStep;    ///< Step size for ambient occlusion
+
+    float m_gradientCutoff; ///< Cutoff for surface based shading 
 
     unsigned int m_occludeSamples; ///< Number of ambient occlusion samples
 };

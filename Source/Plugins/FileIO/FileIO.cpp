@@ -24,13 +24,12 @@
 =========================================================================== */
 
 // Include Header
-#include "FilesystemIO.h"
+#include "FileIO.h"
 
 // API dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/FileError.h"
-#include "VoxLib/Error/PluginError.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
 
@@ -80,7 +79,7 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Returns a filebuf with the specified mode settings
 // --------------------------------------------------------------------
-std::shared_ptr<std::streambuf> FilesystemIO::access(
+std::shared_ptr<std::streambuf> FileIO::access(
     ResourceId &     identifier, 
     OptionSet const& options,
     unsigned int     openMode
@@ -132,7 +131,7 @@ std::shared_ptr<std::streambuf> FilesystemIO::access(
 // --------------------------------------------------------------------
 //  Performs a query of the specified file or directory
 // --------------------------------------------------------------------
-std::shared_ptr<QueryResult> FilesystemIO::query(
+std::shared_ptr<QueryResult> FileIO::query(
     ResourceId const& identifier, 
     OptionSet const&  options
     )
@@ -155,7 +154,7 @@ std::shared_ptr<QueryResult> FilesystemIO::query(
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void FilesystemIO::remove(
+void FileIO::remove(
     ResourceId const& identifier, 
     OptionSet const&  options
     )

@@ -191,8 +191,7 @@ namespace filescope {
     //  This is done by casting rays out around the sample point and 
     //  computing the average attenuation over a short distance.
     // --------------------------------------------------------------------
-    VOX_DEVICE float computeAmbientOcclusion(
-        CRandomGenerator & rng, Vector3f const& pos)
+    VOX_DEVICE float computeAmbientOcclusion(CRandomGenerator & rng, Vector3f const& pos)
     {
         unsigned int samples = gd_renderParams.occludeSamples();
 
@@ -215,25 +214,41 @@ namespace filescope {
     }
     
     // --------------------------------------------------------------------
-    //  Samples the scene lighting to compute the radiance contribution
+    //  Computes radiance using a volumetric model
     // --------------------------------------------------------------------
-    VOX_DEVICE ColorLabxHdr estimateRadiance(
-        CRandomGenerator & rng, Ray3f const& location)
+    VOX_DEVICE inline ColorLabxHdr computeVolumetricShading(
+        CRandomGenerator & rng, 
+        Ray3f const&       location,
+        float              density, 
+        Vector3f const&    gradient,
+        float              gradientMagnitude,
+        Vector3f const&    diffuse
+        )
     {
-        float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
+        // Compute the ambient component of the scene lighting
+        Vector3f Lv = diffuse * gd_ambient * computeAmbientOcclusion(rng, location.pos);
+        
+        return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
+    }
 
-        // Compute the gradient at the point of interest
-        Vector3f gradient = sampleGradient(location.pos);
-        if (Vector3f::dot(gradient, location.dir) > 0)
+    // --------------------------------------------------------------------
+    //  Computes radiance using a surface shading model
+    // --------------------------------------------------------------------
+    VOX_DEVICE inline ColorLabxHdr computeSurfaceShading(
+        CRandomGenerator & rng, 
+        Ray3f const&       location,
+        float              density, 
+        Vector3f const&    gradient,
+        float              gradMag,
+        Vector3f const&    diffuse
+        )
+    {
+        // Determine the gradient orientation for specular/occlusion 
+        Vector3f gradDir = gradient / gradMag;
+        if (Vector3f::dot(gradDir, location.dir) > 0)
         {
-            gradient = -gradient;
+            gradDir = -gradDir;
         }
-        float gradMag = gradient.length();
-        gradient = gradient * 1.0f / gradMag;
-
-        // Determine the diffuse characteristic of the sample point 
-        float4 sampleDiffuse = tex3D(gd_diffuseTex, density, 0.0f, 0.0f); 
-        Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
 
         // Compute the ambient component of the scene lighting
         Vector3f Lv = diffuse * gd_ambient * computeAmbientOcclusion(rng, location.pos);
@@ -250,7 +265,7 @@ namespace filescope {
                                     gd_renderParams.shadowStepSize(), 1000.0f);
 
             // Compute the diffuse component of the reflectance function
-                Lv += lightEmission * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
+                Lv += lightEmission * diffuse * abs(Vector3f::dot(gradDir, lightDirection)); 
 
             // Compute the specular component of the reflectance function
 
@@ -260,7 +275,7 @@ namespace filescope {
                 float4 specularData = tex3D(gd_specularTex, density, 0.0f, 0.0f);
 
                 //Intensity of the specular light
-                float NdotH = Vector3f::dot(gradient, H);
+                float NdotH = Vector3f::dot(gradDir, H);
                 float intensity = pow(saturate( NdotH ), specularData.w*100.0f + 2.0f);
  
                 // Compute the resulting specular strength
@@ -268,6 +283,33 @@ namespace filescope {
         }
 
         return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
+    }
+
+    // --------------------------------------------------------------------
+    //  Samples the scene lighting to compute the radiance contribution
+    // --------------------------------------------------------------------
+    VOX_DEVICE ColorLabxHdr estimateRadiance(
+        CRandomGenerator & rng, Ray3f const& location)
+    {
+        float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
+
+        // Compute the gradient at the point of interest
+        Vector3f gradient = sampleGradient(location.pos);
+        float gradMag = gradient.length();
+
+        // Determine the diffuse characteristic of the sample point 
+        float4 sampleDiffuse = tex3D(gd_diffuseTex, density, 0.0f, 0.0f); 
+        Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
+
+        // Perform shading computations based on the gradient 
+        if (gradMag > gd_renderParams.gradientCutoff())
+        {
+            return computeSurfaceShading(rng, location, density, gradient, gradMag, diffuse);
+        }
+        else
+        {
+            return computeVolumetricShading(rng, location, density, gradient, gradMag, diffuse);
+        }
     }
 
     // --------------------------------------------------------------------

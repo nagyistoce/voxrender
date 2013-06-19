@@ -1,11 +1,10 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
+#   Project: Vox Scene File Loader                                          #
 #                                                                           #
-#   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#   Description: Provides an scene file importer for vox scene files        #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#   Copyright (C) 2013 Lucas Sherman                                        #
 #                                                                           #
 #   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
@@ -26,10 +25,19 @@
 
 INCLUDE_DIRECTORIES(.)
 
-#===============================================#
-#           INCLUDE DESIRED PLUGINS             #
-#===============================================#
-
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(FileIO)
-
+VOX_PROJECT(
+    TARGET "VoxSceneImporter" SHARED
+    FOLDER "Plugins"
+    HEADERS
+        "Common.h"
+        "VoxSceneFile.h"
+        "Plugin.h"
+        "Version.h"
+    SOURCES
+        "VoxSceneFile.cpp"
+        "Plugin.cpp"
+    DEPENDENCIES
+        VoxLib
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

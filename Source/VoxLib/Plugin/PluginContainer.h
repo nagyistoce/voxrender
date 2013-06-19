@@ -23,7 +23,7 @@
 
 =========================================================================== */
 
-// Note: This is an internal implementation header // 
+// TODO: Should expose some of this to the user, remove the pluginManager helper stuff // 
 
 // Begin definition
 #ifndef VOX_PLUGIN_CONTAINER_H
@@ -31,10 +31,12 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Types.h"
+#include "VoxLib/Plugin/PluginInfo.h"
 
 // API namespace
 namespace vox {
-
+    
     // Plugin interface for current API version
     typedef char const* (*NameFunc)();
     typedef char const* (*VersionFunc)();
@@ -42,6 +44,7 @@ namespace vox {
     typedef char const* (*ApiVersionMaxFunc)();
     typedef char const* (*ApiVersionMinFunc)();
     typedef char const* (*ReferenceUrlFunc)();
+    typedef char const* (*DescriptionFunc)();
     typedef void        (*InitPluginFunc)();
     typedef void        (*FreePluginFunc)();
     typedef void        (*EnableFunc)();
@@ -50,20 +53,26 @@ namespace vox {
     /** Structure for loaded plugins in the manager */
     struct PluginContainer 
     {
-        /** Initialize pointers to null */
-        PluginContainer() :
+        /** Initialize from file specification */
+        PluginContainer(String const& filename) :
             m_isEnabled(false),
-            name(nullptr),
-            version(nullptr),
-            vendor(nullptr),
-            apiVersionMax(nullptr),
-            apiVersionMin(nullptr),
-            referenceUrl(nullptr),
             m_initPluginFunc(nullptr),
             m_freePluginFunc(nullptr),
             m_enableFunc(nullptr),
             m_disableFunc(nullptr)
         {
+            getInfo(filename);
+        }
+
+        /** Initialize from info structure */
+        PluginContainer(std::shared_ptr<PluginInfo> info) :
+            m_isEnabled(false),
+            m_initPluginFunc(nullptr),
+            m_freePluginFunc(nullptr),
+            m_enableFunc(nullptr),
+            m_disableFunc(nullptr)
+        {
+            m_info = info;
         }
 
         /** Ensure plugin disabled+unloaded */
@@ -83,20 +92,20 @@ namespace vox {
 
                 m_plugin.reload();
 
-                m_initPluginFunc();
+                getPluginHandles();
 
-                getSymbols();
+                m_initPluginFunc();
             }
         }
 
         /** Loads the specified plugin */
-        void load(String const& path)
+        void load()
         {
-            unload(); // Ensure plugin is unloaded 
+            if (m_plugin.isOpen()) return;
 
-            m_plugin.open(path);
+            m_plugin.open(m_info->file);
 
-            getSymbols();
+            getPluginHandles();
 
             m_initPluginFunc();
         }
@@ -111,13 +120,6 @@ namespace vox {
                 m_freePluginFunc();
 
                 m_plugin.close();
-
-                name          = nullptr;
-                version       = nullptr;
-                vendor        = nullptr;
-                apiVersionMax = nullptr;
-                apiVersionMin = nullptr;
-                referenceUrl  = nullptr;
 
                 m_initPluginFunc = nullptr;
                 m_freePluginFunc = nullptr;
@@ -152,42 +154,81 @@ namespace vox {
             }
         }
         
+        /** Returns true if the plugin is enabled */
+        bool isEnabled()
+        {
+            return m_isEnabled;
+        }
+
         /** Returns the filesystem path of the plugin */
         String const& path()
         {
             return m_plugin.library();
         }
 
-        NameFunc          name;
-        VersionFunc       version;
-        VendorFunc        vendor;
-        ApiVersionMaxFunc apiVersionMax;
-        ApiVersionMinFunc apiVersionMin;
-        ReferenceUrlFunc  referenceUrl;
+        /** Returns the info structure for this plugin */
+        std::shared_ptr<PluginInfo> info()
+        {
+            return m_info;
+        }
 
     private:
         Plugin m_plugin;
         bool   m_isEnabled;
-        
+
+        std::shared_ptr<PluginInfo> m_info;
+
         InitPluginFunc    m_initPluginFunc;
         FreePluginFunc    m_freePluginFunc;
         EnableFunc        m_enableFunc;
         DisableFunc       m_disableFunc;
 
-        /** Acquires the required plugin API symbols */
-        void getSymbols()
+        /** Extracts the plugin control function pointers */
+        void getPluginHandles()
         {
-            name          = m_plugin.findSymbolAs<NameFunc>("name");
-            version       = m_plugin.findSymbolAs<VersionFunc>("version");
-            vendor        = m_plugin.findSymbolAs<VendorFunc>("vendor");
-            apiVersionMax = m_plugin.findSymbolAs<ApiVersionMaxFunc>("apiVersionMax");
-            apiVersionMin = m_plugin.findSymbolAs<ApiVersionMinFunc>("apiVersionMin");
-            referenceUrl  = m_plugin.findSymbolAs<ReferenceUrlFunc>("referenceUrl");
-            
             m_initPluginFunc = m_plugin.findSymbolAs<InitPluginFunc>("initPlugin");
             m_freePluginFunc = m_plugin.findSymbolAs<FreePluginFunc>("freePlugin");
             m_enableFunc     = m_plugin.findSymbolAs<EnableFunc>("enable");
             m_disableFunc    = m_plugin.findSymbolAs<DisableFunc>("disable");
+        }
+
+        /** Extracts the plugin info from the loaded plugin */
+        void getInfo(String const& filename)
+        {
+            m_plugin.open(filename);
+
+                // Extract the plugin info 
+                m_info = std::make_shared<PluginInfo>();
+
+                m_info->file = filename;
+
+                m_info->name   = m_plugin.findSymbolAs<NameFunc>("name")();
+                m_info->vendor = m_plugin.findSymbolAs<VendorFunc>("vendor")();
+                m_info->url    = m_plugin.findSymbolAs<ReferenceUrlFunc>("referenceUrl")();
+                
+                m_info->description = m_plugin.findSymbolAs<DescriptionFunc>("description")();
+
+                m_info->version       = parseVersionStr(m_plugin.findSymbolAs<VersionFunc>("version")());
+                m_info->apiVersionMax = parseVersionStr(m_plugin.findSymbolAs<ApiVersionMaxFunc>("apiVersionMax")());
+                m_info->apiVersionMin = parseVersionStr(m_plugin.findSymbolAs<ApiVersionMinFunc>("apiVersionMin")());
+            
+            getPluginHandles();
+
+            m_initPluginFunc();
+        }
+
+        /** Parses a version string into a version structure */
+        PluginInfo::Version parseVersionStr(String const& versionStr)
+        {
+            PluginInfo::Version version;
+
+            std::vector<String> fields;
+            boost::algorithm::split(fields, versionStr, boost::is_any_of("."));
+            if (fields.size() > 2) version.patch = boost::lexical_cast<unsigned int>(fields[2]);
+            if (fields.size() > 1) version.minor = boost::lexical_cast<unsigned int>(fields[1]);
+            if (fields.size() > 0) version.major = boost::lexical_cast<unsigned int>(fields[0]);
+
+            return version;
         }
     };
 

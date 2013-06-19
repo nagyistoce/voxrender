@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/IO/Resource.h"
+#include "VoxLib/Plugin/PluginManager.h"
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>
@@ -147,7 +148,7 @@ namespace filescope {
                 {
                     BOOST_FOREACH (auto & child, *m_node)
                     {
-                        if (child.first == "<xml_comment>") continue; // Ignore comments
+                        if (child.first == "<xmlcomment>") continue; // Ignore comments
 
                         if (child.first == "Module")
                         {
@@ -175,6 +176,24 @@ namespace filescope {
         {
             if (!push("Plugins", Optional)) return;
                    
+              // Load the specified plugin search directories
+              if (push("SearchDirectories", Optional)) 
+              {
+                  auto rootPath = boost::filesystem::absolute(m_identifier, boost::filesystem::current_path()).remove_filename();
+
+                  auto & pluginManager = PluginManager::instance();
+
+                  BOOST_FOREACH (auto const& child, *m_node)
+                  {
+                      if (child.first == "Dir")
+                      {
+                          auto path = rootPath / child.second.get<String>("");
+
+                          pluginManager.addPath(path.string());
+                      }
+                  }
+              }
+
             pop();
         }
 

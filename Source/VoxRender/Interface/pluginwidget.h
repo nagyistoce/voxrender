@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Version Info
+	Project: VoxRender
 
-	Description: Defines VoxRender version info macros
+	Description: Pane widget which depicts plugin information for user
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,24 +23,40 @@
 
 =========================================================================== */
 
-// Begin definition
-#ifndef VOX_VERSION_H
-#define VOX_VERSION_H
+// Begin Definition
+#ifndef PLUGIN_WIDGET_H
+#define PLUGIN_WIDGET_H
 
-// Stringify macro
-#define VOX_XSTR(v) #v
-#define VOX_STR(v) VOX_XSTR(v)
+// Include Dependencies
+#include "VoxLib/Plugin/PluginInfo.h"
 
-// VoxRender version
-#define VOX_VERSION_POSTFIX " (dev)"
-#define VOX_VERSION_MAJOR 1
-#define VOX_VERSION_MINOR 0
-#define VOX_VERSION_PATCH 0
+#include <QtWidgets/QWidget>
 
-// VoxRender version string
-#define VOX_VERSION_STRING VOX_STR(VOX_VERSION_MAJOR) \
-	"." VOX_STR(VOX_VERSION_MINOR) "."                \
-    VOX_STR(VOX_VERSION_PATCH) VOX_VERSION_POSTFIX
+namespace Ui {
+	class PluginWidget;
+}
+
+// Volume data histogram widget
+class PluginWidget : public QWidget
+{
+	Q_OBJECT
+
+public:
+    /** Creates a new plugin info display widget for the specified plugin info */
+	explicit PluginWidget(QWidget *parent, std::shared_ptr<vox::PluginInfo> info);
+
+	~PluginWidget();
+
+protected:
+    /** Enables or disables the plugin  */
+	virtual void changeEvent(QEvent *e);
+
+private:
+	Ui::PluginWidget * ui;
+
+    std::shared_ptr<vox::PluginInfo> m_info;
+};
 
 // End definition
-#endif // VOX_VERSION_H
+#endif // PLUGIN_WIDGET_H
+

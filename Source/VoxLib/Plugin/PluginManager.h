@@ -92,23 +92,11 @@
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
+#include "VoxLib/Plugin/PluginInfo.h"
 
 // API namespace
 namespace vox
 {
-    /** Information structure describing a loaded plugin */
-    struct PluginInfo
-    {
-        String path;           ///< Path to location of plugin 
-        String apiVersionMax;  ///< Maximum supported API version (dot delimited)
-        String apiVersionMin;  ///< Minimum supported API version (dot delimited) 
-        String name;           ///< The name of the plugin
-        String vendor;         ///< The plugin vendor
-        String version;        ///< The plugin version (dot delimited)
-        String url;            ///< Reference URL for vender/plugin info
-        String description;    ///< Description of the plugin
-    };
-
 	/** 
 	 * Plugin Management class
      *
@@ -121,12 +109,10 @@ namespace vox
     class VOX_EXPORT PluginManager
 	{
     public:
+        typedef std::function<void(std::shared_ptr<PluginInfo>)> DiscoveryCallback;
+
         /** Returns the global PluginManager */
-        inline PluginManager const& instance()
-        {
-            static PluginManager pmanager;
-            return pmanager;
-        }
+        static PluginManager & instance();
 
         /**
          * Disables and unloads active plugins
@@ -166,19 +152,26 @@ namespace vox
         void removePath(String const& path);
 
         /** 
-         * Loads a specified plugin 
+         * Loads a specified plugin from a file
          *
-         * This function will attempt to load a specified plugin by a filesystem path or plugin name. 
-         * If a more qualified version of the plugin is already loaded, an exception will be thrown.
-         * If a less qualified version of the plugin is already loaded, it will be automatically unloaded.
+         * This function will attempt to load a specified plugin from a filesystem path. If the plugin
+         * is already loaded, a warning will be logged and the PluginInfo structure will be returned.
          *
          * @param name   A plugin name or filesystem path identifying the plugin
          * @param enable If true, the plugin is enabled after load
+         *
+         * @returns A handle to the plugin information
          */
-        void load(String const& name, bool enable = true);
+        std::shared_ptr<PluginInfo> loadFromFile(String const& file, bool enable = true);
+
+        /** Attempts to load a plugin */
+        void load(std::shared_ptr<PluginInfo> const& info);
 
         /** Unloads a plugin if it has been loaded */
-        void unload(String const& plugin);
+        void unload(std::shared_ptr<PluginInfo> const& info);
+
+        /** Returns true if the given plugin is currently active */
+        bool isLoaded(std::shared_ptr<PluginInfo> const& info);
 
         /** 
          * Unloads and then enables a plugin 
@@ -194,16 +187,20 @@ namespace vox
         /**
          * Loads all available plugins
          *
-         * This function causes the plugin manager to load all plugins found in the available 
+         * This function causes the plugin manager to find all plugins in the available 
          * search directories. This does not include multiple versions of the same plugin.
+         *
+         * @param load      If true, any detected plugins will automatically be loaded 
+         * @param checkBins If true, binaries with plugin extensions (dll, so, etc) and no associated .pin will be loaded, 
+         *                  for a short time, to extract plugin info. Otherwise only .pin associated files are loaded.
          */
-        void loadAll(bool enable = false);
+        void findAll(DiscoveryCallback callback, bool load = false, bool checkBins = false);
 
         /** Explicitly unloads any loaded plugins */
         void unloadAll();
 
         /** Returns an info structure for a given plugin */
-        PluginInfo getPluginInfo(String const& pluginName);
+        std::shared_ptr<PluginInfo> getPluginInfo(String const& name);
 
         /** 
          * Enables automatic runtime detection and loading of plugins

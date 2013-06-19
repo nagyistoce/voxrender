@@ -1,12 +1,12 @@
 /* ===========================================================================
 
-	Project: VoxRender - Version Info
+    Project: FileIO - File IO protocol for VoxIO
+    
+	Description: Defines a VoxIO compatible plugin interface
 
-	Description: Defines VoxRender version info macros
+    Copyright (C) 2013 Lucas Sherman
 
-    Copyright (C) 2012-2013 Lucas Sherman
-
-	Lucas Sherman, email: LucasASherman@gmail.com
+    Lucas Sherman, email: LucasASherman@gmail.com
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,23 +24,25 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_VERSION_H
-#define VOX_VERSION_H
+#ifndef FIO_VERSION_H
+#define FIO_VERSION_H
 
 // Stringify macro
-#define VOX_XSTR(v) #v
-#define VOX_STR(v) VOX_XSTR(v)
+#define FIO_XSTR(v) #v
+#define FIO_STR(v) FIO_XSTR(v)
 
-// VoxRender version
-#define VOX_VERSION_POSTFIX " (dev)"
-#define VOX_VERSION_MAJOR 1
-#define VOX_VERSION_MINOR 0
-#define VOX_VERSION_PATCH 0
+// Plugin version info
+#define FIO_VERSION_MAJOR 1
+#define FIO_VERSION_MINOR 0
+#define FIO_VERSION_PATCH 0
 
-// VoxRender version string
-#define VOX_VERSION_STRING VOX_STR(VOX_VERSION_MAJOR) \
-	"." VOX_STR(VOX_VERSION_MINOR) "."                \
-    VOX_STR(VOX_VERSION_PATCH) VOX_VERSION_POSTFIX
+// API support version info
+#define FIO_API_VERSION_MIN_STR "0.0.0"
+#define FIO_API_VERSION_MAX_STR "999.999.999"
+
+// Plugin version string
+#define FIO_VERSION_STRING FIO_STR(FIO_VERSION_MAJOR) \
+	"." FIO_STR(FIO_VERSION_MINOR) "." FIO_STR(FIO_VERSION_PATCH)
 
 // End definition
-#endif // VOX_VERSION_H
+#endif // FIO_VERSION_H
