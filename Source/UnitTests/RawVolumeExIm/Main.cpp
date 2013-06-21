@@ -27,16 +27,17 @@
 
 // Include Boost UnitTest Framework
 #include <boost/test/unit_test.hpp>
+#include <boost/filesystem.hpp>
 
 // Include Dependencies
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
 #include "VoxLib/Scene/Scene.h"
-#include "VoxLib/Scene/ExIm/RawVolumeFile.h"
 #include "VoxLib/Scene/Volume.h"
+#include "Plugins/FileIO/FileIO.h"
+#include "Plugins/RawVolumeImporter/RawVolumeImporter.h"
 
 #include <stdlib.h>     // srand, rand 
 #include <time.h>       // time 
@@ -90,9 +91,10 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         std::cout << "WARNING: This test may take awhile to complete" << std::endl;
 
         // Register the raw volume file ExIm and a filesystem IO module
-        Scene::registerImportModule(".raw", &RawVolumeFile::importer);
-        Scene::registerExportModule(".raw", &RawVolumeFile::exporter);
-        Resource::registerModule("file", FilesystemIO::create());
+        auto exim = std::shared_ptr<RawVolumeFile>(new RawVolumeFile());
+        Scene::registerImportModule(".raw", exim);
+        Scene::registerExportModule(".raw", exim);
+        Resource::registerModule("file", std::shared_ptr<FileIO>(new FileIO));
      
         // Specify the test volume parameters
         Vector4u extent(256, 256, 256, 1);

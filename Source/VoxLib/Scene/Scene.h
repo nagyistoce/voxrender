@@ -101,7 +101,8 @@ namespace vox
      * @sa
      *  ::SceneExporter
 	 */              
-    typedef std::function<Scene(ResourceIStream & data, OptionSet const& options)> SceneImporter;
+    class SceneImporter { public: virtual Scene importer(ResourceIStream & data, OptionSet const& options) = 0;
+                          virtual ~SceneImporter() { } };
 
     /**
 	 * Scene File Exporter
@@ -116,8 +117,9 @@ namespace vox
      * @sa
      *  ::SceneImporter
      */
-    typedef std::function<void(ResourceOStream & data, OptionSet const& options, 
-                               Scene const& scene)> SceneExporter;
+    class SceneExporter { public: virtual void exporter(ResourceOStream & data, OptionSet const& options, 
+                                                        Scene const& scene) = 0; 
+                          virtual ~SceneExporter() { } };
 
 	/** 
 	 * @brief Scene Class
@@ -196,14 +198,13 @@ namespace vox
                    String const&     extension = String()) const; 
 
 		/**`
-		 * Registers a new scene importer with the specified regular expression object for 
-         * matching. If an importer is already specified which has a conflicting regular 
-         * expression matcher, the new importer will take precedence.
+		 * Registers a new scene importer with the specified extension. If an importer is already 
+         * specified which has a conflicting extension, it will be overridden.
 		 * 
 		 * @param importer [in] The new scene importer to be registered
 		 * @param matcher  [in] The regular expression for matching
 		 */
-        static void registerImportModule(String const& extension, SceneImporter importer);
+        static void registerImportModule(String const& extension, std::shared_ptr<SceneImporter> importer);
 
 		/**
 		 * Registers a new scene exporter with the specified regular expression object for 
@@ -213,21 +214,19 @@ namespace vox
 		 * @param loader  [in] The new scene exporter to be registered
 		 * @param matcher [in] The regular expression for matching
 		 */
-        static void registerExportModule(String const& extension, SceneExporter exporter);
+        static void registerExportModule(String const& extension, std::shared_ptr<SceneExporter> exporter);
 
-		/**
-		 * Returns a reference to the list containing the active scene importers.
-		 * 
-		 * @return A const reference to the internal list containing scene importers.
-		 */
-		static std::map<String, SceneImporter> const& importers();
+        /** Removes a scene import module */
+        static void removeImportModule(std::shared_ptr<SceneImporter> importer, String const& extension = "");
 
-		/**
-		 * Returns a reference to the list containing the active scene exporters.
-		 * 
-		 * @return A const reference to the internal list containing scene exporters.
-		 */
-		static std::map<String, SceneExporter> const& exporters();
+        /** Removes a scene export module */
+        static void removeExportModule(std::shared_ptr<SceneExporter> exporter, String const& extension = "");
+        
+        /** Removes a scene import module */
+        static void removeImportModule(String const& extension);
+
+        /** Removes a scene export module */
+        static void removeExportModule(String const& extension);
 
         /** Releases handles to the scene's internal data components */
         void reset()

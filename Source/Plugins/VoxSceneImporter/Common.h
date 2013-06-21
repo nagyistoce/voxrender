@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-    Project: FileIO - Module definition for exported interface
+    Project: Vox Scene Importer - Module definition for scene importer
 
-    Description: A boost::filesystem wrapper compatible with the VoxIO library
+    Description: A vox scene file importer module
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
     Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,14 +24,18 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef FIO_COMMON_H
-#define FIO_COMMON_H
+#ifndef VSI_COMMON_H
+#define VSI_COMMON_H
 
 // VoxRender log category
-static char const* FIO_LOG_CATEGORY = "FIO";
+static char const* VSI_LOG_CATEGORY = "VSI";
 
 // Export macro
-#define FIO_EXPORT __declspec(dllexport)
+#ifdef VoxSceneImporter_EXPORTS
+#   define VSI_EXPORT __declspec(dllexport)
+#else
+#   define VSI_EXPORT __declspec(dllimport)
+#endif
 
 // Version info
 #include "Version.h"

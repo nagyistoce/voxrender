@@ -40,9 +40,10 @@ namespace vox
 namespace {
 namespace filescope {
 
-    static std::map<String, SceneImporter> importers;   // Registered import modules
-    static std::map<String, SceneExporter> exporters;   // Registered export modules    
-    static boost::shared_mutex             moduleMutex; // Module access mutex for read-write locks
+    static std::map<String, std::shared_ptr<SceneImporter>> importers;   // Registered import modules
+    static std::map<String, std::shared_ptr<SceneExporter>> exporters;   // Registered export modules 
+
+    static boost::shared_mutex moduleMutex; // Module access mutex for read-write locks
 
     // --------------------------------------------------------------------
     //  Helper function for issuing warning for missing scene data
@@ -58,28 +59,15 @@ namespace filescope {
 } // namespace anonymous
 
 // --------------------------------------------------------------------
-//  Registered import modules accessor :TODO: privatize, used for testing
-// --------------------------------------------------------------------
-std::map<String, SceneImporter> const& Scene::importers() 
-{ 
-    return filescope::importers; 
-}
-
-// --------------------------------------------------------------------
-//  Registered export modules accessor
-// --------------------------------------------------------------------
-std::map<String, SceneExporter> const& Scene::exporters() 
-{ 
-    return filescope::exporters; 
-}
-
-// --------------------------------------------------------------------
 //  Registers a new resource import module
 // --------------------------------------------------------------------
-void Scene::registerImportModule(String const& extension, SceneImporter importer)
+void Scene::registerImportModule(String const& extension, std::shared_ptr<SceneImporter> importer)
 { 
     // Acquire a read-lock on the modules for thread safety support
     boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+    
+    if (!importer) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+        "Attempted to register empty import module", Error_NotAllowed);
 
     filescope::importers[extension] = importer; 
 }
@@ -87,12 +75,79 @@ void Scene::registerImportModule(String const& extension, SceneImporter importer
 // --------------------------------------------------------------------
 //  Registers a new resource export module
 // --------------------------------------------------------------------
-void Scene::registerExportModule(String const& extension, SceneExporter exporter)
+void Scene::registerExportModule(String const& extension, std::shared_ptr<SceneExporter> exporter)
 { 
     // Acquire a read-lock on the modules for thread safety support
     boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
+    if (!exporter) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+        "Attempted to register empty export module", Error_NotAllowed);
+
     filescope::exporters[extension] = exporter; 
+}
+
+// --------------------------------------------------------------------
+//  Removes a scene import module
+// --------------------------------------------------------------------
+void Scene::removeImportModule(std::shared_ptr<SceneImporter> importer, String const& extension)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+    
+    if (extension.empty())
+    {
+        auto iter = filescope::importers.begin();
+        while (iter != filescope::importers.end())
+        {
+            if (iter->second == importer)
+            {
+                auto old = iter; ++iter;
+                filescope::importers.erase(old);
+            }
+            else
+            {
+                ++iter;
+            }
+        }
+    }
+    else
+    {
+        auto iter = filescope::importers.find(extension);
+        if (iter != filescope::importers.end()) 
+            filescope::importers.erase(iter);
+    }
+}
+
+// --------------------------------------------------------------------
+//  Removes a scene export module
+// --------------------------------------------------------------------
+void Scene::removeExportModule(std::shared_ptr<SceneExporter> exporter, String const& extension)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+    
+    if (extension.empty())
+    {
+        auto iter = filescope::exporters.begin();
+        while (iter != filescope::exporters.end())
+        {
+            if (iter->second == exporter)
+            {
+                auto old = iter; ++iter;
+                filescope::exporters.erase(old);
+            }
+            else
+            {
+                ++iter;
+            }
+        }
+    }
+    else
+    {
+        auto iter = filescope::exporters.find(extension);
+        if (iter != filescope::exporters.end()) 
+            filescope::exporters.erase(iter);
+    }
 }
 
 // --------------------------------------------------------------------
@@ -109,7 +164,7 @@ Scene Scene::imprt(ResourceIStream & data, OptionSet const& options, String cons
     auto importer = filescope::importers.find(type);
     if (importer != filescope::importers.end())
     {
-        return importer->second(data, options);
+        return importer->second->importer(data, options);
     }
 
     throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
@@ -130,7 +185,7 @@ void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const
     auto exporter = filescope::exporters.find(type);
     if (exporter != filescope::exporters.end())
     {
-        exporter->second(data, options, *this);
+        exporter->second->exporter(data, options, *this);
     }
     else
     {

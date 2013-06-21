@@ -28,7 +28,7 @@
 #define VOX_FILE_IO_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "Plugins/FileIO/Common.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceModule.h"
@@ -43,7 +43,7 @@ namespace vox
  * Provides a resource retrieval module for accessing files using the 'file' 
  * protocol as outline in RFC-1738 http://www.rfc-editor.org/rfc/rfc1738.txt
  */
-class FileIO : public ResourceModule
+class FIO_EXPORT FileIO : public ResourceModule
 {
 public:
     FileIO() { }

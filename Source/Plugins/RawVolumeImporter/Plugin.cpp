@@ -27,8 +27,8 @@
 #include "Plugin.h"
 
 // Include Dependencies
-#include "VoxSceneImporter/Common.h"
-#include "VoxSceneImporter/VoxSceneImporter.h"
+#include "RawVolumeImporter/Common.h"
+#include "RawVolumeImporter/RawVolumeImporter.h"
 #include "VoxLib/Core/Logging.h"
 
 using namespace vox;
@@ -36,7 +36,7 @@ using namespace vox;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<VoxSceneFile> exim;
+    std::shared_ptr<RawVolumeFile> exim;
 
 } // namespace filescope
 } // namespace anonymous
@@ -54,7 +54,7 @@ void freePlugin() { }
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
 // --------------------------------------------------------------------
-char const* version() { return VSI_VERSION_STRING; }
+char const* version() { return RVI_VERSION_STRING; }
 
 // --------------------------------------------------------------------
 //  Returns a reference URL for the plugin
@@ -64,17 +64,17 @@ char const* referenceUrl() { return "http://code.google.com/p/voxrender/"; }
 // --------------------------------------------------------------------
 //  Returns the minimum compatible version of the plugin API
 // --------------------------------------------------------------------
-char const* apiVersionMin() { return VSI_API_VERSION_MIN_STR; }
+char const* apiVersionMin() { return RVI_API_VERSION_MIN_STR; }
 
 // --------------------------------------------------------------------
 //  Returns the minimum compatible version of the plugin API
 // --------------------------------------------------------------------
-char const* apiVersionMax() { return VSI_API_VERSION_MAX_STR; }
+char const* apiVersionMax() { return RVI_API_VERSION_MAX_STR; }
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-char const* name() { return "Vox Scene ExIm"; }
+char const* name() { return "Raw Volume ExIm"; }
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
@@ -86,8 +86,8 @@ char const* vendor() { return "Vox"; }
 // --------------------------------------------------------------------
 char const* description() 
 {
-    return  "The Vox Scene ExIm plugin provides scene import and export modules "
-            "for vox format scene files. These files are XML format specifications of scene data. "
+    return  "The Raw Volume ExIm plugin provides scene import and export modules "
+            "for raw format volume data. (No info headers. Simply raw binary data content. "
             "See the VoxRender documentation for associated information on required options. "
             ;
 }
@@ -97,12 +97,12 @@ char const* description()
 // --------------------------------------------------------------------
 void enable() 
 {  
-    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Enabling the 'Vox.Vox Scene ExIm' plugin");
+    VOX_LOG_INFO(RVI_LOG_CATEGORY, "Enabling the 'Vox.Raw Volume ExIm' plugin");
     
-    filescope::exim = std::shared_ptr<VoxSceneFile>(new VoxSceneFile());
+    filescope::exim = std::shared_ptr<RawVolumeFile>(new RawVolumeFile());
 
-    vox::Scene::registerImportModule(".xml", filescope::exim);
-    vox::Scene::registerExportModule(".xml", filescope::exim);
+    vox::Scene::registerImportModule(".raw", filescope::exim);
+    vox::Scene::registerExportModule(".raw", filescope::exim);
 }
 
 // --------------------------------------------------------------------
@@ -110,7 +110,7 @@ void enable()
 // --------------------------------------------------------------------
 void disable() 
 { 
-    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Disabling the 'Vox.Vox Scene ExIm' plugin");
+    VOX_LOG_INFO(RVI_LOG_CATEGORY, "Disabling the 'Vox.Raw Volume ExIm' plugin");
 
     vox::Scene::removeImportModule(filescope::exim);
     vox::Scene::removeExportModule(filescope::exim);

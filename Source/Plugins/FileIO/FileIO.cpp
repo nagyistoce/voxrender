@@ -120,9 +120,9 @@ std::shared_ptr<std::streambuf> FileIO::access(
     // Open the specified file with the determined mode settings
     if (!buffer->open(filename, which))
     {
-        throw FileError(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                        format("Failed to open with mode %1%", which),
-                        identifier.asString(), Error_NotFound);
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Failed to open '%1%' with mode %2%", identifier.asString(), which),
+                    Error_NotFound);
     }
 
     return buffer;
@@ -163,9 +163,9 @@ void FileIO::remove(
 
     if (!boost::filesystem::remove(filename))
     {
-        throw FileError(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                        "Attempted to delete non-existent file",
-                        filename, Error_NotFound);
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Attempted to delete non-existent file: '%1%'", filename),
+                    Error_NotFound);
     }
 }
 

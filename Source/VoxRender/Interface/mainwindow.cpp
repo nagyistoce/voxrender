@@ -38,10 +38,6 @@
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Scene/RenderParams.h"
 
-// Abstract Scene File Import/Export Modules
-#include "VoxLib/Scene/ExIm/RawVolumeFile.h"
-#include "VoxLib/Scene/ExIm/VoxSceneFile.h"
-
 // Qt4 Includes
 #include <QtCore/QDateTime>
 #include <QtCore/QTextStream>
@@ -108,12 +104,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Load the configuration file from the current directory
     vox::ResourceHelper::loadConfigFile("VoxRender.config");
-
-    // Register the scene file import / export modules :TODO: Plugins
-    vox::Scene::registerImportModule(".xml", &vox::VoxSceneFile::importer   );
-    vox::Scene::registerImportModule(".raw", &vox::RawVolumeFile::importer  );
-    vox::Scene::registerExportModule(".xml", &vox::VoxSceneFile::exporter   );
-    vox::Scene::registerExportModule(".raw", &vox::RawVolumeFile::exporter  );
 
     // VoxRender log configuration
     configureLoggingEnvironment();
@@ -183,6 +173,7 @@ MainWindow::~MainWindow()
 {
     writeSettings();
 
+    activeScene;
     m_renderController.stop();
     m_renderer.reset();
 

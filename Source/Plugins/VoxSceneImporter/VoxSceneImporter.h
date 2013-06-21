@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Scene File
-    
-	Description: Vox scene file import/export module
+    Project: Vox Scene Importer - Module definition for scene importer
+
+    Description: A vox scene file importer module
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -24,11 +24,11 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_SCENE_FILE_H
-#define VOX_SCENE_FILE_H
+#ifndef VSI_SCENE_FILE_H
+#define VSI_SCENE_FILE_H
 
 // Include Dependencies
-#include "VoxLib/Core/Common.h"
+#include "Plugins/VoxSceneImporter/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/Resource.h"
@@ -55,7 +55,7 @@ enum ExportOpt
  *
  * This module is compatible with the abstract scene import/export interface.
  */
-class VOX_EXPORT VoxSceneFile
+class VSI_EXPORT VoxSceneFile : public SceneImporter, public SceneExporter
 {
 public:
 	/** 
@@ -75,7 +75,7 @@ public:
      * \b{Required Options}
      *  - None
      */
-	static void exporter(ResourceOStream & data, OptionSet const& options, Scene const& scene);
+     void exporter(ResourceOStream & data, OptionSet const& options, Scene const& scene);
 
 	/** 
      * @brief Vox Scene File Importer 
@@ -90,10 +90,10 @@ public:
      * \b{Required Options}
      *  - None
      */
-	static Scene importer(ResourceIStream & data, OptionSet const& options);
+	Scene importer(ResourceIStream & data, OptionSet const& options);
 };
 
 }
 
 // End definition
-#endif // VOX_SCENE_FILE_H
+#endif // VSI_SCENE_FILE_H

@@ -31,10 +31,10 @@
 // Include Dependencies
 #include "VoxLib/Core/System.h"
 #include "VoxLib/Error/Error.h"
-#include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/MimeTypes.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
+#include "Plugins/FileIO/FileIO.h"
 
 using namespace vox;
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_SUITE( ResourceModulesTest )
         String const identifier = "file:///" + System::currentDirectory() + "/test_FileIO.txt";
 
         // Register the FilesystemIO resource module
-        Resource::registerModule("file", FilesystemIO::create());
+        Resource::registerModule("file", std::shared_ptr<FileIO>(new FileIO()));
      
         // Stream some output data to a file
         ResourceOStream out(identifier);

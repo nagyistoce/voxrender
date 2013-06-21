@@ -31,6 +31,8 @@ VOX_PROJECT(
         Main.cpp
     DEPENDENCIES
         VoxLib
+        FileIO
+		RawVolumeImporter
     LIBRARIES
         ${Boost_LIBRARIES}
     )

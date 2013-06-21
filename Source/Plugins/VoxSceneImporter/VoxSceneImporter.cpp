@@ -1,8 +1,8 @@
 ﻿/* ===========================================================================
 
-	Project: VoxRender - Vox Scene File
-    
-	Description: Vox scene file import/export module
+    Project: Vox Scene Importer - Module definition for scene importer
+
+    Description: A vox scene file importer module
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -24,7 +24,7 @@
 =========================================================================== */
 
 // Include Header
-#include "VoxSceneFile.h"
+#include "VoxSceneImporter.h"
 
 // Include Dependencies
 #include "VoxLib/Core/Debug.h"

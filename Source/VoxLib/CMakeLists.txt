@@ -108,11 +108,6 @@ Set(VoxLib_HEADERS_RENDERING
     Rendering/RenderThread.h
 )
 
-Set(VoxLib_HEADERS_SCENE_EXIM
-    Scene/ExIm/VoxSceneFile.h
-    Scene/ExIm/RawVolumeFile.h
-)
-
 set(VoxLib_HEADERS
     ${VoxLib_HEADERS_ACTION}
     ${VoxLib_HEADERS_BITMAP}
@@ -135,7 +130,6 @@ SOURCE_GROUP("Header Files\\IO"                             FILES ${VoxLib_HEADE
 SOURCE_GROUP("Header Files\\Plugin"                         FILES ${VoxLib_HEADERS_PLUGIN})
 SOURCE_GROUP("Header Files\\Rendering"                      FILES ${VoxLib_HEADERS_RENDERING})
 SOURCE_GROUP("Header Files\\Scene"                          FILES ${VoxLib_HEADERS_SCENE})
-SOURCE_GROUP("Header Files\\Scene\\Exim"                    FILES ${VoxLib_HEADERS_SCENE_EXIM})
 
 #===============================================#
 #                  SOURCE FILES                 #
@@ -183,11 +177,6 @@ Set(VoxLib_SOURCES_SCENE
     Scene/Volume.cpp
 )
 
-Set(VoxLib_SOURCES_SCENE_EXIM
-    Scene/Exim/VoxSceneFile.cpp
-    Scene/Exim/RawVolumeFile.cpp
-)
-
 Set(VoxLib_SOURCES_RENDERING
     Rendering/RenderController.cpp
     Rendering/Renderer.cpp
@@ -216,7 +205,6 @@ SOURCE_GROUP("Source Files\\Error"                          FILES ${VoxLib_SOURC
 SOURCE_GROUP("Source Files\\IO"                             FILES ${VoxLib_SOURCES_IO})
 SOURCE_GROUP("Source Files\\Scene"                          FILES ${VoxLib_SOURCES_SCENE})
 SOURCE_GROUP("Source Files\\Rendering"                      FILES ${VoxLib_SOURCES_RENDERING})
-SOURCE_GROUP("Source Files\\Scene\\Exim"                    FILES ${VoxLib_SOURCES_SCENE_EXIM})
 
 #===============================================#
 #                  LIBRARY                      #

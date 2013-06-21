@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-    Project: Vox Scene Importer - Module definition for scene importer
+    Project: Raw Volume Import Module
+    
+	Description: Defines a VoxScene import module for .raw format volumes
 
-    Description: A vox scene file importer module
-
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
     Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,25 +24,21 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VSI_VERSION_H
-#define VSI_VERSION_H
+#ifndef RVI_COMMON_H
+#define RVI_COMMON_H
 
-// Stringify macro
-#define VSI_XSTR(v) #v
-#define VSI_STR(v) VSI_XSTR(v)
+// VoxRender log category
+static char const* RVI_LOG_CATEGORY = "RVI";
 
-// Plugin version info
-#define VSI_VERSION_MAJOR 1
-#define VSI_VERSION_MINOR 0
-#define VSI_VERSION_PATCH 0
+// Export macro
+#ifdef RawVolumeImporter_EXPORTS
+#   define RVI_EXPORT __declspec(dllexport)
+#else
+#   define RVI_EXPORT __declspec(dllimport)
+#endif
 
-// API support version info
-#define VSI_API_VERSION_MIN_STR "0.0.0"
-#define VSI_API_VERSION_MAX_STR "999.999.999"
-
-// Plugin version string
-#define VSI_VERSION_STRING VSI_STR(VSI_VERSION_MAJOR) \
-	"." VSI_STR(VSI_VERSION_MINOR) "." VSI_STR(VSI_VERSION_PATCH)
+// Version info
+#include "Version.h"
 
 // End definition
-#endif // VSI_VERSION_H
+#endif // RVI_COMMON_H

@@ -34,10 +34,11 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Plugin/Plugin.h"
-#include "VoxLib/IO/FilesystemIO.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
+
+#include "Plugins/StandardIO/StandardIO.h"
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>

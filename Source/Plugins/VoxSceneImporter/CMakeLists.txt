@@ -30,11 +30,11 @@ VOX_PROJECT(
     FOLDER "Plugins"
     HEADERS
         "Common.h"
-        "VoxSceneFile.h"
+        "VoxSceneImporter.h"
         "Plugin.h"
         "Version.h"
     SOURCES
-        "VoxSceneFile.cpp"
+        "VoxSceneImporter.cpp"
         "Plugin.cpp"
     DEPENDENCIES
         VoxLib

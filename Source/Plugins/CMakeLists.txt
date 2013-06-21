@@ -30,6 +30,8 @@ INCLUDE_DIRECTORIES(.)
 #           INCLUDE DESIRED PLUGINS             #
 #===============================================#
 
+ADD_SUBDIRECTORY(RawVolumeImporter)
+ADD_SUBDIRECTORY(VoxSceneImporter)
 ADD_SUBDIRECTORY(StandardIO)
 ADD_SUBDIRECTORY(FileIO)
 

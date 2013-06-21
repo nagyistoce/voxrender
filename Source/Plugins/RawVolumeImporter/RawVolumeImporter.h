@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Raw Volume File
+    Project: Raw Volume Import Module
     
-	Description: Raw volume file import/export module
+	Description: Defines a VoxScene import module for .raw format volumes
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,11 +24,11 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_RAW_VOLUME_FILE_H
-#define VOX_RAW_VOLUME_FILE_H
+#ifndef RVI_RAW_VOLUME_FILE_H
+#define RVI_RAW_VOLUME_FILE_H
 
 // Include Dependencies
-#include "VoxLib/Core/Common.h"
+#include "Plugins/RawVolumeImporter/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/Resource.h"
@@ -43,7 +43,7 @@ namespace vox
  *
  * This module is compatible with the abstract scene import/export interface.
  */
-class VOX_EXPORT RawVolumeFile
+class RVI_EXPORT RawVolumeFile : public SceneExporter, public SceneImporter
 {
 public:
 	/** 
@@ -54,7 +54,7 @@ public:
      *
      * \b{Required Options}
      */
-	static void exporter(ResourceOStream & source, OptionSet const& options, Scene const& scene);
+	virtual void exporter(ResourceOStream & source, OptionSet const& options, Scene const& scene);
 
 	/** 
      * @brief Vox Scene File Importer 
@@ -67,10 +67,10 @@ public:
      *  Size          : Vector4u | Specifies the extent of the 3D volume in the order [x y z t]
      *  Endianess     : String   | Specifies endianess ("little" or "big") Optional if BytesPerVoxel=8.
      */
-	static Scene importer(ResourceIStream & source, OptionSet const& options);
+	virtual Scene importer(ResourceIStream & source, OptionSet const& options);
 };
 
 }
 
 // End definition
-#endif // VOX_RAW_VOLUME_FILE_H
+#endif // RVI_RAW_VOLUME_FILE_H

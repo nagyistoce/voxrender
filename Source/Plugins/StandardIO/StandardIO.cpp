@@ -28,7 +28,6 @@
 
 // Include Dependencies
 #include "StandardIO/CurlStreamBuf.h"
-#include "VoxLib/Error/PluginError.h"
 #include "VoxLib/Core/Logging.h"
 
 // 3rd Party Dependencies
@@ -53,7 +52,7 @@ std::shared_ptr<std::streambuf> StandardIO::access(
     // Input and Output mode are not supported simultaneously for libcurl protocols
     if ( (openMode&Resource::Mode_Input) && (openMode&Resource::Mode_Output) )
     {
-        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
+        throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY,
             "Invalid openMode: Input and Output not supported",
             Error_NotImplemented);
     }
@@ -68,7 +67,7 @@ std::shared_ptr<std::streambuf> StandardIO::access(
         return std::make_shared<vox::CurlOStreamBuf>(identifier, options);
     }
     
-    throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, 
+    throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY, 
         "Invalid access flags (must specify read or write)", Error_Range);
 
     return nullptr; // Satisfy less intelligent compilers
@@ -88,7 +87,7 @@ void StandardIO::remove(
     auto curl = curl_easy_init();
     if (!curl)
     {
-        throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY, "curl_easy_init has failed");
+        throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY, "curl_easy_init has failed");
     }
 
     // Configure the request for a protocol specific deletion
@@ -100,7 +99,7 @@ void StandardIO::remove(
     {
         // :TODO:
     }
-    else throw PluginError(__FILE__, __LINE__, SIO_LOG_CATEGORY,
+    else throw Error(__FILE__, __LINE__, SIO_LOG_CATEGORY,
         format("Unsupported scheme: %1%", url), Error_NotAllowed);
 
     // Perform the request and ensure successful execution

@@ -31,7 +31,11 @@
 static char const* FIO_LOG_CATEGORY = "FIO";
 
 // Export macro
-#define FIO_EXPORT __declspec(dllexport)
+#ifdef FileIO_EXPORTS
+#   define FIO_EXPORT __declspec(dllexport)
+#else
+#   define FIO_EXPORT __declspec(dllimport)
+#endif
 
 // Version info
 #include "Version.h"
