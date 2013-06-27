@@ -156,6 +156,7 @@ void RenderController::stop()
         m_controlThread->interrupt();
         m_controlThread->join(); 
         m_controlThread.reset();
+        m_scene.reset();
     }
 }
 

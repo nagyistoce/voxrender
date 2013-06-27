@@ -64,6 +64,10 @@ namespace filescope {
             {
                 std::ifstream source(sourceFile); // Access the file for reading
 
+                if (!source) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Unable to open config file <%1%>", sourceFile), 
+                    Error_NotFound);
+
                 boost::property_tree::xml_parser::read_xml(source, m_tree);
             }
             catch(boost::property_tree::xml_parser::xml_parser_error & error)

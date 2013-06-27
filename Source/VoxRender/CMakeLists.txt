@@ -60,6 +60,8 @@ IF(Qt5Widgets_FOUND)
         Interface/ambientlightwidget.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
+        Interface/clipdialogue.cpp
+        Interface/clipplanewidget.cpp
         Interface/edgeitem.cpp
         Interface/griditem.cpp
         Interface/histogramitem.cpp
@@ -89,6 +91,8 @@ IF(Qt5Widgets_FOUND)
         Interface/ambientlightwidget.h
         Interface/arealightwidget.h
         Interface/camerawidget.h
+        Interface/clipdialogue.h
+        Interface/clipplanewidget.h
         Interface/edgeitem.h
         Interface/griditem.h
         Interface/histogramitem.h
@@ -117,6 +121,8 @@ IF(Qt5Widgets_FOUND)
         Interface/ambientlightwidget.ui
         Interface/arealightwidget.ui
         Interface/camerawidget.ui
+        Interface/clipdialogue.ui
+        Interface/clipplanewidget.ui
         Interface/histogramwidget.ui
         Interface/infowidget.ui
         Interface/lightdialogue.ui

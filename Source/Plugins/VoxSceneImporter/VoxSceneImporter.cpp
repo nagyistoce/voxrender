@@ -4,7 +4,7 @@
 
     Description: A vox scene file importer module
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -38,6 +38,7 @@
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/Material.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>
@@ -145,11 +146,12 @@ namespace
                     scene = executeImportDirectives();
 
                     // Load scene components
-                    scene.volume     = loadVolume();
-                    scene.camera     = loadCamera();
-                    scene.lightSet   = loadLights();
-                    scene.transfer   = loadTransfer();
-                    scene.parameters = loadParams();
+                    scene.volume       = loadVolume();
+                    scene.camera       = loadCamera();
+                    scene.lightSet     = loadLights();
+                    scene.transfer     = loadTransfer();
+                    scene.parameters   = loadParams();
+                    scene.clipGeometry = loadClipGeometry();
                 }
 
                 // Malformed data on a node read attempt
@@ -230,7 +232,7 @@ namespace
                 
                   // Instantiate default volume object
                   auto cameraPtr = executeImportDirectives().camera;
-                  if (!cameraPtr) cameraPtr = std::make_shared<Camera>();
+                  if (!cameraPtr) cameraPtr = std::shared_ptr<Camera>(new Camera());
                   auto & camera = *cameraPtr;
                 
                   // :TODO: This just overwrites imported parameters, should initialize to default
@@ -399,6 +401,29 @@ namespace
                 pop();
 
                 return transferPtr;
+            }
+
+            // --------------------------------------------------------------------
+            //  Creates a GeometrySet for clipping from the transfer node of a scene file
+            // --------------------------------------------------------------------
+            std::shared_ptr<PrimGroup> loadClipGeometry()
+            {
+                if (!push("ClipGeometry", Preferred)) return nullptr;
+
+                    // Instantiate default volume object
+                    auto geoPtr = executeImportDirectives().clipGeometry;
+                    if (!geoPtr) geoPtr = std::make_shared<PrimGroup>();
+                    auto & geometrySet = *geoPtr;
+
+                    // Parse inline geometry specifications
+                    BOOST_FOREACH (auto & region, *m_node)
+                    {
+                        // :TODO: Execute the geometry constructor (construct from child property_tree)
+                    }
+
+                pop();
+
+                return geoPtr;
             }
 
             // --------------------------------------------------------------------

@@ -49,6 +49,9 @@ public:
      */ 
     Camera(); 
 
+    /** Destructor */
+    ~Camera();
+
     /** Returns the current camera position */
     inline Vector3f const& position() const { return m_pos; }
 

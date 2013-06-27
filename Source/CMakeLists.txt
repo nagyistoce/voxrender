@@ -54,6 +54,11 @@ SET(VSR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VolumeScatterRen
 ADD_SUBDIRECTORY(VoxRender)
 
 #===============================================#
+#                   WEB CLIENTS                 #
+#===============================================#
+ADD_SUBDIRECTORY(WebClients)
+
+#===============================================#
 #                    PLUGINS                    #
 #===============================================#
 ADD_SUBDIRECTORY(Plugins)

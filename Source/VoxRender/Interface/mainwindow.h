@@ -30,6 +30,7 @@
 // API Header
 #include "VoxLib/Core/VoxRender.h"
 #include "VoxLib/Plugin/PluginManager.h"
+#include "VoxLib/Core/Geometry/Primitives.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
@@ -38,7 +39,6 @@
 #include "infowidget.h"
 #include "camerawidget.h"
 #include "histogramwidget.h"
-#include "lightdialogue.h"
 #include "panewidget.h"
 #include "renderview.h"
 #include "samplingwidget.h"
@@ -142,6 +142,9 @@ private:
 
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
+    
+    // Frame Ready Callback
+    void onFrameReady(std::shared_ptr<vox::FrameBuffer> frame);
 
 	// Render state control
 	RenderState m_guiRenderState;
@@ -152,6 +155,9 @@ private:
 
     /** Adds a control for managing a light in the render scene */
     void addLight(std::shared_ptr<vox::Light> light, QString const& name);
+    
+    /** Adds a control for managing a clipping object in the render scene */
+    void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
@@ -194,10 +200,17 @@ private:
 	enum { NumTransferPanes = 0 };
 	TransferWidget* transferwidget;
 
+    // :TODO: Really have to find a cleaner way to do this, Pane Manager Widget...?
+    //        Would be necessary if we moved to allowing plugins for the interface components
+
     // Light panel panes
     PaneWidget *         m_ambientPane;
 	QVector<PaneWidget*> m_lightPanes;
     QSpacerItem *        m_spacer;
+
+    // Clipping Geometry panel panes
+	QVector<PaneWidget*> m_clipPanes;
+    QSpacerItem *        m_clipSpacer;
 
     // Plugin panes
     QVector<PaneWidget*> m_pluginPanes;
@@ -218,6 +231,7 @@ private slots:
 	// Render pushbuttons
 	void on_pushButton_clipboard_clicked();
     void on_pushButton_addLight_clicked();
+    void on_pushButton_addClip_clicked();
 
 	// Toolbar action slots
     void on_actionFull_Screen_triggered();

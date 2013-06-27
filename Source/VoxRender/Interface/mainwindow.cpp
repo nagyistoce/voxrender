@@ -31,12 +31,16 @@
 #include "aboutdialogue.h"
 #include "arealightwidget.h"
 #include "pointlightwidget.h"
+#include "lightdialogue.h"
+#include "clipdialogue.h"
+#include "clipplanewidget.h"
 
 // VoxRender Includes
 #include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Scene/RenderParams.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 // Qt4 Includes
 #include <QtCore/QDateTime>
@@ -103,7 +107,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QMetaTypeId<std::string>::qt_metatype_id();
 
     // Load the configuration file from the current directory
-    vox::ResourceHelper::loadConfigFile("VoxRender.config");
+    try
+    {
+        vox::ResourceHelper::loadConfigFile("VoxRender.config");
+    }
+    catch (Error & error)
+    {
+        VOX_LOG_ERROR(error.code, "GUI", "Unable to load config file: " + error.message);
+    }
 
     // VoxRender log configuration
     configureLoggingEnvironment();
@@ -132,40 +143,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     readSettings(); // Read in the application settings
 
-    // Initialize the master renderer and register the callback
+    // Initialize the master renderer and register the interactive display callback
     m_renderer = vox::VolumeScatterRenderer::create();
-    m_renderer->setRenderEventCallback(
-        [this] (std::shared_ptr<FrameBuffer> frame)
-        {
-            // Process scene interaction through the view
-            m_renderView->processSceneInteractions();
-
-            // Process scene interactions through the interface
-            if (ui->checkBox_imagingAuto->isChecked() || m_imagingUpdate)
-            {
-                m_imagingUpdate = false; // Reset the image update flag
-
-                // Process any changes to the lighting control widgets
-                BOOST_FOREACH (auto & pane, m_lightPanes)
-                {
-                    auto widget = static_cast<PointLightWidget*>(pane->getWidget());
-                    widget->processInteractions();
-                }
-                
-                static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->processInteractions();
-                camerawidget->processInteractions();
-                samplingwidget->processInteractions();
-            }
-
-            // Lock the framebuffer and issue the frameReady signal
-            emit frameReady(std::make_shared<FrameBufferLock>(frame));
-        }
-        );
+    m_renderer->setRenderEventCallback(std::bind(&MainWindow::onFrameReady, 
+        this, std::placeholders::_1));
 
 	// Set initial render state 
     //renderNewSceneFile( "" );
 }
-    
+
 // ----------------------------------------------------------------------------
 //  Write the application settings file and terminate the core library
 // ----------------------------------------------------------------------------
@@ -173,14 +159,15 @@ MainWindow::~MainWindow()
 {
     writeSettings();
 
-    activeScene;
+    activeScene.reset();
     m_renderController.stop();
     m_renderer.reset();
 
-    vox::PluginManager::instance().unloadAll();
-
     delete transferwidget;
 	delete m_renderView;
+
+    vox::PluginManager::instance().unloadAll();
+
     delete ui;
 }
 
@@ -564,9 +551,10 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     {
         // Attempt to parse the scene file content
         activeScene = vox::Scene::imprt(identifier);
-        if (!activeScene.parameters) activeScene.parameters = std::make_shared<vox::RenderParams>();
+        if (!activeScene.parameters)   activeScene.parameters   = std::make_shared<vox::RenderParams>();
+        if (!activeScene.clipGeometry) activeScene.clipGeometry = std::make_shared<vox::PrimGroup>();
         // :TODO: Default other parameters if unspecified (immediate)
-        // :TODO: Interactive option specification interface for import (long-term)
+        // :TODO: Interactive option specification interface for import (long-term) ie raw volume width, height, etc
 
         // Synchronize the scene view
         synchronizeView();
@@ -786,6 +774,13 @@ void MainWindow::createRenderTabPanes()
     // Reinsert spacer following new pane
 	ui->lightsAreaLayout->addItem( m_spacer );
 
+    //
+    // Clipping Geometry
+    //
+
+    m_clipSpacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding);
+	ui->clipAreaLayout->addItem(m_clipSpacer);
+
 	// 
 	// Advanced Tab
 	//
@@ -906,6 +901,54 @@ void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
 
     // Reinsert spacer following new pane
 	ui->lightsAreaLayout->addItem( m_spacer );
+}
+
+// ----------------------------------------------------------------------------
+//  Adds a control widget for an existing clipping geometry object 
+// ----------------------------------------------------------------------------
+void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
+{
+    // Remove spacer prior to pane insertion
+    ui->clipAreaLayout->removeItem(m_clipSpacer);
+
+    // Create new pane for the light setting widget
+    PaneWidget *pane = new PaneWidget(ui->clipAreaContents);
+   
+    // Create the control widget to populate the pane
+    QWidget * currWidget = nullptr;
+    if (prim->typeId() == "Plane")
+    {
+        auto plane = std::dynamic_pointer_cast<vox::Plane>(prim);
+        if (!plane) throw Error(__FILE__, __LINE__, "GUI", 
+            "Error interpreting primitive :TODO:");
+        currWidget = new ClipPlaneWidget(pane, plane); 
+    }
+    else
+    {
+        // :TODO: Default hideable attribute pane
+
+        VOX_LOG_WARNING(Error_NotImplemented, "GUI", 
+            format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->id()));
+
+        return;
+    }
+
+    int index = m_clipPanes.size( );
+
+    pane->SetIndex(index);
+    pane->showOnOffButton();
+    pane->showSoloButton();
+    pane->setTitle(QString::fromLatin1(prim->id().c_str()));
+    pane->setIcon(":/icons/lightgroupsicon.png");
+    pane->setWidget(currWidget);
+    pane->expand();
+
+    ui->clipAreaLayout->addWidget(pane);
+
+    m_clipPanes.push_back(pane);
+
+    // Reinsert spacer following new pane
+	ui->clipAreaLayout->addItem(m_clipSpacer);
 }
 
 // ----------------------------------------------------------------------------
@@ -1220,6 +1263,33 @@ void MainWindow::on_pushButton_pause_clicked()
 }
 
 // ----------------------------------------------------------------------------
+//  Opens the new light selection dialogue
+// ----------------------------------------------------------------------------
+void MainWindow::on_pushButton_addClip_clicked()
+{ 
+    static int numClips = -1; numClips++; // Clip UID generator
+
+    ClipDialogue clipDialogue(numClips);
+    int result = clipDialogue.exec();
+
+    if (!result) { numClips--; return; } // Cancelled, decrement UID generator
+
+    std::shared_ptr<vox::Primitive> prim;
+    switch (clipDialogue.typeSelected())
+    {
+    case ClipType_Plane:
+        prim = std::shared_ptr<vox::Plane>(new vox::Plane());
+        break;
+
+    default:
+        VOX_LOG_ERROR(Error_Bug, "GUI", "Invalid geometry type selection");
+        return;
+    }
+
+    addClippingGeometry(prim);
+}
+
+// ----------------------------------------------------------------------------
 // Flag to perform an image update for the next render callback
 // ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_imagingApply_clicked()
@@ -1251,4 +1321,33 @@ void MainWindow::on_pushButton_loadPlugin_clicked()
             VOX_LOG_EXCEPTION(vox::Severity_Error, error);
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+//  Callback from renderer with tonemapped framebuffer for interactive display
+// ----------------------------------------------------------------------------
+void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
+{
+    // Process scene interaction through the view
+    m_renderView->processSceneInteractions();
+
+    // Process scene interactions through the interface
+    if (ui->checkBox_imagingAuto->isChecked() || m_imagingUpdate)
+    {
+        m_imagingUpdate = false; // Reset the image update flag
+
+        // Process any changes to the lighting control widgets
+        BOOST_FOREACH (auto & pane, m_lightPanes)
+        {
+            auto widget = static_cast<PointLightWidget*>(pane->getWidget());
+            widget->processInteractions();
+        }
+                
+        static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->processInteractions();
+        camerawidget->processInteractions();
+        samplingwidget->processInteractions();
+    }
+
+    // Lock the framebuffer and issue the frameReady signal
+    emit frameReady(std::make_shared<FrameBufferLock>(frame));
 }

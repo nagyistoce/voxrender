@@ -25,7 +25,7 @@
 
 INCLUDE_DIRECTORIES(.)
 
-
+ADD_SUBDIRECTORY(HttpClient)
 
 
 

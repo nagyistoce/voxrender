@@ -124,6 +124,14 @@ void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBin
 {
     BOOST_FOREACH(auto & searchPath, m_pImpl->searchPaths)
     {
+        // Verify the search path is valid before attempting to iterate
+        if (!boost::filesystem::exists(searchPath)) 
+        {
+            VOX_LOG_WARNING(Error_NotFound, VOX_LOG_CATEGORY, format("Plugin search directory <%1%> not found.", searchPath)); 
+            continue;
+        }
+
+        // Locate and assess all files in the plugin directory
         BOOST_FOREACH (auto & entry, boost::make_iterator_range(boost::filesystem::directory_iterator(searchPath), 
                                                                 boost::filesystem::directory_iterator()))
         {
