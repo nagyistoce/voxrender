@@ -148,9 +148,38 @@ BOOST_AUTO_TEST_SUITE( Vector )
     BOOST_AUTO_TEST_CASE( Matrix )
     {
         {
-        Matrix3x3f vec1(Vector3f(0.0f, 2.0f, 0.0f),
-                        Vector3f(0.0f, 2.0f, 1.0f),
-                        Vector3f(5.0f, 3.0f, 8.0f));
+            {
+            std::cout << "Testing UINT8 to float" << std::endl;
+            UInt8 max = std::numeric_limits<UInt8>::max();
+            for (UInt8 i = 0; i < max; i++)
+            {
+                float  norm   = ((static_cast<float>(i)+0.5f) / max);
+                UInt16 denorm = static_cast<UInt8>(norm * max);
+                if (denorm != i)
+                {
+                    std::cout << "(value,denorm) " << i << ", " << denorm << std::endl;
+                }
+                if (norm > 1.0f) std::cout << "(value,norm) " << i << ", " << norm << std::endl;
+            }
+            }
+
+            {
+            std::cout << "Testing UINT16 to float" << std::endl;
+            UInt16 max = std::numeric_limits<UInt16>::max();
+            for (UInt16 i = 0; i < max; i++)
+            {
+                float  norm   = ((static_cast<float>(i)+0.5f) / max);
+                UInt16 denorm = static_cast<UInt16>(norm * max);
+                if (denorm != i)
+                {
+                    std::cout << "(value,denorm) " << i << ", " << denorm << std::endl;
+                }
+                if (norm > 1.0f) std::cout << "(value,norm) " << i << ", " << norm << std::endl;
+            }
+            }
+        //Matrix3x3f vec1(Vector3f(0.0f, 2.0f, 0.0f),
+        //                Vector3f(0.0f, 2.0f, 1.0f),
+        //                Vector3f(5.0f, 3.0f, 8.0f));
         }
     }
 

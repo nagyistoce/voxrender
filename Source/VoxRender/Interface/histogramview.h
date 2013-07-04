@@ -71,26 +71,13 @@ public:
 
     /** Updates the transfer function views */
     void updateTransfer();
-
-    /** Enables log scaling of the density magnitude component of the histogram view */
-	void setLogEnabled(bool enabled) 
-    { 
-        if( enabled ) m_options |= HistogramOptionF_LogScale;
-		else m_options ^= HistogramOptionF_LogScale; 
-    }
-
-    /** Enables equalization of the histogram's generated results */
-	void setEqualizationEnabled(bool enabled) 
-    { 
-        if( enabled ) m_options |= HistogramOptionF_Equalize;
-		else m_options ^= HistogramOptionF_Equalize; 
-    }
     
-    /** Regenerates the histogram display image */
-	void updateImage();
+    void setType(int dataType);
 
 private slots:
-    void updateHistogramData( );
+    void updateHistogramData();
+
+    void onHistogramReady(int dataType);
 
 private:
     // Histogram display option flags
@@ -99,27 +86,19 @@ private:
         HistogramOptionF_LogScale = 1<<0,
         HistogramOptionF_Equalize = 1<<1
     };
-    
-    // Generates a density histogram volume data set
-    void makeDensityHistogram();
 
-    // Updates the drawing canvas bounds
-    void updateCanvas();
+    void updateImage();
 
-    std::vector<size_t> m_bins;
-    size_t m_binMax;
-
-    unsigned char* m_imagebuffer;
 	unsigned int m_options;
 
 	void wheelEvent(QWheelEvent *event);
 	void resizeEvent(QResizeEvent *event);
-	
+
 	float zoomfactor;   ///< Current zoom level on histogram display
     
 	TransferItem* m_transferItem; ///< Optional transfer function interaction item
 
-    DataType m_type;
+    int m_type; ///< Current data type of this histogram
 
 	QGraphicsScene      m_scene;            ///< Histogram view scene handle
 	QGraphicsPixmapItem m_histogramItem;    ///< Histogram image

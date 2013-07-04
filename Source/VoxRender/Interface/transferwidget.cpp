@@ -70,7 +70,6 @@ TransferWidget::TransferWidget(QWidget *parent) :
 	// Transfer function view elements (with histogram underlay)
 	m_primaryView   = new HistogramView(ui->transferPrimary,   true);
 	m_secondaryView = new HistogramView(ui->transferSecondary, true);
-    m_primaryView->setLogEnabled(true); m_secondaryView->setLogEnabled(true);
 	ui->gridLayout_transferPrimary->addWidget(  m_primaryView,   0, 0, 1, 1);
 	ui->gridLayout_transferSecondary->addWidget(m_secondaryView, 0, 0, 1, 1);
 

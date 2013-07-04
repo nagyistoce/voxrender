@@ -212,16 +212,40 @@ namespace filescope {
 //  Creates a new node and initializes the material property structure if one
 //  is not specified by the user
 // ----------------------------------------------------------------------------
-Node::Node(std::shared_ptr<Material> material) : m_contextChanged(true)
+Node::Node() : m_contextChanged(true) { }
+
+// ----------------------------------------------------------------------------
+//  Assigns a new material to the node
+// ----------------------------------------------------------------------------
+void Node::setMaterial(std::shared_ptr<Material> material) 
 { 
-    if (material)
+    auto thisPtr = shared_from_this();
+
+    if (m_material)
     {
-        m_material = material;
+        m_material->removeNode(thisPtr);
     }
-    else
-    {
-        m_material = std::make_shared<Material>();
-    }
+    
+    m_material = material; 
+
+    m_material->addNode(thisPtr);
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void Node::setPosition(int dim, float position) 
+{
+    m_position[dim] = position;
+
+    setDirty();
+}
+
+// ----------------------------------------------------------------------------
+//  Marks the node dirty and in need of update
+// ----------------------------------------------------------------------------
+void Node::setDirty(bool dirty)
+{
+    if (m_parent) m_parent->setDirty();
 }
 
 // ----------------------------------------------------------------------------
@@ -243,6 +267,8 @@ void Transfer::setResolution(Vector3u const& resolution)
 void Transfer::addNode(std::shared_ptr<Node> node)
 {
     m_contextChanged = true;
+    
+    node->m_parent = shared_from_this();
 
     m_nodes.push_back(node);
 }

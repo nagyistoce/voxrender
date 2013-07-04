@@ -4,7 +4,7 @@
 
 	Description: Implements the main window for the VoxRender GUI
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 

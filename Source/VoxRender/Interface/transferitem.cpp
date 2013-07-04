@@ -94,7 +94,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 
     auto transfer = MainWindow::instance->scene().transfer;
 
-    auto node = std::make_shared<Node>();
+    auto node = Node::create();
 
     transfer->addNode(node);
 

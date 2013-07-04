@@ -79,6 +79,12 @@ namespace vox
         /** Image stride accessor */
         size_t stride() const { return m_stride; }
 
+        /** Image pixel accessor */
+        T & at(size_t x, size_t y) { return *((T*)(((UInt8*)m_buffer.get()) + y * m_stride + x * sizeof(T))); }
+        
+        /** Image pixel accessor */
+        T const& at(size_t x, size_t y) const { return at(x, y); }
+        
         /** Image buffer accessor for const data access */
         T const* data() const { return m_buffer.get(); }
 

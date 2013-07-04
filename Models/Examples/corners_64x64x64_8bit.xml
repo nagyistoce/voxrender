@@ -1,8 +1,7 @@
 <!-- 
-     Gradient dataset for testing transfer
-     function behavior. Consists of a single
-	 strip of 256 samples of decreasing 
-	 density 
+     Corner dataset for depicting camera focus
+     function behavior. Consists of 8 boxes aligned
+	 in a grid pattern 2x2x2.
 -->
  
 <Scene>
@@ -14,10 +13,10 @@
 	
 	<Camera>
 		<FieldOfView>30</FieldOfView>
-		<ApertureSize>0</ApertureSize>
-		<FocalDistance>0</FocalDistance>
-		<Position>[32 32 -100]</Position>
-		<Target>[32 32 32]</Target>
+		<ApertureSize>12</ApertureSize>
+		<FocalDistance>170</FocalDistance>
+		<Position>[-71.2 182.4 -77.7]</Position>
+		<Target>[32 28 32]</Target>
 		<FilmWidth>512</FilmWidth>
 		<FilmHeight>512</FilmHeight>
 	</Camera>
@@ -36,22 +35,21 @@
     <Lights>
         <Light>
             <Color>[1.0 1.0 1.0]</Color>
-            <Position>[0, 100, 0]</Position>
+            <Position>[-13 97.4 -17]</Position>
         </Light>
     </Lights>
 	
 	<Transfer>
 		<Resolution>256</Resolution>
 		<Materials>
-			<Empty></Empty>
 			<Solid>
-				
+				<Thickness>1.0</Thickness>
 			</Solid>
 		</Materials>
 		<Nodes>
 			<Empty>
-				<Material>Empty</Material>
-				<Density>0.0</Density>
+				<Material>Solid</Material>
+				<Density>0.1</Density>
 			</Empty>
 			<Solid>
 				<Material>Solid</Material>

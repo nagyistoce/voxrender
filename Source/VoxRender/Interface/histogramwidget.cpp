@@ -29,10 +29,13 @@
 #include "histogramwidget.h"
 
 // API Includes
-#include "Core/VoxRender.h"
+#include "VoxLib/Core/Logging.h"
+#include "VoxLib/Core/Format.h"
 
 // Include Dependencies
 #include "mainwindow.h"
+
+using namespace vox;
 
 // ---------------------------------------------------------
 // Constuctor - Initialize widget slots and signals
@@ -45,12 +48,6 @@ HistogramWidget::HistogramWidget( QWidget *parent ) :
     // Create the histogram view 
 	histogramView = new HistogramView( ui->frame_histogram );
 	ui->histogramLayout->addWidget( histogramView, 0, 0, 1, 1 );
-
-    // Setup the slider/spinBox signals
-	connect( ui->slider_histogramGamma, SIGNAL(valueChanged(int)), 
-		this, SLOT(gamma_changed(int)) );
-	connect( ui->spinBox_histogramGamma, SIGNAL(valueChanged(double)), 
-		this, SLOT(gamma_changed(double)) );
 }
     
 // ---------------------------------------------------------
@@ -67,74 +64,28 @@ HistogramWidget::~HistogramWidget( )
 // ---------------------------------------------------------
 void HistogramWidget::Update( )
 {
-	histogramView->updateImage( );
-}
-
-// ---------------------------------------------------------
-// Toggle histogram log selection
-// ---------------------------------------------------------
-void HistogramWidget::on_checkBox_histogramLog_toggled( bool checked )
-{
-	histogramView->setLogEnabled( checked );
-	histogramView->updateImage( );
-}
-
-// ---------------------------------------------------------
-// Toggle histogram equalization selection
-// ---------------------------------------------------------
-void HistogramWidget::on_checkBox_histogramEqualize_toggled( bool checked )
-{
-	histogramView->setEqualizationEnabled( checked );
-	histogramView->updateImage( );
+	//histogramView->updateImage( );
 }
 
 // ---------------------------------------------------------
 // Change histogram type selection
 // ---------------------------------------------------------
-void HistogramWidget::on_comboBox_histogramChannel_activated( QString str )
+void HistogramWidget::on_comboBox_histogramChannel_activated(QString str)
 {
-	if( str == "Density" )
+	if (str == "Density")
 	{
+        histogramView->setType(HistogramView::DataType_Density);
 	}
-	else if( str == "Gradient" )
+	else if (str == "Gradient")
 	{
+        histogramView->setType(HistogramView::DataType_DensityGrad);
 	}
-	else if( str == "2nd Deriv." )
+	else if (str == "Laplacian")
 	{
+        histogramView->setType(HistogramView::DataType_DensityLap);
 	}
 	else
     {
-        // :TODO:
+        VOX_LOG_ERROR(Error_Bug, "GUI", format("Unrecognized histogram type: %1%", str.toLatin1().data()));
     }
-}
-
-// ---------------------------------------------------------
-// Histogram gamma slider changed
-// ---------------------------------------------------------
-void HistogramWidget::gamma_changed( int value ) 
-{ 
-	gamma_changed
-	( 
-		(double)value / 
-			( (double)ui->slider_histogramGamma->maximum( ) / 
-				ui->spinBox_histogramGamma->maximum( ) ) 
-	);
-}
-
-// ---------------------------------------------------------
-// Histogram gamma slider changed
-// ---------------------------------------------------------
-void HistogramWidget::gamma_changed( double value ) 
-{
-	int sliderval = (int)(((double)ui->slider_histogramGamma->maximum( ) 
-		/ ui->spinBox_histogramGamma->maximum( ) ) * value);
-
-	ui->slider_histogramGamma->blockSignals( true );
-	ui->spinBox_histogramGamma->blockSignals( true );
-	ui->slider_histogramGamma->setValue( sliderval );
-	ui->spinBox_histogramGamma->setValue( value );
-	ui->slider_histogramGamma->blockSignals( false );
-	ui->spinBox_histogramGamma->blockSignals( false );
-
-	// Notify histogram view //
 }

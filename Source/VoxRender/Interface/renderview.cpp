@@ -307,7 +307,7 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     auto curr    = boost::chrono::high_resolution_clock::now();
     auto elapsed = curr - m_lastTime; m_lastTime = curr;
 
-    auto fps = 1.0f / (static_cast<float>(elapsed.count()) / 1000.0f / 1000.0f / 1000.0f);
+    auto fps = 1.0f / (static_cast<float>(elapsed.count()) / 1000.0f / 1000.0f / 1000.0f); // this is crap
 
     // Draws the statistical information overlay
     {

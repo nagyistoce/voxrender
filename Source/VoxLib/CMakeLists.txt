@@ -174,6 +174,7 @@ Set(VoxLib_SOURCES_PLUGIN
 Set(VoxLib_SOURCES_SCENE
     Scene/Camera.cpp
     Scene/Light.cpp
+    Scene/Material.cpp
     Scene/PrimGroup.cpp
     Scene/Scene.cpp
     Scene/Transfer.cpp

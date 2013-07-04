@@ -56,17 +56,11 @@ public:
 	void SetEnabled( bool enabled );
 
 private:
-
-	Ui::HistogramWidget *ui;
-	HistogramView *histogramView;
+	Ui::HistogramWidget * ui;
+	HistogramView * histogramView;
 
 private slots:
-	void on_checkBox_histogramEqualize_toggled( bool checked );
-	void on_comboBox_histogramChannel_activated( QString str );
-	void on_checkBox_histogramLog_toggled( bool checked );
-	
-	void gamma_changed( double );
-	void gamma_changed( int );
+	void on_comboBox_histogramChannel_activated(QString str);
 };
 
 // End definition

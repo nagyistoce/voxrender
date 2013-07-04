@@ -1,9 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Volume management
+	Project: VoxLib
 
-	Description:
-	 Defines 3D volume and volume description classes for use by the renderer.
+	Description: Defines a 3D volume class
 
     Copyright (C) 2012 Lucas Sherman
 
@@ -30,3 +29,89 @@
 // Standard Includes
 #include <iostream>
 #include <fstream>
+
+namespace vox {
+
+    namespace {
+    namespace filescope {
+
+        // --------------------------------------------------------------------
+        //  Computes the maximum normalized range of values within the voxel
+        //  type which is occupied by the volume data.
+        // --------------------------------------------------------------------
+        template<typename T> Vector2f maxValueRange(size_t elements, UInt8 const* raw)
+        {
+            T low  = std::numeric_limits<T>::max();
+            T high = static_cast<T>(0);
+
+            T const* data = reinterpret_cast<T const*>(raw);
+
+            for (size_t i = 0; i < elements; i++)
+            {
+                if (low > *data) low = *data;
+                else if (high < *data) high = *data;
+
+                data++;
+            }
+
+            Vector2f result = Vector2f(static_cast<float>(low)+0.5f, static_cast<float>(high)+0.5f);
+
+            return result / static_cast<float>(std::numeric_limits<T>::max());
+        }
+
+    } // namespace filescope
+    } // namespace anonymous
+    
+// ----------------------------------------------------------------------------
+//  Sets the volume data
+// ----------------------------------------------------------------------------
+void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type)
+{
+    m_data   = data; 
+    m_extent = extent; 
+    m_type   = type;
+
+    updateRange();
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the value range for the volume voxels
+// ----------------------------------------------------------------------------
+void Volume::updateRange()
+{
+    size_t       elems = m_extent.fold<size_t>(1, &mul);
+    UInt8 const* ptr   = m_data.get();
+
+    switch (m_type)
+    {
+        case Volume::Type_UInt8:  m_range = filescope::maxValueRange<UInt8>(elems, ptr); break;
+        case Volume::Type_UInt16: m_range = filescope::maxValueRange<UInt16>(elems, ptr); break;
+        default:
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
+                Error_NotImplemented);
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Fetches the normalized value at a voxel
+// ----------------------------------------------------------------------------
+float Volume::fetchNormalized(size_t x, size_t y, size_t z) const
+{
+    size_t i = x + y * m_extent[0] + z * m_extent[0] * m_extent[1];
+        
+    float sample;
+    switch (m_type)
+    {
+        case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
+        case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
+        default:
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
+                Error_NotImplemented);
+    }
+        
+    return (sample - m_range[0]) / (m_range[1] - m_range[0]);
+}
+
+} // namespace vox

@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Volume
+	Project: VoxLib
 
 	Description: Defines a volume class for use by the Renderer
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -106,6 +106,7 @@ public:
           ) : 
         m_data(data), m_extent(extent), m_spacing(spacing), m_type(type), m_offset(offset)
     { 
+        updateRange();
     }
 
     /** Spacing modifier */     
@@ -123,16 +124,20 @@ public:
     /** Offset accessor */
     Vector3f const& offset() const { return m_offset; }
 
+    Vector2f const& valueRange() const { return m_range; }
+
+    void updateRange();
+
     /** Raw voxel data accessor */
     void* const& at(size_t x, size_t y, size_t z) const;
    
+    /** Voxel data accessor */
+    float fetchNormalized(size_t x, size_t y, size_t z) const;
+
     /** Data modifier */ 
     void setData(std::shared_ptr<UInt8> const& data, 
                  Vector4u               const& extent,
-				 Type                          type)
-    {
-        m_data = data; m_extent = extent; m_type = type;
-    }
+				 Type                          type);
 
     /** Raw voxel data accessor */
     UInt8 * mutableData() { return m_data.get(); }
@@ -156,6 +161,7 @@ private:
 
     std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
 
+    Vector2f m_range;       ///< Volume value range (normalized to type)
     Vector3f m_offset;      ///< Volume offset (mm)
     Vector4f m_spacing;     ///< Spacing between voxels (mm)
     Vector4u m_extent;      ///< Size of volume in voxels

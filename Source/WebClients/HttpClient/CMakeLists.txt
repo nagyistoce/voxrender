@@ -1,12 +1,12 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxLib - Web Client Libraries                                  #
+#   Project: HttpClient                                                     #
 #                                                                           #
-#   Description: Collection of libraries for web client activities          #
+#   Description: Provides an http client library for VoxLib                 #
 #                                                                           #
-#       Copyright (C) 2012 Lucas Sherman                                    #
+#   Copyright (C) 2013 Lucas Sherman                                        #
 #                                                                           #
-#	Lucas Sherman, email: LucasASherman@gmail.com                       #
+#   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
 #   This program is free software: you can redistribute it and/or modify    #
 #   it under the terms of the GNU General Public License as published by    #
@@ -25,22 +25,15 @@
 
 INCLUDE_DIRECTORIES(.)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+VOX_PROJECT(
+    TARGET "HttpClient" SHARED
+    FOLDER "WebClients"
+    HEADERS
+        "Common.h"
+        "Version.h"
+    SOURCES
+    DEPENDENCIES
+        VoxLib
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender
+	Project: VoxLib
 
 	Description: Data structure defining material properties of volume
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -34,112 +34,72 @@
 // API Namespace
 namespace vox
 {
-    /** 
-     * Defines the material properties of a block of volume material.
-     */
+    class VOX_EXPORT Node;
+
+    /** Defines the material properties of a volume. */
     class VOX_EXPORT Material
     {
     public:
         /** Initializes a standard default material */
-        Material() :
-          m_opticalThickness(0.0f),
-          m_glossiness(80.0f),
-          m_emissiveStrength(0.0f),
-          m_emissive(0, 0, 0),
-          m_diffuse(255, 255, 255),
-          m_specular(0, 0, 0),
-          m_dirty(true)
-        {
-        }
+        Material();
+
+        /** Because some people (VS 2010 - hint, hint) don't support unique_ptr */
+        ~Material();
 
         /** Returns the optical thickness of the material () */
-        float opticalThickness() const { return m_opticalThickness; }
+        float opticalThickness() const;
         
         /** Sets the optical thickness of the material */
-        void setOpticalThickness(float thickness)
-        {
-            if (m_opticalThickness != thickness)
-            {
-                m_opticalThickness = thickness;
-
-                m_dirty = true;
-            }
-        }
+        void setOpticalThickness(float thickness);
 
         /** Returns the glossiness factor of the material */
-        float glossiness() const { return m_glossiness; }
+        float glossiness() const;
 
         /** Sets the glossiness factor of the material */
-        void setGlossiness(float glossiness)
-        {
-            if (m_glossiness != glossiness)
-            {
-                m_glossiness = glossiness;
-
-                m_dirty = true;
-            }
-        }
+        void setGlossiness(float glossiness);
         
         /** Emissive light intensity */
-        float emissiveStrength() const { return m_emissiveStrength; }
+        float emissiveStrength() const;
 
         /** Sets the emissive light intensity */
-        void setEmissiveStrength(float intensity) { m_emissiveStrength = intensity; }
+        void setEmissiveStrength(float intensity);
 
         /** Returns the emissive properties of the material */
-        Vector<UInt8,3> emissive() const { return m_emissive; }
+        Vector<UInt8,3> emissive() const;
 
         /** Sets the emissive properties of the material */
-        void setEmissive(Vector<UInt8,3> const& emissive)
-        {
-            if (m_emissive != emissive)
-            {
-                m_emissive = emissive;
-
-                m_dirty = true;
-            }
-        }
+        void setEmissive(Vector<UInt8,3> const& emissive);
 
         /** Returns the diffuse properties of the material */
-        Vector<UInt8,3> const& diffuse() const { return m_diffuse; }
+        Vector<UInt8,3> const& diffuse() const;
 
         /** Sets the diffuse properties of the material */
-        void setDiffuse(Vector<UInt8,3> const& diffuse)
-        {
-            if (m_diffuse != diffuse)
-            {
-                m_diffuse = diffuse;
-
-                m_dirty = true;
-            }
-        }
+        void setDiffuse(Vector<UInt8,3> const& diffuse);
 
         /** Returns the specular properties of the material */
-        Vector<UInt8,3> const& specular() const { return m_specular; }
+        Vector<UInt8,3> const& specular() const;
 
         /** Sets the specular properties of the material */
-        void setSpecular(Vector<UInt8,3> const& specular)
-        {
-            if (m_specular != specular)
-            {
-                m_specular = specular;
+        void setSpecular(Vector<UInt8,3> const& specular);
 
-                m_dirty = true;
-            }
-        }
+        /** Sets the dirty state of the material */
+        void setDirty(bool dirty = true);
+
+        /** Returns true if the dirt flag is set */
+        bool isDirty() { return m_isDirty; }
 
     private:
-        //class Impl; std::unique_ptr<Impl> m_pImpl;
+        class Impl; Impl * m_pImpl;
 
-        float m_opticalThickness; ///< Optical thickness of material (-INF, INF)
-        float m_glossiness;       ///< Glossiness factor
-        float m_emissiveStrength; ///< Emissive light intensity
+        friend Node;
 
-        Vector<UInt8,3> m_emissive;         ///< Emissive color
-        Vector<UInt8,3> m_diffuse;          ///< Diffuse reflection color
-        Vector<UInt8,3> m_specular;         ///< Specular reflection color
+        /** Registers a user node for this material */
+        void addNode(std::shared_ptr<Node> node);
 
-        bool m_dirty; ///< Dirty flag for interactive rendering
+        /** Deregisters a user node for this material */
+        void removeNode(std::shared_ptr<Node> node);
+
+        bool m_isDirty; ///< Dirty flag for interactive rendering
     };
 }
 

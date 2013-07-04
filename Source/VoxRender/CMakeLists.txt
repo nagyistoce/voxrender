@@ -65,6 +65,7 @@ IF(Qt5Widgets_FOUND)
         Interface/edgeitem.cpp
         Interface/griditem.cpp
         Interface/histogramitem.cpp
+        Interface/histogramgenerator.cpp
         Interface/histogramview.cpp
         Interface/histogramwidget.cpp
         Interface/infowidget.cpp
@@ -96,6 +97,7 @@ IF(Qt5Widgets_FOUND)
         Interface/edgeitem.h
         Interface/griditem.h
         Interface/histogramitem.h
+        Interface/histogramgenerator.h
         Interface/histogramview.h
         Interface/histogramwidget.h
         Interface/infowidget.h

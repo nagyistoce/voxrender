@@ -128,8 +128,9 @@ namespace filescope {
     VOX_DEVICE float sampleAbsorption(Vector3f const& location)
     {
         float density = sampleDensity(location[0], location[1], location[2]);
+        float gradMag = sampleGradient(location).length() * (1.0f / 1.73205f);
 
-        return tex3D(gd_opacityTex, density, 0.0f, 0.0f);
+        return tex3D(gd_opacityTex, density, gradMag, 0.0f);
     }
     
     // --------------------------------------------------------------------
@@ -174,7 +175,9 @@ namespace filescope {
         float opacity = 0.0f;
         while (rayMin < rayMax)
         {
-            float absorption = sampleAbsorption(pos + dir * rayMin);
+            auto location = pos + dir * rayMin;
+
+            float absorption = sampleAbsorption(location);
 
             opacity += absorption * rayStepSize;
 

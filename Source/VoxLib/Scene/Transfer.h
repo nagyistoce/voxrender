@@ -44,11 +44,19 @@ namespace vox
     class Transfer;
 
     /** Transfer function node */
-    class VOX_EXPORT Node 
+    class VOX_EXPORT Node : public std::enable_shared_from_this<Node>
     {
     public:
-        /** Constructs a new node with an optionally specifiable material */
-        Node(std::shared_ptr<Material> material = std::shared_ptr<Material>());
+        /** Constructs a new transfer function object */
+        static std::shared_ptr<Node> create(std::shared_ptr<Material> material = nullptr) 
+        { 
+            auto node = std::shared_ptr<Node>(new Node()); 
+
+            if (material) node->setMaterial(material);
+            else          node->setMaterial(std::make_shared<Material>());
+
+            return node;
+        }
 
         // Node comparison operators for sorting operations
         bool operator<(Node const& rhs) { return m_position < rhs.m_position; }
@@ -60,19 +68,27 @@ namespace vox
         }
 
         /** Sets the normalized position of the node in the specified dimension */
-        void setPosition(int dim, float position) { m_position[dim] = position; }
+        void setPosition(int dim, float position);
 
         /** Returns the normalized position of the node in the specified dimension */
         float position(int dim) const { return m_position[dim]; }
 
         /** Sets the node's material properties */
-        void setMaterial(std::shared_ptr<Material> material) { m_material = material; }
+        void setMaterial(std::shared_ptr<Material> material);
         
         /** Returns the material properties of the node */
         std::shared_ptr<Material> material() { return m_material; }
 
+        /** Marks the node dirty */
+        void setDirty(bool dirty = true);
+
     private:
+        /** Constructs a new node with the specified material */
+        Node();
+
         friend Transfer; 
+
+        std::shared_ptr<Transfer> m_parent;
 
 	    Vector3f m_position; ///< Normalized node transfer coordinates
 
@@ -97,11 +113,11 @@ namespace vox
     };
 
     /** Transfer Function */
-    class VOX_EXPORT Transfer
+    class VOX_EXPORT Transfer : public std::enable_shared_from_this<Transfer>
     {
     public:
-        /** Initializes a new transfer function object */
-        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
+        /** Constructs a new transfer function object */
+        static std::shared_ptr<Transfer> create() { return std::shared_ptr<Transfer>(new Transfer()); }
 
         /** Sets the desired resolution of the transfer function */
         void setResolution(Vector3u const& resolution);
@@ -124,7 +140,13 @@ namespace vox
         /** Returns true if an unprocessed context change has occured */
         bool isDirty() const { return m_contextChanged; }
 
+        /** Sets the dirty state of the transfer function */
+        void setDirty(bool dirty = true) { m_contextChanged = dirty; }
+
     private:
+        /** Initializes a new transfer function object */
+        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
+
         friend RenderController;
 
         Vector3u m_resolution; ///< Transfer function map resolution

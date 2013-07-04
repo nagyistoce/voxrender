@@ -252,8 +252,8 @@ namespace
                   camera.setFilmHeight( m_node->get("FilmHeight", 256) );
 
                   // :TODO: Allow 2-3 specified control orients, compute resulting position
-                  camera.setEye( m_node->get("Eye", Vector3f(0.0f, 0.0f, 1.0f)) );
-                  camera.setRight( m_node->get("Right", Vector3f(1.0f, 0.0f, 0.0f)) );
+                  //camera.setEye( m_node->get("Eye", Vector3f(0.0f, 0.0f, 1.0f)) );
+                  //camera.setRight( m_node->get("Right", Vector3f(1.0f, 0.0f, 0.0f)) );
 
                 pop();
 
@@ -347,7 +347,7 @@ namespace
 
                   // Instantiate default transfer object
                   auto transferPtr = executeImportDirectives().transfer;
-                  if (!transferPtr) transferPtr = std::make_shared<Transfer>();
+                  if (!transferPtr) transferPtr = Transfer::create();
                   auto & transfer = *transferPtr;
                   /*
                   // Transfer function resolution
@@ -371,7 +371,7 @@ namespace
                       BOOST_FOREACH (auto & region, *m_node)
                       {
                           // Create a new node for insertion
-                          auto node = std::make_shared<Node>();
+                          auto node = Node::create();
                           transfer.addNode(node);
 
                           // Determine the node's material properties
@@ -445,8 +445,8 @@ namespace
                         
                         // Parse the material specification :TODO:
                         auto material = std::make_shared<Material>();
-                        material->setGlossiness( m_node->get("Glossiness", 0.0f) );
-                        material->setOpticalThickness( m_node->get("Thickness", 0.0f) );
+                        material->setGlossiness( materialNode.second.get("Glossiness", 0.0f) );
+                        material->setOpticalThickness( materialNode.second.get("Thickness", 0.0f) );
                         materials[materialNode.first] = material;
                     }
            

@@ -82,10 +82,10 @@ namespace
                 // Detect the endian mode settings
                 std::string endianess = m_options.lookup("Endianess", "little");
                 boost::algorithm::to_lower(endianess);
-                if (endianess == "little")
+                if (endianess == "little" || endianess == "lsb")
                 {
                 }
-                else if (endianess == "big")
+                else if (endianess == "big" || endianess == "msb")
                 {
                 }
                 else

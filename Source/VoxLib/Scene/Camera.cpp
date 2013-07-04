@@ -111,7 +111,11 @@ void Camera::roll(float radians)
 // --------------------------------------------------------------------
 void Camera::lookAt(Vector3f const& position, Vector3f const& up)
 {
-    m_eye = (m_pos-position).normalized();
+    auto eyeish = (position-m_pos);
+    m_eye = (position-m_pos).normalized();
+
+    m_right = Vector3f::cross(m_eye, up).normalized();
+    m_up    = Vector3f::cross(m_right, m_eye).normalized();
 
     m_contextChanged = true;
 }
