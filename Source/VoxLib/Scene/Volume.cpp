@@ -62,6 +62,18 @@ namespace vox {
     } // namespace filescope
     } // namespace anonymous
     
+Volume::Volume(
+    std::shared_ptr<UInt8> data,
+    Vector4u const& extent,
+    Vector4f const& spacing,
+    Vector3f const& offset,
+	Type            type
+        ) : 
+    m_data(data), m_extent(extent), m_spacing(spacing), m_type(type), m_offset(offset)
+{ 
+    updateRange();
+}
+
 // ----------------------------------------------------------------------------
 //  Sets the volume data
 // ----------------------------------------------------------------------------

@@ -40,8 +40,8 @@ namespace vox
     class VOX_EXPORT Material
     {
     public:
-        /** Initializes a standard default material */
-        Material();
+        /** Constructs a new transfer function object */
+        static std::shared_ptr<Material> create() { return std::shared_ptr<Material>(new Material()); }
 
         /** Because some people (VS 2010 - hint, hint) don't support unique_ptr */
         ~Material();
@@ -89,6 +89,9 @@ namespace vox
         bool isDirty() { return m_isDirty; }
 
     private:
+        /** Initializes a standard default material */
+        Material();
+
         class Impl; Impl * m_pImpl;
 
         friend Node;

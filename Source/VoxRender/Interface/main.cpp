@@ -5,7 +5,7 @@
 	Description: Performs interactive rendering of volume data using 
 		photon mapping and volume ray casting techniques.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -32,14 +32,12 @@
 #include "voxapp.h"
 
 // Application Entry Point
-int main( int argc, char** argv ) 
+int main(int argc, char** argv) 
 {
-    VoxGuiApp application( argc, argv );
+    VoxGuiApp application(argc, argv);
 
-	/* !QTranslator Goes Here! */
-
-	application.initialize( );
+	application.initialize();
 
 	// Execute application
-    return application.exec( );
+    return application.exec();
 }

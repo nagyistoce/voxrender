@@ -53,7 +53,7 @@ namespace vox
             auto node = std::shared_ptr<Node>(new Node()); 
 
             if (material) node->setMaterial(material);
-            else          node->setMaterial(std::make_shared<Material>());
+            else          node->setMaterial(Material::create());
 
             return node;
         }

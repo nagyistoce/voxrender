@@ -44,41 +44,131 @@ namespace vox {
 // Implementation of private members for PluginManager
 struct PluginManager::Impl 
 {
+public:
+    Impl() : m_complete(false), m_pluginThread(std::bind(&Impl::threadEntryPoint, this))
+    {
+    }
+
+    ~Impl()
+    {
+        m_complete = true;
+
+        m_noWorkCond.notify_one();
+
+        m_pluginThread.join();
+    }
+
     std::list<boost::filesystem::path> searchPaths; // Directories or files to search
 
     std::list<std::shared_ptr<PluginContainer>> plugins; // List of detected/loaded plugins
 
-    boost::mutex mutex;
+    boost::recursive_mutex mutex;
+    
+    std::shared_ptr<void> pluginHandle;
 
-    std::unique_ptr<boost::thread> runtimeDetectionThread;
+    // ----------------------------------------------------------------------------
+    //  Constructs a handle for a plugin to manage its lifetime
+    // ----------------------------------------------------------------------------
+    void buildPluginHandle(std::shared_ptr<PluginContainer> container)
+    {
+        pluginHandle = std::shared_ptr<void>(container.get(), boost::bind(&Impl::unload, this, _1));
+    }
+
+private: 
+
+    std::list<std::shared_ptr<PluginContainer>> m_loadQueue;
+    std::list<std::shared_ptr<PluginContainer>> m_unloadQueue;
+    
+    boost::condition_variable_any m_noWorkCond;
+    bool                          m_complete;
+    boost::thread                 m_pluginThread;
+
+    // ----------------------------------------------------------------------------
+    //  Instantiates the pImpl member structure for the plugin manager
+    // ----------------------------------------------------------------------------
+    void unload(void* plugin)
+    {
+        boost::recursive_mutex::scoped_lock lock(mutex);
+
+        BOOST_FOREACH (auto & container, plugins)
+        {
+            if (container.get() == plugin) { m_unloadQueue.push_back(container); break; }
+        }
+
+        lock.unlock();
+
+        m_noWorkCond.notify_one();
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Unload service for plugins as well as the search service for automated
+    //  plugin detection
+    //  :TODO: Boost lockfree_queue
+    // ----------------------------------------------------------------------------
+    void threadEntryPoint()
+    {
+        boost::recursive_mutex::scoped_lock lock(mutex);
+
+        while (!m_complete)
+        {
+            while (m_unloadQueue.empty()) m_noWorkCond.wait(lock);
+
+            while (!m_unloadQueue.empty())
+            {
+                m_unloadQueue.front()->unload();
+
+                m_unloadQueue.pop_front();
+            }
+        }
+    }
 };
     
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Instantiates the pImpl member structure for the plugin manager
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 PluginManager & PluginManager::instance()
 { 
     static PluginManager pmanager;
     return pmanager;
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Instantiates the pImpl member structure for the plugin manager
-// --------------------------------------------------------------------
-PluginManager::PluginManager() { m_pImpl = new Impl(); }
+// ----------------------------------------------------------------------------
+PluginManager::PluginManager() 
+{ 
+    m_pImpl = new Impl(); 
+}
     
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Deletes the pImple member structure and unloads all plugins
-// --------------------------------------------------------------------
-PluginManager::~PluginManager() { unloadAll(); delete m_pImpl; }
+// ----------------------------------------------------------------------------
+PluginManager::~PluginManager() 
+{ 
+    unloadAll(); 
+    
+    delete m_pImpl; 
+}
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Returns the plugin handle which keeps the plugin from being unloaded
+// ----------------------------------------------------------------------------
+std::shared_ptr<void> PluginManager::acquirePluginHandle()
+{
+    auto handle = m_pImpl->pluginHandle;
+
+    m_pImpl->pluginHandle.reset();
+
+    return handle;
+}
+
+// ----------------------------------------------------------------------------
 //  Adds a path to the search paths for the program
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::addPath(String const& string)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
 
     boost::filesystem::path path(string);
 
@@ -87,12 +177,12 @@ void PluginManager::addPath(String const& string)
     m_pImpl->searchPaths.push_back(path);
 }
     
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Removes a path from the search paths for the program
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::removePath(String const& string)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
 
     boost::filesystem::path path(string);
 
@@ -101,12 +191,12 @@ void PluginManager::removePath(String const& string)
     m_pImpl->searchPaths.remove(path);
 }   
     
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Returns an info structure describing a loaded plugin
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 std::shared_ptr<PluginInfo> PluginManager::getPluginInfo(String const& name)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
         
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
     {
@@ -116,10 +206,10 @@ std::shared_ptr<PluginInfo> PluginManager::getPluginInfo(String const& name)
                 format("Requested info for unknown plugin: %1%", name));
 }
     
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Searches for any plugins in the set of search directories and
 //  optionally enables them.
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBins)
 {
     BOOST_FOREACH(auto & searchPath, m_pImpl->searchPaths)
@@ -144,7 +234,7 @@ void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBin
             {
                 try
                 {
-                    auto info = loadFromFile(entry.path().string(), false);
+                    auto info = loadFromFile(entry.path().string(), load);
 
                     callback(info);
                 }
@@ -152,29 +242,29 @@ void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBin
                 {
                     VOX_LOG_WARNING(error.code, VOX_LOG_CATEGORY, format("Attempt to load <%1%> as plugin failed: %2%", entry.path().string(), error.message));
                 }
-
-                if (load) ;
             }
         }
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Unloads any plugins loaded by the PluginManager (nothrow)
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::unloadAll()
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
 
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins) plugin->unload();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Loads a specified plugin. If the plugin info file cannot be found
 //  and the permissions are not available, an exception will be thrown.
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 std::shared_ptr<PluginInfo> PluginManager::loadFromFile(String const& file, bool enable)
 {
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
+
     boost::filesystem::path filePath(file);
     filePath.replace_extension("dll"); // :TODO: Platform specific system extension name
 
@@ -198,8 +288,11 @@ std::shared_ptr<PluginInfo> PluginManager::loadFromFile(String const& file, bool
             }
         }
 
-        if (enable) plugin->enable();
-        else plugin->unload();
+        if (enable) 
+        {
+            plugin->load(); 
+            plugin->enable();
+        }
 
         m_pImpl->plugins.push_back(plugin);
 
@@ -212,26 +305,36 @@ std::shared_ptr<PluginInfo> PluginManager::loadFromFile(String const& file, bool
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Loads a specified plugin (ie enable or load-enable)
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::load(std::shared_ptr<PluginInfo> const& info)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
     
     // Unload the plugin but keep the info structure for reference
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
     {
-        if (info == plugin->info()) { plugin->load(); plugin->enable(); return; }
+        if (info == plugin->info()) 
+        {
+            m_pImpl->buildPluginHandle(plugin);
+            plugin->load(); 
+            if (!m_pImpl->pluginHandle) plugin->enable();
+            break;
+        }
     }
+    
+    lock.unlock();
+
+    m_pImpl->pluginHandle.reset();
 }
         
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Returns true if the specified plugin is 'loaded' (ie enabled)
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 bool PluginManager::isLoaded(std::shared_ptr<PluginInfo> const& info)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
     
     // Unload the plugin but keep the info structure for reference
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
@@ -242,26 +345,26 @@ bool PluginManager::isLoaded(std::shared_ptr<PluginInfo> const& info)
     return false;
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Unloads a loaded plugin if it is currently loaded
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::unload(std::shared_ptr<PluginInfo> const& info)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
     
     // Unload the plugin but keep the info structure for reference
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
     {
-        if (info == plugin->info()) { plugin->unload(); return; }
+        if (info == plugin->info()) { plugin->disable(); return; }
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Performs a soft reset of an enabled plugin
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::softReload(String const& pluginName)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
 
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
     {
@@ -275,12 +378,12 @@ void PluginManager::softReload(String const& pluginName)
                 format("Requested soft reload for unknown plugin: %1%", pluginName));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Performs a hard reset of an enabled plugin - load and unload dll
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PluginManager::reload(String const& name)
 {
-    boost::mutex::scoped_lock lock(m_pImpl->mutex);
+    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
 
     BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
     {

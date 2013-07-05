@@ -191,9 +191,7 @@ void HistogramView::resizeEvent(QResizeEvent *event)
 
     m_histogramItem.setOffset(m_canvasRectangle.left(), m_canvasRectangle.top());
 
-    auto generator = HistogramGenerator::instance();
-    QSize size(m_canvasRectangle.width(), m_canvasRectangle.height());
-    m_histogramItem.setPixmap(generator->densityPixmap().scaled(size));
+    updateImage();
 
 	QGraphicsView::resizeEvent(event);
 }

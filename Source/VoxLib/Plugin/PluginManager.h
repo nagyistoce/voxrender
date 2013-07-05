@@ -29,8 +29,8 @@
  * <b>Overview</b>
  *
  * The PluginManager class, in association with the Plugin class, provides 
- * basic functionality for loading and running C/C++ plugins at runtime in
- * a managed fashion.
+ * basic functionality for loading and running plugins at runtime in a
+ * managed fashion.
  *
  * Although the plugin class allows loading and interaction with any shared
  * library, the PluginManager has stricter requirements concerning the
@@ -39,7 +39,9 @@
  *
  * void initPlugin()             <<< Called immediately after plugin loading
  * void freePlugin()             <<< Called before the plugin is unloaded
- *  
+ *
+ * void requestUnload()          <<< Called to indicate the plugin should unload
+ *
  * void enable()                 <<< Called on user permission to activate
  * void disable()                <<< Called on user shutdown request 
  *
@@ -48,8 +50,6 @@
  * char const* apiVersionMin()   <<< Returns the minimum supported API version
  * char const* apiVersionMax()   <<< Returns the maximum supported API version
  * char const* version()         <<< Returns the version of the plugin
- *
- * bool canFree()                <<< Return true if the plugin is safe to free
  *
  * <b>Reference URL</b>
  *
@@ -215,11 +215,18 @@ namespace vox
          */
         void enableRuntimeDetection(unsigned int pluginOptions);
 
-        /**
-         * If runtime detection of plugins was previously enabled, it
-         * will be disabled.
-         */
+        /** If runtime detection of plugins was previously enabled, it will be disabled. */
         void disableRuntimeDetection();
+
+        /** 
+         * This function is intended only to be used by plugins 
+         *
+         * If called by a plugin within its init method, it returns a handle which will notify the
+         * plugin manager when destroyed. This initiates unloading of the plugin and should be held
+         * internally until (1) no resources from the plugin are in use by the program AND (2) the
+         * plugin has recieved a call to it's disable method.
+         */
+        std::shared_ptr<void> acquirePluginHandle();
 
     private:
         PluginManager();

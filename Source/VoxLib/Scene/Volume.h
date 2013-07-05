@@ -98,15 +98,15 @@ public:
      * @param extent  Volume extent in x,y,z,t dimensions respectively
      * @param spacing Volume spacing in x,y,z,t dimensions respectively
      */
-    Volume(std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
+    static std::shared_ptr<Volume> create(
+           std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
            Vector4u const&          extent    = Vector4u(0),
            Vector4f const&          spacing   = Vector4f(0.0f),
            Vector3f const&          offset    = Vector3f(0.0f),
 		   Type                     type      = Type_UInt8 
-          ) : 
-        m_data(data), m_extent(extent), m_spacing(spacing), m_type(type), m_offset(offset)
+          )
     { 
-        updateRange();
+        return std::shared_ptr<Volume>(new Volume(data, extent, spacing, offset, type));
     }
 
     /** Spacing modifier */     
@@ -156,6 +156,20 @@ public:
 
 private:
     friend RenderController;
+
+	/** 
+     * Loads the given data set into the volume
+     *
+     * @param data    Volume density data in a grid x,y,z,t format
+     * @param extent  Volume extent in x,y,z,t dimensions respectively
+     * @param spacing Volume spacing in x,y,z,t dimensions respectively
+     */
+    Volume(std::shared_ptr<UInt8>   data,
+           Vector4u const&          extent,
+           Vector4f const&          spacing,
+           Vector3f const&          offset,
+		   Type                     type
+          );
 
     bool m_contextChanged; ///< Context change flag
 

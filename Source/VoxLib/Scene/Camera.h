@@ -41,13 +41,8 @@ class RenderController;
 class VOX_EXPORT Camera
 {
 public:
-    /**
-     * Constructor - Initalizes a scene camera to the default orientation
-     *
-     * The default camera position is at the origin facing along
-     * the z-axis. (The coordinate system is left-handed)
-     */ 
-    Camera(); 
+    /** Constructs a new transfer function object */
+    static std::shared_ptr<Camera> create() { return std::shared_ptr<Camera>(new Camera()); }
 
     /** Destructor */
     ~Camera();
@@ -172,6 +167,14 @@ public:
     inline bool isFilmDirty() const { return m_filmChanged; }
 
 private:
+    /**
+     * Constructor - Initalizes a scene camera to the default orientation
+     *
+     * The default camera position is at the origin facing along
+     * the z-axis. (The coordinate system is left-handed)
+     */ 
+    Camera(); 
+
     friend RenderController;
 
     bool m_contextChanged; ///< Context change flag

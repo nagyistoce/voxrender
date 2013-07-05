@@ -1,6 +1,6 @@
 /* ===========================================================================
 
-    Project: Raw Volume Import Module
+    Project: Vox Scene Import Module
     
 	Description: Defines a VoxScene import module for .raw format volumes
 
@@ -30,6 +30,7 @@
 #include "VoxSceneImporter/Common.h"
 #include "VoxSceneImporter/VoxSceneImporter.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Plugin/PluginManager.h"
 
 using namespace vox;
 
@@ -37,6 +38,7 @@ namespace {
 namespace filescope {
 
     std::shared_ptr<VoxSceneFile> exim;
+    std::shared_ptr<void> handle;
 
 } // namespace filescope
 } // namespace anonymous
@@ -44,12 +46,20 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void initPlugin() { }
+void initPlugin() 
+{ 
+    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Loading the 'Vox.Vox Scene ExIm' plugin");
+    
+    filescope::handle = PluginManager::instance().acquirePluginHandle();
+}
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void freePlugin() { }
+void freePlugin() 
+{ 
+    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Unloading the 'Vox.Vox Scene ExIm' plugin");
+}
 
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
@@ -99,7 +109,7 @@ void enable()
 {  
     VOX_LOG_INFO(VSI_LOG_CATEGORY, "Enabling the 'Vox.Vox Scene ExIm' plugin");
     
-    filescope::exim = std::shared_ptr<VoxSceneFile>(new VoxSceneFile());
+    filescope::exim = std::shared_ptr<VoxSceneFile>(new VoxSceneFile(filescope::handle));
 
     vox::Scene::registerImportModule(".xml", filescope::exim);
     vox::Scene::registerExportModule(".xml", filescope::exim);
@@ -116,4 +126,5 @@ void disable()
     vox::Scene::removeExportModule(filescope::exim);
 
     filescope::exim.reset();
+    filescope::handle.reset();
 }

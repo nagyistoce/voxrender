@@ -44,12 +44,14 @@ namespace filescope {
 
         std::vector<size_t> bins(nBins, 0);
 
-        for (size_t i = 0; i < elements; i++)
+        auto extent = volume->extent();
+	    for (size_t k = 0; k < extent[2]; k++)
+	    for (size_t j = 0; j < extent[1]; j++)
+	    for (size_t i = 0; i < extent[0]; i++)
         {
-            float  sample           = static_cast<float>(data[i]) / max;
-            float  normalizedSample = (sample - range[0]) / (range[1] - range[0]);
+            float sample = volume->fetchNormalized(i, j, k);
 
-            size_t bin = clamp<size_t>(static_cast<size_t>(normalizedSample*nBins), 0, nBins-1);
+            size_t bin = clamp<size_t>(static_cast<size_t>(sample*(nBins-1)), 0, nBins-1);
 
             bins[bin]++;
         }
@@ -64,8 +66,18 @@ namespace filescope {
     {
         switch (volume->type())
         {
-            case Volume::Type_UInt8:  return filescope::generateHistogramBins<UInt8>(256, volume);   // Assuming max range has negligible cost
-            case Volume::Type_UInt16: return filescope::generateHistogramBins<UInt16>(512, volume);
+            case Volume::Type_UInt8:  
+            {
+                size_t min = 255 * volume->valueRange()[0];
+                size_t max = 255 * volume->valueRange()[1];
+                return filescope::generateHistogramBins<UInt8>(max-min+1, volume);
+            }
+
+            case Volume::Type_UInt16:
+            {
+                return filescope::generateHistogramBins<UInt16>(512, volume);
+            }
+
             default:
                 throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
                     format("Unsupported volume data type (%1%)", 
@@ -203,13 +215,21 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
 
     auto const height  = m_gradientImage.height();
     auto const width   = m_gradientImage.width();
-
-    memset(m_gradientImage.data(), 255, m_gradientImage.stride()*m_gradientImage.height());
+    
+	for (size_t j = 0; j < height;  j++)
+	for (size_t i = 0; i < width; i++)
+    {
+        auto & pixel = m_gradientImage.at(i, j);
+        pixel.a = 255;
+        pixel.r = 0;
+        pixel.g = 0;
+        pixel.b = 0;
+    }
 
     auto extent = volume->extent();
-	for (size_t i = 0; i < extent[0]; i++)
-	for (size_t j = 0; j < extent[1]; j++)
 	for (size_t k = 0; k < extent[2]; k++)
+	for (size_t j = 0; j < extent[1]; j++)
+	for (size_t i = 0; i < extent[0]; i++)
     {
         auto im = i ? i-1 : 0;
         auto jm = j ? j-1 : 0;
@@ -229,10 +249,14 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
         auto xpos = clamp<size_t>(density*(width-1), 0, width-1);
         auto ypos = height-1-clamp<size_t>(gradient*(height-1), 0, height-1);
 
-        auto & pixel = m_gradientImage.at(xpos, ypos);
-        pixel.r *= 0.95f;
-        pixel.g *= 0.95f;
-        pixel.b *= 0.95f;
+        m_gradientImage.at(xpos, ypos).a *= 0.95f;
+    }
+    
+	for (size_t j = 0; j < height; j++)
+	for (size_t i = 0; i < width;  i++)
+    {
+        auto & pixel = m_gradientImage.at(i, j);
+        pixel.a = 255 - pixel.a;
     }
 
     auto tend = boost::chrono::high_resolution_clock::now();

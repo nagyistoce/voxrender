@@ -46,6 +46,8 @@ namespace vox
 class RVI_EXPORT RawVolumeFile : public SceneExporter, public SceneImporter
 {
 public:
+    RawVolumeFile(std::shared_ptr<void> handle) : m_handle(handle) { }
+
 	/** 
      * @brief Vox Scene File Exporter
      *
@@ -68,6 +70,9 @@ public:
      *  Endianess     : String   | Specifies endianess ("little" or "big") Optional if BytesPerVoxel=8.
      */
 	virtual Scene importer(ResourceIStream & source, OptionSet const& options);
+    
+private:
+    std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
 };
 
 }

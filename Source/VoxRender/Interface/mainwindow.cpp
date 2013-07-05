@@ -34,6 +34,7 @@
 #include "lightdialogue.h"
 #include "clipdialogue.h"
 #include "clipplanewidget.h"
+#include "histogramgenerator.h"
 
 // VoxRender Includes
 #include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
@@ -159,10 +160,13 @@ MainWindow::~MainWindow()
 {
     writeSettings();
 
+    HistogramGenerator::instance()->stopGeneratingImages();
+
     activeScene.reset();
     m_renderController.stop();
     m_renderer.reset();
 
+    delete histogramwidget;
     delete transferwidget;
 	delete m_renderView;
 

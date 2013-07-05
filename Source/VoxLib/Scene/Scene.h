@@ -230,13 +230,7 @@ namespace vox
         static void removeExportModule(String const& extension);
 
         /** Releases handles to the scene's internal data components */
-        void reset()
-        {
-            volume.reset(); 
-            transfer.reset(); 
-            lightSet.reset(); 
-            camera.reset();
-        }
+        void reset();
 
         /** Logs warning for missing scene components */
         void issueWarningsForMissingHandles() const;

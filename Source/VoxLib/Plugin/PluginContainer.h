@@ -192,7 +192,7 @@ namespace vox {
             m_disableFunc    = m_plugin.findSymbolAs<DisableFunc>("disable");
         }
 
-        /** Extracts the plugin info from the loaded plugin */
+        /** Extracts the plugin info from the plugin dll without initiating it */
         void getInfo(String const& filename)
         {
             m_plugin.open(filename);
@@ -212,9 +212,7 @@ namespace vox {
                 m_info->apiVersionMax = parseVersionStr(m_plugin.findSymbolAs<ApiVersionMaxFunc>("apiVersionMax")());
                 m_info->apiVersionMin = parseVersionStr(m_plugin.findSymbolAs<ApiVersionMinFunc>("apiVersionMin")());
             
-            getPluginHandles();
-
-            m_initPluginFunc();
+            m_plugin.close();
         }
 
         /** Parses a version string into a version structure */

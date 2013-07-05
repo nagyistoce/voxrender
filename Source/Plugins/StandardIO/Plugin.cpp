@@ -31,6 +31,7 @@
 #include "StandardIO/StandardIO.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Plugin/PluginManager.h"
 
 // LibCurl Library
 #include <curl/curl.h>
@@ -39,6 +40,7 @@ namespace {
 namespace filescope {
 
     static std::shared_ptr<vox::StandardIO> io;
+    std::shared_ptr<void> handle;
 
 } // namespace filescope
 } // namespace anonymous
@@ -46,12 +48,20 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void initPlugin() { }
+void initPlugin() 
+{
+    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Loading the 'Vox.Standard IO' plugin");
+    
+    filescope::handle = vox::PluginManager::instance().acquirePluginHandle(); 
+}
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void freePlugin() { }
+void freePlugin() 
+{
+    VOX_LOG_INFO(SIO_LOG_CATEGORY, "Unloading the 'Vox.Standard IO' plugin"); 
+}
 
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
@@ -139,4 +149,5 @@ void disable()
     vox::Resource::removeModule(filescope::io);
 
     filescope::io.reset();
+    filescope::handle.reset();
 }

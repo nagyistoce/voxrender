@@ -27,7 +27,19 @@
 // Include Header
 #include "Functors.h"
 
+namespace vox {
+
 // --------------------------------------------------------------------
 //  Implements a convenience array deleter for std::shared_ptr
 // --------------------------------------------------------------------
-void vox::arrayDeleter(void* data) { delete[] data; }
+std::shared_ptr<UInt8> makeSharedArray(size_t bytes)
+{
+    return std::shared_ptr<UInt8>(new UInt8[bytes], &arrayDeleter);
+}
+
+// --------------------------------------------------------------------
+//  Implements a convenience array deleter for std::shared_ptr
+// --------------------------------------------------------------------
+void arrayDeleter(void* data) { delete[] data; }
+
+} // namespace vox

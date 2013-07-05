@@ -41,8 +41,8 @@ namespace vox
     class VOX_EXPORT LightSet : public std::enable_shared_from_this<LightSet>
     {
     public:
-        /** Ensure initial context change */
-        LightSet() : m_contextChanged(true) { }
+        /** Constructs a new transfer function object */
+        static std::shared_ptr<LightSet> create() { return std::shared_ptr<LightSet>(new LightSet()); }
 
         /** Sets the ambient lighting conditions */
         void setAmbientLight(Vector3f const& light)
@@ -91,6 +91,9 @@ namespace vox
         bool isAmbientDirty() const { return m_ambientChanged; }
 
     private:
+        /** Ensure initial context change */
+        LightSet() : m_contextChanged(true) { }
+
         friend RenderController;
         friend Light;
 

@@ -30,11 +30,15 @@
 #include "FileIO/Common.h"
 #include "FileIO/FileIO.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Plugin/PluginManager.h"
+
+using namespace vox;
 
 namespace {
 namespace filescope {
 
     static std::shared_ptr<vox::FileIO> io;
+    std::shared_ptr<void> handle;
 
 } // namespace filescope
 } // namespace anonymous
@@ -42,12 +46,20 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void initPlugin() { }
+void initPlugin() 
+{
+    VOX_LOG_INFO(FIO_LOG_CATEGORY, "Loading the 'Vox.File IO' plugin"); 
+    
+    filescope::handle = PluginManager::instance().acquirePluginHandle();
+}
 
 // --------------------------------------------------------------------
 //  Deletes the specified file or directory 
 // --------------------------------------------------------------------
-void freePlugin() { }
+void freePlugin()
+{ 
+    VOX_LOG_INFO(FIO_LOG_CATEGORY, "Unloading the 'Vox.File IO' plugin");
+}
 
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
@@ -114,4 +126,5 @@ void disable()
     vox::Resource::removeModule(filescope::io);
 
     filescope::io.reset();
+    filescope::handle.reset();
 }

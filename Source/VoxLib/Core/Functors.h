@@ -30,6 +30,7 @@
 
 // Common headers
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Types.h"
 #include "VoxLib/Core/Preprocessor.h"
 
 // Repetition limit for functors
@@ -81,6 +82,9 @@ namespace vox
     {
         return (value<low) ? low : ( (value>high) ? high : value );
     }
+
+    /** Creates a shared array of the specified size */
+    VOX_EXPORT VOX_HOST std::shared_ptr<UInt8> makeSharedArray(size_t bytes);
 
     /** Functional array deleter method for shared_ptr */
     VOX_EXPORT VOX_HOST void arrayDeleter(void* data);

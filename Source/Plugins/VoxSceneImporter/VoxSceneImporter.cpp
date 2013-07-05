@@ -97,8 +97,8 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
             // --------------------------------------------------------------------
-            SceneImporter(ResourceIStream & source, OptionSet const& options) : 
-              m_options(options), m_node(&m_tree), m_identifier(source.identifier())
+            SceneImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> handle) : 
+              m_options(options), m_node(&m_tree), m_identifier(source.identifier()), m_handle(handle)
             {
                 // Detect errors parsing the scene file's XML content
                 try
@@ -183,6 +183,8 @@ namespace
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
             static int const versionMinor = 0; ///< Scene version minor [enforces non-breaking]
 
+            std::shared_ptr<void> & m_handle;
+
             boost::property_tree::ptree   m_tree;        ///< Scenefile tree
             boost::property_tree::ptree * m_node;        ///< Current node in tree (top of traversal stack)
             OptionSet const&              m_options;     ///< Import options
@@ -232,7 +234,7 @@ namespace
                 
                   // Instantiate default volume object
                   auto cameraPtr = executeImportDirectives().camera;
-                  if (!cameraPtr) cameraPtr = std::shared_ptr<Camera>(new Camera());
+                  if (!cameraPtr) cameraPtr = Camera::create();
                   auto & camera = *cameraPtr;
                 
                   // :TODO: This just overwrites imported parameters, should initialize to default
@@ -268,7 +270,7 @@ namespace
                 if (!push("Lights", Preferred)) return nullptr;
 
                   // Instantiate empty light object vector
-                  auto lightSetPtr = std::make_shared<LightSet>();
+                  auto lightSetPtr = LightSet::create();
                   auto & lightSet = *lightSetPtr;
 
                   // Check for ambient level specification
@@ -300,7 +302,7 @@ namespace
 
                   // Instantiate default volume object
                   auto volumePtr = executeImportDirectives().volume;
-                  if (!volumePtr) volumePtr = std::make_shared<Volume>();
+                  if (!volumePtr) volumePtr = Volume::create();
                   auto & volume = *volumePtr;
         
                   // Read inline volume parameter specifications
@@ -325,7 +327,7 @@ namespace
 
                   // Instantiate default volume object
                   auto paramPtr = executeImportDirectives().parameters;
-                  if (!paramPtr) paramPtr = std::make_shared<RenderParams>();
+                  if (!paramPtr) paramPtr = std::shared_ptr<RenderParams>(m_handle, new RenderParams());
                   auto & parameters = *paramPtr;
         
                   // Read inline parameter specifications
@@ -387,7 +389,7 @@ namespace
                           }
                           else // load inline specification of material
                           {
-                              auto material = std::make_shared<Material>();
+                              auto material = Material::create();
                               material->setGlossiness( region.second.get("Glossiness", 0.0f) );
                               material->setOpticalThickness( region.second.get("Thickness", 0.0f) );
                               node->setMaterial(material);
@@ -412,7 +414,7 @@ namespace
 
                     // Instantiate default volume object
                     auto geoPtr = executeImportDirectives().clipGeometry;
-                    if (!geoPtr) geoPtr = std::make_shared<PrimGroup>();
+                    if (!geoPtr) geoPtr = std::shared_ptr<PrimGroup>(m_handle, new PrimGroup());
                     auto & geometrySet = *geoPtr;
 
                     // Parse inline geometry specifications
@@ -444,7 +446,7 @@ namespace
                         }
                         
                         // Parse the material specification :TODO:
-                        auto material = std::make_shared<Material>();
+                        auto material = Material::create();
                         material->setGlossiness( materialNode.second.get("Glossiness", 0.0f) );
                         material->setOpticalThickness( materialNode.second.get("Thickness", 0.0f) );
                         materials[materialNode.first] = material;
@@ -605,7 +607,7 @@ void VoxSceneFile::exporter(ResourceOStream & sink, OptionSet const& options, Sc
 Scene VoxSceneFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
-    filescope::SceneImporter importModule(source, options);
+    filescope::SceneImporter importModule(source, options, m_handle);
 
     // Read property tree and load scene
     return importModule.parseSceneFile();

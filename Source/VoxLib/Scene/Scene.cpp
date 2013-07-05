@@ -59,6 +59,17 @@ namespace filescope {
 } // namespace anonymous
 
 // --------------------------------------------------------------------
+//  Resets the scene element pointers
+// --------------------------------------------------------------------
+void Scene::reset()
+{
+    camera.reset();
+    transfer.reset(); 
+    lightSet.reset(); 
+    volume.reset(); 
+}
+
+// --------------------------------------------------------------------
 //  Registers a new resource import module
 // --------------------------------------------------------------------
 void Scene::registerImportModule(String const& extension, std::shared_ptr<SceneImporter> importer)

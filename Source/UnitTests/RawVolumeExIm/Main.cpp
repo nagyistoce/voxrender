@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         std::cout << "WARNING: This test may take awhile to complete" << std::endl;
 
         // Register the raw volume file ExIm and a filesystem IO module
-        auto exim = std::shared_ptr<RawVolumeFile>(new RawVolumeFile());
+        auto exim = std::shared_ptr<RawVolumeFile>(new RawVolumeFile(nullptr));
         Scene::registerImportModule(".raw", exim);
         Scene::registerExportModule(".raw", exim);
         Resource::registerModule("file", std::shared_ptr<FileIO>(new FileIO));
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
 
         // Generate a random test volume data set
         std::shared_ptr<UInt8> data(new UInt8[nVoxels], &arrayDeleter);
-        auto volume = std::make_shared<Volume>(data, extent, spacing);
+        auto volume = Volume::create(data, extent, spacing);
         for (size_t i = 256*256*128; i < nVoxels; i++)
         {
             data.get()[i] = static_cast<UInt8>( rand()*std::numeric_limits<UInt8>::max() );

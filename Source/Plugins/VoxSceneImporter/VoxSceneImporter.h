@@ -58,6 +58,8 @@ enum ExportOpt
 class VSI_EXPORT VoxSceneFile : public SceneImporter, public SceneExporter
 {
 public:
+    VoxSceneFile(std::shared_ptr<void> handle) : m_handle(handle) { }
+
 	/** 
      * @brief Vox Scene File Exporter
      *
@@ -91,6 +93,9 @@ public:
      *  - None
      */
 	Scene importer(ResourceIStream & data, OptionSet const& options);
+
+private:
+    std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
 };
 
 }

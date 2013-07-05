@@ -216,6 +216,7 @@ void TransferWidget::switchDimensions(int nDims)
 		case 1:
 
 			// Configure widget for 1-Dimensional work 
+            m_primaryView->setType(HistogramView::DataType_Density);
 			ui->radioButton_1->setChecked( true ); 
 			ui->groupBox_transferSecondary->hide( );
 			ui->horizontalSlider_gradient->hide( );
@@ -230,6 +231,7 @@ void TransferWidget::switchDimensions(int nDims)
 		case 2:
 
 			// Configure widget for 2-Dimensional work
+            m_primaryView->setType(HistogramView::DataType_DensityGrad);
 			ui->radioButton_2->setChecked( true ); 
 			ui->groupBox_transferSecondary->hide( );
 			ui->horizontalSlider_gradient->show( );
@@ -244,6 +246,8 @@ void TransferWidget::switchDimensions(int nDims)
 		case 3:
 
 			// Configure widget for 3-Dimensional work
+            m_primaryView->setType(HistogramView::DataType_DensityGrad);
+            m_secondaryView->setType(HistogramView::DataType_DensityLap);
 			ui->radioButton_3->setChecked( true ); 
 			ui->groupBox_transferSecondary->show( );
 			ui->horizontalSlider_gradient->show( );

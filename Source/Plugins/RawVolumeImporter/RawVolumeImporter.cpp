@@ -149,8 +149,8 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
             // --------------------------------------------------------------------
-            RawImporter(ResourceIStream & source, OptionSet const& options) : 
-              m_options(options), m_source(source)
+            RawImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> & handle) : 
+              m_options(options), m_source(source), m_handle(handle)
             {
                 // Compose the resource identifier for log warning entries
                 std::string filename = source.identifier().extractFileName();
@@ -175,12 +175,12 @@ namespace
 
                 // Read the raw volume data from the filter chain
                 size_t voxels = size.fold<size_t>(1, &mul);
-                std::shared_ptr<UInt8> data(new UInt8[voxels*bytesPerVoxel], &arrayDeleter);
+                auto data = makeSharedArray(voxels*bytesPerVoxel);
                 readInputData(bytesPerVoxel, voxels, data.get());
 				
                 // Construct the volume object for the response
                 Scene scene;
-                scene.volume = std::make_shared<Volume>(data, size, spacing, offset, type);
+                scene.volume = Volume::create(data, size, spacing, offset, type);
 
                 return scene;
             }
@@ -255,6 +255,8 @@ namespace
 
             static int const versionMajor = 0; ///< Version major
             static int const versionMinor = 0; ///< Version minor 
+            
+            std::shared_ptr<void> & m_handle;   ///< Plugin handle to track this DLL's usage
 
             ResourceIStream & m_source;       ///< Resource stream
             OptionSet const&  m_options;      ///< Import options
@@ -281,7 +283,7 @@ void RawVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, S
 Scene RawVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
-    filescope::RawImporter importModule(source, options);
+    filescope::RawImporter importModule(source, options, m_handle);
 
     // Read property tree and load scene
     return importModule.readRawDataFile();
