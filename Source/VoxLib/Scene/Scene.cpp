@@ -4,7 +4,7 @@
 
 	Description: Defines the Scene class used by the Renderer
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -67,6 +67,8 @@ void Scene::reset()
     transfer.reset(); 
     lightSet.reset(); 
     volume.reset(); 
+    clipGeometry.reset();
+    parameters.reset();
 }
 
 // --------------------------------------------------------------------
@@ -210,10 +212,12 @@ void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const
 // --------------------------------------------------------------------
 void Scene::issueWarningsForMissingHandles() const
 {
-    if (!camera)   filescope::issueWarning("Camera");
-    if (!volume)   filescope::issueWarning("Volume");
-    if (!lightSet) filescope::issueWarning("LightSet");
-    if (!transfer) filescope::issueWarning("Transfer Function");
+    if (!camera)        filescope::issueWarning("Camera");
+    if (!volume)        filescope::issueWarning("Volume");
+    if (!lightSet)      filescope::issueWarning("LightSet");
+    if (!transfer)      filescope::issueWarning("Transfer Function");
+    if (!clipGeometry)  filescope::issueWarning("Clipping Geometry");
+    if (!parameters)    filescope::issueWarning("Render Parameters");
 }
 
 } // namespace vox

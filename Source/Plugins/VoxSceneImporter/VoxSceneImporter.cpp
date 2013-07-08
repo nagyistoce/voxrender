@@ -327,7 +327,7 @@ namespace
 
                   // Instantiate default volume object
                   auto paramPtr = executeImportDirectives().parameters;
-                  if (!paramPtr) paramPtr = std::shared_ptr<RenderParams>(m_handle, new RenderParams());
+                  if (!paramPtr) paramPtr = RenderParams::create();
                   auto & parameters = *paramPtr;
         
                   // Read inline parameter specifications
@@ -414,7 +414,7 @@ namespace
 
                     // Instantiate default volume object
                     auto geoPtr = executeImportDirectives().clipGeometry;
-                    if (!geoPtr) geoPtr = std::shared_ptr<PrimGroup>(m_handle, new PrimGroup());
+                    if (!geoPtr) geoPtr = PrimGroup::create();
                     auto & geometrySet = *geoPtr;
 
                     // Parse inline geometry specifications

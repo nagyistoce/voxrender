@@ -83,7 +83,7 @@ namespace vox
         T & at(size_t x, size_t y) { return *((T*)(((UInt8*)m_buffer.get()) + y * m_stride + x * sizeof(T))); }
         
         /** Image pixel accessor */
-        T const& at(size_t x, size_t y) const { return at(x, y); }
+        T const& at(size_t x, size_t y) const { return *((T*)(((UInt8*)m_buffer.get()) + y * m_stride + x * sizeof(T))); }
         
         /** Image buffer accessor for const data access */
         T const* data() const { return m_buffer.get(); }

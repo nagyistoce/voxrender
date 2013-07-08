@@ -305,9 +305,10 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 
     // Compute the performance statistics for this frame
     auto curr    = boost::chrono::high_resolution_clock::now();
-    auto elapsed = curr - m_lastTime; m_lastTime = curr;
+    auto elapsed = curr - m_lastTime; 
+    m_lastTime = curr;
 
-    auto fps = 1.0f / (static_cast<float>(elapsed.count()) / 1000.0f / 1000.0f / 1000.0f); // this is crap
+    auto fps = 1000000.0f / boost::chrono::duration_cast<boost::chrono::microseconds>(elapsed).count();
 
     // Draws the statistical information overlay
     {

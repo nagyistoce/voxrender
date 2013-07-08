@@ -71,10 +71,11 @@ static char const* VOX_LOG_CATEGORY = "Vox";
 #   pragma message("warning: 'deprecated' tag not defined for this compiler, no warnings will be issued")
 #endif
 
-// Platform independent compiler warning macro
+// Platform independent compiler warning macros
 #ifdef _MSC_VER
 #   define VOX_LOC __FILE__ "("VOX_STR(__LINE__)") : Warning Msg: "
 #   define VOX_WARN(msg) _Pragma(message(VOX_LOC msg))
+#   pragma warning(disable : 4251 4275) // Needs to have DLL interface to be used by clients
 #else
 #   define VOXWARN(msg)
 #endif

@@ -555,8 +555,8 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     {
         // Attempt to parse the scene file content
         activeScene = vox::Scene::imprt(identifier);
-        if (!activeScene.parameters)   activeScene.parameters   = std::make_shared<vox::RenderParams>();
-        if (!activeScene.clipGeometry) activeScene.clipGeometry = std::make_shared<vox::PrimGroup>();
+        if (!activeScene.parameters)   activeScene.parameters   = RenderParams::create();
+        if (!activeScene.clipGeometry) activeScene.clipGeometry = PrimGroup::create();
         // :TODO: Default other parameters if unspecified (immediate)
         // :TODO: Interactive option specification interface for import (long-term) ie raw volume width, height, etc
 
@@ -920,7 +920,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
    
     // Create the control widget to populate the pane
     QWidget * currWidget = nullptr;
-    if (prim->typeId() == "Plane")
+    if (prim->typeId() == Plane::classTypeId())
     {
         auto plane = std::dynamic_pointer_cast<vox::Plane>(prim);
         if (!plane) throw Error(__FILE__, __LINE__, "GUI", 
@@ -1282,7 +1282,7 @@ void MainWindow::on_pushButton_addClip_clicked()
     switch (clipDialogue.typeSelected())
     {
     case ClipType_Plane:
-        prim = std::shared_ptr<vox::Plane>(new vox::Plane());
+        prim = vox::Plane::create();
         break;
 
     default:

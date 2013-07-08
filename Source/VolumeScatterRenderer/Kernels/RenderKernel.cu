@@ -43,10 +43,20 @@
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
 
+// Include Clip Geometry Functions
+#include "VolumeScatterRenderer/Clip/CClipGroup.cuh"
+#include "VolumeScatterRenderer/Clip/CClipPlane.cuh"
+
 namespace vox {
 
 namespace {
 namespace filescope {
+    
+    // --------------------------------------------------------------------
+    //                   HOST HANDLES FOR DEVICE DATA
+    // --------------------------------------------------------------------
+
+    std::shared_ptr<CClipGeometry> gh_clipRoot;
 
     // --------------------------------------------------------------------
     //                        RENDER PARAMETERS
@@ -61,6 +71,8 @@ namespace filescope {
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
     __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light
+
+    __constant__ CClipGeometry::Clipper * gd_clipRoot;    ///< Clipping geometry root
 
     __constant__ ColorLabxHdr gd_backdropClr;       ///< Color of the backdrop for the volume
 
@@ -147,6 +159,12 @@ namespace filescope {
         // Compute the intersection of the ray with the volume's outer bounding box
         Intersect::rayBoxIntersection(rayPos, rayDir, 
             Vector3f(0.0f), gd_volumeBuffer.size(), rayMin, rayMax);
+
+        Ray3f rayForTest;
+        if (filescope::gd_clipRoot)
+        {
+           filescope::gd_clipRoot->clip(rayForTest);
+        }
 
         // Compute the intersection of the ray with clipping planes (:DEBUG:)
         //Intersect::rayPlaneIntersection(rayPos, rayDir, 
@@ -331,7 +349,7 @@ namespace filescope {
     //  region of the image buffer
     // --------------------------------------------------------------------
     __global__ void renderKernel()
-    { 	
+    { 
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
 	    int py = blockIdx.y * blockDim.y + threadIdx.y;
@@ -357,6 +375,18 @@ namespace filescope {
 
 } // namespace filescope
 } // namespace anonymous
+
+// --------------------------------------------------------------------
+//  Sets the root primitive for clipping operations
+// --------------------------------------------------------------------
+void RenderKernel::setClipRoot(std::shared_ptr<CClipGeometry> root)
+{
+    CClipGeometry::Clipper * ptr = root ? root->clipper() : nullptr;
+        
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_clipRoot, &ptr, sizeof(CClipGeometry::Clipper*)));
+
+    filescope::gh_clipRoot = root; // Store the pointer so we don't free the memory accidently
+}
 
 // --------------------------------------------------------------------
 //  Sets the camera model for the active device

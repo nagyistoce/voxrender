@@ -44,6 +44,7 @@
 #include "VoxLib/Scene/Light.h"
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 // Device representations of scene components
 #include "VolumeScatterRenderer/Core/CBuffer.h"
@@ -51,6 +52,7 @@
 #include "VolumeScatterRenderer/Core/CRandomGenerator.h"
 #include "VolumeScatterRenderer/Core/CSampleBuffer.h"
 #include "VolumeScatterRenderer/Scene/CCamera.h"
+#include "VolumeScatterRenderer/Scene/CClipGeometry.h"
 #include "VolumeScatterRenderer/Scene/CLight.h"
 #include "VolumeScatterRenderer/Scene/CTransferBuffer.h"
 #include "VolumeScatterRenderer/Scene/CVolumeBuffer.h"
@@ -180,6 +182,12 @@ public:
         if (scene.camera->isDirty())
         {
             RenderKernel::setCamera(CCamera(scene.camera));
+        }
+
+        // Clipping geometry synchronization
+        if (scene.clipGeometry->isDirty())
+        {
+            RenderKernel::setClipRoot(CClipGeometry::create(scene.clipGeometry));
         }
 
         // Light data synchronization

@@ -25,3 +25,68 @@
 
 // Include Header
 #include "PrimGroup.h"
+
+namespace vox {
+    
+namespace {
+namespace filescope {
+
+    // Static member initialization
+    Char const* typeId  = "PrimGroup";
+
+} // namespace filescope 
+} // namespace
+
+// ----------------------------------------------------------------------------
+//  Returns the UID for this primitive type
+// ----------------------------------------------------------------------------
+Char const* PrimGroup::typeId() 
+{ 
+    return filescope::typeId; 
+}
+
+// ----------------------------------------------------------------------------
+//  Returns the UID for this primitive type
+// ----------------------------------------------------------------------------          
+Char const* PrimGroup::classTypeId() 
+{ 
+    return filescope::typeId; 
+}  
+
+// --------------------------------------------------------------------
+//  Adds a new child node to this primitive group
+// --------------------------------------------------------------------
+void PrimGroup::add(std::shared_ptr<Primitive> child)
+{
+    m_children.push_front(child);
+
+    child->setParent(shared_from_this());
+
+    child->setDirty();
+
+    setDirty();
+}
+
+// --------------------------------------------------------------------
+//  Removes a child node from this primitive group
+// --------------------------------------------------------------------
+void PrimGroup::remove(std::shared_ptr<Primitive> child)
+{
+    m_children.remove(child);
+
+    child->setParent(nullptr);
+
+    setDirty();
+}
+
+// --------------------------------------------------------------------
+//  Clears all elements from the primitive group
+// --------------------------------------------------------------------
+void PrimGroup::clear()
+{ 
+     m_children.clear(); 
+     
+     setDirty(); 
+}
+
+} // namespace vox

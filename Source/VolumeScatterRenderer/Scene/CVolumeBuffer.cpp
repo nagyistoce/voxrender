@@ -44,7 +44,7 @@ void CVolumeBuffer::reset()
 {
     if (m_handle)
     {
-        VOX_CUDA_CHECK(cudaFreeArray(m_handle));
+        cudaFreeArray(m_handle);
 
         m_handle = nullptr;
     }

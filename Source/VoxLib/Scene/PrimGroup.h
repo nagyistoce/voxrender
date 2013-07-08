@@ -29,22 +29,26 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
-#include "VoxLib/Core/Geometry/Primitives.h"
+#include "VoxLib/Scene/Primitive.h"
 
 // API namespace
 namespace vox
 {
     /** Buffer class for scene lights */
-    class VOX_EXPORT PrimGroup : Primitive
+    class VOX_EXPORT PrimGroup : public Primitive, public std::enable_shared_from_this<PrimGroup>
     {
     public:
         /** Ensure initial context change */
-        PrimGroup() { }
-        
-        ~PrimGroup() {}
+        static std::shared_ptr<PrimGroup> create()
+        {
+            return std::shared_ptr<PrimGroup>(new PrimGroup());
+        }
 
         /** Returns the UID string classifying this type (classname) */
-        virtual Char const* typeId() { return "PrimGroup"; }
+        virtual Char const* typeId();
+        
+        /** Returns the UID string classifying this type (classname) */
+        static Char const* classTypeId();
 
         /** Adds a new child element to the group */
         void add(std::shared_ptr<Primitive> child);
@@ -53,10 +57,18 @@ namespace vox
         void remove(std::shared_ptr<Primitive> child);
 
         /** Clears all child elements from the group */
-        void clear() { m_children.clear(); setDirty(); }
+        void clear();
+
+        /** Returns a list of the current child nodes */
+        std::list<std::shared_ptr<Primitive>> children() 
+        {
+            return m_children;
+        }
 
     private:
-        std::map<String,std::shared_ptr<Primitive>> m_children;
+        PrimGroup() { }
+
+        std::list<std::shared_ptr<Primitive>> m_children;
     };
 }
 

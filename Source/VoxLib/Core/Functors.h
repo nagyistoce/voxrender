@@ -5,7 +5,7 @@
 	Defines some basic functors for simplifying container operations such as
     folding and mapping.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 

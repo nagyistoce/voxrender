@@ -63,7 +63,6 @@ Set(VoxLib_HEADERS_CORE_GEOMETRY
     Core/Geometry/Image.h
     Core/Geometry/Image3D.h
     Core/Geometry/Matrix.h
-    Core/Geometry/Primitives.h
     Core/Geometry/Ray.h
     Core/Geometry/Vector.h
 )
@@ -96,6 +95,7 @@ Set(VoxLib_HEADERS_SCENE
     Scene/Camera.h
     Scene/Light.h
     Scene/Material.h
+    Scene/Primitive.h
     Scene/PrimGroup.h
     Scene/RenderParams.h
     Scene/Scene.h
@@ -175,6 +175,7 @@ Set(VoxLib_SOURCES_SCENE
     Scene/Camera.cpp
     Scene/Light.cpp
     Scene/Material.cpp
+    Scene/Primitive.cpp
     Scene/PrimGroup.cpp
     Scene/Scene.cpp
     Scene/Transfer.cpp

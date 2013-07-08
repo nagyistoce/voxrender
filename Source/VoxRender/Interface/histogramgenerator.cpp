@@ -243,13 +243,13 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
         auto yd = volume->fetchNormalized(i,  jp, k ) - volume->fetchNormalized(i,  jm, k );
         auto zd = volume->fetchNormalized(i,  j,  kp) - volume->fetchNormalized(i,  j,  km);
 
-        auto gradient = sqrt(xd*xd + yd*yd + zd*zd) / 1.73205f;
+        auto gradient = sqrt(xd*xd + yd*yd + zd*zd);
         auto density  = volume->fetchNormalized(i, j, k);
 
         auto xpos = clamp<size_t>(density*(width-1), 0, width-1);
         auto ypos = height-1-clamp<size_t>(gradient*(height-1), 0, height-1);
 
-        m_gradientImage.at(xpos, ypos).a *= 0.95f;
+        m_gradientImage.at(xpos, ypos).a *= 0.99f;
     }
     
 	for (size_t j = 0; j < height; j++)

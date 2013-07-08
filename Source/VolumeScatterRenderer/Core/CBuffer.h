@@ -94,7 +94,7 @@ public:
     {
         if (m_pData)
         {
-            VOX_CUDA_CHECK(cudaFree(m_pData));
+            cudaFree(m_pData);
 
             m_pData = nullptr;
             m_size  = 0;
@@ -110,6 +110,8 @@ public:
     /** Writes data to the internal buffer from a standard vector, resizing as necessary */
     VOX_HOST void write(std::vector<T> const& data)
     {
+        if (data.size() == 0) { reset(); return; }
+
         if (m_size != data.size()) resize(data.size());
 
         write(&data[0], cudaMemcpyHostToDevice);
@@ -220,7 +222,7 @@ public:
     {
         if (m_pData)
         {
-            VOX_CUDA_CHECK(cudaFree(m_pData));
+            cudaFree(m_pData);
 
             m_pData  = nullptr;
             m_width  = 0;

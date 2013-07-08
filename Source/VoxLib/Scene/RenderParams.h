@@ -43,15 +43,9 @@ class RenderController;
 class VOX_EXPORT RenderParams
 {
 public:
-    /** Initializes default render parameters */
-    RenderParams() :
-        m_primaryStep(2.0f),
-        m_shadowStep(3.0f),
-        m_occludeStep(1.0f),
-        m_occludeSamples(0u),
-        m_gradCutoff(0.2f),
-        m_contextChanged(true)
+    static std::shared_ptr<RenderParams> create()
     {
+        return std::shared_ptr<RenderParams>(new RenderParams());
     }
 
     /** Returns true if the context change flag is set */
@@ -88,6 +82,17 @@ public:
     void setOccludeSamples(unsigned int samples) { m_occludeSamples = samples; m_contextChanged = true; }
 
 private:
+    /** Initializes default render parameters */
+    RenderParams() :
+        m_primaryStep(2.0f),
+        m_shadowStep(3.0f),
+        m_occludeStep(1.0f),
+        m_occludeSamples(0u),
+        m_gradCutoff(0.2f),
+        m_contextChanged(true)
+    {
+    }
+
     friend RenderController;
 
     float m_primaryStep;    ///< Step size for primary volume trace

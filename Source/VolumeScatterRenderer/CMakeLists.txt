@@ -43,15 +43,23 @@ Set(HEADERS_CORE_IMPL
     Core/CRandomBuffer.h
     Core/CRandomGenerator.h
     Core/CSampleBuffer.h
-	Core/Intersect.h
+    Core/Intersect.h
 )
 
 Set(HEADERS_SCENE_IMPL
     Scene/CCamera.h
+    Scene/CClipGeometry.h
     Scene/CLight.h
     Scene/CTransferBuffer.h
     Scene/CVolumeBuffer.h
-	Scene/CRenderParams.h
+    Scene/CRenderParams.h
+)
+
+Set(HEADERS_CLIP_IMPL
+    Clip/CClipGroup.cuh
+    Clip/CClipGroup.h
+    Clip/CClipPlane.cuh
+    Clip/CClipPlane.h
 )
 
 Set(HEADERS_KERNELS
@@ -63,6 +71,7 @@ Set(HEADERS_KERNELS
 set(HEADER_FILES
     ${HEADERS_CORE}
     ${HEADERS_CORE_IMPL}
+    ${HEADERS_CLIP_IMPL}
     ${HEADERS_SCENE_IMPL}
     ${HEADERS_KERNELS}
 )
@@ -70,6 +79,7 @@ set(HEADER_FILES
 SOURCE_GROUP("Header Files\\Core"        FILES ${HEADERS_CORE})
 SOURCE_GROUP("Header Files\\Core\\Impl"  FILES ${HEADERS_CORE_IMPL})
 SOURCE_GROUP("Header Files\\Scene\\Impl" FILES ${HEADERS_SCENE_IMPL})
+SOURCE_GROUP("Header Files\\Clip\\Impl"  FILES ${HEADERS_CLIP_IMPL})
 SOURCE_GROUP("Header Files\\Kernels"     FILES ${HEADERS_KERNELS})
 
 #===============================================#
@@ -81,8 +91,14 @@ Set(SOURCES_CORE
     Core/CBuffer.cu
 )
 
+Set(SOURCES_CLIP
+    Clip/CClipGroup.cpp
+    Clip/CClipPlane.cpp
+)
+
 Set(SOURCES_SCENE
     Scene/CCamera.cpp
+    Scene/CClipGeometry.cpp
     Scene/CVolumeBuffer.cpp
     Scene/CTransferBuffer.cpp
 )
@@ -97,10 +113,12 @@ set(SOURCE_FILES
     ${SOURCES_CORE}
     ${SOURCES_SCENE}
     ${SOURCES_KERNELS}
+    ${SOURCES_CLIP}
 )
 
 SOURCE_GROUP("Source Files\\Core"       FILES ${SOURCES_CORE})
 SOURCE_GROUP("Source Files\\Scene"      FILES ${SOURCES_SCENE})
+SOURCE_GROUP("Source Files\\Clip"       FILES ${SOURCES_CLIP})
 SOURCE_GROUP("Source Files\\Kernels"    FILES ${SOURCES_KERNELS})
 
 #===============================================#

@@ -36,6 +36,7 @@
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/RenderParams.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 // API namespace
 namespace vox
@@ -264,6 +265,7 @@ void RenderController::synchronizationSubroutine()
         m_scene.volume->m_contextChanged     = false;
         m_scene.transfer->m_contextChanged   = false;
         m_scene.parameters->m_contextChanged = false;
+        m_scene.clipGeometry->setDirty(false);
     }
 }
 

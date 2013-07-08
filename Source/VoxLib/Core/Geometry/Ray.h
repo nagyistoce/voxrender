@@ -46,12 +46,16 @@ namespace vox
             Vector<T,N> const& direction
             ) :
             pos(origin),
-            dir(direction)
+            dir(direction),
+            min(0),
+            max(0)
         {
         }
 
 		Vector<T,N> pos; ///< Ray beg point
         Vector<T,N> dir; ///< Ray direction
+        T min;
+        T max;
 	};
 
 	// Common ray types

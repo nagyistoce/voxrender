@@ -30,7 +30,7 @@
 // API Header
 #include "VoxLib/Core/VoxRender.h"
 #include "VoxLib/Plugin/PluginManager.h"
-#include "VoxLib/Core/Geometry/Primitives.h"
+#include "VoxLib/Scene/Primitive.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"

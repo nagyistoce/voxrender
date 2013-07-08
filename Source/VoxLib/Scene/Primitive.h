@@ -1,12 +1,12 @@
 /* ===========================================================================
 
-	Project: VoxLib
+    Project: VoxLib
 
-	Description: Defines the basic primitive object element
+    Description: Defines the basic primitive object element
 
     Copyright (C) 2013 Lucas Sherman
 
-	Lucas Sherman, email: LucasASherman@gmail.com
+    Lucas Sherman, email: LucasASherman@gmail.com
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,8 +23,6 @@
 
 =========================================================================== */
 
-// :TODO: This should be in the Scene library
-
 // Begin definition
 #ifndef VOX_PRIMITIVES_H
 #define VOX_PRIMITIVES_H
@@ -37,15 +35,16 @@
 // API namespace
 namespace vox
 {
+    class VOX_EXPORT PrimGroup;
+    
     /** Primitive geometry object */
-    class Primitive
+    class VOX_EXPORT Primitive 
     {
     public:
         /** Prerequisite virtualized destructor for inheritance */
-        virtual ~Primitive() { }
+        virtual ~Primitive() {}
 
         /** Returns the type identifier for this primitive */
-        // :TODO: Register with static member for int
         virtual Char const* typeId() = 0;
 
         /** Returns the UID string for this primitive */
@@ -67,52 +66,91 @@ namespace vox
         bool isDirty() { return m_dirty; }
 
         /** Notifies the object that it's geometry should be updated */
-        void setDirty(bool dirty = true) { m_dirty = dirty; }
-
-        /** */
+        void setDirty(bool dirty = true) 
+        { 
+            m_dirty = dirty; 
+        
+            if (m_parent) m_parent->setDirty();
+        }
 
     private:
+        friend PrimGroup;
+
+        std::shared_ptr<Primitive> m_parent;
+
+        void setParent(std::shared_ptr<PrimGroup> parent);
+
         bool m_visible;   ///< The visibility status of this primitive
         bool m_dirty;     ///< The update flag for this primitive
 
     protected:
+        Primitive() {}
+
         String m_id;
     };
 
 	/** Plane structure */
-	class Plane : public Primitive
+    class VOX_EXPORT Plane : public Primitive
 	{
     public:
-        Plane() :
-          normal(0.0f, 1.0f, 0.0f),
-          position(0.0f, 0.0f, 0.0f)
-        {
+        /** Factory method for plane primitive */
+        static std::shared_ptr<Plane> create(
+            Vector3f const& normal   = Vector3f(0.0f, 1.0f, 0.0f),
+            float           distance = 0.0f
+            ) 
+        { 
+            return std::shared_ptr<Plane>(new Plane(normal, distance));
         }
 
         /** Returns the UID string classifying this type (classname) */
-        virtual Char const* typeId() { return "Plane"; }
+        virtual Char const* typeId();
+ 
+        /** Returns the UID string classifying this type (classname) */              
+        static Char const* classTypeId();
 
-		Vector3f normal;   ///< Normal vector of the plane
-        Vector3f position; ///< Position on the plane
+        /** Returns the current normal vector for this plane */
+        Vector3f const& normal() { return m_normal; }
+
+        /** Sets a new normal vector for this plane */
+        void setNormal(Vector3f const& normal);
+
+        /** Returns the current position vector for this plane */
+        float distance() { return m_distance; }
+
+        /** Sets a new position vector for this plane */
+        void setDistance(float distance);
+
+    private:
+        Plane(Vector3f const& normal, float distance) :
+          m_normal(normal), m_distance(distance)
+        {
+        }
+
+        Vector3f m_normal;   ///< Normal vector of the plane
+        float    m_distance; ///< Normal distance from origin
 	};
 
     /** Sphere structure */
-	class Sphere : public Primitive
+	class VOX_EXPORT Sphere : public Primitive
 	{
     public:
+        /** Returns the UID string classifying this type (classname) */
+        virtual Char const* typeId();
+ 
+        /** Returns the UID string classifying this type (classname) */              
+        static Char const* classTypeId();
+
+    private:
         Sphere() :
-          origin(0.0f, 0.0f, 0.0f),
-          radius(50.0f),
-          inside(true)
+          m_origin(0.0f, 0.0f, 0.0f),
+          m_radius(50.0f),
+          m_inside(true)
         {
         }
 
-        /** Returns the UID string classifying this type (classname) */
-        virtual Char const* typeId() { return "Sphere"; }
-
-		Vector3f origin; ///< Origin of the sphere
-        float    radius; ///< Radius of the sphere
-        bool     inside; ///< Inner or outer is solid
+        Vector3f m_origin; ///< Origin of the sphere
+        float    m_radius; ///< Radius of the sphere
+        bool     m_inside; ///< Inner or outer is solid
 	};
 }
 

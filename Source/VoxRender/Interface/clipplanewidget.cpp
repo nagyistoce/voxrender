@@ -28,11 +28,13 @@
 #include "clipplanewidget.h"
 
 // Include Dependencies
+#include "mainwindow.h"
 #include "utilities.h"
 
 // VoxLib Dependencies
-#include "VoxLib/Core/Geometry/Primitives.h"
 #include "VoxLib/Core/format.h"
+#include "VoxLib/Scene/Primitive.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 // QT Includes
 #include <QtWidgets/QMessageBox>
@@ -55,6 +57,8 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
     m_plane(plane)
 {
 	ui->setupUi(this);
+    
+    MainWindow::instance->scene().clipGeometry->add(m_plane);
 
     m_dirty = false;
 }
@@ -64,6 +68,10 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
 // --------------------------------------------------------------------
 ClipPlaneWidget::~ClipPlaneWidget()
 {
+    auto cg = MainWindow::instance->scene().clipGeometry;
+    
+    if (cg) cg->remove(m_plane);
+
     delete ui;
 }
 

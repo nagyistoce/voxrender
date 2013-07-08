@@ -38,10 +38,10 @@ namespace vox {
 // --------------------------------------------------------------------
 void CTransferBuffer::reset()
 {
-    if (m_diffuseArray)  { VOX_CUDA_CHECK(cudaFreeArray(m_diffuseArray)); m_diffuseArray = nullptr; }
-    if (m_opacityArray)  { VOX_CUDA_CHECK(cudaFreeArray(m_opacityArray)); m_opacityArray = nullptr; }
-    if (m_specularArray) { VOX_CUDA_CHECK(cudaFreeArray(m_specularArray)); m_specularArray = nullptr; }
-    if (m_emissiveArray) { VOX_CUDA_CHECK(cudaFreeArray(m_emissiveArray)); m_emissiveArray = nullptr; }
+    if (m_diffuseArray)  { cudaFreeArray(m_diffuseArray); m_diffuseArray = nullptr; }
+    if (m_opacityArray)  { cudaFreeArray(m_opacityArray); m_opacityArray = nullptr; }
+    if (m_specularArray) { cudaFreeArray(m_specularArray); m_specularArray = nullptr; }
+    if (m_emissiveArray) { cudaFreeArray(m_emissiveArray); m_emissiveArray = nullptr; }
 }
 
 // --------------------------------------------------------------------
