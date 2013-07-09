@@ -149,22 +149,14 @@ namespace filescope {
     //  Computes the ray intersection with the volume, taking into account
     //  any bounding volumes etc...
     // --------------------------------------------------------------------
-    VOX_DEVICE void intersectVolume(
-        const Vector3f &rayPos, 
-        const Vector3f &rayDir, 
-	    float &rayMin, 
-        float &rayMax
-        )
+    VOX_DEVICE void intersectVolume(Ray3f & ray)
     {
-        // Compute the intersection of the ray with the volume's outer bounding box
-        Intersect::rayBoxIntersection(rayPos, rayDir, 
-            Vector3f(0.0f), gd_volumeBuffer.size(), rayMin, rayMax);
+        // Compute the intersection with the volume extent box
+        Intersect::rayBoxIntersection(ray.pos, ray.dir, 
+            Vector3f(0.0f), gd_volumeBuffer.size(), ray.min, ray.max);
 
-        Ray3f rayForTest;
-        if (filescope::gd_clipRoot)
-        {
-           filescope::gd_clipRoot->clip(rayForTest);
-        }
+        // Compute the intersection with the scene clip geometry
+        if (filescope::gd_clipRoot) filescope::gd_clipRoot->clip(ray);
 
         // Compute the intersection of the ray with clipping planes (:DEBUG:)
         //Intersect::rayPlaneIntersection(rayPos, rayDir, 
@@ -176,32 +168,29 @@ namespace filescope {
     // --------------------------------------------------------------------
     VOX_DEVICE inline float computeTransmission(
         CRandomGenerator & rng,
-        Vector3f const& pos, 
-        Vector3f const& dir,
-        float rayStepSize,
-        float maxDistance
+        Ray3f &            sampleRay,
+        float              rayStepSize
         )
     {
-        // Determine the maximum ray extent
-        float rayMin = 0.0f, rayMax = maxDistance;
-        intersectVolume(pos, dir, rayMin, rayMax);
+        // Clip the ray to the scene geometry
+        intersectVolume(sampleRay);
         
         // Offset the ray origin by a fraction of step size
-        rayMin += rng.sample1D() * rayStepSize;
+        sampleRay.min += rng.sample1D() * rayStepSize;
 
         // Perform ray marching until the sample depth is reached
         float opacity = 0.0f;
-        while (rayMin < rayMax)
+        while (sampleRay.min < sampleRay.max)
         {
-            auto location = pos + dir * rayMin;
+            auto location = sampleRay.pos + sampleRay.dir * sampleRay.min;
 
             float absorption = sampleAbsorption(location);
 
             opacity += absorption * rayStepSize;
 
-            rayMin += rayStepSize;
+            sampleRay.min += rayStepSize;
             
-            if (rayMin > rayMax) break;
+            if (sampleRay.min > sampleRay.max) break;
         }
 
         return max(1.0f - opacity, 0.0f);
@@ -222,8 +211,10 @@ namespace filescope {
             float transmission = 0.0f;
             for (unsigned int i = 0; i < samples; i++)
             {
-                transmission += computeTransmission(rng, pos, rng.sampleSphere(), 
-                    gd_renderParams.occludeStepSize(), 5.0f);/*:TODO: occlude distance*/
+                float occludeDistance = 5.0f;
+                float stepSize = gd_renderParams.occludeStepSize();
+                Ray3f ray(pos, rng.sampleSphere(), 0.0f, occludeDistance);
+                transmission += computeTransmission(rng, ray, stepSize);
             }
 
             return transmission / (float)samples;
@@ -237,7 +228,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Samples the scene lighting to compute the radiance contribution
     // --------------------------------------------------------------------
-    VOX_DEVICE ColorLabxHdr estimateRadiance(CRandomGenerator & rng, Ray3f const& location)
+    VOX_DEVICE ColorLabxHdr estimateRadiance(CRandomGenerator & rng, Ray3f & location)
     {
         float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
 
@@ -260,19 +251,17 @@ namespace filescope {
         // Sample the scene lighting
         if (gd_lights.size() != 0)
         {
-            // Sample the scene lighting for this iteration
-            Vector3f lightEmission  = gd_lights[0].color();
+            // Compute the lighting properties for the selected scattering point
             Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
-
-            // Compute the attenuated light reaching the selected scattering point
-            lightEmission *= computeTransmission(rng, location.pos, lightDirection,
-                                    gd_renderParams.shadowStepSize(), 1000.0f);
+            float    stepSize       = gd_renderParams.shadowStepSize();
+            Ray3f    lightRay       = Ray3f(location.pos, lightDirection, 0.0f, 10000.0f);
+            Vector3f lightIncident  = gd_lights[0].color() * computeTransmission(rng, lightRay, stepSize);
             
             // Switch to surface based shading above the gradient threshold
             if (gradMag > gd_renderParams.gradientCutoff())
             {
                 // Compute the diffuse component of the reflectance function
-                Lv += lightEmission * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
+                Lv += lightIncident * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
 
                 // Compute the specular component of the reflectance function
 
@@ -286,11 +275,11 @@ namespace filescope {
                 float intensity = pow(saturate( NdotH ), specularData.w*100.0f + 2.0f);
  
                 // Compute the resulting specular strength
-                Lv += Vector3f(specularData.x, specularData.y, specularData.z) * lightEmission * intensity;
+                Lv += Vector3f(specularData.x, specularData.y, specularData.z) * lightIncident * intensity;
             }
             else
             {
-                Lv += lightEmission * diffuse * 0.717; 
+                Lv += lightIncident * diffuse * 0.717; // :TODO: Volume scatter function
             }
         }
 
@@ -303,23 +292,22 @@ namespace filescope {
     VOX_DEVICE bool selectVolumeSamplePoint(
         int px, int py,
         CRandomGenerator & rng,
-        Ray3f & sampleLocation
+        Ray3f & sampleRay
         )
     {
         // Initialize the sample ray for marching
-        sampleLocation = gd_camera.generateRay(
-                            Vector2f(px, py) + rng.sample2D(), // Pixel position
-                            rng.sampleDisk());                 // Aperture position
+        sampleRay = gd_camera.generateRay(
+                        Vector2f(px, py) + rng.sample2D(), // Pixel position
+                        rng.sampleDisk());                 // Aperture position
 
-        // Clip the sample ray to the volume's bounding box
-        float rayMin = 0.0f, rayMax = 100000.0f;
-        intersectVolume(sampleLocation.pos, sampleLocation.dir, rayMin, rayMax);
+        // Clip the sample ray to the scene geometry
+        intersectVolume(sampleRay);
 
         // Offset the ray origin by a fraction of step size
         float rayStepSize = gd_renderParams.primaryStepSize();
-        rayMin += rng.sample1D() * rayStepSize;  
-        if (rayMin > rayMax) return false;                   // Non-intersection with volume
-        sampleLocation.pos += sampleLocation.dir * rayMin;
+        sampleRay.min += rng.sample1D() * rayStepSize;  
+        if (sampleRay.min > sampleRay.max) return false;        // Non-intersection with volume
+        sampleRay.pos += sampleRay.dir * sampleRay.min;
 
         // Select a sample depth to evaluate for this iteration
         const float targetOpacity = -log(rng.sample1D());
@@ -328,17 +316,17 @@ namespace filescope {
         float opacity = 0.0f;
         while (true)
         {
-            float absorption = sampleAbsorption(sampleLocation.pos);
+            float absorption = sampleAbsorption(sampleRay.pos);
 
             opacity += absorption * rayStepSize;
 
             if (opacity >= targetOpacity) break;
 
-            rayMin += rayStepSize;
+            sampleRay.min += rayStepSize;
             
-            if (rayMin > rayMax) return false; // Outside volume => sample background
+            if (sampleRay.min > sampleRay.max) return false; // Outside volume => sample environment
 
-            sampleLocation.pos += sampleLocation.dir * rayStepSize;
+            sampleRay.pos += sampleRay.dir * rayStepSize;
         }
 
         return true;
@@ -360,14 +348,14 @@ namespace filescope {
         CRandomGenerator rng(&gd_rndBuffer0.at(px, py), 
                              &gd_rndBuffer1.at(px, py));
         
-        Ray3f sampleLocation;
+        Ray3f sampleRay; // Allocate storage for the ray
 
-        // Evaluate the shading at the sample point
-        if (selectVolumeSamplePoint(px, py, rng, sampleLocation))
+        // Evaluate the shading at a single volume point ...
+        if (selectVolumeSamplePoint(px, py, rng, sampleRay))
         {
-            gd_sampleBuffer.push(px, py, estimateRadiance(rng, sampleLocation));
+            gd_sampleBuffer.push(px, py, estimateRadiance(rng, sampleRay));
         }
-        else
+        else // ... or sample environment
         {
             gd_sampleBuffer.push(px, py, gd_backdropClr);
         }
@@ -562,9 +550,23 @@ void RenderKernel::execute(size_t xstart, size_t ystart,
         (width + threads.x - 1) / threads.x,
 		(height + threads.y - 1) / threads.y 
         );
+    /*
+cudaEvent_t start, stop;
+float elapsedTime;
 
+cudaEventCreate(&start);
+cudaEventRecord(start,0);
+*/
 	// Execute the device rendering kernel
 	filescope::renderKernel<<<blocks,threads>>>();
+    /*
+cudaEventCreate(&stop);
+cudaEventRecord(stop,0);
+cudaEventSynchronize(stop);
+
+cudaEventElapsedTime(&elapsedTime, start,stop);
+printf("Elapsed time : %f ms\n" ,elapsedTime);
+*/
 }
 
 } // namespace vox

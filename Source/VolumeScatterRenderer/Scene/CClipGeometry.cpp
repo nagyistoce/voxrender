@@ -45,6 +45,7 @@ std::shared_ptr<CClipGeometry> CClipGeometry::create(std::shared_ptr<Primitive> 
     if (primitive->typeId() == PrimGroup::classTypeId())
     {
         auto primGroup = std::dynamic_pointer_cast<PrimGroup>(primitive);
+        if (primGroup->children().empty()) return nullptr;
         return std::shared_ptr<CClipGroup>(new CClipGroup(primGroup));
     }
     else if (primitive->typeId() == Plane::classTypeId())

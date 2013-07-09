@@ -43,12 +43,14 @@ namespace vox
 
         VOX_HOST_DEVICE Ray(
             Vector<T,N> const& origin,
-            Vector<T,N> const& direction
+            Vector<T,N> const& direction,
+            T const& min = 0,
+            T const& max = 0
             ) :
             pos(origin),
             dir(direction),
-            min(0),
-            max(0)
+            min(min),
+            max(max)
         {
         }
 

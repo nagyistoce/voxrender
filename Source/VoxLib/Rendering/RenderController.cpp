@@ -253,7 +253,8 @@ void RenderController::synchronizationSubroutine()
     if (m_scene.camera->isDirty() ||
         m_scene.lightSet->isDirty() ||
         m_scene.parameters->isDirty() ||
-        m_scene.transfer->isDirty())
+        m_scene.transfer->isDirty() ||
+        m_scene.clipGeometry->isDirty())
     {
         m_masterRenderer->syncScene(m_scene);
 

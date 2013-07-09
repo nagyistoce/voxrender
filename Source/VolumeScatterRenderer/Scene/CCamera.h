@@ -77,6 +77,8 @@ public:
         Ray3f ray(m_pos, m_eye + (m_right * screenX) - (m_up * screenY));
 
         ray.dir.normalize();
+        ray.min = 0.0f;
+        ray.max = 100000.0f;
 
         if (m_apertureSize != 0.0f)
         {

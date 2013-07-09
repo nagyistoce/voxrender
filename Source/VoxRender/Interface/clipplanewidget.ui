@@ -54,10 +54,10 @@
         <string> mm</string>
        </property>
        <property name="minimum">
-        <double>-90.000000000000000</double>
+        <double>-500.000000000000000</double>
        </property>
        <property name="maximum">
-        <double>90.000000000000000</double>
+        <double>500.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -80,8 +80,11 @@
        <property name="suffix">
         <string> mm</string>
        </property>
+       <property name="minimum">
+        <double>-500.000000000000000</double>
+       </property>
        <property name="maximum">
-        <double>100.000000000000000</double>
+        <double>500.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -91,15 +94,18 @@
         <string> mm</string>
        </property>
        <property name="minimum">
-        <double>-180.000000000000000</double>
+        <double>-500.000000000000000</double>
        </property>
        <property name="maximum">
-        <double>180.000000000000000</double>
+        <double>500.000000000000000</double>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
       <widget class="QSlider" name="horizontalSlider_x">
+       <property name="minimum">
+        <number>0</number>
+       </property>
        <property name="maximum">
         <number>100</number>
        </property>
@@ -146,8 +152,11 @@
        <property name="suffix">
         <string>°</string>
        </property>
+       <property name="minimum">
+        <double>-90.000000000000000</double>
+       </property>
        <property name="maximum">
-        <double>5000.000000000000000</double>
+        <double>90.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -160,15 +169,24 @@
      </item>
      <item row="4" column="1">
       <widget class="QSlider" name="horizontalSlider_yaw">
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="maximum">
+        <number>180</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_Yaw">
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_yaw">
        <property name="suffix">
         <string>°</string>
+       </property>
+       <property name="maximum">
+        <double>180.000000000000000</double>
        </property>
       </widget>
      </item>

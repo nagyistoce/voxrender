@@ -1329,6 +1329,8 @@ void MainWindow::on_pushButton_loadPlugin_clicked()
 
 // ----------------------------------------------------------------------------
 //  Callback from renderer with tonemapped framebuffer for interactive display
+//  :TODO: Need to seriously add some thread locking around this stuff
+//         and the transfer function stuff too
 // ----------------------------------------------------------------------------
 void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {
@@ -1346,7 +1348,14 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
             auto widget = static_cast<PointLightWidget*>(pane->getWidget());
             widget->processInteractions();
         }
-                
+               
+        // Process any changes to the clip geometry
+        BOOST_FOREACH (auto & pane, m_clipPanes)
+        {
+            auto widget = static_cast<ClipPlaneWidget*>(pane->getWidget());
+            widget->processInteractions();
+        }
+
         static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->processInteractions();
         camerawidget->processInteractions();
         samplingwidget->processInteractions();

@@ -65,8 +65,19 @@ private:
 
 	int m_index;
     bool m_dirty;
-
+    
 private slots:
+    void on_horizontalSlider_pitch_valueChanged(int value);
+    void on_horizontalSlider_yaw_valueChanged(int value);
+    void on_horizontalSlider_x_valueChanged(int value);
+    void on_horizontalSlider_y_valueChanged(int value);
+    void on_horizontalSlider_z_valueChanged(int value);
+
+    void on_doubleSpinBox_pitch_valueChanged(double value);
+    void on_doubleSpinBox_yaw_valueChanged(double value);
+    void on_doubleSpinBox_x_valueChanged(double value);
+    void on_doubleSpinBox_y_valueChanged(double value);
+    void on_doubleSpinBox_z_valueChanged(double value);
 };
 
 #endif // CLIP_PLANE_WIDGET_H
