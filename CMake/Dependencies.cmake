@@ -38,9 +38,8 @@ SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFO
 #                  NVIDIA CUDA                  #
 #===============================================#
 
-set(CUDA_NVCC_FLAGS "--cl-version 2010")
 FIND_PACKAGE(CUDA REQUIRED)
-set(CUDA_NVCC_FLAGS "--cl-version 2010")
+SET(CUDA_NVCC_FLAGS "-arch;sm_30")
 
 message(STATUS "Cuda include directory: " "${CUDA_INCLUDE_DIRS}")
 message(STATUS "Cuda library directory: " "${CUDA_LIBRARIES}")

@@ -38,7 +38,7 @@ namespace vox
 class RenderController;
 
 /** 
- * Class for managing additional rendering parameters not associated with a single scene element
+ * Class for managing additional rendering parameters not associated with a scene element
  */
 class VOX_EXPORT RenderParams
 {
@@ -65,6 +65,9 @@ public:
 
     /** Returns the gradient magnitude cutoff */
     float gradientCutoff() const { return m_gradCutoff; }
+    
+    /** Returns the scattering function coefficient */
+    float scatterCoefficient() { return m_scatterCoefficient; }
 
     /** Sets the gradient magnitude threshhold */
     void setGradientCutoff(float cutoff) { m_gradCutoff = cutoff; }
@@ -81,6 +84,9 @@ public:
     /** Sets the number of ambient occlusion sample rays cast */
     void setOccludeSamples(unsigned int samples) { m_occludeSamples = samples; m_contextChanged = true; }
 
+    /** Sets the scattering function coefficient */
+    void setScatterCoefficient(float value) { m_scatterCoefficient = value; m_contextChanged = true; }
+
 private:
     /** Initializes default render parameters */
     RenderParams() :
@@ -89,6 +95,7 @@ private:
         m_occludeStep(1.0f),
         m_occludeSamples(0u),
         m_gradCutoff(0.2f),
+        m_scatterCoefficient(0.0f),
         m_contextChanged(true)
     {
     }
@@ -99,6 +106,8 @@ private:
     float m_shadowStep;     ///< Step size for shadow ray trace
     float m_occludeStep;    ///< Step size for ambient occlusion
     float m_gradCutoff;     ///< Transition magnitude for surface/volume shading
+
+    float m_scatterCoefficient; ///< Coefficient of the scattering function
 
     unsigned int m_occludeSamples; ///< Number of ambient occlusion samples
 

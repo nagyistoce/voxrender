@@ -65,6 +65,7 @@ void SamplingWidget::synchronizeView()
     ui->doubleSpinBox_primaryStep->setValue( (double)settings.primaryStepSize() );
     ui->doubleSpinBox_shadowStep->setValue ( (double)settings.shadowStepSize()  );
     ui->doubleSpinBox_occludeStep->setValue( (double)settings.occludeStepSize() );
+    ui->doubleSpinBox_coefficient->setValue( (double)settings.scatterCoefficient() );
     
     ui->doubleSpinBox_gradient->setValue( (double)settings.gradientCutoff() );
 
@@ -88,6 +89,7 @@ void SamplingWidget::processInteractions()
         settings.setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
         settings.setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
         settings.setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
+        settings.setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
 
         settings.setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
     }
@@ -168,6 +170,24 @@ void SamplingWidget::on_doubleSpinBox_gradient_valueChanged(double value)
     Utilities::forceSlToSb(
         ui->horizontalSlider_gradient,
         ui->doubleSpinBox_gradient,
+        value);
+    
+    m_dirty = true;
+}
+void SamplingWidget::on_horizontalSlider_coefficient_valueChanged(int value) 
+{ 
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_coefficient,
+        ui->horizontalSlider_coefficient,
+        value);
+
+    m_dirty = true; 
+}
+void SamplingWidget::on_doubleSpinBox_coefficient_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_coefficient,
+        ui->doubleSpinBox_coefficient,
         value);
     
     m_dirty = true;

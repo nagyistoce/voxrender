@@ -47,6 +47,10 @@
 #include "VolumeScatterRenderer/Clip/CClipGroup.cuh"
 #include "VolumeScatterRenderer/Clip/CClipPlane.cuh"
 
+// Additional Includes
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 namespace vox {
 
 namespace {
@@ -157,10 +161,6 @@ namespace filescope {
 
         // Compute the intersection with the scene clip geometry
         if (filescope::gd_clipRoot) filescope::gd_clipRoot->clip(ray);
-
-        // Compute the intersection of the ray with clipping planes (:DEBUG:)
-        //Intersect::rayPlaneIntersection(rayPos, rayDir, 
-        //    Vector3f(0.0f, 1.0f, 0.0f), 150.0f, rayMin, rayMax);
     }
 
     // --------------------------------------------------------------------
@@ -252,18 +252,18 @@ namespace filescope {
         if (gd_lights.size() != 0)
         {
             // Compute the lighting properties for the selected scattering point
-            Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
             float    stepSize       = gd_renderParams.shadowStepSize();
+            Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
             Ray3f    lightRay       = Ray3f(location.pos, lightDirection, 0.0f, 10000.0f);
             Vector3f lightIncident  = gd_lights[0].color() * computeTransmission(rng, lightRay, stepSize);
             
             // Switch to surface based shading above the gradient threshold
             if (gradMag > gd_renderParams.gradientCutoff())
             {
-                // Compute the diffuse component of the reflectance function
+                // *** Compute the diffuse component of the reflectance function ***
                 Lv += lightIncident * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
 
-                // Compute the specular component of the reflectance function
+                // *** Compute the specular component of the reflectance function ***
 
                 // Calculate the half vector between the light and view
                 Vector3f H = (lightDirection - location.dir).normalized();
@@ -279,7 +279,11 @@ namespace filescope {
             }
             else
             {
-                Lv += lightIncident * diffuse * 0.717; // :TODO: Volume scatter function
+                auto const g  = gd_renderParams.scatterCoefficient();
+                auto cosTheta = - Vector3f::dot(location.dir, lightRay.dir);
+                auto phaseHG  = (0.25f / M_PI) * (1 - g*g) / pow(1.0f + g*g + 2*g*cosTheta, 1.5f);
+
+                Lv += lightIncident * phaseHG;
             }
         }
 
@@ -348,10 +352,14 @@ namespace filescope {
         CRandomGenerator rng(&gd_rndBuffer0.at(px, py), 
                              &gd_rndBuffer1.at(px, py));
         
-        Ray3f sampleRay; // Allocate storage for the ray
+        // Compute the volume sample point
+        Ray3f sampleRay; 
+        bool hit = selectVolumeSamplePoint(px, py, rng, sampleRay);
+
+        __syncthreads();
 
         // Evaluate the shading at a single volume point ...
-        if (selectVolumeSamplePoint(px, py, rng, sampleRay))
+        if (hit)
         {
             gd_sampleBuffer.push(px, py, estimateRadiance(rng, sampleRay));
         }
@@ -373,7 +381,7 @@ void RenderKernel::setClipRoot(std::shared_ptr<CClipGeometry> root)
         
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_clipRoot, &ptr, sizeof(CClipGeometry::Clipper*)));
 
-    filescope::gh_clipRoot = root; // Store the pointer so we don't free the memory accidently
+    filescope::gh_clipRoot = root; // Store the pointer so we don't free the memory acciddently
 }
 
 // --------------------------------------------------------------------
@@ -541,7 +549,7 @@ void RenderKernel::setFrameBuffers(
 void RenderKernel::execute(size_t xstart, size_t ystart,
                            size_t width,  size_t height)
 {
-    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_backdropClr, &ColorLabxHdr(1.0f, 1.0f, 1.0f), sizeof(ColorLabxHdr)));
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_backdropClr, &ColorLabxHdr(0.0f, 0.0f, 0.0f), sizeof(ColorLabxHdr)));
 
 	// Setup the execution configuration
 	static const unsigned int BLOCK_SIZE = 32;

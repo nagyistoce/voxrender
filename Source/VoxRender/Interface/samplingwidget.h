@@ -68,6 +68,8 @@ private slots:
 	void on_horizontalSlider_occludeStep_valueChanged(int value);
 	void on_doubleSpinBox_occludeStep_valueChanged(double value);
 	void on_horizontalSlider_occludeSamples_valueChanged(int value);
+	void on_doubleSpinBox_coefficient_valueChanged(double value);
+	void on_horizontalSlider_coefficient_valueChanged(int value);
 };
 
 // End definition
