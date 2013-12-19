@@ -26,9 +26,8 @@ echo **************************************************************************
 echo.
 echo Please select which Cuda SDK you wish to use:
 echo.
-echo 1. NVIDIA CUDA ToolKit 5.0 for Win 32 bit
-echo 2. NVIDIA CUDA ToolKit 5.0 for Win 64 bit (also contains 32bit libs)
-echo N. I have already installed an NVIDIA CUDA 5.0 Toolkit
+echo 1. NVIDIA CUDA ToolKit for Windows
+echo N. I have already installed an NVIDIA CUDA 5.5 Toolkit
 echo.
 set CUDA_CHOICE=0
 set /p CUDA_CHOICE="Selection? "

@@ -39,6 +39,8 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_DIR}")
 SET(BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Binaries")
 SET(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source")
 
+ADD_DEFINITIONS(-D_VARIADIC_MAX=10)
+
 #===============================================#
 #              BUILD CONFIGURATION              #
 #===============================================#

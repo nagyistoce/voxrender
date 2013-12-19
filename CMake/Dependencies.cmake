@@ -30,9 +30,10 @@
 # Default include directories from build scripts
 
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/boost)
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} C:/Qt/Qt5.0.2/5.0.2/msvc2010_opengl)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} C:/Qt/Qt5.2.0/5.2.0/msvc2012)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/glew-1.5.5)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl)
+SET(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v5.5")
 
 #===============================================#
 #                  NVIDIA CUDA                  #
@@ -107,15 +108,17 @@ ENDIF(LIBCURL_LIB_FOUND)
 #===============================================#
 #                      BOOST                    #
 #===============================================#
-
 IF(APPLE)
     SET(BOOST_ROOT ${OSX_DEPENDENCY_ROOT})
 ENDIF(APPLE)
 
+#set(Boost_DEBUG 1)
+
 # Acceptable Version Info
+set(Boost_COMPILER "-vc110")
 SET(Boost_MINIMUM_VERSION "1.43")
 SET(Boost_ADDITIONAL_VERSIONS "1.49.0" "1.49" "1.46.2" "1.46.1" "1.46.0" 
-    "1.46" "1.45.0" "1.45" "1.44.0" "1.44" "1.43.0" "1.43")
+    "1.46" "1.45.0" "1.45" "1.44.0" "1.44" "1.43.0" "1.43" "1.52.0" "1.53.0")
 
 # Required Component Libraries
 SET(Boost_COMPONENTS atomic thread program_options filesystem serialization chrono

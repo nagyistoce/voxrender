@@ -1120,40 +1120,6 @@ void MainWindow::on_actionSave_and_Exit_triggered()
 }
 
 // ----------------------------------------------------------------------------
-// Loads the panel settings from a specified file
-// ----------------------------------------------------------------------------
-void MainWindow::on_actionLoad_Panel_Settings_triggered() 
-{ 
-	QString fileName = QFileDialog::getOpenFileName( 
-		this, tr("Choose a settings file to load"), 
-		m_lastOpenDir, tr("Vox Settings Files (*.ini *txt)"));
-
-	if( fileName.isEmpty( ) ) return;
-
-	QFileInfo info( fileName );
-	m_lastOpenDir = info.absolutePath( );
-
-	// :TODO:
-}
-
-// ----------------------------------------------------------------------------
-//  Saves the panel settings to a specified file
-// ----------------------------------------------------------------------------
-void MainWindow::on_actionSave_Panel_Settings_triggered() 
-{
-	QString fileName = QFileDialog::getSaveFileName(
-		this, tr("Choose a Voxrender panel settings file to save"), 
-		m_lastOpenDir, tr("Voxrender panel settings (*.ini *.txt)"));
-
-	if (fileName.isEmpty()) return;
-
-	QFileInfo info(fileName);
-	m_lastOpenDir = info.absolutePath( );
-
-	// :TODO:
-}
-
-// ----------------------------------------------------------------------------
 //  Returns the rendering to windowed mode
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionNormal_Screen_triggered() 
@@ -1363,4 +1329,21 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 
     // Lock the framebuffer and issue the frameReady signal
     emit frameReady(std::make_shared<FrameBufferLock>(frame));
+}
+
+// ----------------------------------------------------------------------------
+//  Exports a scene file containing scene configuration information
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionExport_Scene_File_triggered()
+{
+    QString filename = QFileDialog::getSaveFileName( 
+        this, tr("Choose a scene file to open"), 
+        m_lastOpenDir, tr("Vox Scene File (*.xml)"));
+
+    std::string identifier(filename.toUtf8().data());
+    if (identifier.front() != '/') identifier = '/' + identifier;
+
+    vox::ResourceOStream ofile(identifier);
+
+    scene().exprt(ofile);
 }

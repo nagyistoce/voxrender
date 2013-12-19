@@ -29,6 +29,8 @@
 #ifndef PANEWIDGET_H
 #define PANEWIDGET_H
 
+#include <memory>
+
 #include <QtWidgets/QWidget>
 #include <QtGui/QPixmap>
 #include <QtWidgets/QLabel>

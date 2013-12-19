@@ -1,11 +1,10 @@
 /* ===========================================================================
 
-	Project: CUDA Renderer - CUDA Renderer for VoxRender
+    Project: Vox Scene Importer - Module definition for scene importer
 
-	Includes the VoxRender common header as well as defining some additional 
-    macros specific to the CUDA Renderer library.
+    Description: Defines the string constants for the XML format scene files
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,29 +23,21 @@
 
 =========================================================================== */
 
-// Begin definition
-#ifndef CR_COMMON_H
-#define CR_COMMON_H
+// Version
 
-// Export configurations
-#if defined(CUDARenderer_SHARED) 
-#   ifdef CUDARenderer_EXPORTS
-#       define CR_EXPORT __declspec(dllexport)
-#   else
-#       define CR_EXPORT __declspec(dllimport)
-#   endif
-#else
-#	define CR_EXPORT
-#endif
+auto V_MAJOR = "Major";
+auto V_MINOR = "Minor";
 
-// VoxRender log category
-static char const* CR_LOG_CATEGORY = "CRR";
+// Camera
 
-// Version info
-#include "CudaRenderer/Core/Version.h"
+auto C_APERTURE   = "ApertureSize";
+auto C_FOV        = "FieldOfView";
+auto C_FOCAL_DIST = "FocalDistance";
+auto C_POSITION   = "Position";
+auto C_TARGET     = "Target";
+auto C_FWIDTH     = "FilmWidth";
+auto C_FHEIGHT    = "FilmHeight";
+auto C_UP         = "Up";
+auto C_RIGHT      = "Right";
 
-// VoxRender Common Headers
-#include "VoxLib/Core/CudaCommon.h"
-
-// End definition
-#endif // CR_COMMON_H
+// 

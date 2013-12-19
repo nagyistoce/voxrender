@@ -401,8 +401,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
-                  <height>164</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -458,8 +458,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
-                  <height>164</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -518,8 +518,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>80</width>
-                  <height>20</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -551,8 +551,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>80</width>
-                  <height>20</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -611,7 +611,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Add Devices...</string>
+             <string>Use Device</string>
             </property>
             <property name="icon">
              <iconset resource="icons.qrc">
@@ -754,8 +754,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>80</width>
-             <height>20</height>
+             <width>756</width>
+             <height>460</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -855,9 +855,7 @@
     <addaction name="actionOpen"/>
     <addaction name="menuOpen_Recent"/>
     <addaction name="separator"/>
-    <addaction name="actionSave_Panel_Settings"/>
-    <addaction name="actionLoad_Panel_Settings"/>
-    <addaction name="separator"/>
+    <addaction name="actionExport_Scene_File"/>
     <addaction name="menuExport_To_Image"/>
     <addaction name="separator"/>
     <addaction name="actionSave_and_Exit"/>
@@ -1110,6 +1108,11 @@
   <action name="actionA">
    <property name="text">
     <string>a</string>
+   </property>
+  </action>
+  <action name="actionExport_Scene_File">
+   <property name="text">
+    <string>Export Scene File</string>
    </property>
   </action>
  </widget>

@@ -76,6 +76,7 @@ static char const* VOX_LOG_CATEGORY = "Vox";
 #   define VOX_LOC __FILE__ "("VOX_STR(__LINE__)") : Warning Msg: "
 #   define VOX_WARN(msg) _Pragma(message(VOX_LOC msg))
 #   pragma warning(disable : 4251 4275) // Needs to have DLL interface to be used by clients
+#   pragma warning(disable : 4250)      // Some offense MSVC takes with virtual multiple inheritance
 #else
 #   define VOXWARN(msg)
 #endif

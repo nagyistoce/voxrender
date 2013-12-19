@@ -107,7 +107,7 @@ char const* description()
 // --------------------------------------------------------------------
 void enable() 
 {  
-    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Enabling the 'Vox.Vox Scene ExIm' plugin");
+    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Enabling the 'Vox Scene ExIm' plugin");
     
     filescope::exim = std::shared_ptr<VoxSceneFile>(new VoxSceneFile(filescope::handle));
 
@@ -120,7 +120,7 @@ void enable()
 // --------------------------------------------------------------------
 void disable() 
 { 
-    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Disabling the 'Vox.Vox Scene ExIm' plugin");
+    VOX_LOG_INFO(VSI_LOG_CATEGORY, "Disabling the 'Vox Scene ExIm' plugin");
 
     vox::Scene::removeImportModule(filescope::exim);
     vox::Scene::removeExportModule(filescope::exim);

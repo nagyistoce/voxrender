@@ -142,7 +142,6 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
         ui->groupBox_nodePos->setDisabled(true);
         ui->groupBox_material->setDisabled(true);
     }
-
 }
 
 // ----------------------------------------------------------------------------

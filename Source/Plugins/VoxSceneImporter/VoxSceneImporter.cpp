@@ -27,6 +27,7 @@
 #include "VoxSceneImporter.h"
 
 // Include Dependencies
+#include "Strings.h"
 #include "VoxLib/Core/Debug.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/Types.h"
@@ -74,7 +75,8 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            SceneExporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene)
+            SceneExporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene) :
+                m_scene(scene), m_sink(sink)
             {
             }
 
@@ -83,11 +85,117 @@ namespace
             // --------------------------------------------------------------------
             void writeDataSceneFile()
             {
+                // Write the version info to the tree
+                m_tree.add("Scene.Version.Major", versionMajor);
+                m_tree.add("Scene.Version.Minor", versionMinor);
+
+                // Write the scene information
+                writeCameraData();
+                writeVolumeData();
+                writeLightingData();
+                writeTransferData();
+                writeClipGeometry();
+
+                // Write the compiled XML data to the output stream
+                boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+                boost::property_tree::xml_parser::write_xml(m_sink, m_tree, settings);
+            }
+
+            // --------------------------------------------------------------------
+            //  Write the camera settings to the property tree
+            // --------------------------------------------------------------------
+            void writeCameraData()
+            {
+                boost::property_tree::ptree node;
+                auto camera = m_scene.camera;
+                
+                node.add(C_APERTURE, camera->apertureSize());
+                node.add(C_FOV, camera->fieldOfView() * 180.0f / (float)M_PI);
+                node.add(C_FOCAL_DIST, camera->focalDistance());
+                node.add(C_FWIDTH, camera->filmWidth());
+                node.add(C_FHEIGHT, camera->filmHeight());
+                node.add(C_POSITION, camera->position());
+                node.add(C_UP, camera->up());
+                node.add(C_RIGHT, camera->right());
+
+                m_tree.add_child("Scene.Camera", node);
+            }
+            
+            // --------------------------------------------------------------------
+            //  Write the volume settings to the property tree
+            // --------------------------------------------------------------------
+            void writeVolumeData() 
+            {
+                boost::property_tree::ptree node;
+                auto volume = m_scene.volume;
+                
+                m_tree.add_child("Scene.Volume", node);
+            }
+
+            // --------------------------------------------------------------------
+            //  Write the lighting settings to the property tree
+            // --------------------------------------------------------------------
+            void writeLightingData()
+            {
+                boost::property_tree::ptree node;
+                auto lights = m_scene.lightSet;
+                
+                // Check for ambient level specification
+                node.add("Ambient", lights->ambientLight());
+                BOOST_FOREACH (auto & light, lights->lights())
+                {
+                    boost::property_tree::ptree cNode;
+
+                    cNode.add("Color", light->color());
+                    cNode.add("Position", light->position());
+                    cNode.add("Intensity", light->intensity());
+
+                    node.add_child("Light", cNode);
+                }
+
+                m_tree.add_child("Scene.Lights", node);
+            }
+
+            // --------------------------------------------------------------------
+            //  Write the transfer settings to the property tree
+            // --------------------------------------------------------------------
+            void writeTransferData()
+            {
+                boost::property_tree::ptree node;
+                auto transfer = m_scene.transfer;
+                
+                node.add("Resolution", transfer->resolution()[0]);
+
+                BOOST_FOREACH (auto & point, transfer->nodes())
+                {
+                    boost::property_tree::ptree cNode;
+
+                    cNode.add("Density", point->position(0));
+
+                    node.add_child("Nodes.Node", cNode);
+                }
+
+                m_tree.add_child("Scene.Transfer", node);
+            }
+            
+            // --------------------------------------------------------------------
+            //  Write the clipping geometry settings to the property tree
+            // --------------------------------------------------------------------
+            void writeClipGeometry()
+            {
+                boost::property_tree::ptree node;
+
+                m_tree.add_child("Scene.ClipGeometry", node);
             }
 
         private:
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
             static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
+            
+            boost::property_tree::ptree m_tree; ///< Scenefile tree
+
+            Scene const& m_scene; // Scene
+            ResourceOStream & m_sink;
         };
 
         // Import module implementation

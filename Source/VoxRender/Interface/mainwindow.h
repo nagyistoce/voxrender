@@ -240,13 +240,12 @@ private slots:
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
     void on_actionSave_and_Exit_triggered();
-    void on_actionLoad_Panel_Settings_triggered();
-    void on_actionSave_Panel_Settings_triggered();
     void on_actionNormal_Screen_triggered();
     void on_actionClear_Log_triggered();
     void on_actionCopy_Log_triggered();
 	void on_actionShow_Side_Panel_triggered(bool checked);
     void onActionOpenRecentFile();
+    void on_actionExport_Scene_File_triggered();
 
     void on_pushButton_stop_clicked();
     void on_pushButton_resume_clicked();
