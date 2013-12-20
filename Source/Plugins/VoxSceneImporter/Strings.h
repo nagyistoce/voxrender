@@ -40,4 +40,8 @@ auto C_FHEIGHT    = "FilmHeight";
 auto C_UP         = "Up";
 auto C_RIGHT      = "Right";
 
-// 
+// Params
+
+auto P_STEP_PRIMARY = "PrimaryStepSize";
+auto P_STEP_SHADOW  = "ShadowStepSize";
+auto P_STEP_OCCLUDE = "OccludeStepSize";

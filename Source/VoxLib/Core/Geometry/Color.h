@@ -77,11 +77,13 @@ namespace vox
     /** Low Dynamic Range RGBA color information */
 	struct VOX_EXPORT ColorRgbaLdr 
 	{
-        VOX_HOST_DEVICE ColorRgbaLdr() { } 
+        VOX_HOST_DEVICE ColorRgbaLdr() :  
+            r(0), g(0), b(0), a(0xFF)
+        { } 
 
         /** Initialization constructor */
         VOX_HOST_DEVICE ColorRgbaLdr(
-            UInt8 ir, UInt8 ig, UInt8 ib, UInt8 ia = 0xF) :
+            UInt8 ir, UInt8 ig, UInt8 ib, UInt8 ia = 0xFF) :
           r(ir), g(ig), b(ib), a(ia)
         {
         }

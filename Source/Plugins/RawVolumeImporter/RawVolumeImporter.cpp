@@ -127,8 +127,9 @@ namespace
                 chain.push(m_sink);
 
                 // Output raw volume data in the specified endian format
-                auto bytesToWrite = m_scene.volume->extent().fold<size_t>(1, &mul);
-                size_t bytesWritten = boost::iostreams::write(chain, 
+                size_t bytesPerVoxel = Volume::typeToSize(m_scene.volume->type());
+                auto bytesToWrite    = m_scene.volume->extent().fold<size_t>(1, &mul) * bytesPerVoxel;
+                size_t bytesWritten  = boost::iostreams::write(chain, 
                     reinterpret_cast<char const*>(m_scene.volume->data()), bytesToWrite);
             }
 

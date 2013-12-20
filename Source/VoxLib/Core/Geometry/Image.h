@@ -56,6 +56,15 @@ namespace vox
         { 
         }
             
+        /** Clears the image data */
+        void clear(T const& val = T())
+        {
+            // :TODO: Optimized memset for sizeof(T) <= sizeof(int)
+	        for (size_t j = 0; j < m_height; j++)
+	        for (size_t i = 0; i < m_width;  i++)
+                at(i, j) = val;
+        }
+
         /** Resizes the image to the specified dimensions */
         void resize(size_t width, size_t height)
         {

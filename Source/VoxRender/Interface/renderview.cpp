@@ -296,6 +296,10 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     if (image.width() != frame.width() || image.height() != frame.height())
     {
         image = frame;
+
+        auto rect = m_renderscene->sceneRect();
+        m_renderscene->setSceneRect(
+            0.0f, 0.0f, (float)image.width(),  (float)image.height());
     }
     else memcpy(image.data(), frame.data(), frame.size());
 
@@ -314,7 +318,7 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     {
         QPainter painter;
         painter.begin(&qimage);
-        painter.setPen(Qt::black);
+        painter.setPen(Qt::white);
         painter.setCompositionMode(QPainter::CompositionMode_Source);
  
         painter.drawText(2, 10, format("%1%",fps).c_str());  // Draw a number on the image

@@ -3,7 +3,7 @@
 :: This flag identifies the version of qt to
 :: be downloaded and built, you may change it but
 :: it could cause issues with altered ABIs, etc 
-set QT_VER=5.0.2
+set QT_VER=5.2.0
 
 :: Issue a message about the project and the use of 
 :: wget for fetching the project source+dependencies
@@ -36,7 +36,7 @@ IF NOT EXIST %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip (
 	echo *                          Downloading QT                                *
 	echo **************************************************************************
 	echo.
-	%WGET% ftp://ftp.qt-project.org/qt/source/qt-everywhere-opensource-src-%QT_VER%.zip -O %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip
+	%WGET% http://download.qt-project.org/official_releases/qt/5.2/%QT_VER%/single/qt-everywhere-opensource-src-%QT_VER%.zip -O %DOWNLOADS%\qt-everywhere-opensource-src-%QT_VER%.zip
 	if ERRORLEVEL 1 (
 		echo.
 		echo Download failed. You should check your internet connection and verify that the
@@ -66,9 +66,7 @@ echo Cleaning Qt, this may take a few moments...
 nmake confclean 1>nul 2>nul
 echo.
 
-del "bin\syncqt"
-del "bin\syncqt.bat"
-configure -opensource -release -fast -mp -plugin-manifests -nomake demos -nomake examples -no-multimedia -no-phonon -no-phonon-backend -no-audio-backend -no-webkit -no-script -no-scripttools -no-sse2
+configure -opensource -release -mp -plugin-manifests -nomake -nomake examples -no-phonon -no-phonon-backend -no-audio-backend -no-webkit -no-script -no-scripttools -no-sse2
 nmake
 cd %CURRENT%
 

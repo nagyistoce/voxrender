@@ -26,27 +26,28 @@ echo **************************************************************************
 echo.
 echo Please select which Cuda SDK you wish to use:
 echo.
-echo 1. NVIDIA CUDA ToolKit for Windows
+echo 1. NVIDIA CUDA ToolKit for Windows 8.1
+echo 2. NVIDIA CUDA ToolKit for Windows Vista,7,8.0
 echo N. I have already installed an NVIDIA CUDA 5.5 Toolkit
 echo.
 set CUDA_CHOICE=0
 set /p CUDA_CHOICE="Selection? "
-IF %CUDA_CHOICE% EQU 1 goto CUDA_32
-IF %CUDA_CHOICE% EQU 2 goto CUDA_64
+IF %CUDA_CHOICE% EQU 1 goto CUDA_81
+IF %CUDA_CHOICE% EQU 2 goto CUDA_80
 IF /i "%CUDA_CHOICE%" == "N" goto Finished
 echo Invalid choice
 goto Choice
 
-:CUDA_32
-set CUDA_NAME=NVIDIA CUDA ToolKit 5.0 for Win 32 bit
-set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_0/rel-update-1/installers/
-set CUDA_PKG=cuda_5.0.35_winvista_win7_win8_general_32-3.msi
+:CUDA_80
+set CUDA_NAME=NVIDIA CUDA ToolKit 5.5 for Win Vista,7,8.0
+set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_5/rel/installers/
+set CUDA_PKG=cuda_5.5.31_win8.1_general_x64.exe
 goto Install
 
-:CUDA_64
-set CUDA_NAME=NVIDIA CUDA ToolKit 5.0 for Win 64 bit
-set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_0/rel-update-1/installers/
-set CUDA_PKG=cuda_5.0.35_winvista_win7_win8_general_64-3.msi
+:CUDA_81
+set CUDA_NAME=NVIDIA CUDA ToolKit 5.5 for Win 8.1
+set CUDA_URL=http://developer.download.nvidia.com/compute/cuda/5_5/rel/installers/
+set CUDA_PKG=cuda_5.5.20_winvista_win7_win8_general_64.exe
 goto Install
 
 :Install

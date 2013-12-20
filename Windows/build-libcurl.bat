@@ -3,7 +3,7 @@
 :: This flag identifies the version of libcurl to
 :: be downloaded and built, you may change it but
 :: it could cause issues with altered ABIs, etc 
-set CURL_VER=7.29.0
+set CURL_VER=7.34.0
 
 :: Issue a message about the project and the use of 
 :: wget for fetching the project source+dependencies
@@ -65,11 +65,11 @@ echo **************************************************************************
 echo.
 
 cd %DEPENDS%/curl-%CURL_VER%/winbuild
-nmake /f Makefile.vc VC=10 GEN_PDB=yes mode=dll MACHINE=%BUILD_PLATFORM% /S > %CURRENT%\Reports\curl-%CURL_VER%_%BUILD_PLATFORM%_build.txt
+nmake /f Makefile.vc VC=11 GEN_PDB=yes mode=dll MACHINE=%BUILD_PLATFORM% /S > %CURRENT%\Reports\curl-%CURL_VER%_%BUILD_PLATFORM%_build.txt
 cd %CURRENT%
 
 rmdir %INCLUDES%\%BUILD_PLATFORM%\curl > %CURRENT%\Reports\tmp.txt
-mklink /J %INCLUDES%\%BUILD_PLATFORM%\curl %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc10-%BUILD_PLATFORM%-release-dll-ipv6-sspi-spnego-winssl > %CURRENT%\Reports\tmp.txt
+mklink /J %INCLUDES%\%BUILD_PLATFORM%\curl %DEPENDS%\curl-%CURL_VER%\builds\libcurl-vc11-%BUILD_PLATFORM%-release-dll-ipv6-sspi-spnego-winssl > %CURRENT%\Reports\tmp.txt
 
 echo.
 echo **************************************************************************

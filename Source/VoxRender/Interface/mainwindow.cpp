@@ -1341,6 +1341,7 @@ void MainWindow::on_actionExport_Scene_File_triggered()
         m_lastOpenDir, tr("Vox Scene File (*.xml)"));
 
     std::string identifier(filename.toUtf8().data());
+    if (identifier.empty()) return;
     if (identifier.front() != '/') identifier = '/' + identifier;
 
     vox::ResourceOStream ofile(identifier);

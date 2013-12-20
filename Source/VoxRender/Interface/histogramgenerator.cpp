@@ -215,16 +215,10 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
 
     auto const height  = m_gradientImage.height();
     auto const width   = m_gradientImage.width();
+    vox::Image<size_t> bins(width, height);
     
-	for (size_t j = 0; j < height;  j++)
-	for (size_t i = 0; i < width; i++)
-    {
-        auto & pixel = m_gradientImage.at(i, j);
-        pixel.a = 255;
-        pixel.r = 0;
-        pixel.g = 0;
-        pixel.b = 0;
-    }
+    m_gradientImage.clear();
+    bins.clear(0);
 
     auto extent = volume->extent();
 	for (size_t k = 0; k < extent[2]; k++)
@@ -249,14 +243,33 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
         auto xpos = clamp<size_t>(density*(width-1), 0, width-1);
         auto ypos = height-1-clamp<size_t>(gradient*(height-1), 0, height-1);
 
-        m_gradientImage.at(xpos, ypos).a *= 0.99f;
+        ++ bins.at(xpos, ypos);
     }
     
+    // Compute the bounds on the counts
+    size_t cmin = bins.at(0,0);
+    size_t cmax = cmin;
 	for (size_t j = 0; j < height; j++)
 	for (size_t i = 0; i < width;  i++)
     {
-        auto & pixel = m_gradientImage.at(i, j);
-        pixel.a = 255 - pixel.a;
+        auto count = bins.at(i, j);
+        if (cmin > count) cmin = count;
+        else if (cmax < count) cmax = count;
+    }
+
+    // Compute the image pixel colors
+    float logMax = log((double)cmax);
+	for (size_t j = 0; j < height; j++)
+	for (size_t i = 0; i < width;  i++)
+    {
+        auto count = bins.at(i, j);
+        if (count < 10) { // Prevent negative error
+            m_gradientImage.at(i, j).a = 0;
+            continue;
+        }
+
+        int normVal = (int)(255.0 * (log((double)count) / logMax));
+        m_gradientImage.at(i, j).a = vox::clamp(normVal, 0, 255);
     }
 
     auto tend = boost::chrono::high_resolution_clock::now();

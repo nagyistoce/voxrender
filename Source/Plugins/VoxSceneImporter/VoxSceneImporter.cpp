@@ -83,18 +83,19 @@ namespace
             // --------------------------------------------------------------------
             //  Write the boost::property_tree as an XML file to the stream
             // --------------------------------------------------------------------
-            void writeDataSceneFile()
+            void writeSceneFile()
             {
                 // Write the version info to the tree
                 m_tree.add("Scene.Version.Major", versionMajor);
                 m_tree.add("Scene.Version.Minor", versionMinor);
 
                 // Write the scene information
-                writeCameraData();
-                writeVolumeData();
-                writeLightingData();
-                writeTransferData();
+                writeCamera();
+                writeVolume();
+                writeLighting();
+                writeTransfer();
                 writeClipGeometry();
+                writeParams();
 
                 // Write the compiled XML data to the output stream
                 boost::property_tree::xml_writer_settings<char> settings('\t', 1);
@@ -104,7 +105,7 @@ namespace
             // --------------------------------------------------------------------
             //  Write the camera settings to the property tree
             // --------------------------------------------------------------------
-            void writeCameraData()
+            void writeCamera()
             {
                 boost::property_tree::ptree node;
                 auto camera = m_scene.camera;
@@ -122,20 +123,41 @@ namespace
             }
             
             // --------------------------------------------------------------------
-            //  Write the volume settings to the property tree
+            //  Write the volume settings to the property tree (uses .raw format)
             // --------------------------------------------------------------------
-            void writeVolumeData() 
+            void writeVolume() 
             {
                 boost::property_tree::ptree node;
+                auto const COMP_FORMAT = "gzip";
                 auto volume = m_scene.volume;
                 
+                // Compose the volume format options
+                OptionSet options;
+                options.addOption("Compression", COMP_FORMAT);
+
+                // Write the raw format volume to disk
+                auto baseUrl  = m_sink.identifier();
+                auto filename = baseUrl.extractFileName();
+                filename      = filename.substr(0, filename.find_last_of('.')) + ".raw"; 
+                auto volUrl   = baseUrl.applyRelativeReference(filename);
+                m_scene.exprt(volUrl, options);
+
+                // Imbed the import directives
+                node.add("Import.Options.Size", volume->extent());
+                node.add("Import.Options.Spacing", volume->spacing());
+                node.add("Import.Options.Type", Volume::typeToString(volume->type()));
+                node.add("Import.Options.Offset", volume->offset());
+                node.add("Import.Options.Compression", COMP_FORMAT);
+                node.add("Import.Endianess", "little");
+                node.add("Import.Resource", filename);
+
                 m_tree.add_child("Scene.Volume", node);
             }
 
             // --------------------------------------------------------------------
             //  Write the lighting settings to the property tree
             // --------------------------------------------------------------------
-            void writeLightingData()
+            void writeLighting()
             {
                 boost::property_tree::ptree node;
                 auto lights = m_scene.lightSet;
@@ -159,7 +181,7 @@ namespace
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree
             // --------------------------------------------------------------------
-            void writeTransferData()
+            void writeTransfer()
             {
                 boost::property_tree::ptree node;
                 auto transfer = m_scene.transfer;
@@ -179,11 +201,34 @@ namespace
             }
             
             // --------------------------------------------------------------------
+            //  Write the render parameter settings to the property tree
+            // --------------------------------------------------------------------
+            void writeParams()
+            {
+                boost::property_tree::ptree node;
+                auto settings = m_scene.parameters;
+                
+                node.add(P_STEP_PRIMARY, settings->primaryStepSize());
+                node.add(P_STEP_SHADOW,  settings->shadowStepSize());
+                node.add(P_STEP_OCCLUDE, settings->occludeStepSize());
+
+                m_tree.add_child("Scene.Settings", node);
+            }
+
+            // --------------------------------------------------------------------
             //  Write the clipping geometry settings to the property tree
             // --------------------------------------------------------------------
             void writeClipGeometry()
             {
                 boost::property_tree::ptree node;
+                auto graph = m_scene.clipGeometry;
+
+                BOOST_FOREACH (auto & object, graph->children())
+                {
+                    boost::property_tree::ptree node;// = object->serializeToXML();
+
+                    node.add_child(object->typeId(), node);
+                }
 
                 m_tree.add_child("Scene.ClipGeometry", node);
             }
@@ -706,7 +751,7 @@ void VoxSceneFile::exporter(ResourceOStream & sink, OptionSet const& options, Sc
     filescope::SceneExporter exportModule(sink, options, scene);
 
     // Write property tree to the stream
-    exportModule.writeDataSceneFile();
+    exportModule.writeSceneFile();
 }
 
 // --------------------------------------------------------------------
