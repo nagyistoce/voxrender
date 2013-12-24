@@ -33,6 +33,7 @@ VOX_PROJECT(
         "VoxSceneImporter.h"
         "Plugin.h"
         "Version.h"
+		"Strings.h"
     SOURCES
         "VoxSceneImporter.cpp"
         "Plugin.cpp"

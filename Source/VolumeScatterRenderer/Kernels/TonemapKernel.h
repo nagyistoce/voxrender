@@ -45,6 +45,12 @@ class TonemapKernel
 public:
     /** Executes the tonemapping kernel on the device */
     static void execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer);
+
+    /** Returns the time for the last kernel execution */
+    static float getTime() { return m_elapsedTime; }
+
+private:
+    static float m_elapsedTime; ///< Kernel execution time
 };
 
 }

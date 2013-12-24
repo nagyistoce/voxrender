@@ -114,6 +114,9 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 {
     m_currentNode = node;
     
+    // :TODO: Prevent signal launches here
+    // :TODO: Toggle selected state by update signal
+
     if (node)
     {
         auto material = m_currentNode->material();
@@ -299,7 +302,7 @@ void TransferWidget::on_pushButton_first_clicked( )
 {
     if (m_transfer)
     {
-        m_currentNode = m_transfer->nodes().front();
+        setSelectedNode(m_transfer->nodes().front());
     }
 }
 
@@ -316,7 +319,7 @@ void TransferWidget::on_pushButton_next_clicked( )
         {
             // Acquire a handle to the subsequent node in the linked list
             auto iter = std::find(nodes.begin(), nodes.end(), m_currentNode);
-            m_currentNode = *(++iter);
+            setSelectedNode(*(++iter));
         }
     }
 }
@@ -334,7 +337,7 @@ void TransferWidget::on_pushButton_prev_clicked( )
         if (iter != nodes.begin())
         {
             // Acquire a handle to the previous node in the linked list
-            m_currentNode = *(--iter);
+            setSelectedNode(*(--iter));
         }
     }
 }
@@ -346,7 +349,7 @@ void TransferWidget::on_pushButton_last_clicked( )
 {
     if (m_transfer)
     {
-        m_currentNode = m_transfer->nodes().back();
+        setSelectedNode(m_transfer->nodes().back());
     }
 }
 
@@ -381,6 +384,7 @@ void TransferWidget::on_horizontalSlider_density_valueChanged(int value)
     {
         auto value = ui->doubleSpinBox_density->value() / 100.0f;
         m_currentNode->setPosition(0, value);
+        emit nodePositionChanged(m_currentNode);
     }
 }
 
@@ -398,6 +402,7 @@ void TransferWidget::on_doubleSpinBox_density_valueChanged(double value)
     {
         auto value = ui->doubleSpinBox_density->value() / 100.0f;
         m_currentNode->setPosition(0, value);
+        emit nodePositionChanged(m_currentNode);
     }
 }
 
@@ -449,6 +454,7 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
     {
         auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
         m_currentNode->material()->setOpticalThickness(value);
+        emit nodePositionChanged(m_currentNode);
     }
 }
 
@@ -466,6 +472,7 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
     {
         auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
         m_currentNode->material()->setOpticalThickness(value);
+        emit nodePositionChanged(m_currentNode);
     }
 }
 

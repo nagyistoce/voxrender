@@ -92,6 +92,8 @@ private:
 signals:
 	void transferChanged();
 
+    void nodePositionChanged(std::shared_ptr<vox::Node> node);
+
 public slots:
     void setSelectedNode(std::shared_ptr<vox::Node> node);
 

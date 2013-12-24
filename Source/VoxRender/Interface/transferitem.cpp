@@ -50,6 +50,10 @@ TransferItem::TransferItem(QGraphicsItem* parent)
 // ----------------------------------------------------------------------------
 void TransferItem::synchronizeView()
 {
+    disconnect(this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
+    connect(MainWindow::instance->transferWidget(), SIGNAL(nodePositionChanged(std::shared_ptr<vox::Node>)), 
+            this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
+
     m_nodes.clear();
     m_edges.clear();
 
@@ -79,6 +83,19 @@ void TransferItem::synchronizeView()
         }
 
         // Update transfer function edges
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the specified node on the transfer function
+// ----------------------------------------------------------------------------
+void TransferItem::updateNode(std::shared_ptr<vox::Node> node)
+{
+    BOOST_FOREACH (auto & nodeElem, m_nodes)
+    if (nodeElem->node() == node) 
+    {
+        nodeElem->setSelected(node == MainWindow::instance->transferWidget()->selectedNode());
+        nodeElem->updatePosition();
     }
 }
 

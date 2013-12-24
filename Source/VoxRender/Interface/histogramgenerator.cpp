@@ -90,6 +90,7 @@ namespace filescope {
 } // namespace anonymous
 
 // ----------------------------------------------------------------------------
+//  Initialize some slot-signal connections
 // ----------------------------------------------------------------------------
 HistogramGenerator::HistogramGenerator() 
 {
@@ -99,6 +100,7 @@ HistogramGenerator::HistogramGenerator()
 }
 
 // ----------------------------------------------------------------------------
+//  Terminates the historgram generation thread
 // ----------------------------------------------------------------------------
 HistogramGenerator::~HistogramGenerator() 
 {

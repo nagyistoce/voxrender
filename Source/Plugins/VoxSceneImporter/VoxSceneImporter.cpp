@@ -186,12 +186,29 @@ namespace
                 boost::property_tree::ptree node;
                 auto transfer = m_scene.transfer;
                 
-                node.add("Resolution", transfer->resolution()[0]);
+                node.add(T_RESOLUTION, transfer->resolution()[0]);
+
+                std::list<void*> materials;
 
                 BOOST_FOREACH (auto & point, transfer->nodes())
                 {
                     boost::property_tree::ptree cNode;
 
+                    void * key = point->material().get();
+                    if (std::find(materials.begin(), materials.end(), key) == materials.end())
+                    {
+                        auto material = point->material();
+                        materials.push_back(key);
+                        
+                        boost::property_tree::ptree mNode;
+                        //mNode.add(M_GLOSSINESS, material->glossiness());
+                        //mNode.add(M_THICKNESS, material->opticalThickness());
+
+                        //node.add_child("Materials.Material", mNode);
+                    }
+
+                    cNode.add("Glossiness", point->material()->glossiness());
+                    cNode.add("Thickness", point->material()->opticalThickness());
                     cNode.add("Density", point->position(0));
 
                     node.add_child("Nodes.Node", cNode);
@@ -211,6 +228,7 @@ namespace
                 node.add(P_STEP_PRIMARY, settings->primaryStepSize());
                 node.add(P_STEP_SHADOW,  settings->shadowStepSize());
                 node.add(P_STEP_OCCLUDE, settings->occludeStepSize());
+                node.add(P_SAMPLES_OCCLUDE, settings->occludeSamples());
 
                 m_tree.add_child("Scene.Settings", node);
             }
@@ -302,8 +320,8 @@ namespace
                     scene.volume       = loadVolume();
                     scene.camera       = loadCamera();
                     scene.lightSet     = loadLights();
-                    scene.transfer     = loadTransfer();
                     scene.parameters   = loadParams();
+                    scene.transfer     = loadTransfer();
                     scene.clipGeometry = loadClipGeometry();
                 }
 
@@ -394,21 +412,33 @@ namespace
                   //        in Camera constructor and use import values as defaults for assignment
 
                   // Load direct camera projection parameters
-                  camera.setApertureSize( m_node->get("ApertureSize", 0.0f) );
-                  camera.setFieldOfView( m_node->get("FieldOfView", 60.0f) / 180.0f * (float)M_PI );
-                  camera.setFocalDistance( m_node->get("FocalDistance", 0.0f) );
-
-                  // Load camera orientation parameters
-                  camera.setPosition( m_node->get("Position", Vector3f(0.0f, 0.0f, 0.0f)) );
-                  camera.lookAt( m_node->get("Target", camera.position() + Vector3f(0.0f, 0.0f, 1.0f)) );
+                  camera.setApertureSize( m_node->get(C_APERTURE, 0.0f) );
+                  camera.setFieldOfView( m_node->get(C_FOV, 60.0f) / 180.0f * (float)M_PI );
+                  camera.setFocalDistance( m_node->get(C_FOCAL_DIST, 0.0f) );
 
                   // Load camera film dimensions
-                  camera.setFilmWidth( m_node->get("FilmWidth", 256) );
-                  camera.setFilmHeight( m_node->get("FilmHeight", 256) );
+                  camera.setFilmWidth( m_node->get(C_FWIDTH, 256) );
+                  camera.setFilmHeight( m_node->get(C_FHEIGHT, 256) );
 
-                  // :TODO: Allow 2-3 specified control orients, compute resulting position
-                  //camera.setEye( m_node->get("Eye", Vector3f(0.0f, 0.0f, 1.0f)) );
-                  //camera.setRight( m_node->get("Right", Vector3f(1.0f, 0.0f, 0.0f)) );
+                  // Load camera position
+                  camera.setPosition( m_node->get(C_POSITION, Vector3f(0.0f, 0.0f, 0.0f)) );
+
+                  // Load camera orientation
+                  auto target = m_node->get_optional<Vector3f>(C_TARGET);
+                  auto right  = m_node->get_optional<Vector3f>(C_RIGHT);
+                  auto up     = m_node->get_optional<Vector3f>(C_UP);
+                  auto eye    = m_node->get_optional<Vector3f>(C_EYE);
+                  Vector3f fEye;
+                  Vector3f fUp;
+                  if (target)           fEye = target.get() - camera.position();
+                  else if (up && right) fEye = Vector3f::cross(up.get(), right.get());
+                  else if (eye)         fEye = eye.get();
+                  else                  fEye = Vector3f(0.0f, 0.0f, 1.0f);
+                  if (right)            fUp = Vector3f::cross(right.get(), fEye);
+                  else if (up)          fUp = up.get();
+                  else                  fUp = Vector3f(0.0f, 1.0f);
+                  auto fRight = Vector3f::cross(fEye, fUp);
+                  camera.lookAt(camera.position() + fEye, Vector3f::cross(fRight, fEye));
 
                 pop();
 
@@ -459,8 +489,8 @@ namespace
                   auto & volume = *volumePtr;
         
                   // Read inline volume parameter specifications
-                  volume.setSpacing(m_node->get("Spacing", volume.spacing()));
-                  volume.setOffset(m_node->get("Offset", volume.offset()));
+                  volume.setSpacing(m_node->get(V_SPACING, volume.spacing()));
+                  volume.setOffset(m_node->get(V_OFFSET, volume.offset()));
 
                   // Do not allow any other parameter specifications here as they will 
                   // overwrite interdependent information (ie extent relates to data etc)
@@ -484,9 +514,10 @@ namespace
                   auto & parameters = *paramPtr;
         
                   // Read inline parameter specifications
-                  parameters.setPrimaryStepSize(m_node->get("PrimaryStepSize", parameters.primaryStepSize()));
-                  parameters.setShadowStepSize(m_node->get("ShadowStepSize", parameters.shadowStepSize()));
-                  parameters.setOccludeStepSize(m_node->get("OccludeStepSize", parameters.occludeStepSize()));
+                  parameters.setPrimaryStepSize(m_node->get(P_STEP_PRIMARY, parameters.primaryStepSize()));
+                  parameters.setShadowStepSize(m_node->get(P_STEP_SHADOW, parameters.shadowStepSize()));
+                  parameters.setOccludeStepSize(m_node->get(P_STEP_OCCLUDE, parameters.occludeStepSize()));
+                  parameters.setOccludeSamples(m_node->get(P_SAMPLES_OCCLUDE, parameters.occludeSamples()));
 
                 pop();
 
@@ -506,7 +537,7 @@ namespace
                   auto & transfer = *transferPtr;
                   /*
                   // Transfer function resolution
-                  String resolution = m_node->get("Resolution");
+                  String resolution = m_node->get(T_RESOLUTION);
                   std::vector<String> dimensions;
                   boost::algorithm::split(
                     dimensions, 
@@ -543,14 +574,16 @@ namespace
                           else // load inline specification of material
                           {
                               auto material = Material::create();
-                              material->setGlossiness( region.second.get("Glossiness", 0.0f) );
-                              material->setOpticalThickness( region.second.get("Thickness", 0.0f) );
+                              material->setGlossiness( region.second.get(M_GLOSSINESS, 0.0f) );
+                              material->setOpticalThickness( region.second.get(M_THICKNESS, 0.0f) );
                               node->setMaterial(material);
                           }
 
                           // Determine the node's position
                           node->setPosition(0, region.second.get<float>("Density"));
                       }
+
+                      pop();
                   }
 
                 pop();
@@ -600,8 +633,8 @@ namespace
                         
                         // Parse the material specification :TODO:
                         auto material = Material::create();
-                        material->setGlossiness( materialNode.second.get("Glossiness", 0.0f) );
-                        material->setOpticalThickness( materialNode.second.get("Thickness", 0.0f) );
+                        material->setGlossiness( materialNode.second.get(M_GLOSSINESS, 0.0f) );
+                        material->setOpticalThickness( materialNode.second.get(M_THICKNESS, 0.0f) );
                         materials[materialNode.first] = material;
                     }
            

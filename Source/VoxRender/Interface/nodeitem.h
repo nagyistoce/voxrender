@@ -63,6 +63,9 @@ public:
 
     /** Updates the position of the node item */
     void updatePosition();
+    
+    /** Returns the transfer function node associated with this element */
+    std::shared_ptr<vox::Node> node() { return m_pNode; }
 
 protected:
 	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);

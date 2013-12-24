@@ -172,6 +172,8 @@ namespace filescope {
         float              rayStepSize
         )
     {
+        // :TODO: Trim min from ray, consider shared memory for registers here
+
         // Clip the ray to the scene geometry
         intersectVolume(sampleRay);
         
@@ -251,13 +253,17 @@ namespace filescope {
         // Sample the scene lighting
         if (gd_lights.size() != 0)
         {
+            // Determine the sample light for this iteration
+            auto const lightNum = (int)floorf(rng.sample1D() * (float)gd_lights.size());
+
             // Compute the lighting properties for the selected scattering point
             float    stepSize       = gd_renderParams.shadowStepSize();
-            Vector3f lightDirection = (gd_lights[0].position() - location.pos).normalize();
+            Vector3f lightDirection = (gd_lights[lightNum].position() - location.pos).normalize();
             Ray3f    lightRay       = Ray3f(location.pos, lightDirection, 0.0f, 10000.0f);
-            Vector3f lightIncident  = gd_lights[0].color() * computeTransmission(rng, lightRay, stepSize);
+            Vector3f lightIncident  = gd_lights[lightNum].color() * computeTransmission(rng, lightRay, stepSize);
             
             // Switch to surface based shading above the gradient threshold
+            // :TODO: Fix this block
             if (gradMag > gd_renderParams.gradientCutoff())
             {
                 // *** Compute the diffuse component of the reflectance function ***

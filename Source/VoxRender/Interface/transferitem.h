@@ -61,6 +61,8 @@ public:
 public slots:
     void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 
+    void updateNode(std::shared_ptr<vox::Node> node);
+
 private:
     std::list<std::shared_ptr<NodeItem>> m_nodes; ///< Graphics items for transfer nodes
     std::list<std::shared_ptr<EdgeItem>> m_edges; ///< Graphics items for transfer edges
