@@ -36,7 +36,7 @@
 namespace vox
 {
     class VOX_EXPORT PrimGroup;
-    
+
     /** Primitive geometry object */
     class VOX_EXPORT Primitive 
     {
@@ -46,6 +46,25 @@ namespace vox
 
         /** Returns the type identifier for this primitive */
         virtual Char const* typeId() = 0;
+
+        ///** 
+        // * Parses a primitive specified in text format 
+        // *
+        // * @param data (first) The type of the primitive, used to associate a registered parser
+        // *             (second) The input data from which to construct the primitive 
+        // */
+        //static std::shared_ptr<Primitive> imprt(std::pair<String const&, boost::property_tree::ptree const&> data);
+
+        ///**
+        // * Exports a primitive to a text format
+        // *
+        // * @param primitive The primitive to export
+        // */
+        //static std::shared_ptr<boost::property_tree::ptree> exprt(std::shared_ptr<Primitive> primitive);
+
+        ///** 
+        // * Registers a primitive import/export module
+        // */
 
         /** Returns the UID string for this primitive */
         String const& id() { return m_id; }

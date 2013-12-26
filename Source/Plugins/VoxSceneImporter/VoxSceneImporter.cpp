@@ -535,18 +535,21 @@ namespace
                   auto transferPtr = executeImportDirectives().transfer;
                   if (!transferPtr) transferPtr = Transfer::create();
                   auto & transfer = *transferPtr;
-                  /*
+                  
                   // Transfer function resolution
-                  String resolution = m_node->get(T_RESOLUTION);
-                  std::vector<String> dimensions;
+                  Vector3u dimensions(256u, 0u, 0u);
+                  String resolution = m_node->get(T_RESOLUTION, "");
+                  std::vector<String> dimensionStrs;
                   boost::algorithm::split(
-                    dimensions, 
+                    dimensionStrs, 
                     resolution, 
                     boost::is_any_of(" ,\n\t\r"), 
                     boost::algorithm::token_compress_on
                     );
-                  boost::lexical_cast<size_t>(dimensions[0]);
-                  */
+                  if (dimensionStrs.size() > 3) parseError(Error_BadFormat, "Too many transfer function dimensions");
+                  for (size_t i = 0; i < dimensionStrs.size(); i++)
+                      dimensions[i] = boost::lexical_cast<size_t>(dimensionStrs[0]);
+                  transfer.setResolution(dimensions);
 
                   // Import any named materials 
                   auto materials = loadMaterials();
@@ -604,10 +607,7 @@ namespace
                     auto & geometrySet = *geoPtr;
 
                     // Parse inline geometry specifications
-                    BOOST_FOREACH (auto & region, *m_node)
-                    {
-                        // :TODO: Execute the geometry constructor (construct from child property_tree)
-                    }
+                    //Primitive::imprt(std::make_pair(String("Group"), *m_node));
 
                 pop();
 

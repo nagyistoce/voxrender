@@ -32,7 +32,6 @@
 
 // Include Dependencies
 #include "griditem.h"
-#include "transferitem.h"
 
 // QT Dependencies
 #include <QtCore/QEvent>
@@ -46,6 +45,8 @@
 #include <QtWidgets/QGraphicsPixmapItem>
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsView>
+
+class TransferItem;
 
 /** Implements a QT graphics view for volume histogram data and transfer functions */
 class HistogramView : public QGraphicsView

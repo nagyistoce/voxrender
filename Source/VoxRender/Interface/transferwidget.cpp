@@ -63,7 +63,8 @@ TransferWidget::TransferWidget(QWidget *parent) :
     ui(new Ui::TransferWidget),
     m_colorDiffuse(new QColorPushButton()),
     m_colorEmissive(new QColorPushButton()),
-    m_colorSpecular(new QColorPushButton())
+    m_colorSpecular(new QColorPushButton()),
+    m_blockNodeUpdates(false)
 {
     ui->setupUi(this);
 
@@ -114,6 +115,8 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 {
     m_currentNode = node;
     
+    m_blockNodeUpdates = true;
+
     // :TODO: Prevent signal launches here
     // :TODO: Toggle selected state by update signal
 
@@ -145,6 +148,8 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
         ui->groupBox_nodePos->setDisabled(true);
         ui->groupBox_material->setDisabled(true);
     }
+
+    m_blockNodeUpdates = false;
 }
 
 // ----------------------------------------------------------------------------
@@ -379,13 +384,12 @@ void TransferWidget::on_horizontalSlider_density_valueChanged(int value)
         ui->doubleSpinBox_density,
         ui->horizontalSlider_density,
         value);
+    
+    if (m_blockNodeUpdates) return;
 
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_density->value() / 100.0f;
-        m_currentNode->setPosition(0, value);
-        emit nodePositionChanged(m_currentNode);
-    }
+    auto val = ui->doubleSpinBox_density->value() / 100.0f;
+    m_currentNode->setPosition(0, val);
+    emit nodePositionChanged(m_currentNode);
 }
 
 // ----------------------------------------------------------------------------
@@ -398,12 +402,11 @@ void TransferWidget::on_doubleSpinBox_density_valueChanged(double value)
         ui->doubleSpinBox_density,
         value);
 
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_density->value() / 100.0f;
-        m_currentNode->setPosition(0, value);
-        emit nodePositionChanged(m_currentNode);
-    }
+    if (m_blockNodeUpdates) return;
+
+    auto val = ui->doubleSpinBox_density->value() / 100.0f;
+    m_currentNode->setPosition(0, val);
+    emit nodePositionChanged(m_currentNode);
 }
 
 // ----------------------------------------------------------------------------
@@ -415,12 +418,11 @@ void TransferWidget::on_horizontalSlider_gloss_valueChanged(int value)
         ui->doubleSpinBox_gloss,
         ui->horizontalSlider_gloss,
         value);
+    
+    if (m_blockNodeUpdates) return;
 
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_gloss->value() / 100.0f;
-        m_currentNode->material()->setGlossiness(value);
-    }
+    auto val = ui->doubleSpinBox_gloss->value() / 100.0f;
+    m_currentNode->material()->setGlossiness(val);
 }
 
 // ----------------------------------------------------------------------------
@@ -432,12 +434,11 @@ void TransferWidget::on_doubleSpinBox_gloss_valueChanged(double value)
         ui->horizontalSlider_gloss,
         ui->doubleSpinBox_gloss,
         value);
-    
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_gloss->value() / 100.0f;
-        m_currentNode->material()->setGlossiness(value);
-    }
+
+    if (m_blockNodeUpdates) return;
+
+    auto val = ui->doubleSpinBox_gloss->value() / 100.0f;
+    m_currentNode->material()->setGlossiness(val);
 }
 
 // ----------------------------------------------------------------------------
@@ -450,12 +451,11 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
         ui->horizontalSlider_opacity,
         value);
 
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
-        m_currentNode->material()->setOpticalThickness(value);
-        emit nodePositionChanged(m_currentNode);
-    }
+    if (m_blockNodeUpdates) return;
+
+    auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
+    m_currentNode->material()->setOpticalThickness(val);
+    emit nodePositionChanged(m_currentNode);
 }
 
 // ----------------------------------------------------------------------------
@@ -468,12 +468,11 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
         ui->doubleSpinBox_opacity,
         value);
 
-    if (m_currentNode)
-    {
-        auto value = ui->doubleSpinBox_opacity->value() / 100.0f;
-        m_currentNode->material()->setOpticalThickness(value);
-        emit nodePositionChanged(m_currentNode);
-    }
+    if (m_blockNodeUpdates) return;
+
+    auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
+    m_currentNode->material()->setOpticalThickness(val);
+    emit nodePositionChanged(m_currentNode);
 }
 
 // ----------------------------------------------------------------------------
@@ -486,10 +485,9 @@ void TransferWidget::on_horizontalSlider_emissiveStr_valueChanged(int value)
         ui->horizontalSlider_emissiveStr,
         value);
 
-    if (m_currentNode)
-    {
-        m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
-    }
+    if (m_blockNodeUpdates) return;
+
+    m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
 }
 
 // ----------------------------------------------------------------------------
@@ -502,10 +500,9 @@ void TransferWidget::on_doubleSpinBox_emissiveStr_valueChanged(double value)
         ui->doubleSpinBox_emissiveStr,
         value);
 
-    if (m_currentNode)
-    {
-        m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
-    }
+    if (m_blockNodeUpdates) return;
+
+    m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
 }
 
 // --------------------------------------------------------------------

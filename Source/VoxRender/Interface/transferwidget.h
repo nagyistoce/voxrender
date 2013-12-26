@@ -68,6 +68,8 @@ public:
 private:
     Ui::TransferWidget *ui;
 
+    bool m_blockNodeUpdates;
+
 	// Color Selection Dialogue
     QColorPushButton * m_colorDiffuse;
     QColorPushButton * m_colorEmissive;

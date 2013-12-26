@@ -33,6 +33,14 @@ namespace filescope {
 
     // Static member initialization
     Char const* typeId  = "PrimGroup";
+    
+    // ---------------------------------------------------------------------------- 
+    //  Parses a primitive group from a property tree node
+    // ---------------------------------------------------------------------------- 
+    //void parseFunc(boost::property_tree::ptree const& data)
+    //{
+        //BOOST_FOREACH (auto const& node, data) Primitive::imprt(node);
+    //}
 
 } // namespace filescope 
 } // namespace

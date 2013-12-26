@@ -57,7 +57,10 @@ void TransferItem::synchronizeView()
     m_nodes.clear();
     m_edges.clear();
 
-    if (auto transfer = MainWindow::instance->activeScene.transfer)
+    auto transfer = MainWindow::instance->scene().transfer;
+    if (!transfer) return;
+
+    if (true)
     {
         // Update transfer function nodes
         auto nodes = transfer->nodes();
@@ -81,8 +84,6 @@ void TransferItem::synchronizeView()
             // Set the previous node
             prevItem = nodeItem;
         }
-
-        // Update transfer function edges
     }
 }
 
@@ -112,6 +113,11 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
     auto transfer = MainWindow::instance->scene().transfer;
 
     auto node = Node::create();
+
+    auto pos = pEvent->pos();
+    auto ext = rect();
+    node->setPosition(0, (pos.x()-ext.left()) / ext.width());
+    node->material()->setOpticalThickness(1.0f - (pos.y()-ext.top()) / ext.height());
 
     transfer->addNode(node);
 

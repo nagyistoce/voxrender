@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "mainwindow.h"
 #include "histogramgenerator.h"
+#include "transferitem.h"
 
 using namespace vox;
 

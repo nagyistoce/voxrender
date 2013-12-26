@@ -270,7 +270,8 @@ void Transfer::addNode(std::shared_ptr<Node> node)
     
     node->m_parent = shared_from_this();
 
-    m_nodes.push_back(node);
+    auto iter = std::lower_bound(m_nodes.begin(), m_nodes.end(), node, filescope::slt<Node>);
+    m_nodes.insert(iter, node);
 }
 
 // ----------------------------------------------------------------------------
@@ -285,7 +286,6 @@ void Transfer::removeNode(std::shared_ptr<Node> node)
 
 // ----------------------------------------------------------------------------
 //  Maps the transfer function to a texture of the specified resolution 
-//  :TEST: 1D transfer function
 // ----------------------------------------------------------------------------
 std::shared_ptr<TransferMap> Transfer::generateMap()
 {

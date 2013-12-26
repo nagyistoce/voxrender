@@ -58,23 +58,6 @@ namespace
 {
     namespace filescope
     {
-        // Stylesheet for button tooltip
-        char const* toolTipTemplate = 
-            "<table>                                                \
-                <tr><td>Node</td><td>: </td><td>%1%</td></tr>       \
-                <tr><td>Position</td><td>: </td><td>%2%</td></tr>   \
-                <tr><td>Opacity</td><td>: </td><td>%3%</td></tr>    \
-                <tr>                                                \
-                    <td>Color</td><td>: </td>                       \
-                    <td style='color:rgb(%4%,%5%,%6%)'><b>          \
-                        <style type='text/css'>                     \
-                            background {color:red;}                 \
-                        </style>                                    \
-                        [%4%,%5%,%6%]                               \
-                    </b></td>                                       \
-                </tr>                                               \
-             </table>";
-
         // Epsilon value for node position adjustment
         const float nodePositionEpsilon = 0.01f;
 
@@ -107,10 +90,6 @@ NodeItem::NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node) :
 	setFlag(QGraphicsItem::ItemIsSelectable);
 
     updatePosition();
-
-    // Update the tooltip
-    setToolTip( vox::format( filescope::toolTipTemplate, 
-        1, 2, 3, 4, 5, 6 ).c_str( ) );  // :TODO: :DEBUG: implement tooltip
 };
 
 // --------------------------------------------------------------------

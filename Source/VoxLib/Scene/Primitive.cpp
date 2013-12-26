@@ -38,6 +38,8 @@ namespace filescope {
     Char const* planeTypeId  = "Plane";
     Char const* sphereTypeId = "Sphere";
 
+    static std::map<String, bool> parsers; ///< Primitive parsers
+
 } // namespace filescope 
 } // namespace
 
@@ -48,6 +50,24 @@ void Primitive::setParent(std::shared_ptr<PrimGroup> parent)
 { 
     m_parent = parent;
 }
+//
+//// ----------------------------------------------------------------------------
+////  Parses a primitive from a property tree structure
+//// ----------------------------------------------------------------------------
+//std::shared_ptr<Primitive> Primitive::imprt(std::pair<String const&, boost::property_tree::ptree const*> data)
+//{
+//    return nullptr;
+//}
+//
+//// ----------------------------------------------------------------------------
+////  Converts the primitive into a text storage format
+//// ----------------------------------------------------------------------------
+//std::shared_ptr<boost::property_tree::ptree> Primitive::exprt(std::shared_ptr<Primitive> primitive)
+//{
+//    std::shared_ptr<boost::property_tree::ptree> data; 
+//
+//    return data;
+//}
 
 // ----------------------------------------------------------------------------
 //  Returns the UID for this primitive type
