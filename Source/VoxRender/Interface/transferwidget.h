@@ -49,8 +49,8 @@ class TransferWidget : public QWidget
     Q_OBJECT
     
 public:
-    explicit TransferWidget( QWidget *parent = 0 );
-    ~TransferWidget( );
+    explicit TransferWidget(QWidget *parent = 0);
+    ~TransferWidget();
     
     void synchronizeView();
     void processInteractions();
@@ -83,13 +83,16 @@ private:
 	// Transfer function information
     std::shared_ptr<vox::Transfer> m_transfer;
     std::shared_ptr<vox::Node>     m_currentNode;
-	//vox::Transfer::Region* m_currentRegion;
+    std::shared_ptr<vox::Quad>     m_currentQuad;
+    std::shared_ptr<vox::Material> m_currentMaterial;
 
 	// Dimension selection
 	void switchDimensions(int nDims);
 	bool canSwitchDimensions();
     
     void keyPressEvent(QKeyEvent * event);
+
+    void setSelectedMaterial(std::shared_ptr<vox::Material> material);
 
 signals:
 	void transferChanged();
@@ -98,6 +101,7 @@ signals:
 
 public slots:
     void setSelectedNode(std::shared_ptr<vox::Node> node);
+    void setSelectedQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node = vox::Quad::Node_End);
 
 private slots:
 	// Node selection group box
@@ -126,6 +130,10 @@ private slots:
     void colorDiffuseChanged(QColor const& color);
     void colorEmissiveChanged(QColor const& color);
     void colorSpecularChanged(QColor const& color);
+
+    // Transfer function import/export support
+    void on_pushButton_export_clicked();
+    void on_pushButton_import_clicked();
 };
 
 #endif // TRANSFERWIDGET_H

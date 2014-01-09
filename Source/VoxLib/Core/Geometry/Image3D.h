@@ -56,6 +56,9 @@ namespace vox
             m_buffer = std::unique_ptr<T[]>(reinterpret_cast<T*>(new UInt8[width*depth*height*sizeof(T)]));
         }
 
+        /** Zeroes the image data */
+        void clear() { memset(m_buffer.get(), 0, size()*sizeof(T)); }
+
         /** Image width accessor */
         size_t width() const { return m_width; }
 
@@ -70,6 +73,20 @@ namespace vox
 
         /** Image buffer accessor for mutable data access */
         T * data() { return m_buffer.get(); }
+
+        /** Voxel accessor for mutable data access */
+        T & at(size_t x, size_t y, size_t z)
+        {
+            auto p = m_width * m_height;
+            return m_buffer.get()[x + y*m_width + z*p];
+        }
+
+        /** Voxel accessor for const data access */
+        T const& at(size_t x, size_t y, size_t z) const
+        {
+            auto p = m_width * m_height;
+            return m_buffer.get()[x + y*m_width + z*p];
+        }
 
         /** Returns the size of the image content */
         size_t size() const

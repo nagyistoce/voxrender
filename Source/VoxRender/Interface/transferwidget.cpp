@@ -37,6 +37,17 @@
 
 // QT Includes
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QFileDialog>
+
+// Transfer function modification wrapper for auto-update
+#define DO_LOCK(X)              \
+    m_transfer->lock();         \
+    X                           \
+    if (true) {                 \
+    m_transfer->setDirty(true); \
+    }                           \
+    m_transfer->unlock();
+// :TODO: Check auto update set 
 
 using namespace vox;
 
@@ -88,6 +99,8 @@ TransferWidget::TransferWidget(QWidget *parent) :
     // Ensure transfer node selection is detected 
     connect(MainWindow::instance, SIGNAL(transferNodeSelected(std::shared_ptr<vox::Node>)),
         this, SLOT(setSelectedNode(std::shared_ptr<vox::Node>)));
+    connect(MainWindow::instance, SIGNAL(transferQuadSelected(std::shared_ptr<vox::Quad>,vox::Quad::Node)),
+        this, SLOT(setSelectedQuad(std::shared_ptr<vox::Quad>,vox::Quad::Node)));
 
     setSelectedNode(nullptr); // Initialize the widget to no curr node settings
 }
@@ -109,7 +122,7 @@ std::shared_ptr<Node> TransferWidget::selectedNode()
 }
 
 // ----------------------------------------------------------------------------
-//  Sets the selected node for transfer function editing
+//  Sets the selected node for 1D transfer function editing
 // ----------------------------------------------------------------------------
 void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 {
@@ -117,39 +130,65 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
     
     m_blockNodeUpdates = true;
 
-    // :TODO: Prevent signal launches here
+    // :TODO: Prevent signal launches here, it sets the transfer to dirty
     // :TODO: Toggle selected state by update signal
 
     if (node)
     {
-        auto material = m_currentNode->material();
+        setSelectedMaterial(m_currentNode->material);
         
         // Enable all off the active node controls
         ui->groupBox_currNode->setDisabled(false);
         ui->groupBox_nodePos->setDisabled(false);
-        ui->groupBox_material->setDisabled(false);
-
+        
         // Update all of the active node controls
-        ui->doubleSpinBox_density->setValue(m_currentNode->position(0)*100.0f);
-        ui->doubleSpinBox_gradient->setValue(m_currentNode->position(1)*100.0f);
-        ui->doubleSpinBox_gradient2->setValue(m_currentNode->position(2)*100.0f);
-        ui->doubleSpinBox_gloss->setValue(material->glossiness()*100.0f);
-        ui->doubleSpinBox_opacity->setValue(material->opticalThickness()*100.0f);
+        ui->doubleSpinBox_density->setValue(m_currentNode->density*100.0f);
         ui->checkBox_visible->setChecked(true);
-
-        m_colorDiffuse->setColor(filescope::toQColor(material->diffuse()), true);
-        m_colorEmissive->setColor(filescope::toQColor(material->emissive()), true);
-        m_colorSpecular->setColor(filescope::toQColor(material->specular()), true);
     }
     else
     {
+        setSelectedMaterial(nullptr);
+
         // Disable all of the active node controls
         ui->groupBox_currNode->setDisabled(true);
         ui->groupBox_nodePos->setDisabled(true);
-        ui->groupBox_material->setDisabled(true);
     }
 
     m_blockNodeUpdates = false;
+}
+
+// ----------------------------------------------------------------------------
+//  Sets the selected quad for 2D transfer function editing
+// ----------------------------------------------------------------------------
+void TransferWidget::setSelectedQuad(std::shared_ptr<Quad> quad, Quad::Node node)
+{
+    // Set the selected material within the quad
+    if (!quad || node == Quad::Node::Node_End) 
+        setSelectedMaterial(nullptr);
+    else setSelectedMaterial(quad->materials[node]);
+
+    // Set the node controls for the selected component of the quad
+    m_currentQuad = quad;
+}
+
+// ----------------------------------------------------------------------------
+//  Sets the selected material for transfer function editing
+// ----------------------------------------------------------------------------
+void TransferWidget::setSelectedMaterial(std::shared_ptr<Material> material)
+{
+    m_currentMaterial = material;
+
+    if (material)
+    {
+        ui->groupBox_material->setDisabled(false);
+        ui->doubleSpinBox_gloss->setValue(material->glossiness*100.0f);
+        ui->doubleSpinBox_opacity->setValue(material->opticalThickness*100.0f);
+
+        m_colorDiffuse->setColor(filescope::toQColor(material->diffuse), true);
+        m_colorEmissive->setColor(filescope::toQColor(material->emissive), true);
+        m_colorSpecular->setColor(filescope::toQColor(material->specular), true);
+    }
+    else ui->groupBox_material->setDisabled(true); 
 }
 
 // ----------------------------------------------------------------------------
@@ -157,20 +196,23 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 // ----------------------------------------------------------------------------
 void TransferWidget::synchronizeView()
 {
-    // Update the local scene component handles
-    m_transfer    = MainWindow::instance->scene().transfer;
-    m_currentNode = m_transfer->nodes().empty() ? 
-        nullptr : m_transfer->nodes().front();
+    m_transfer = MainWindow::instance->scene().transfer;
+
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
+    {
+        switchDimensions(1);
+        setSelectedNode(transfer1D->nodes().empty() ? 
+            nullptr : transfer1D->nodes().front());
+    }
+    else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
+    {
+        switchDimensions(2);
+        setSelectedQuad(transfer2D->quads().empty() ? 
+            nullptr : transfer2D->quads().front());
+    }
+    else m_currentNode = nullptr;
 
     onTransferFunctionChanged();
-}
-
-// ----------------------------------------------------------------------------
-//  Applies interactions with the interface to the scene transfer function
-//   (Executed on the master renderer thread allowing safe scene changes)
-// ----------------------------------------------------------------------------
-void TransferWidget::processInteractions()
-{
 }
 
 // ----------------------------------------------------------------------------
@@ -213,16 +255,20 @@ bool TransferWidget::canSwitchDimensions()
 void TransferWidget::switchDimensions(int nDims)
 {
 	// Block radio button signals
-	ui->radioButton_1->blockSignals( true );
-	ui->radioButton_2->blockSignals( true );
-	ui->radioButton_3->blockSignals( true );
+	ui->radioButton_1->blockSignals(true);
+	ui->radioButton_2->blockSignals(true);
+	ui->radioButton_3->blockSignals(true);
 
 	// Switch transfer control context
-	switch( nDims ) 
+	switch (nDims) 
 	{
 		case 1:
 
 			// Configure widget for 1-Dimensional work 
+            if (!dynamic_cast<Transfer1D*>(m_transfer.get()))
+            {
+                MainWindow::instance->scene().transfer = Transfer1D::create(); // :TODO: LOCK SCENE
+            }
             m_primaryView->setType(HistogramView::DataType_Density);
 			ui->radioButton_1->setChecked( true ); 
 			ui->groupBox_transferSecondary->hide( );
@@ -238,6 +284,10 @@ void TransferWidget::switchDimensions(int nDims)
 		case 2:
 
 			// Configure widget for 2-Dimensional work
+            if (!dynamic_cast<Transfer2D*>(m_transfer.get()))
+            {
+                MainWindow::instance->scene().transfer = Transfer2D::create(); // :TODO: LOCK SCENE
+            }
             m_primaryView->setType(HistogramView::DataType_DensityGrad);
 			ui->radioButton_2->setChecked( true ); 
 			ui->groupBox_transferSecondary->hide( );
@@ -301,30 +351,97 @@ void TransferWidget::on_radioButton_3_toggled(bool checked)
 }
 
 // ----------------------------------------------------------------------------
+//  Opens a dialogue to import a transfer function from a user defined file
+// ----------------------------------------------------------------------------
+void TransferWidget::on_pushButton_import_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName( 
+        this, tr("Choose a scene file to open"), 
+        MainWindow::instance->lastOpenDir(), 
+        tr("Vox Scene Files (*.xml)"));
+    
+    if (filename.isNull()) return;
+
+    QFileInfo info(filename);
+    MainWindow::instance->setLastOpenDir(info.absolutePath());
+
+    // Compose the resource identifier for filesystem access
+    std::string identifier(filename.toUtf8().data());
+    if (identifier.front() != '/') identifier = '/' + identifier;
+
+    // Attempt to parse the scene file 
+    vox::OptionSet options;
+    options.addOption("ImportVolume",  false);
+    options.addOption("ImportCamera",  false);
+    options.addOption("ImportLights",  false);
+    options.addOption("ImportClipGeo", false);
+    options.addOption("ImportParams",  false);
+    auto scene = vox::Scene::imprt(identifier, options);
+
+    // Set the imported transfer function
+    MainWindow::instance->scene().transfer = scene.transfer;
+}
+
+// ----------------------------------------------------------------------------
+//  Opens a dialogue to export a transfer function to a user defined file
+// ----------------------------------------------------------------------------
+void TransferWidget::on_pushButton_export_clicked()
+{
+    // Get a filename from the user
+    QString filename = QFileDialog::getSaveFileName( 
+        this, tr("Choose a file location"), 
+        MainWindow::instance->lastOpenDir(), 
+        tr("Vox Scene Files (*.xml)"));
+
+    if (filename.isNull()) return;
+    
+    QFileInfo info(filename);
+    MainWindow::instance->setLastOpenDir(info.absolutePath());
+
+    // Compose the resource identifier for filesystem access
+    std::string identifier(filename.toUtf8().data());
+    if (identifier.front() != '/') identifier = '/' + identifier;
+
+    // Attempt to parse the scene file
+    vox::OptionSet options;
+    options.addOption("ExportVolume",  false);
+    options.addOption("ExportCamera",  false);
+    options.addOption("ExportLights",  false);
+    options.addOption("ExportClipGeo", false);
+    options.addOption("ExportParams",  false);
+    MainWindow::instance->scene().exprt(identifier, options);
+}
+
+// ----------------------------------------------------------------------------
 // Select the first node / previous region
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_first_clicked( )
+void TransferWidget::on_pushButton_first_clicked()
 {
-    if (m_transfer)
+    if (!m_transfer) return;
+
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
-        setSelectedNode(m_transfer->nodes().front());
+        setSelectedNode(transfer1D->nodes().front());
     }
 }
 
 // ----------------------------------------------------------------------------
 //  Select the next node
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_next_clicked( )
+void TransferWidget::on_pushButton_next_clicked()
 {
     if (m_currentNode)
     {
-        // Check if this is the last node
-        auto nodes = m_transfer->nodes();
-        if (m_currentNode != nodes.back())
+        if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
         {
-            // Acquire a handle to the subsequent node in the linked list
-            auto iter = std::find(nodes.begin(), nodes.end(), m_currentNode);
-            setSelectedNode(*(++iter));
+            // Check if this is the last node
+            auto nodes = transfer1D->nodes();
+            if (m_currentNode != nodes.back())
+            {
+                // Acquire a handle to the subsequent node in the linked list
+                auto iter = std::find(nodes.begin(), nodes.end(), m_currentNode);
+                setSelectedNode(*(++iter));
+            }
         }
     }
 }
@@ -332,12 +449,14 @@ void TransferWidget::on_pushButton_next_clicked( )
 // ----------------------------------------------------------------------------
 //  Select the previous node
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_prev_clicked( )
+void TransferWidget::on_pushButton_prev_clicked()
 {
-    if (m_currentNode)
+    if (!m_currentNode) return;
+
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
         // Check if this is the first node
-        auto nodes = m_transfer->nodes();
+        auto nodes = transfer1D->nodes();
         auto iter  = std::find(nodes.begin(), nodes.end(), m_currentNode);
         if (iter != nodes.begin())
         {
@@ -350,11 +469,13 @@ void TransferWidget::on_pushButton_prev_clicked( )
 // ----------------------------------------------------------------------------
 //  Select the last node / next region
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_last_clicked( )
+void TransferWidget::on_pushButton_last_clicked()
 {
-    if (m_transfer)
+    if (!m_transfer) return;
+
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
-        setSelectedNode(m_transfer->nodes().back());
+        setSelectedNode(transfer1D->nodes().back());
     }
 }
 
@@ -363,16 +484,20 @@ void TransferWidget::on_pushButton_last_clicked( )
 // ----------------------------------------------------------------------------
 void TransferWidget::on_pushButton_delete_clicked()
 {
-    if (m_currentNode)
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
-        m_transfer->removeNode(m_currentNode);
+        if (!m_currentNode) return;
+        DO_LOCK(transfer1D->removeNode(m_currentNode);)
+        setSelectedNode(nullptr);
+    }
+    else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
+    {
+        if (!m_currentQuad) return;
+        DO_LOCK(transfer2D->removeQuad(m_currentQuad);)
+        setSelectedQuad(nullptr);
     }
 
     onTransferFunctionChanged();
-
-    setSelectedNode(nullptr);
-
-    //on_pushButton_first_clicked();
 }
 
 // ----------------------------------------------------------------------------
@@ -388,7 +513,7 @@ void TransferWidget::on_horizontalSlider_density_valueChanged(int value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_density->value() / 100.0f;
-    m_currentNode->setPosition(0, val);
+    DO_LOCK(m_currentNode->density = val;)
     emit nodePositionChanged(m_currentNode);
 }
 
@@ -405,7 +530,7 @@ void TransferWidget::on_doubleSpinBox_density_valueChanged(double value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_density->value() / 100.0f;
-    m_currentNode->setPosition(0, val);
+    DO_LOCK(m_currentNode->density = val;)
     emit nodePositionChanged(m_currentNode);
 }
 
@@ -422,7 +547,7 @@ void TransferWidget::on_horizontalSlider_gloss_valueChanged(int value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_gloss->value() / 100.0f;
-    m_currentNode->material()->setGlossiness(val);
+    DO_LOCK(m_currentMaterial->glossiness = val;)
 }
 
 // ----------------------------------------------------------------------------
@@ -438,7 +563,7 @@ void TransferWidget::on_doubleSpinBox_gloss_valueChanged(double value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_gloss->value() / 100.0f;
-    m_currentNode->material()->setGlossiness(val);
+    DO_LOCK(m_currentMaterial->glossiness = val;)
 }
 
 // ----------------------------------------------------------------------------
@@ -454,7 +579,7 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
-    m_currentNode->material()->setOpticalThickness(val);
+    DO_LOCK(m_currentMaterial->opticalThickness = val;)
     emit nodePositionChanged(m_currentNode);
 }
 
@@ -471,7 +596,7 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
     if (m_blockNodeUpdates) return;
 
     auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
-    m_currentNode->material()->setOpticalThickness(val);
+    DO_LOCK(m_currentMaterial->opticalThickness = val;)
     emit nodePositionChanged(m_currentNode);
 }
 
@@ -487,7 +612,7 @@ void TransferWidget::on_horizontalSlider_emissiveStr_valueChanged(int value)
 
     if (m_blockNodeUpdates) return;
 
-    m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
+    DO_LOCK(m_currentMaterial->emissiveStrength = ui->doubleSpinBox_emissiveStr->value();)
 }
 
 // ----------------------------------------------------------------------------
@@ -502,7 +627,7 @@ void TransferWidget::on_doubleSpinBox_emissiveStr_valueChanged(double value)
 
     if (m_blockNodeUpdates) return;
 
-    m_currentNode->material()->setEmissiveStrength(ui->doubleSpinBox_emissiveStr->value());
+    DO_LOCK(m_currentMaterial->emissiveStrength = ui->doubleSpinBox_emissiveStr->value();)
 }
 
 // --------------------------------------------------------------------
@@ -510,7 +635,8 @@ void TransferWidget::on_doubleSpinBox_emissiveStr_valueChanged(double value)
 // --------------------------------------------------------------------
 void TransferWidget::colorDiffuseChanged(QColor const& color)
 {
-    m_currentNode->material()->setDiffuse( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+    auto cast = Vector<UInt8,3>(color.red(), color.green(), color.blue());
+    DO_LOCK(m_currentMaterial->diffuse = cast;)
 }
 
 // --------------------------------------------------------------------
@@ -518,7 +644,8 @@ void TransferWidget::colorDiffuseChanged(QColor const& color)
 // --------------------------------------------------------------------
 void TransferWidget::colorEmissiveChanged(QColor const& color)
 {
-    m_currentNode->material()->setEmissive( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+    auto cast = Vector<UInt8,3>(color.red(), color.green(), color.blue());
+    DO_LOCK(m_currentMaterial->emissive = cast;)
 }
 
 // --------------------------------------------------------------------
@@ -526,5 +653,6 @@ void TransferWidget::colorEmissiveChanged(QColor const& color)
 // --------------------------------------------------------------------
 void TransferWidget::colorSpecularChanged(QColor const& color)
 {
-    m_currentNode->material()->setSpecular( Vector<UInt8,3>(color.red(), color.green(), color.blue()) );
+    auto cast = Vector<UInt8,3>(color.red(), color.green(), color.blue());
+    DO_LOCK(m_currentMaterial->specular = cast;)
 }

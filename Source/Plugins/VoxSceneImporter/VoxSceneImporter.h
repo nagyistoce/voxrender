@@ -64,11 +64,11 @@ public:
      * @brief Vox Scene File Exporter
      *
      * \b{Valid Options}
-     *  - ExportVolume   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export volume data
-     *  - ExportCamera   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export camera data
-     *  - ExportTransfer : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export transfer data
-     *  - ExportLights   : bool   [default=ExportOpt_CopyIfModified] | Specifies whether to export lighting data
-     *  - ExportFilm     : bool   [default=ExportOpt_] | Specifies whether to export the current film
+     *  - ExportVolume   : bool   [default=true]  | Specifies whether to export volume data
+     *  - ExportCamera   : bool   [default=true]  | Specifies whether to export camera data
+     *  - ExportTransfer : bool   [default=true]  | Specifies whether to export transfer data
+     *  - ExportLights   : bool   [default=true]  | Specifies whether to export lighting data
+     *  - ExportFilm     : bool   [default=false] | Specifies whether to export the current film
      *  - Compress       : string [default=""]    | Specifies compression types and order, supported
      *                                              compression modes include 'zlib', 'bzip2', and 'gzip'.
      *                                              Compression is applied from left to right treating
@@ -83,11 +83,11 @@ public:
      * @brief Vox Scene File Importer 
      *
      * \b{Valid Options}
-     *  ExportVolume   : bool   [default=true]  | Specifies whether to export volume info
-     *  ExportCamera   : bool   [default=true]  | Specifies whether to export camera info
-     *  ExportTransfer : bool   [default=true]  | Specifies whether to export transfer info
-     *  ExportLights   : bool   [default=true]  | Specifies whether to export lighting info
-     *  ExportFilm     : bool   [default=false] | Specifies whether to export the current film
+     *  ImportVolume   : bool   [default=true]  | Specifies whether to import volume info
+     *  ImportCamera   : bool   [default=true]  | Specifies whether to import camera info
+     *  ImportTransfer : bool   [default=true]  | Specifies whether to import transfer info
+     *  ImportLights   : bool   [default=true]  | Specifies whether to import lighting info
+     *  ImportFilm     : bool   [default=false] | Specifies whether to import the current film
      *
      * \b{Required Options}
      *  - None

@@ -35,6 +35,9 @@
 #include "nodeitem.h"
 #include "edgeitem.h"
 
+namespace vox { class Node; };
+namespace vox { class Quad; };
+
 /** 
  * Transfer function display item 
  *
@@ -57,10 +60,20 @@ public:
     void onResizeEvent();
 
     void synchronizeView();
+    
+    /** Node item callback for position changing event */
+    void onNodeItemChange(NodeItem * item, QPointF & point);
+
+    /** Node item callback for position changed event */
+    void onNodeItemChanged(NodeItem * item, float x, float y);
+
+    /** Node item callback for selection event */
+    void onNodeItemSelected(NodeItem * item, bool selected);
 
 public slots:
     void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 
+    void updateQuad(std::shared_ptr<vox::Quad> quad);
     void updateNode(std::shared_ptr<vox::Node> node);
 
 private:

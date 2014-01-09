@@ -163,12 +163,18 @@ public:
         }
 
         // Transfer function data synchronization
-        if (scene.transfer->isDirty())
+        if (scene.transfer)
         {
-            auto map = scene.transfer->generateMap();
-
-            m_transferBuffer.setTransfer(map);
-
+            if (scene.transfer->isDirty())
+            {
+                scene.transfer->generateMap(scene.transferMap);
+                m_transferBuffer.setTransfer(scene.transferMap);
+                RenderKernel::setTransfer(m_transferBuffer);
+            }
+        }
+        else if (scene.transferMap->isDirty())
+        {
+            m_transferBuffer.setTransfer(scene.transferMap);
             RenderKernel::setTransfer(m_transferBuffer);
         }
 

@@ -36,94 +36,135 @@
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Scene/Material.h"
+#include "VoxLib/Scene/TransferMap.h"
 
 // API Namespace
 namespace vox
 {
     class RenderController;
     class Transfer;
+    class Node;
+
+    typedef std::shared_ptr<Node> NodeH;
 
     /** Transfer function node */
-    class VOX_EXPORT Node : public std::enable_shared_from_this<Node>
+    class VOX_EXPORT Node
     {
     public:
         /** Constructs a new transfer function object */
-        static std::shared_ptr<Node> create(std::shared_ptr<Material> material = nullptr) 
-        { 
-            auto node = std::shared_ptr<Node>(new Node()); 
-
-            if (material) node->setMaterial(material);
-            else          node->setMaterial(Material::create());
-
-            return node;
-        }
+        static std::shared_ptr<Node> create(float density = 1.0f, std::shared_ptr<Material> material = nullptr);
 
         // Node comparison operators for sorting operations
-        bool operator<(Node const& rhs) { return m_position < rhs.m_position; }
-        bool operator>(Node const& rhs) { return m_position > rhs.m_position; }
+        bool operator<(Node const& rhs) { return density < rhs.density; }
+        bool operator>(Node const& rhs) { return density > rhs.density; }
         bool operator==(Node const& rhs) 
         { 
-            return m_position == rhs.m_position &&
-                   m_material == rhs.m_material; 
+            return density == rhs.density &&
+                   material == rhs.material; 
         }
 
-        /** Sets the normalized position of the node in the specified dimension */
-        void setPosition(int dim, float position);
+        std::shared_ptr<Material> material;   ///< Material properties
 
-        /** Returns the normalized position of the node in the specified dimension */
-        float position(int dim) const { return m_position[dim]; }
-
-        /** Sets the node's material properties */
-        void setMaterial(std::shared_ptr<Material> material);
-        
-        /** Returns the material properties of the node */
-        std::shared_ptr<Material> material() { return m_material; }
-
-        /** Marks the node dirty */
-        void setDirty(bool dirty = true);
+	    float density; ///< Normalized density
 
     private:
-        /** Constructs a new node with the specified material */
-        Node();
-
-        friend Transfer; 
-
-        std::shared_ptr<Transfer> m_parent;
-
-	    Vector3f m_position; ///< Normalized node transfer coordinates
-
-        std::shared_ptr<Material> m_material;   ///< Material properties
-
-        bool  m_contextChanged;  ///< Dirty flag
+        Node() { }
     };
 
-	/** 
-	 * Transfer Function Mapping 
-	 *
-	 * A transfer function mapping is a mapping structure used by renderers
-	 * for sampling the transfer function content. The resolution of the map
-	 * textures is determined by the transfer function which generates it.
-	 */
-    struct VOX_EXPORT TransferMap
+    /** 2D Transfer function block */
+    class VOX_EXPORT Quad
     {
-        Image3D<Vector<UInt8,4>> diffuse;  ///< Diffuse transfer mapping [RGBX]
-        Image3D<Vector<UInt8,4>> specular; ///< Specular transfer mapping [Reflectance + Roughness]
-        Image3D<Vector4f>        emissive; ///< Emissive transfer mapping
-        Image3D<float>           opacity;  ///< Absorption coefficient
+    public:
+        /** Node position indices */
+        enum Node
+        {
+            Node_Begin = 0,
+            Node_UL = Node_Begin,
+            Node_UR,
+            Node_LL,
+            Node_LR,
+            Node_End
+        };
+
+    public:
+        /** Constructs a new quad object */
+        static std::shared_ptr<Quad> create() {
+            return std::shared_ptr<Quad>(new Quad());
+        }
+
+        Vector<std::shared_ptr<Material>,4> materials; ///< Corner materials
+
+        Vector2f position;    ///< Center position of the quad
+        Vector2f heights;     ///< Edge heights of the quad
+        Vector2f widths;      ///< Edge widths of the quad
+
+    private:
+        Quad();
     };
 
-    /** Transfer Function */
+    /** Transfer function interface */
     class VOX_EXPORT Transfer : public std::enable_shared_from_this<Transfer>
+    {
+    public: 
+        /** Initializes the default transfer function resolution */
+        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
+
+        /** Updates the input map based on the this transfer function */
+        virtual void generateMap(std::shared_ptr<TransferMap> map) = 0;
+
+        /** Returns the type identifier of the derived class */
+        virtual Char const* type() = 0;
+
+        /** Locks the transfer function for editing */
+        void lock() { }
+
+        /** Unlocks the transfer function after editing */
+        void unlock() { }
+
+        /** Sets the transfer function resolution */
+        void setResolution(Vector3u const& resolution);
+
+        /** Returns the resolution of the transfer function */
+        Vector3u const& resolution() const { return m_resolution; }
+
+        /** Returns true if an unprocessed context change has occured */
+        bool isDirty() const { return m_contextChanged; }
+
+        /** Sets the dirty state of the transfer function */
+        void setDirty(bool dirty = true) { m_contextChanged = dirty; }
+
+    protected:
+        class Impl;
+        Impl * m_pImpl;
+
+        Vector3u m_resolution; ///< Transfer function map resolution
+
+        friend RenderController;
+
+        bool m_contextChanged;
+    };
+
+    /** 1 Dimensional Transfer Function */
+    class VOX_EXPORT Transfer1D : public Transfer
     {
     public:
         /** Constructs a new transfer function object */
-        static std::shared_ptr<Transfer> create() { return std::shared_ptr<Transfer>(new Transfer()); }
+        static std::shared_ptr<Transfer1D> create() { return std::shared_ptr<Transfer1D>(new Transfer1D()); }
 
-        /** Sets the desired resolution of the transfer function */
-        void setResolution(Vector3u const& resolution);
+        /** Sets the 1D transfer function resolution without requiring a Vec3 */
+        void setResolution(size_t resolution)
+        {
+            Transfer::setResolution(Vector3u(resolution, 1, 1));
+        }
 
-        /** Returns the desired resolution of the transfer function */
-        Vector3u resolution() const { return m_resolution; }
+        /** Generates the associated transfer map */
+        virtual void generateMap(std::shared_ptr<TransferMap> map);
+
+        /** Returns the type of a transfer function */
+        virtual Char const* type() { return Transfer1D::typeID(); }
+
+        /** Returns the type of the 1D transfer function */
+        static Char const* typeID() { return "Transfer1D"; }
 
         /** Adds a new node to the transfer function */
         void addNode(std::shared_ptr<Node> node);
@@ -132,28 +173,51 @@ namespace vox
         void removeNode(std::shared_ptr<Node> node);
 
         /** Returns a linked list of the transfer function nodes */
-        std::list<std::shared_ptr<Node>> nodes() { return m_nodes; }
-
-        /** Generates a map of the transfer function content */
-        std::shared_ptr<TransferMap> generateMap();
-
-        /** Returns true if an unprocessed context change has occured */
-        bool isDirty() const { return m_contextChanged; }
-
-        /** Sets the dirty state of the transfer function */
-        void setDirty(bool dirty = true) { m_contextChanged = dirty; }
+        std::list<std::shared_ptr<Node>> & nodes() { return m_nodes; }
 
     private:
         /** Initializes a new transfer function object */
-        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
+        Transfer1D() { }
 
-        friend RenderController;
+        std::list<NodeH> m_nodes;
+    };
 
-        Vector3u m_resolution; ///< Transfer function map resolution
+    /** 2 Dimensional Transfer Function */
+    class VOX_EXPORT Transfer2D : public Transfer
+    {
+    public:
+        /** Constructs a new transfer function object */
+        static std::shared_ptr<Transfer2D> create() { return std::shared_ptr<Transfer2D>(new Transfer2D()); }
+        
+        /** Sets the 1D transfer function resolution without requiring a Vec3 */
+        void setResolution(Vector2u resolution)
+        {
+            Transfer::setResolution(Vector3u(resolution[0], resolution[1], 1));
+        }
 
-        std::list<std::shared_ptr<Node>> m_nodes; ///< List of transfer regions :TODO:
+        /** Generates the associated transfer map */
+        virtual void generateMap(std::shared_ptr<TransferMap> map);
 
-        bool m_contextChanged;
+        /** Returns the type of a transfer function */
+        virtual Char const* type() { return Transfer2D::typeID(); }
+
+        /** Returns the type of the 1D transfer function */
+        static Char const* typeID() { return "Transfer2D"; }
+
+        /** Adds a new node to the transfer function */
+        void addQuad(std::shared_ptr<Quad> quad);
+
+        /** Removes a node from the transfer function */
+        void removeQuad(std::shared_ptr<Quad> quad);
+
+        /** Returns a linked list of the transfer function nodes */
+        std::list<std::shared_ptr<Quad>> & quads() { return m_quads; }
+
+    private:
+        /** Initializes a new transfer function object */
+        Transfer2D() { }
+
+        std::list<std::shared_ptr<Quad>> m_quads;
     };
 }
 

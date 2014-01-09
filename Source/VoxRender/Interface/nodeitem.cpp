@@ -79,17 +79,26 @@ namespace
 // --------------------------------------------------------------------
 // Constructor - Initialize node as interactible object
 // --------------------------------------------------------------------
-NodeItem::NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node) : 
+NodeItem::NodeItem(TransferItem* parent, float x, float y, std::shared_ptr<void> data) : 
     QGraphicsEllipseItem(parent),
     m_parent(parent),
-    m_pNode(node),
+    m_data(data),
     m_ignorePosChange(false)
 {
 	setFlag(QGraphicsItem::ItemIsMovable);
 	setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 	setFlag(QGraphicsItem::ItemIsSelectable);
 
-    updatePosition();
+    setZValue(500.f);
+
+    setPosition(x, y);
+
+    // Set the node rectangle
+    QRectF ellipseRect;
+    ellipseRect.setTopLeft( QPointF(-filescope::radius, -filescope::radius) );
+    ellipseRect.setWidth( 2.0f * filescope::radius );
+    ellipseRect.setHeight( 2.0f * filescope::radius );
+    setRect(ellipseRect);
 };
 
 // --------------------------------------------------------------------
@@ -149,19 +158,21 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     if (change == QGraphicsItem::ItemSelectedChange && !m_ignorePosChange)
     {
         bool selected = this->isSelected();
-
-        if (!selected) MainWindow::instance->setTransferNode(m_pNode);
-        else MainWindow::instance->setTransferNode(nullptr);
+        m_parent->onNodeItemSelected(this, selected);
     }
 
     // Ensure the node remains within the parent boundaries
     if (change == QGraphicsItem::ItemPositionChange)
     {
-        QPointF const nodeRangeMin = m_parent->rect( ).topLeft( );
-        QPointF const nodeRangeMax = m_parent->rect( ).bottomRight( );
+        if (m_ignorePosChange) return position;
 
-        position.setX( qMin( nodeRangeMax.x( ), qMax( position.x( ), nodeRangeMin.x( ) ) ) );
-        position.setY( qMin( nodeRangeMax.y( ), qMax( position.y( ), nodeRangeMin.y( ) ) ) );
+        QPointF const nodeRangeMin = m_parent->rect().topLeft();
+        QPointF const nodeRangeMax = m_parent->rect().bottomRight();
+
+        position.setX(qMin(nodeRangeMax.x(), qMax(position.x(), nodeRangeMin.x())));
+        position.setY(qMin(nodeRangeMax.y(), qMax(position.y(), nodeRangeMin.y())));
+
+        m_parent->onNodeItemChange(this, position);
 
         return position;
     }
@@ -169,29 +180,10 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     // Update the associated transfer function node when moved
     if (change == QGraphicsItem::ItemPositionHasChanged && !m_ignorePosChange)
     {
-        // :TODO: LOCKING MECHANISM (to prevent changes while mapping transfer) //
-
         float xNorm = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
         float yNorm = 1.f - (position.y() - m_parent->rect().y()) / m_parent->rect().height();
         
-        // :TODO: Adjust parameter corresponding to parent transfer item's view 
-        if (true) // Density + Opacity
-        {
-            m_pNode->setPosition(0, xNorm);
-            m_pNode->material()->setOpticalThickness(yNorm);
-        }
-        else if (false) // Density + Gradient_Magnitude
-        {
-            m_pNode->setPosition(0, xNorm);
-            m_pNode->setPosition(1, yNorm);
-        }
-        else // Density + Laplacian
-        {
-            m_pNode->setPosition(0, xNorm);
-            m_pNode->setPosition(2, yNorm);
-        }
-
-        MainWindow::instance->transferWidget()->setSelectedNode(m_pNode);
+        m_parent->onNodeItemChanged(this, xNorm, yNorm);
 
         return position;
     }
@@ -204,11 +196,10 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
 // --------------------------------------------------------------------
 void NodeItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 {
-	QGraphicsItem::mousePressEvent( pEvent );
+	QGraphicsItem::mousePressEvent(pEvent);
 
-	if( pEvent->button( ) == Qt::LeftButton )
-		if( false ) setCursor( QCursor(Qt::SizeVerCursor) );
-		else setCursor( QCursor(Qt::SizeAllCursor) );
+	if (pEvent->button() == Qt::LeftButton) 
+        setCursor(QCursor(Qt::SizeAllCursor));
 }
 
 // --------------------------------------------------------------------
@@ -216,51 +207,25 @@ void NodeItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 // --------------------------------------------------------------------
 void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 {
-	QGraphicsEllipseItem::mouseReleaseEvent( pEvent );
+	QGraphicsEllipseItem::mouseReleaseEvent(pEvent);
 
-	setCursor( QCursor(Qt::ArrowCursor) );
+	setCursor(QCursor(Qt::ArrowCursor));
 }
 
 // --------------------------------------------------------------------
 //  Updates the position of the node item 
 // --------------------------------------------------------------------
-void NodeItem::updatePosition()
+void NodeItem::setPosition(float x, float y)
 {
-    QPointF normPos;
-
-    // Determine the normalized view position based on transfer type
-    if (true)  // :TODO: Analyze parent transfer's type
-    {
-        normPos.setX(m_pNode->position(0));
-        normPos.setY(1.f-m_pNode->material()->opticalThickness());
-    }
-    else if (false)
-    {
-    }
-    else
-    {
-    }
-
     // Compute the realized coordinates of the node within its parent
-    QPointF const nodeRangeMin = m_parent->rect( ).topLeft( );
-    QPointF const nodeRangeMax = m_parent->rect( ).bottomRight( );
+    QPointF const nodeRangeMin = m_parent->rect().topLeft();
+    QPointF const nodeRangeMax = m_parent->rect().bottomRight();
     QPointF newPos(
-        nodeRangeMin.x() + (nodeRangeMax.x() - nodeRangeMin.x()) * normPos.x(),
-        nodeRangeMin.y() + (nodeRangeMax.y() - nodeRangeMin.y()) * normPos.y()
+        nodeRangeMin.x() + (nodeRangeMax.x() - nodeRangeMin.x()) * x,
+        nodeRangeMin.y() + (nodeRangeMax.y() - nodeRangeMin.y()) * (1 - y)
         );
 
-    // Issue the position update
-    if (newPos == this->pos()) return;
-    
     m_ignorePosChange = true;
     QGraphicsEllipseItem::setPos(newPos);
     m_ignorePosChange = false;
-
-    QRectF ellipseRect;
-
-    ellipseRect.setTopLeft( QPointF(-filescope::radius, -filescope::radius) );
-    ellipseRect.setWidth( 2.0f * filescope::radius );
-    ellipseRect.setHeight( 2.0f * filescope::radius );
-
-    setRect(ellipseRect);
 }

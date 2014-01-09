@@ -30,8 +30,8 @@ auto V_MINOR = "Minor"; ///< Minor version number
 
 // Volume
 
-auto V_SPACING = "Spacing";
-auto V_OFFSET  = "Offset";
+auto V_SPACING = "Spacing"; ///< Spacing between volume samples (mm x mm x mm x s)
+auto V_OFFSET  = "Offset";  ///< Volume offset from origin (mm x mm x mm)
 
 // Camera
 
@@ -49,6 +49,7 @@ auto C_EYE        = "Eye";              ///< Camera eye vector (mm X mm X mm)
 // Transfer
 
 auto T_RESOLUTION = "Resolution";   ///< Transfer map resolution (pixels X pixels X pixels)
+auto T_TYPE       = "Type";         ///< Transfer function type (# of dimensions)
 
 // |-> Materials
 
@@ -56,6 +57,13 @@ auto M_GLOSSINESS = "Glossiness";       ///< Material specularity
 auto M_THICKNESS  = "Thickness";        ///< Optical thickness (/mm)
 
 // |-> Node
+
+// |-> Quad
+
+auto Q_POSITION  = "Position";   ///< Center position of quad (normalized)
+auto Q_HEIGHTS   = "Heights";    ///< Height of quad (left, right)
+auto Q_WIDTHS    = "Widths";     ///< Width of quad (top, bottom) 
+auto Q_MATERIALS = "Materials";  ///< Material list for nodes
 
 // Settings
 

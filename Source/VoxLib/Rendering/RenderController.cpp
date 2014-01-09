@@ -265,6 +265,7 @@ void RenderController::synchronizationSubroutine()
         m_scene.lightSet->m_ambientChanged   = false;
         m_scene.volume->m_contextChanged     = false;
         m_scene.transfer->m_contextChanged   = false;
+        m_scene.transfer->m_contextChanged   = false;
         m_scene.parameters->m_contextChanged = false;
         m_scene.clipGeometry->setDirty(false);
     }

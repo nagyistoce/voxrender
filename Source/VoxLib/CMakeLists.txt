@@ -100,6 +100,7 @@ Set(VoxLib_HEADERS_SCENE
     Scene/RenderParams.h
     Scene/Scene.h
     Scene/Transfer.h
+    Scene/TransferMap.h
     Scene/Volume.h
 )
 
@@ -179,6 +180,7 @@ Set(VoxLib_SOURCES_SCENE
     Scene/PrimGroup.cpp
     Scene/Scene.cpp
     Scene/Transfer.cpp
+    Scene/TransferMap.cpp
     Scene/Volume.cpp
 )
 

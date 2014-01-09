@@ -105,6 +105,14 @@ public:
     {
         emit transferNodeSelected(node);
     }
+    void setTransferQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node)
+    {
+        emit transferQuadSelected(quad, node);
+    }
+
+    QString const& lastOpenDir() { return m_lastOpenDir; }
+
+    void setLastOpenDir(QString const& lastOpenDir) { m_lastOpenDir = lastOpenDir; } 
 
 	vox::RenderController m_renderController; ///< Application render controller
 	vox::Scene activeScene;                   ///< Current scene elements
@@ -115,7 +123,8 @@ signals:
 
     /** Signal sent when the working transfer node is changed */
     void transferNodeSelected(std::shared_ptr<vox::Node> node); 
-     
+    void transferQuadSelected(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node); 
+
     /** Signal sent when the RenderController feeds back a frame */
     void frameReady(std::shared_ptr<vox::FrameBufferLock> frame);
 

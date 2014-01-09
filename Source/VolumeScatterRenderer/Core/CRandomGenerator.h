@@ -104,7 +104,7 @@ namespace vox
         {
             float z = 1.f - 2.f * sample1D();
             float r = sqrtf(high(0.f, 1.f - z*z));
-            float phi = 2.f * M_PI * sample1D();
+            float phi = 2.f * (float)M_PI * sample1D();
             float x = r * cosf(phi);
             float y = r * sinf(phi);
 
@@ -116,7 +116,7 @@ namespace vox
         {
             float z = sample1D();
             float r = sqrtf(high(0.f, 1.f - z*z));
-            float phi = 2.f * M_PI * sample1D();
+            float phi = 2.f * (float)M_PI * sample1D();
             float x = r * cosf(phi);
             float y = r * sinf(phi);
 

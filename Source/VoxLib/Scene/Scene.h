@@ -43,6 +43,7 @@ namespace vox
     class VOX_EXPORT LightSet;
     class VOX_EXPORT RenderParams;
     class VOX_EXPORT PrimGroup;
+    class VOX_EXPORT TransferMap;
 
 	/** 
 	 * Scene File Importer
@@ -239,6 +240,7 @@ namespace vox
         std::shared_ptr<LightSet>     lightSet;     ///< Lighting Data
         std::shared_ptr<PrimGroup>    clipGeometry; ///< Clipping objects
         std::shared_ptr<Transfer>     transfer;     ///< Transfer function
+        std::shared_ptr<TransferMap>  transferMap;  ///< Transfer function map
 		std::shared_ptr<Volume>       volume;	    ///< Volume data
 		std::shared_ptr<Camera>       camera;	    ///< Scene camera
 	};

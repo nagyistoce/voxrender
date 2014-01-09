@@ -47,19 +47,6 @@ message(STATUS "Cuda library directory: " "${CUDA_LIBRARIES}")
 INCLUDE_DIRECTORIES(SYSTEM ${CUDA_INCLUDE_DIRS})
 
 #===============================================#
-#                  NVIDIA OptiX                 #
-#===============================================#
-
-FIND_PACKAGE(OptiX)
-
-IF(OptiX_FOUND)
-    INCLUDE_DIRECTORIES("${OptiX_INCLUDE}")
-    MESSAGE(STATUS "OptiX include directory: " "${OptiX_INCLUDE}")
-ELSE(OptiX_FOUND)
-    MESSAGE(STATUS "OptiX not found")
-ENDIF(OptiX_FOUND)
-
-#===============================================#
 #                     OPENGL                    #
 #===============================================#
 

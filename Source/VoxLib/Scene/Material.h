@@ -34,75 +34,33 @@
 // API Namespace
 namespace vox
 {
-    class VOX_EXPORT Node;
-
     /** Defines the material properties of a volume. */
     class VOX_EXPORT Material
     {
     public:
-        /** Constructs a new transfer function object */
-        static std::shared_ptr<Material> create() { return std::shared_ptr<Material>(new Material()); }
+        static std::shared_ptr<Material> create() 
+        { 
+            return std::shared_ptr<Material>(new Material()); 
+        }
 
-        /** Because some people (VS 2010 - hint, hint) don't support unique_ptr */
-        ~Material();
+        float opticalThickness; ///< Optical thickness of material (-INF, INF)
+        float glossiness;       ///< Glossiness factor
+        float emissiveStrength; ///< Emissive light intensity
 
-        /** Returns the optical thickness of the material () */
-        float opticalThickness() const;
-        
-        /** Sets the optical thickness of the material */
-        void setOpticalThickness(float thickness);
+        Vector<UInt8,3> emissive; ///< Emissive color
+        Vector<UInt8,3> diffuse;  ///< Diffuse reflection color
+        Vector<UInt8,3> specular; ///< Specular reflection color
 
-        /** Returns the glossiness factor of the material */
-        float glossiness() const;
-
-        /** Sets the glossiness factor of the material */
-        void setGlossiness(float glossiness);
-        
-        /** Emissive light intensity */
-        float emissiveStrength() const;
-
-        /** Sets the emissive light intensity */
-        void setEmissiveStrength(float intensity);
-
-        /** Returns the emissive properties of the material */
-        Vector<UInt8,3> emissive() const;
-
-        /** Sets the emissive properties of the material */
-        void setEmissive(Vector<UInt8,3> const& emissive);
-
-        /** Returns the diffuse properties of the material */
-        Vector<UInt8,3> const& diffuse() const;
-
-        /** Sets the diffuse properties of the material */
-        void setDiffuse(Vector<UInt8,3> const& diffuse);
-
-        /** Returns the specular properties of the material */
-        Vector<UInt8,3> const& specular() const;
-
-        /** Sets the specular properties of the material */
-        void setSpecular(Vector<UInt8,3> const& specular);
-
-        /** Sets the dirty state of the material */
-        void setDirty(bool dirty = true);
-
-        /** Returns true if the dirt flag is set */
-        bool isDirty() { return m_isDirty; }
-
-    private:
-        /** Initializes a standard default material */
-        Material();
-
-        class Impl; Impl * m_pImpl;
-
-        friend Node;
-
-        /** Registers a user node for this material */
-        void addNode(std::shared_ptr<Node> node);
-
-        /** Deregisters a user node for this material */
-        void removeNode(std::shared_ptr<Node> node);
-
-        bool m_isDirty; ///< Dirty flag for interactive rendering
+        /** Initializes a default material */
+        Material() :
+          opticalThickness(0.0f),
+          glossiness(80.0f),
+          emissiveStrength(0.0f),
+          emissive(0, 0, 0),
+          diffuse(255, 255, 255),
+          specular(0, 0, 0)
+        {
+        }
     };
 }
 

@@ -61,13 +61,6 @@ namespace
             Optional,   ///< Node is optional 
         };
 
-        // --------------------------------------------------------------------
-        //  Reads a vector of unknown or variable length
-        // --------------------------------------------------------------------
-        template<typename T> std::vector<T> parseNVector(String const& vector)
-        {
-        }
-
         // Export module implementation
         class SceneExporter
         {
@@ -76,7 +69,7 @@ namespace
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
             SceneExporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene) :
-                m_scene(scene), m_sink(sink)
+                m_scene(scene), m_options(options), m_sink(sink)
             {
             }
 
@@ -90,18 +83,19 @@ namespace
                 m_tree.add("Scene.Version.Minor", versionMinor);
 
                 // Write the scene information
-                writeCamera();
-                writeVolume();
-                writeLighting();
-                writeTransfer();
-                writeClipGeometry();
-                writeParams();
+                if (m_options.lookup("ExportCamera", true))   writeCamera();
+                if (m_options.lookup("ExportVolume", true))   writeVolume();
+                if (m_options.lookup("ExportLights", true))   writeLighting();
+                if (m_options.lookup("ExportTransfer", true)) writeTransfer();
+                if (m_options.lookup("ExportClipGeo", true))  writeClipGeometry();
+                if (m_options.lookup("ExportParams", true))   writeParams();
 
                 // Write the compiled XML data to the output stream
                 boost::property_tree::xml_writer_settings<char> settings('\t', 1);
                 boost::property_tree::xml_parser::write_xml(m_sink, m_tree, settings);
             }
 
+        private:
             // --------------------------------------------------------------------
             //  Write the camera settings to the property tree
             // --------------------------------------------------------------------
@@ -186,18 +180,40 @@ namespace
                 boost::property_tree::ptree node;
                 auto transfer = m_scene.transfer;
                 
-                node.add(T_RESOLUTION, transfer->resolution()[0]);
+                if (!transfer) // Transfer map only (or no transfer)
+                {
+                    // :TODO: Export raw image data
+                }
+                else if (transfer->type() == Transfer1D::typeID()) writeTransfer1D(node);
+                else if (transfer->type() == Transfer2D::typeID()) writeTransfer2D(node);
+                else
+                {
+                    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Unrecognized transfer function type", Error_BadFormat);
+                }
+
+                m_tree.add_child("Scene.Transfer", node);
+            }
+            
+            // --------------------------------------------------------------------
+            //  Write the transfer settings to the property tree (1D)
+            // --------------------------------------------------------------------
+            void writeTransfer1D(boost::property_tree::ptree & node)
+            {
+                auto transfer1D = dynamic_cast<Transfer1D*>(m_scene.transfer.get());
+
+                node.add(T_TYPE, 1);
+                node.add(T_RESOLUTION, transfer1D->resolution()[0]);
 
                 std::list<void*> materials;
 
-                BOOST_FOREACH (auto & point, transfer->nodes())
+                BOOST_FOREACH (auto & point, transfer1D->nodes())
                 {
                     boost::property_tree::ptree cNode;
 
-                    void * key = point->material().get();
+                    void * key = point->material.get();
                     if (std::find(materials.begin(), materials.end(), key) == materials.end())
                     {
-                        auto material = point->material();
+                        auto material = point->material;
                         materials.push_back(key);
                         
                         boost::property_tree::ptree mNode;
@@ -207,16 +223,46 @@ namespace
                         //node.add_child("Materials.Material", mNode);
                     }
 
-                    cNode.add("Glossiness", point->material()->glossiness());
-                    cNode.add("Thickness", point->material()->opticalThickness());
-                    cNode.add("Density", point->position(0));
+                    cNode.add("Glossiness", point->material->glossiness);
+                    cNode.add("Thickness", point->material->opticalThickness);
+                    cNode.add("Density", point->density);
 
                     node.add_child("Nodes.Node", cNode);
                 }
-
-                m_tree.add_child("Scene.Transfer", node);
             }
-            
+
+            // --------------------------------------------------------------------
+            //  Write the transfer settings to the property tree (2D)
+            // --------------------------------------------------------------------
+            void writeTransfer2D(boost::property_tree::ptree & node)
+            {
+                auto transfer2D = dynamic_cast<Transfer2D*>(m_scene.transfer.get());
+
+                node.add(T_TYPE, 2);
+                auto res = transfer2D->resolution();
+                node.add(T_RESOLUTION, Vector2u(res[0], res[1]));
+
+                BOOST_FOREACH (auto & quad, transfer2D->quads())
+                {
+                    boost::property_tree::ptree cNode;
+
+                    cNode.add(Q_POSITION, quad->position);
+                    cNode.add(Q_HEIGHTS, quad->heights);
+                    cNode.add(Q_WIDTHS, quad->widths);
+                    
+                    //cNode.add_child(Q_MATERIALS, mNode);
+
+                    node.add_child("Quads.Quad", cNode);
+                }
+            }
+
+            // --------------------------------------------------------------------
+            //  Write the transfer settings to the property tree (3D)
+            // --------------------------------------------------------------------
+            void writeTransfer3D(boost::property_tree::ptree & node)
+            {
+            }
+
             // --------------------------------------------------------------------
             //  Write the render parameter settings to the property tree
             // --------------------------------------------------------------------
@@ -255,7 +301,8 @@ namespace
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
             static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
             
-            boost::property_tree::ptree m_tree; ///< Scenefile tree
+            boost::property_tree::ptree m_tree;     ///< Scenefile tree
+            OptionSet const&            m_options;  ///< Export options
 
             Scene const& m_scene; // Scene
             ResourceOStream & m_sink;
@@ -317,11 +364,11 @@ namespace
                     scene = executeImportDirectives();
 
                     // Load scene components
-                    scene.volume       = loadVolume();
-                    scene.camera       = loadCamera();
-                    scene.lightSet     = loadLights();
-                    scene.parameters   = loadParams();
-                    scene.transfer     = loadTransfer();
+                    if (m_options.lookup("ImportVolume", true)) scene.volume       = loadVolume();
+                    if (m_options.lookup("ImportCamera", true)) scene.camera       = loadCamera();
+                    if (m_options.lookup("ImportLights", true)) scene.lightSet     = loadLights();
+                    if (m_options.lookup("ImportParams", true)) scene.parameters   = loadParams();
+                    if (m_options.lookup("ImportTransfer", true)) loadTransfer(scene);
                     scene.clipGeometry = loadClipGeometry();
                 }
 
@@ -527,71 +574,128 @@ namespace
             // --------------------------------------------------------------------
             //  Creates a transfer object from the 'Transfer' node of a scene file
             // --------------------------------------------------------------------
-            std::shared_ptr<Transfer> loadTransfer()
+            void loadTransfer(Scene & scene)
             {                
-                if (!push("Transfer", Preferred)) return nullptr;
+                if (!push("Transfer", Preferred)) return;
 
-                  // Instantiate default transfer object
-                  auto transferPtr = executeImportDirectives().transfer;
-                  if (!transferPtr) transferPtr = Transfer::create();
-                  auto & transfer = *transferPtr;
-                  
-                  // Transfer function resolution
-                  Vector3u dimensions(256u, 0u, 0u);
-                  String resolution = m_node->get(T_RESOLUTION, "");
-                  std::vector<String> dimensionStrs;
-                  boost::algorithm::split(
-                    dimensionStrs, 
-                    resolution, 
-                    boost::is_any_of(" ,\n\t\r"), 
-                    boost::algorithm::token_compress_on
-                    );
-                  if (dimensionStrs.size() > 3) parseError(Error_BadFormat, "Too many transfer function dimensions");
-                  for (size_t i = 0; i < dimensionStrs.size(); i++)
-                      dimensions[i] = boost::lexical_cast<size_t>(dimensionStrs[0]);
-                  transfer.setResolution(dimensions);
+                  // Execute a transfer function import directive if specified
+                  auto transferImprt = executeImportDirectives();
+                  if (transferImprt.transfer || transferImprt.transferMap) 
+                  { 
+                      scene.transferMap = transferImprt.transferMap;
+                      scene.transfer = transferImprt.transfer;
+                      return;
+                  }
+                  // End
 
-                  // Import any named materials 
-                  auto materials = loadMaterials();
-
-                  // Process transfer function nodes
-                  if (push("Nodes", Preferred))
+                  // Load the transfer function specification, only supported
+                  // xml types are the built in TransferXX classes
+                  size_t type = m_node->get<size_t>("Type", 1);
+                  switch (type)
                   {
-                      BOOST_FOREACH (auto & region, *m_node)
-                      {
-                          // Create a new node for insertion
-                          auto node = Node::create();
-                          transfer.addNode(node);
-
-                          // Determine the node's material properties
-                          auto materialOpt = region.second.get_optional<String>("Material");
-                          if (materialOpt) // Check for name specification of material
-                          {
-                              auto matIter = materials.find(*materialOpt);
-                              if (matIter != materials.end())
-                              {
-                                  node->setMaterial(matIter->second);
-                              }
-                              else parseError(Error_BadToken, format("Undefined material (%1%) used", *materialOpt));
-                          }
-                          else // load inline specification of material
-                          {
-                              auto material = Material::create();
-                              material->setGlossiness( region.second.get(M_GLOSSINESS, 0.0f) );
-                              material->setOpticalThickness( region.second.get(M_THICKNESS, 0.0f) );
-                              node->setMaterial(material);
-                          }
-
-                          // Determine the node's position
-                          node->setPosition(0, region.second.get<float>("Density"));
-                      }
-
-                      pop();
+                  case 1: scene.transfer = loadTransfer1D(); break;
+                  case 2: scene.transfer = loadTransfer2D(); break;
+                  case 3: scene.transfer = loadTransfer3D(); break;
+                  default:
+                      parseError(Error_BadToken, format("Unrecognized transfer function type: %1%", type));
+                      break;
                   }
 
-                pop();
+                  // Generate the transfer function map 
+                  // :TODO: Shouldn't be necessary, bug in higher level user of imprt
+                  scene.transferMap = TransferMap::create();
+                  scene.transfer->generateMap(scene.transferMap);
 
-                return transferPtr;
+                pop();
+            }
+            
+            // --------------------------------------------------------------------
+            //  Loads a 1 dimensional transfer function specification
+            // --------------------------------------------------------------------
+            std::shared_ptr<Transfer> loadTransfer1D()
+            {
+                auto transfer = Transfer1D::create();
+
+                transfer->setResolution(m_node->get<size_t>(T_RESOLUTION, 256)); // Resolution
+                auto materials = loadMaterials(); // Import any referenced materials 
+
+                // Process transfer function nodes
+                if (push("Nodes", Preferred))
+                {
+                    BOOST_FOREACH (auto & region, *m_node)
+                    {
+                        // Create a new node for insertion
+                        auto node = Node::create(
+                            region.second.get<float>("Density"));
+                        transfer->addNode(node);
+
+                        // Determine the node's material properties
+                        auto materialOpt = region.second.get_optional<String>("Material");
+                        if (materialOpt) // Check for name specification of material
+                        {
+                            auto matIter = materials.find(*materialOpt);
+                            if (matIter != materials.end())
+                            {
+                                node->material = matIter->second;
+                            }
+                            else parseError(Error_BadToken, format("Undefined material (%1%) used", *materialOpt));
+                        }
+                        else // load inline specification of material
+                        {
+                            auto material = Material::create();
+                            material->glossiness = region.second.get(M_GLOSSINESS, 0.0f);
+                            material->opticalThickness = region.second.get(M_THICKNESS, 1.0f);
+                            node->material = material;
+                        }
+                    }
+
+                    pop();
+                }
+
+                return transfer;
+            }
+            
+            // --------------------------------------------------------------------
+            //  Loads a 2 dimensional transfer function specification
+            // --------------------------------------------------------------------
+            std::shared_ptr<Transfer> loadTransfer2D()
+            {
+                auto transfer = Transfer2D::create();
+
+                transfer->setResolution(m_node->get(T_RESOLUTION, Vector2u(256, 128))); // Resolution
+                auto materials = loadMaterials(); // Import any referenced materials 
+
+                // Process transfer function nodes
+                if (push("Quads", Preferred))
+                {
+                    BOOST_FOREACH (auto & region, *m_node)
+                    {
+                        auto quad = Quad::create();
+                        quad->position = m_node->get(Q_POSITION, quad->position);
+                        quad->heights  = m_node->get(Q_HEIGHTS, quad->heights);
+                        quad->widths   = m_node->get(Q_WIDTHS, quad->widths);
+                        transfer->addQuad(quad);
+                    }
+
+                    pop();
+                }
+
+                return transfer;
+            }
+                        
+            // --------------------------------------------------------------------
+            //  Loads a 3 dimensional transfer function specification
+            // --------------------------------------------------------------------
+            std::shared_ptr<Transfer> loadTransfer3D()
+            {
+                /*auto transfer = Transfer3D::create();
+
+                transfer->setResolution(m_node->get(T_RESOLUTION, Vector3u(128, 64, 8))); // Resolution
+                auto materials = loadMaterials(); // Import any referenced materials 
+
+                return transfer;*/
+
+                return nullptr;
             }
 
             // --------------------------------------------------------------------
@@ -633,8 +737,8 @@ namespace
                         
                         // Parse the material specification :TODO:
                         auto material = Material::create();
-                        material->setGlossiness( materialNode.second.get(M_GLOSSINESS, 0.0f) );
-                        material->setOpticalThickness( materialNode.second.get(M_THICKNESS, 0.0f) );
+                        material->glossiness = materialNode.second.get(M_GLOSSINESS, 0.0f);
+                        material->opticalThickness = materialNode.second.get(M_THICKNESS, 0.0f);
                         materials[materialNode.first] = material;
                     }
            

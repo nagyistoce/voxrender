@@ -59,6 +59,7 @@ EdgeItem::EdgeItem(QGraphicsItem* parent, std::weak_ptr<NodeItem> node1, std::we
     m_node1(node1),
     m_node2(node2)
 {
+    setZValue(400.f);
 }
 
 // --------------------------------------------------------------------

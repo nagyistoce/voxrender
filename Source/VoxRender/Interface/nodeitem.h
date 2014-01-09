@@ -51,21 +51,20 @@
 #include <memory>
 
 // Parent graphics item class
-namespace vox { class Node; };
 class TransferItem;
 
-/** Graphics item representing a transfer function node */
+/** Graphics item representing a POI on the transfer function */
 class NodeItem : public QGraphicsEllipseItem
 {
 public:
-    /** Constructs a new NodeItem for the specified transfer node */
-	NodeItem(TransferItem* parent, std::shared_ptr<vox::Node> node);
+    /** Constructs a new NodeItem for the specified transfer data */
+	NodeItem(TransferItem* parent, float x, float y, std::shared_ptr<void> data = nullptr);
 
     /** Updates the position of the node item */
-    void updatePosition();
+    void setPosition(float x, float y);
     
-    /** Returns the transfer function node associated with this element */
-    std::shared_ptr<vox::Node> node() { return m_pNode; }
+    /** Returns the transfer function data associated with this element */
+    std::shared_ptr<void> data() { return m_data; }
 
 protected:
 	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
@@ -80,10 +79,10 @@ protected:
     virtual QVariant itemChange(GraphicsItemChange Change, const QVariant& Value);
 
 private:
-    TransferItem* m_parent; ///< Handle to parent 
+    TransferItem * m_parent; ///< Handle to parent 
 
-    std::shared_ptr<vox::Node> m_pNode;   ///< Associated transfer node
-    
+    std::shared_ptr<void> m_data; ///< Associated data
+
     bool m_ignorePosChange; ///< Indicates lock for synchronizing node attributes
 };
 
