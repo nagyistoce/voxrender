@@ -61,6 +61,26 @@ namespace
             Optional,   ///< Node is optional 
         };
 
+        // Converts a material to a property tree representation
+        boost::property_tree::ptree toPtree(std::shared_ptr<Material> material)
+        {
+            boost::property_tree::ptree node;
+
+            node.add("Glossiness", material->glossiness);
+            node.add("Thickness", material->opticalThickness);
+            node.add("Diffuse", Vector3u(material->diffuse));
+            node.add("Specular", Vector3u(material->specular));
+            node.add("Emissive", Vector3u(material->emissive));
+
+            return node;
+        }
+
+        // Constructs a material from a property tree representation
+        std::shared_ptr<Material> toMaterial(boost::property_tree::ptree & node)
+        {
+            return Material::create();
+        }
+
         // Export module implementation
         class SceneExporter
         {
@@ -204,29 +224,10 @@ namespace
                 node.add(T_TYPE, 1);
                 node.add(T_RESOLUTION, transfer1D->resolution()[0]);
 
-                std::list<void*> materials;
-
                 BOOST_FOREACH (auto & point, transfer1D->nodes())
                 {
-                    boost::property_tree::ptree cNode;
-
-                    void * key = point->material.get();
-                    if (std::find(materials.begin(), materials.end(), key) == materials.end())
-                    {
-                        auto material = point->material;
-                        materials.push_back(key);
-                        
-                        boost::property_tree::ptree mNode;
-                        //mNode.add(M_GLOSSINESS, material->glossiness());
-                        //mNode.add(M_THICKNESS, material->opticalThickness());
-
-                        //node.add_child("Materials.Material", mNode);
-                    }
-
-                    cNode.add("Glossiness", point->material->glossiness);
-                    cNode.add("Thickness", point->material->opticalThickness);
+                    boost::property_tree::ptree cNode = toPtree(point->material);
                     cNode.add("Density", point->density);
-
                     node.add_child("Nodes.Node", cNode);
                 }
             }
@@ -250,7 +251,10 @@ namespace
                     cNode.add(Q_HEIGHTS, quad->heights);
                     cNode.add(Q_WIDTHS, quad->widths);
                     
-                    //cNode.add_child(Q_MATERIALS, mNode);
+                    cNode.add_child("UL", toPtree(quad->materials[Quad::Node_UL]));
+                    cNode.add_child("LL", toPtree(quad->materials[Quad::Node_LL]));
+                    cNode.add_child("UR", toPtree(quad->materials[Quad::Node_UR]));
+                    cNode.add_child("LR", toPtree(quad->materials[Quad::Node_LR]));
 
                     node.add_child("Quads.Quad", cNode);
                 }

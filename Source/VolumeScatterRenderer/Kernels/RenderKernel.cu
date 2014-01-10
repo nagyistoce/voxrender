@@ -50,12 +50,14 @@
 // Additional Includes
 #define _USE_MATH_DEFINES
 #include <math.h>
+    
+#define R3I 0.57735026918962576450914878050196f;
 
 namespace vox {
 
 namespace {
 namespace filescope {
-    
+
     // --------------------------------------------------------------------
     //                   HOST HANDLES FOR DEVICE DATA
     // --------------------------------------------------------------------
@@ -144,7 +146,7 @@ namespace filescope {
     VOX_DEVICE float sampleAbsorption(Vector3f const& location)
     {
         float density = sampleDensity(location[0], location[1], location[2]);
-        float gradMag = sampleGradient(location).length() * (1.0f / 1.73205f);
+        float gradMag = sampleGradient(location).length() * R3I;
 
         return tex3D(gd_opacityTex, density, gradMag, 0.0f);
     }
@@ -238,13 +240,14 @@ namespace filescope {
         Vector3f gradient = sampleGradient(location.pos);
         float gradMag = gradient.length();
         gradient = gradient / gradMag;
+        gradMag *= R3I;
         if (Vector3f::dot(gradient, location.dir) > 0)
         {
             gradient = -gradient;
         }
 
         // Determine the diffuse characteristic of the sample point 
-        float4 sampleDiffuse = tex3D(gd_diffuseTex, density, 0.0f, 0.0f); 
+        float4 sampleDiffuse = tex3D(gd_diffuseTex, density, gradMag, 0.0f); 
         Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
 
         // Compute the ambient component of the scene lighting
@@ -274,7 +277,7 @@ namespace filescope {
                 // Calculate the half vector between the light and view
                 Vector3f H = (lightDirection - location.dir).normalized();
 
-                float4 specularData = tex3D(gd_specularTex, density, 0.0f, 0.0f);
+                float4 specularData = tex3D(gd_specularTex, density, gradMag, 0.0f);
 
                 //Intensity of the specular light
                 float NdotH = Vector3f::dot(gradient, H);

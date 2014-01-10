@@ -52,6 +52,13 @@ class RenderView : public QGraphicsView
 	Q_OBJECT
 
 public:
+    enum Tool
+    {
+        Tool_Drag,
+        Tool_ClipPlane
+    };
+
+public:
 	~RenderView();
 
     /** Constructs a new render view portal */
@@ -104,6 +111,11 @@ private:
     void focusOutEvent(QFocusEvent * event);  ///< Releases any held keys
 
     boost::chrono::high_resolution_clock::time_point m_lastTime; ///< Timepoint for latency calculation
+
+    Tool m_activeTool;
+
+    // Plane tool data
+    QLine m_clipLine; // Start index of clip line
 
     unsigned int m_ioFlags;     ///< Bitset for io tracking
     QPoint       m_prevPos;     ///< Mouse position after last event

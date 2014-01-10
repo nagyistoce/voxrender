@@ -107,6 +107,9 @@ public:
     /** Executes a roll rotation */
     void roll(float radians);
 
+    /** Converts a 2D normalized film coordinate into a 3D ray */
+    Ray3f projectRay(Vector2f const& screenCoords);
+
     /** 
      * Points the camera at the specified 3D position 
      *  

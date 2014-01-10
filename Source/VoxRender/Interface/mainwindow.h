@@ -87,6 +87,12 @@ public:
     
     static MainWindow* instance;
 
+    /** Adds a control for managing a light in the render scene */
+    void addLight(std::shared_ptr<vox::Light> light, QString const& name);
+    
+    /** Adds a control for managing a clipping object in the render scene */
+    void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
+
     /** Current scene accessor */
     vox::Scene & scene() { return activeScene; }
 
@@ -162,12 +168,6 @@ private:
 	void changeRenderState( RenderState state );
 	bool canStopRendering();
     void synchronizeView();
-
-    /** Adds a control for managing a light in the render scene */
-    void addLight(std::shared_ptr<vox::Light> light, QString const& name);
-    
-    /** Adds a control for managing a clipping object in the render scene */
-    void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label

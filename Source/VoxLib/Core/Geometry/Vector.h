@@ -144,6 +144,22 @@ namespace vox
          * Fold operator
          *
          * Performs a fold operation on the vector. A fold operation
+         * iterates through the vector elements applying op.
+         *
+         * @param seed The seed value for the fold sequence
+         * @param op The fold operator
+         */
+        T fold(T (*op)(T const&, T const&)) const
+        {
+            T res = coord[i];
+            for (size_t i = 1; i < N; i++)
+                res = op(res, coord[i]);
+        }
+
+        /**
+         * Fold operator
+         *
+         * Performs a fold operation on the vector. A fold operation
          * takes a seed value and iterates through the vector elements
          * applying op to the running seed value and the current element.
          *

@@ -120,4 +120,27 @@ void Camera::lookAt(Vector3f const& position, Vector3f const& up)
     m_contextChanged = true;
 }
 
+// --------------------------------------------------------------------
+//  Generates a camera ray for the specified film coordinates
+// --------------------------------------------------------------------
+Ray3f Camera::projectRay(Vector2f const& screenCoords)
+{
+    // Precompute screen sampling parameters
+    float wo = tanf(m_fieldOfView / 2.0f);
+    float ho = wo * m_filmHeight / m_filmWidth;
+    auto screenUpperLeft = Vector2f(-wo, -ho);
+    auto screenPerPixel  = Vector2f(wo / m_filmWidth, ho / m_filmHeight) * 2.0f;
+
+    float screenX = screenUpperLeft[0] + screenPerPixel[0] * screenCoords[0];
+    float screenY = screenUpperLeft[1] + screenPerPixel[1] * screenCoords[1];
+
+    Ray3f ray(m_pos, m_eye + (m_right * screenX) - (m_up * screenY));
+
+    ray.dir.normalize();
+    ray.min = 0.0f;
+    ray.max = std::numeric_limits<float>::infinity();
+
+    return ray;
+}
+
 }

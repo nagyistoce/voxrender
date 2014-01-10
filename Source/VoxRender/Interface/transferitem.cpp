@@ -285,7 +285,41 @@ void TransferItem::onNodeItemChange(NodeItem * item, QPointF & pos)
     } 
     else if (transfer->type() == Transfer2D::typeID())
     {
+        auto quadItem = std::static_pointer_cast<filescope::QuadIndex>(item->data());
+        auto & quad = quadItem->quad;
+            
+        auto sw = rect().width();
+        auto sh = rect().height();
+        auto w = high(quad->widths[0],  quad->widths[1])  / 2 * sw;
+        auto h = high(quad->heights[0], quad->heights[1]) / 2 * sh;
+        auto x = rect().left();
+        auto y = rect().top();
 
+        switch (quadItem->node)
+        {
+        //case Quad::Node_LL:
+        //    if (pos.x() > x+sw*quad->position[0]) pos.setX(x+sw*quad->position[0]);
+        //    if (pos.y() < y+sh*quad->position[1]) pos.setY(y+sh*quad->position[1]);
+        //    break;
+        //case Quad::Node_LR:
+        //    if (pos.x() > x+sw*quad->position[0]) pos.setX(x+sw*quad->position[0]);
+        //    if (pos.y() > y+sh*quad->position[1]) pos.setY(y+sh*quad->position[1]);
+        //    break;
+        //case Quad::Node_UL:
+        //    if (pos.x() < x+sw*quad->position[0]) pos.setX(x+sw*quad->position[0]);
+        //    if (pos.y() < y+sh*quad->position[1]) pos.setY(y+sh*quad->position[1]);
+        //    break;
+        //case Quad::Node_UR:
+        //    if (pos.x() < x+sw*quad->position[0]) pos.setX(x+sw*quad->position[0]);
+        //    if (pos.y() > y+sh*quad->position[1]) pos.setY(y+sh*quad->position[1]);
+        //    break;
+        case Quad::Node_End: 
+            if (pos.x() < x+w) pos.setX(x+w);
+            if (pos.y() < y+h) pos.setY(y+h);
+            if (pos.x() > x+sw-w) pos.setX(x+sw-w);
+            if (pos.y() > y+sh-h) pos.setY(y+sh-h);
+            break;
+        }
     }
 }
 

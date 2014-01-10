@@ -54,6 +54,7 @@ RenderView::RenderView(QWidget *parent) :
     QGraphicsView(parent),
     m_renderscene(new QGraphicsScene()),
     m_overlayStats(false),
+    m_activeTool(Tool_Drag),
     m_ioFlags(0u)
 {
 	m_renderscene->setBackgroundBrush(QColor(127,127,127));
@@ -196,6 +197,37 @@ void RenderView::mousePressEvent(QMouseEvent* event)
     {
         m_prevPos = event->pos();
     }
+    
+    // Handle the events for the active tool
+    if (event->button() == Qt::LeftButton)
+    {
+        switch (m_activeTool)
+        {
+        case Tool_ClipPlane:
+            if (m_clipLine.p1().isNull()) m_clipLine.setP1(event->pos()); 
+            else if (m_clipLine.p2().isNull()) m_clipLine.setP2(event->pos());
+            else 
+            {
+                if (m_clipLine.p1() != m_clipLine.p2()) 
+                {
+                    auto camera = MainWindow::instance->scene().camera;
+                    auto p0 = viewport()->mapToParent(mapFromScene(0, 0));
+                    auto p1 = m_clipLine.p1() - p0;
+                    p1 *= 100.f / m_zoomfactor;
+                    auto p2 = m_clipLine.p2() - p0;
+                    p2 *= 100.f / m_zoomfactor;
+                    auto v1 = camera->projectRay(Vector2f(p1.x(), p1.y())).dir;
+                    auto v2 = camera->projectRay(Vector2f(p2.x(), p2.y())).dir;
+                    auto normal = Vector3f::cross(v1, v2);
+                    auto plane = vox::Plane::create(normal, Vector3f::dot(normal, camera->position()));
+                    MainWindow::instance->addClippingGeometry(plane);
+                }
+                m_clipLine.setP1(QPoint());
+                m_clipLine.setP2(QPoint());
+            }
+            break;
+        }
+    }
 
 	// Parent class event handler
 	QGraphicsView::mousePressEvent(event);
@@ -230,6 +262,9 @@ void RenderView::keyPressEvent(QKeyEvent * event)
         case Qt::Key_A: m_ioFlags |= filescope::KEY_LEFT;  break;
         case Qt::Key_S: m_ioFlags |= filescope::KEY_DOWN;  break;
         case Qt::Key_D: m_ioFlags |= filescope::KEY_RIGHT; break;
+
+        // :TEST: Plane cut
+        case Qt::Key_Control: if (m_activeTool == Tool_Drag) m_activeTool = Tool_ClipPlane; break;
     }
 }
 
@@ -245,6 +280,16 @@ void RenderView::keyReleaseEvent(QKeyEvent * event)
         case Qt::Key_A: m_ioFlags &= ~filescope::KEY_LEFT;  break;
         case Qt::Key_S: m_ioFlags &= ~filescope::KEY_DOWN;  break;
         case Qt::Key_D: m_ioFlags &= ~filescope::KEY_RIGHT; break;
+
+        // :TEST: Plane cut
+        case Qt::Key_Control: 
+            if (m_activeTool == Tool_ClipPlane) 
+            {
+                m_activeTool = Tool_Drag; 
+                m_clipLine.setP1(QPoint());
+                m_clipLine.setP2(QPoint());
+            }
+            break;
     }
 }
 

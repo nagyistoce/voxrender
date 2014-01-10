@@ -53,8 +53,8 @@ namespace vox
 
         /** Initializes a default material */
         Material() :
-          opticalThickness(0.0f),
-          glossiness(80.0f),
+          opticalThickness(0.2f),
+          glossiness(0.8f),
           emissiveStrength(0.0f),
           emissive(0, 0, 0),
           diffuse(255, 255, 255),
