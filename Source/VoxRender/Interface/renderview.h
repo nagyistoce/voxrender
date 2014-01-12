@@ -70,6 +70,9 @@ public:
     /** Sets the flag for overlaying statistical data on the display image */
 	void setOverlayStatistics(bool value = true) { m_overlayStats = value; };
 
+    /** Returns the internal image being displayed */
+    void saveImageToFile(vox::String const& identifier) const;
+
     /** Returns the current image zoom factor */
 	float zoomFactor() const { return m_zoomfactor; }
 

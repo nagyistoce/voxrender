@@ -754,8 +754,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>756</width>
-             <height>460</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -847,16 +847,11 @@
       <string>Open Recent</string>
      </property>
     </widget>
-    <widget class="QMenu" name="menuExport_To_Image">
-     <property name="title">
-      <string>Export To Image</string>
-     </property>
-    </widget>
     <addaction name="actionOpen"/>
     <addaction name="menuOpen_Recent"/>
     <addaction name="separator"/>
     <addaction name="actionExport_Scene_File"/>
-    <addaction name="menuExport_To_Image"/>
+    <addaction name="actionExport_Image"/>
     <addaction name="separator"/>
     <addaction name="actionSave_and_Exit"/>
     <addaction name="actionExit"/>
@@ -1113,6 +1108,11 @@
   <action name="actionExport_Scene_File">
    <property name="text">
     <string>Export Scene File</string>
+   </property>
+  </action>
+  <action name="actionExport_Image">
+   <property name="text">
+    <string>Export Image</string>
    </property>
   </action>
  </widget>

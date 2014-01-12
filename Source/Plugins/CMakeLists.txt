@@ -31,6 +31,7 @@ INCLUDE_DIRECTORIES(.)
 #===============================================#
 
 ADD_SUBDIRECTORY(RawVolumeImporter)
+ADD_SUBDIRECTORY(StandardImg)
 ADD_SUBDIRECTORY(VoxSceneImporter)
 ADD_SUBDIRECTORY(StandardIO)
 ADD_SUBDIRECTORY(FileIO)

@@ -31,6 +31,7 @@
 
 // VoxRender Dependencies
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Image/RawImage.h"
 #include "VoxLib/Scene/Camera.h"
 
 using namespace vox;
@@ -55,7 +56,8 @@ RenderView::RenderView(QWidget *parent) :
     m_renderscene(new QGraphicsScene()),
     m_overlayStats(false),
     m_activeTool(Tool_Drag),
-    m_ioFlags(0u)
+    m_ioFlags(0u),
+    m_zoomfactor(1.f)
 {
 	m_renderscene->setBackgroundBrush(QColor(127,127,127));
 	
@@ -105,6 +107,29 @@ void RenderView::copyToClipboard() const
         Logger::addEntry(Severity_Error, Error_System, "GUI",
             "Copy to clipboard failed (unable to open clipboard)",
             __FILE__, __LINE__);
+    }
+}
+
+// ------------------------------------------------------------
+//  Exports the contents of the render view to a file
+// ------------------------------------------------------------
+void RenderView::saveImageToFile(String const& identifier) const
+{
+    try
+    {
+        QImage image = m_voxfb->pixmap().toImage();
+        auto type = image.format();
+        RawImage(RawImage::Format_RGBX, image.width(), image.height(), 
+            8, image.bytesPerLine(), std::shared_ptr<void>((void*)image.bits(), [](void* p){}))
+            .exprt(identifier);
+    }
+    catch (Error & error)
+    {
+        VOX_LOG_EXCEPTION(Severity_Error, error);
+    }
+    catch(...)
+    {
+        VOX_LOG_ERROR(Error_Unknown, VOX_LOG_CATEGORY, "An unknown error occurred while saving image file.");
     }
 }
 
@@ -168,8 +193,8 @@ void RenderView::wheelEvent(QWheelEvent* event)
 {
 	if (!m_zoomEnabled) return;
 
-	const float zoomsteps[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12.5, 17, 25, 33, 45, 50, 67, 75, 100, 
-		125, 150, 175, 200, 250, 300, 400, 500, 600, 700, 800, 1000, 1200, 1600 };
+	const float zoomsteps[] = { 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, .125, 0.17, 0.25, 0.33, 0.45, 0.50, 0.67, 0.75, 1, 
+		1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 16 };
 	
 	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
 
@@ -183,7 +208,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 
 	resetTransform();
 
-	scale(m_zoomfactor / 100.f, m_zoomfactor / 100.f);
+	scale(m_zoomfactor, m_zoomfactor);
 
 	emit viewChanged();
 }
@@ -204,21 +229,33 @@ void RenderView::mousePressEvent(QMouseEvent* event)
         switch (m_activeTool)
         {
         case Tool_ClipPlane:
-            if (m_clipLine.p1().isNull()) m_clipLine.setP1(event->pos()); 
-            else if (m_clipLine.p2().isNull()) m_clipLine.setP2(event->pos());
+            // Convert the position to image coordinates
+            auto camera = MainWindow::instance->scene().camera;
+            auto p = event->pos() - viewport()->mapToParent(mapFromScene(0, 0));
+            p /= m_zoomfactor;
+
+            // Store the click position until we have enough data to generate the clip plane
+            if      (m_clipLine.p1().isNull()) m_clipLine.setP1(p); 
+            else if (m_clipLine.p2().isNull()) m_clipLine.setP2(p);
             else 
             {
+                // Construct the clipping plane
                 if (m_clipLine.p1() != m_clipLine.p2()) 
                 {
-                    auto camera = MainWindow::instance->scene().camera;
-                    auto p0 = viewport()->mapToParent(mapFromScene(0, 0));
-                    auto p1 = m_clipLine.p1() - p0;
-                    p1 *= 100.f / m_zoomfactor;
-                    auto p2 = m_clipLine.p2() - p0;
-                    p2 *= 100.f / m_zoomfactor;
-                    auto v1 = camera->projectRay(Vector2f(p1.x(), p1.y())).dir;
-                    auto v2 = camera->projectRay(Vector2f(p2.x(), p2.y())).dir;
-                    auto normal = Vector3f::cross(v1, v2);
+                    auto p1 = m_clipLine.p1();
+                    auto p2 = m_clipLine.p2();
+
+                    // Compute the plane normal vector
+                    auto cv1 = camera->projectRay(Vector2f(p1.x(), p1.y())).dir;
+                    auto cv2 = camera->projectRay(Vector2f(p2.x(), p2.y())).dir;
+                    auto normal = Vector3f::cross(cv1, cv2);
+
+                    // Compute the direction of the normal for clipping (towards the 3rd click)
+                    auto sv1 = p2 - p1;
+                    auto sv2 = p - p1;
+                    if (sv1.x() * sv2.y() - sv1.y() * sv2.x() < 0) normal *= -1;
+
+                    // Add the new clipping plane to the scene
                     auto plane = vox::Plane::create(normal, Vector3f::dot(normal, camera->position()));
                     MainWindow::instance->addClippingGeometry(plane);
                 }
@@ -312,7 +349,7 @@ void RenderView::processSceneInteractions()
     Camera & camera   = *MainWindow::instance->scene().camera;
 
     // Handle camera strafe associated with key holds
-    float duration = 1.0f; // :TODO: Boost <chrono> read elapsed since last, track framerate etc 
+    float duration = 1.0f;
     float distance = camSpeed * duration;
     if (m_ioFlags & filescope::KEY_UP)    camera.move(distance);
     if (m_ioFlags & filescope::KEY_RIGHT) camera.moveRight(distance);
@@ -334,23 +371,23 @@ void RenderView::processSceneInteractions()
 // ------------------------------------------------------------
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
-    static vox::Image<ColorRgbaLdr> image; // :TODO: This was introduced during a bug fix, move to member
+    static vox::Image<vox::ColorRgbaLdr> m_image;
 
     vox::FrameBuffer & frame = *lock->framebuffer.get();
 
-    if (image.width() != frame.width() || image.height() != frame.height())
+    if (m_image.width() != frame.width() || m_image.height() != frame.height())
     {
-        image = frame;
+        m_image = frame.copy();
 
         auto rect = m_renderscene->sceneRect();
         m_renderscene->setSceneRect(
-            0.0f, 0.0f, (float)image.width(),  (float)image.height());
+            0.0f, 0.0f, (float)m_image.width(),  (float)m_image.height());
     }
-    else memcpy(image.data(), frame.data(), frame.size());
+    else memcpy(m_image.data(), frame.data(), frame.size());
 
-    QImage qimage((unsigned char*)image.data(),
-        image.width(), image.height(),
-        image.stride(), QImage::Format_RGB32);
+    QImage qimage((unsigned char*)m_image.data(),
+        m_image.width(), m_image.height(),
+        m_image.stride(), QImage::Format_RGB32);
 
     // Compute the performance statistics for this frame
     auto curr    = boost::chrono::high_resolution_clock::now();

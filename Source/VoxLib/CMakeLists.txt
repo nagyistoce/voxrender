@@ -57,6 +57,10 @@ Set(VoxLib_HEADERS_CORE
     Core/Geometry.h
 )
 
+Set(VoxLib_HEADERS_IMAGE
+    Image/RawImage.h
+)
+
 Set(VoxLib_HEADERS_CORE_GEOMETRY
     Core/Geometry/AABBox.h
     Core/Geometry/Color.h
@@ -118,6 +122,7 @@ set(VoxLib_HEADERS
     ${VoxLib_HEADERS_CORE_GEOMETRY}
     ${VoxLib_HEADERS_ERROR}
     ${VoxLib_HEADERS_IO}
+    ${VoxLib_HEADERS_IMAGE}
     ${VoxLib_HEADERS_PLUGIN}
     ${VoxLib_HEADERS_SCENE}
     ${VoxLib_HEADERS_SCENE_EXIM}
@@ -130,6 +135,7 @@ SOURCE_GROUP("Header Files\\Core"                           FILES ${VoxLib_HEADE
 SOURCE_GROUP("Header Files\\Core\\Geometry"                 FILES ${VoxLib_HEADERS_CORE_GEOMETRY})
 SOURCE_GROUP("Header Files\\Error"                          FILES ${VoxLib_HEADERS_ERROR})
 SOURCE_GROUP("Header Files\\IO"                             FILES ${VoxLib_HEADERS_IO})
+SOURCE_GROUP("Header Files\\Image"                          FILES ${VoxLib_HEADERS_IMAGE})
 SOURCE_GROUP("Header Files\\Plugin"                         FILES ${VoxLib_HEADERS_PLUGIN})
 SOURCE_GROUP("Header Files\\Rendering"                      FILES ${VoxLib_HEADERS_RENDERING})
 SOURCE_GROUP("Header Files\\Scene"                          FILES ${VoxLib_HEADERS_SCENE})
@@ -152,6 +158,10 @@ Set(VoxLib_SOURCES_CORE
     Core/Functors.cpp
     Core/Logging.cpp
     Core/System.cpp
+)
+
+Set(VoxLib_SOURCES_IMAGE
+    Image/RawImage.cpp
 )
 
 Set(VoxLib_SOURCES_CORE_GEOMETRY
@@ -197,6 +207,7 @@ set(VoxLib_SOURCES
     ${VoxLib_SOURCES_CORE_GEOMETRY}
     ${VoxLib_SOURCES_ERROR}
     ${VoxLib_SOURCES_IO}
+    ${VoxLib_SOURCES_IMAGE}
     ${VoxLib_SOURCES_PLUGIN}
     ${VoxLib_SOURCES_SCENE}
     ${VoxLib_SOURCES_SCENE_EXIM}
@@ -210,6 +221,7 @@ SOURCE_GROUP("Source Files\\Core\\Geometry"                 FILES ${VoxLib_SOURC
 SOURCE_GROUP("Source Files\\Plugin"                         FILES ${VoxLib_SOURCES_PLUGIN})
 SOURCE_GROUP("Source Files\\Error"                          FILES ${VoxLib_SOURCES_ERROR})
 SOURCE_GROUP("Source Files\\IO"                             FILES ${VoxLib_SOURCES_IO})
+SOURCE_GROUP("Source Files\\Image"                          FILES ${VoxLib_SOURCES_IMAGE})
 SOURCE_GROUP("Source Files\\Scene"                          FILES ${VoxLib_SOURCES_SCENE})
 SOURCE_GROUP("Source Files\\Rendering"                      FILES ${VoxLib_SOURCES_RENDERING})
 

@@ -1,11 +1,10 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
+#   Project: Raw Volume Import                                              #
 #                                                                           #
-#   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#   Description: Provides a VoxScene import module for raw format volumes   #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#   Copyright (C) 2013 Lucas Sherman                                        #
 #                                                                           #
 #   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
@@ -24,14 +23,22 @@
 #                                                                           #
 #===========================================================================#
 
-#===============================================#
-#         INCLUDE DESIRED UNIT TESTS            #
-#===============================================#
+INCLUDE_DIRECTORIES(.)
 
-ADD_SUBDIRECTORY(Geometry)
-ADD_SUBDIRECTORY(IO)
-ADD_SUBDIRECTORY(Plugins)
-ADD_SUBDIRECTORY(RawVolumeExIm)
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(StandardImg)
-
+VOX_PROJECT(
+    TARGET "StandardImg" SHARED
+    FOLDER "Plugins"
+    HEADERS
+        "Common.h"
+        "StandardImg.h"
+        "Plugin.h"
+        "Version.h"
+    SOURCES
+        "StandardImg.cpp"
+        "Plugin.cpp"
+    DEPENDENCIES
+        VoxLib
+    LIBRARIES
+        ${PNG_LIBRARY}
+        ${Boost_LIBRARIES}
+    )

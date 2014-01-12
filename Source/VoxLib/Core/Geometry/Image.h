@@ -30,6 +30,7 @@
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
+#include "VoxLib/Core/Functors.h"
 
 // API namespace
 namespace vox
@@ -45,21 +46,26 @@ namespace vox
 		Image(size_t width, size_t height) :
             m_width(width), m_height(height), 
             m_stride(sizeof(T)*width),
-            m_buffer(new T[width*height]) 
+            m_buffer(new T[width*height], arrayDeleter) 
         { 
         }
 
         /** Constructs and image of the specified dimensions */
 		Image(size_t width, size_t height, size_t stride) :
             m_width(width), m_height(height), m_stride(stride),
-            m_buffer(reinterpret_cast<T*>(new UInt8[stride*height])) 
+            m_buffer(reinterpret_cast<T*>(new UInt8[stride*height]), arrayDeleter) 
         { 
         }
-            
+          
+        /** Constructs and image of the specified dimensions */
+		Image(size_t width, size_t height, size_t stride, std::shared_ptr<T> buffer) :
+            m_width(width), m_height(height), m_stride(stride), m_buffer(buffer) 
+        { 
+        }
+
         /** Clears the image data */
         void clear(T const& val = T())
         {
-            // :TODO: Optimized memset for sizeof(T) <= sizeof(int)
 	        for (size_t j = 0; j < m_height; j++)
 	        for (size_t i = 0; i < m_width;  i++)
                 at(i, j) = val;
@@ -76,7 +82,7 @@ namespace vox
         {
             m_width = width; m_height = height; m_stride = stride;
 
-            m_buffer = std::unique_ptr<T[]>(reinterpret_cast<T*>(new UInt8[stride*height]));
+            m_buffer.reset(reinterpret_cast<T*>(new UInt8[stride*height]), arrayDeleter);
         }
 
         /** Image width accessor */
@@ -106,36 +112,17 @@ namespace vox
             return m_stride*m_height;
         }
 
-        /** Image copy constructor */
-        Image(Image const& other)
+        /** Returns the internal managed buffer */
+        std::shared_ptr<T> buffer() { return m_buffer; }
+
+        /** Image clone functionality */
+        Image copy()
         {
-            resize(other.width(), other.height(), other.stride());
+            Image result(m_width, m_height, m_stride);
 
-            memcpy(m_buffer.get(), other.data(), size());
-        }
-        
-        /** Image assignment operator */
-        Image& operator=(Image const& other)
-        {
-            resize(other.width(), other.height(), other.stride());
+            memcpy(result.data(), m_buffer.get(), size());
 
-            memcpy(m_buffer.get(), other.data(), size());
-
-            return *this;
-        }
-
-        /** Image move constructor */
-        Image(Image && other)
-        {
-            m_height = other.m_height;
-            m_width  = other.m_width;
-            m_stride = other.m_stride;
-            m_buffer = std::move(other.m_buffer);
-
-            other.m_height = 0;
-            other.m_width  = 0;
-            other.m_stride = 0;
-            other.m_buffer.reset();
+            return result;
         }
 
 	private:
@@ -143,7 +130,7 @@ namespace vox
 		size_t m_width;   ///< Image width
 		size_t m_stride;  ///< Image stride
 
-        std::unique_ptr<T[]> m_buffer;  ///< Image buffer
+        std::shared_ptr<T> m_buffer;  ///< Image buffer
 	};
 }
 

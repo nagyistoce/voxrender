@@ -253,6 +253,7 @@ private slots:
     void on_actionClear_Log_triggered();
     void on_actionCopy_Log_triggered();
 	void on_actionShow_Side_Panel_triggered(bool checked);
+    void on_actionExport_Image_triggered();
     void onActionOpenRecentFile();
     void on_actionExport_Scene_File_triggered();
 

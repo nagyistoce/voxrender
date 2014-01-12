@@ -78,7 +78,16 @@ namespace
         // Constructs a material from a property tree representation
         std::shared_ptr<Material> toMaterial(boost::property_tree::ptree & node)
         {
-            return Material::create();
+            auto material = Material::create();
+
+            material->glossiness       = node.get("Glossiness", material->glossiness);
+            material->opticalThickness = node.get("Thickness", material->opticalThickness);
+            material->diffuse          = node.get("Diffuse", Vector3u(material->diffuse));
+            material->specular         = node.get("Specular", Vector3u(material->specular));
+            material->emissive         = node.get("Emissive", Vector3u(material->emissive));
+            material->emissiveStrength = node.get("EmissiveStrength", material->emissiveStrength);
+
+            return material;
         }
 
         // Export module implementation
@@ -644,13 +653,7 @@ namespace
                             }
                             else parseError(Error_BadToken, format("Undefined material (%1%) used", *materialOpt));
                         }
-                        else // load inline specification of material
-                        {
-                            auto material = Material::create();
-                            material->glossiness = region.second.get(M_GLOSSINESS, 0.0f);
-                            material->opticalThickness = region.second.get(M_THICKNESS, 1.0f);
-                            node->material = material;
-                        }
+                        else node->material = toMaterial(region.second);
                     }
 
                     pop();
@@ -675,9 +678,13 @@ namespace
                     BOOST_FOREACH (auto & region, *m_node)
                     {
                         auto quad = Quad::create();
-                        quad->position = m_node->get(Q_POSITION, quad->position);
-                        quad->heights  = m_node->get(Q_HEIGHTS, quad->heights);
-                        quad->widths   = m_node->get(Q_WIDTHS, quad->widths);
+                        quad->position = region.second.get(Q_POSITION, quad->position);
+                        quad->heights  = region.second.get(Q_HEIGHTS, quad->heights);
+                        quad->widths   = region.second.get(Q_WIDTHS, quad->widths);
+                        if (auto node = region.second.get_child_optional("UL")) quad->materials[Quad::Node_UL] = toMaterial(*node);
+                        if (auto node = region.second.get_child_optional("UR")) quad->materials[Quad::Node_UR] = toMaterial(*node);
+                        if (auto node = region.second.get_child_optional("LL")) quad->materials[Quad::Node_LL] = toMaterial(*node);
+                        if (auto node = region.second.get_child_optional("LR")) quad->materials[Quad::Node_LR] = toMaterial(*node);
                         transfer->addQuad(quad);
                     }
 
@@ -739,11 +746,7 @@ namespace
                             parseError(Error_BadToken, format("Duplicate material defined (%1%)", materialNode.first));
                         }
                         
-                        // Parse the material specification :TODO:
-                        auto material = Material::create();
-                        material->glossiness = materialNode.second.get(M_GLOSSINESS, 0.0f);
-                        material->opticalThickness = materialNode.second.get(M_THICKNESS, 0.0f);
-                        materials[materialNode.first] = material;
+                        materials[materialNode.first] = toMaterial(materialNode.second);
                     }
            
                     pop();

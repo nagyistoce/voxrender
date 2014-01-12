@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-    Project: VoxRender - StandardIO Plugin Test Module
+    Project: VoxRender - StandardImg Plugin Test Module
 
     Description: Performs unit testing for the Standard IO plugin
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
     Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -38,7 +38,7 @@
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
 
-#include "Plugins/StandardIO/StandardIO.h"
+#include "Plugins/StandardImg/StandardImg.h"
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
@@ -48,35 +48,30 @@ using namespace vox;
 // --------------------------------------------------------------------
 //  Performs tests of the Plugin load and unload functionality
 // --------------------------------------------------------------------
-BOOST_AUTO_TEST_SUITE( StandardIOSuite )
+BOOST_AUTO_TEST_SUITE( StandardImgSuite )
 
     // Tests the plugins meta info functions
     BOOST_AUTO_TEST_CASE( MetaInfoTest )
     {
     }
     
-    // Tests the plugins HTTP IO functionality
-    BOOST_AUTO_TEST_CASE( HttpIOTest )
+    // Tests the plugins PNG load functionality
+    BOOST_AUTO_TEST_CASE( PNGTest )
     {
-        std::cout << "**** This test requires an external network connection. ****" << std::endl;
-
         // Load the vox.standard_io plugin
         auto & pluginManager = PluginManager::instance();
-        pluginManager.loadFromFile("StandardIO.dll");
+        pluginManager.loadFromFile("StandardImg.dll");
+        pluginManager.loadFromFile("FileIO.dll");
 
-        // ftp://ftp.funet.fi/README
-        // http://www.example.com
-        // dict://dict.org/m:curl
-        // gopher://gopher.quux.org:70/About%20This%20Server.txt
-        // https://svn.boost.org/htdocs/site/boost.png
+        String testFileI = "file:///" + vox::System::currentDirectory() + "/test_image.png";
+        String testFileO = "file:///" + vox::System::currentDirectory() + "/test_image_out.png";
 
-        ResourceId example("dict://dict.org/m:curl");
+        auto image1 = RawImage::imprt(testFileI);
+        image1.exprt(testFileO);
+        auto image2 = RawImage::imprt(testFileO);
+        BOOST_CHECK(memcmp(image1.data(), image2.data(), image1.size()) == 0);
 
-        //std::ofstream os(example.extractFileName(), std::ios::binary); os << webpageStream.rdbuf();
-
-        std::cout << ResourceHelper::pull(example);
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
+        pluginManager.unloadAll();
     }
 
 BOOST_AUTO_TEST_SUITE_END()

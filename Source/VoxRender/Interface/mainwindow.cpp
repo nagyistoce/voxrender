@@ -1067,6 +1067,24 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 }
 
 // ----------------------------------------------------------------------------
+//  Exports the current render image to a file
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionExport_Image_triggered()
+{
+    QString filename = QFileDialog::getSaveFileName( 
+        this, tr("Choose a scene file to open"), 
+        m_lastOpenDir, tr("PNG Image (*.png)"));
+
+    std::string identifier(filename.toUtf8().data());
+    if (identifier.empty()) return;
+    if (identifier.front() != '/') identifier = '/' + identifier;
+   
+    m_lastOpenDir = QFileInfo(filename).absolutePath();
+
+    m_renderView->saveImageToFile(identifier);
+}
+
+// ----------------------------------------------------------------------------
 //  Opens a new volume data file for rendering
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionOpen_triggered() 

@@ -27,12 +27,14 @@
 #                    INCLUDES                   #
 #===============================================#
 
-# Default include directories from build scripts
+# Default include directories from windows build scripts/installers
 
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/boost)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} C:/Qt/Qt5.2.0/5.2.0/msvc2012)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/glew-1.5.5)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libpng)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/zlib)
 SET(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v5.5")
 
 #===============================================#
@@ -76,6 +78,20 @@ IF(GLEW_FOUND)
 ELSE(GLEW_FOUND)
     MESSAGE("GLEW not found.")
 ENDIF(GLEW_FOUND)
+
+#===============================================#
+#                      LibPNG                   #
+#===============================================#
+
+find_package(PNG)
+
+IF(PNG_LIBRARY AND PNG_INCLUDE_DIRS)
+    MESSAGE(STATUS "libpng include directory: " "${PNG_INCLUDE_DIRS}")
+    MESSAGE(STATUS "libpng library directory: " "${PNG_LIBRARY}")
+    INCLUDE_DIRECTORIES(${PNG_INCLUDE_DIR})
+ELSE()
+    MESSAGE(STATUS "warning: libpng not found.")
+ENDIF()
 
 #===============================================#
 #                       CURL                    #
