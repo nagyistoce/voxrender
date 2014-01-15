@@ -85,8 +85,6 @@ TransferWidget::TransferWidget(QWidget *parent) :
 	ui->gridLayout_transferPrimary->addWidget(  m_primaryView,   0, 0, 1, 1);
 	ui->gridLayout_transferSecondary->addWidget(m_secondaryView, 0, 0, 1, 1);
 
-	switchDimensions(1); // Default to 1D transfer function mode
-
     // Add the color selection widgets to the layout
     ui->layout_diffuseColor->addWidget(m_colorDiffuse);
     ui->layout_emissiveColor->addWidget(m_colorEmissive);
@@ -267,7 +265,10 @@ void TransferWidget::switchDimensions(int nDims)
 			// Configure widget for 1-Dimensional work 
             if (!dynamic_cast<Transfer1D*>(m_transfer.get()))
             {
-                MainWindow::instance->scene().transfer = Transfer1D::create(); // :TODO: LOCK SCENE
+                m_transfer = Transfer1D::create();
+                MainWindow::instance->scene().transfer = m_transfer; // :TODO: LOCK SCENE
+                MainWindow::instance->m_renderController.setTransferFunction(m_transfer);
+                onTransferFunctionChanged();
             }
             m_primaryView->setType(HistogramView::DataType_Density);
 			ui->radioButton_1->setChecked( true ); 
@@ -286,7 +287,10 @@ void TransferWidget::switchDimensions(int nDims)
 			// Configure widget for 2-Dimensional work
             if (!dynamic_cast<Transfer2D*>(m_transfer.get()))
             {
-                MainWindow::instance->scene().transfer = Transfer2D::create(); // :TODO: LOCK SCENE
+                m_transfer = Transfer2D::create();
+                MainWindow::instance->scene().transfer = m_transfer; // :TODO: LOCK SCENE
+                MainWindow::instance->m_renderController.setTransferFunction(m_transfer);
+                onTransferFunctionChanged();
             }
             m_primaryView->setType(HistogramView::DataType_DensityGrad);
 			ui->radioButton_2->setChecked( true ); 

@@ -41,12 +41,11 @@ namespace vox {
         // --------------------------------------------------------------------
         template<typename T> Vector2f maxValueRange(size_t elements, UInt8 const* raw)
         {
-            T low  = std::numeric_limits<T>::max();
-            T high = static_cast<T>(0);
-
             T const* data = reinterpret_cast<T const*>(raw);
+            T low  = *data;
+            T high = *data;
 
-            for (size_t i = 0; i < elements; i++)
+            for (size_t i = 1; i < elements; i++)
             {
                 if (low > *data) low = *data;
                 else if (high < *data) high = *data;

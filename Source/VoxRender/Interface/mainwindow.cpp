@@ -554,11 +554,14 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     try
     {
         // Attempt to parse the scene file content
+        // :TODO: Interactive option specification interface for import (long-term thing) ie requires raw volume width, height, etc as "Type1" ... 
         activeScene = vox::Scene::imprt(identifier);
+        if (!activeScene.volume) throw Error(__FILE__, __LINE__, "gui", "Scene is missing volume data", Error_MissingData);
         if (!activeScene.parameters)   activeScene.parameters   = RenderParams::create();
         if (!activeScene.clipGeometry) activeScene.clipGeometry = PrimGroup::create();
-        // :TODO: Default other parameters if unspecified (immediate)
-        // :TODO: Interactive option specification interface for import (long-term) ie raw volume width, height, etc
+        if (!activeScene.lightSet)     activeScene.lightSet     = LightSet::create();
+        if (!activeScene.transferMap)  activeScene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
+        if (!activeScene.transfer)     activeScene.transfer     = Transfer1D::create();
 
         // Synchronize the scene view
         synchronizeView();
@@ -1093,7 +1096,7 @@ void MainWindow::on_actionOpen_triggered()
 
     QString filename = QFileDialog::getOpenFileName( 
         this, tr("Choose a scene file to open"), 
-        m_lastOpenDir, tr("Vox Scene Files (*.xml)"));
+        m_lastOpenDir, tr("Vox Scene Files (*.xml)\nAll Files (*)"));
 
     if (!filename.isNull()) renderNewSceneFile(filename);
 }

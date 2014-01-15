@@ -77,6 +77,7 @@ namespace filescope {
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
     __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light
+    __constant__ float             gd_occludeDist;      ///< Maximum occlude sample distance
 
     __constant__ CClipGeometry::Clipper * gd_clipRoot;    ///< Clipping geometry root
 
@@ -129,6 +130,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     VOX_DEVICE Vector3f sampleGradient(Vector3f const& location)
     {
+        // :TODO: Factor in clip plane
         float const& x = location[0];
         float const& y = location[1];
         float const& z = location[2];
@@ -215,9 +217,8 @@ namespace filescope {
             float transmission = 0.0f;
             for (unsigned int i = 0; i < samples; i++)
             {
-                float occludeDistance = 5.0f;
                 float stepSize = gd_renderParams.occludeStepSize();
-                Ray3f ray(pos, rng.sampleSphere(), 0.0f, occludeDistance);
+                Ray3f ray(pos, rng.sampleSphere(), 0.0f, gd_occludeDist);
                 transmission += computeTransmission(rng, ray, stepSize);
             }
 
@@ -406,6 +407,9 @@ void RenderKernel::setCamera(CCamera const& camera)
 // --------------------------------------------------------------------
 void RenderKernel::setParameters(CRenderParams const& settings)
 {
+    float occludeDist = 5.0f;
+
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_occludeDist, &occludeDist, sizeof(occludeDist)));
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_renderParams, &settings, sizeof(settings)));
 }
 

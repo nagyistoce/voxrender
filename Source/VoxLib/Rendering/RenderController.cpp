@@ -112,6 +112,14 @@ void RenderController::removeRenderer(SlaveHandle renderer)
 }
 
 // ---------------------------------------------------------
+//  Changes the transfer map generator at runtime
+// ---------------------------------------------------------
+void RenderController::setTransferFunction(std::shared_ptr<Transfer> transfer)
+{
+    m_scene.transfer = transfer; // :TODO: LOCK FOR CHANGE 
+}
+
+// ---------------------------------------------------------
 //  Pauses the render controller
 // ---------------------------------------------------------
 void RenderController::pause()

@@ -454,19 +454,24 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
 
     auto & diffuse = map->diffuse();
     diffuse.resize(128, 1, 1);
-    filescope::mapDiffuse(diffuse, m_nodes);
-    
     auto & opacity = map->opacity();
     opacity.resize(128, 1, 1);
-    filescope::mapOpacity(opacity, m_nodes);
-    
     auto & specular = map->specular();
     specular.resize(128, 1, 1);
-    filescope::mapSpecular(specular, m_nodes);
-    
     auto & emissive = map->emissive();
     emissive.resize(64, 1, 1);
-    filescope::mapEmissive(emissive, m_nodes);
+
+    if (m_nodes.size())
+    {
+        filescope::mapEmissive(emissive, m_nodes);
+        filescope::mapSpecular(specular, m_nodes);
+        filescope::mapOpacity(opacity, m_nodes);
+        filescope::mapDiffuse(diffuse, m_nodes);
+    }
+    else
+    {
+        opacity.clear();
+    }
 
     map->setDirty(true);
 

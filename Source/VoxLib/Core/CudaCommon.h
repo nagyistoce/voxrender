@@ -84,6 +84,15 @@ static char const* VOX_LOG_CATEGORY = "Vox";
 // VS2012 limitations
 #define _VARIADIC_MAX 10
 
+// Byte ordering functions
+#ifdef _MSC_VER
+#   define VOX_SWAP16(x) _byteswap_ushort(x)
+#   define VOX_SWAP32(x) _byteswap_ulong(x)
+#elif defined(__GNUC__)
+#   define VOX_SWAP16(x) ( ((0x00ff&x)<<8) | ((0xff00&x)>>8) )
+#   define VOX_SWAP32(x) __builtin_bswap32(x)
+#endif
+
 // Not really a great idea to include a bunch of headers here
 // but they are used so frequently that I deemed it worthwhile
 

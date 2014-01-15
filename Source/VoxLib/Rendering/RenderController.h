@@ -64,6 +64,9 @@ namespace vox
         /** Removes a renderer from the controller */
         void removeRenderer(SlaveHandle renderer);
 
+        /** Sets the transfer function that generates the scene transfer map */
+        void setTransferFunction(std::shared_ptr<Transfer> transfer);
+
 		/** Returns the scene currently being renderered */
         Scene const& currentScene() const { return m_scene; }
 

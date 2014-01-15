@@ -151,9 +151,10 @@ namespace vox
          */
         T fold(T (*op)(T const&, T const&)) const
         {
-            T res = coord[i];
+            T res = coord[0];
             for (size_t i = 1; i < N; i++)
                 res = op(res, coord[i]);
+            return res;
         }
 
         /**
