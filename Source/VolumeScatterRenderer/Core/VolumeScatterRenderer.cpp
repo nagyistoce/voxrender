@@ -277,6 +277,22 @@ public:
 		m_frameBuffer.reset();
 	}
 
+    // --------------------------------------------------------------------
+    //  Returns the time for the last call to the render kernel
+    // --------------------------------------------------------------------
+    virtual float renderTime()
+    {
+        return RenderKernel::getTime();
+    }
+    
+    // --------------------------------------------------------------------
+    //  Returns the time for the last call to the tonemapping kernel
+    // --------------------------------------------------------------------
+    virtual float tonemapTime()
+    {
+        return TonemapKernel::getTime();
+    }
+
 private:
     std::vector<int> m_devices; /// Authorized Device IDs
 

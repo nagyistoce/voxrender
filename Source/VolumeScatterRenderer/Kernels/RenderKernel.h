@@ -82,11 +82,17 @@ public:
     /** Executes a single pass rendering kernel on the active device */
     static void execute(size_t xstart, size_t ystart,
                         size_t width,  size_t height);
-
+    
+    /** Returns the time for the last kernel execution */
+    static float getTime() { return m_elapsedTime; }
+    
     // :TODO: This will get fixed up if this code is moved to a static
     //        library and relocatable-device-code is used
     static ClipFunc getCClipGroupFunc();
     static ClipFunc getCClipPlaneFunc();
+
+private:
+    static float m_elapsedTime; ///< Kernel execution time
 };
 
 }

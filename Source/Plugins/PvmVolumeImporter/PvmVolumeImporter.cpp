@@ -38,6 +38,8 @@
 
 #include <boost/detail/endian.hpp>
 
+#include "ddsbase.h"
+
 // API namespace
 namespace vox
 {
@@ -135,7 +137,7 @@ namespace
                 auto offset = chunks * blockSize * dist;
                 auto * writePtr = out.get() + offset;
                 auto * readPtr  = data + offset;
-                auto remains  = bytes - offset * blockSize * dist;
+                auto remains  = bytes - chunks * blockSize * dist;
                 for (size_t i = 0; i < dist; i++)
                 for (size_t j = i; j < remains; j += dist)
                     writePtr[j] = *readPtr++;
@@ -257,6 +259,9 @@ namespace
             // --------------------------------------------------------------------
             Scene readPvmHelper(std::istream & stream)
             {
+                unsigned int a, b, c;
+                //readPVMvolume("C:/Users/lucas/Documents/Projects/voxrender/trunk/Models/Tooth/Spheres.pvm", &a, &b, &c);
+
                 // Verify the 'PVM' file header
                 String header;
                 std::getline(stream, header);
@@ -312,6 +317,12 @@ namespace
                         data.push_back(value);
                         //if (data.size() == data.capacity()) data.reserve(data.size() + data.capacity());
                         ptr = &data.back();
+
+                            if (data.size() == 2097327)
+                            {
+                                int i = 0;
+                            }
+
                     }
                 }
 
@@ -407,6 +418,7 @@ namespace
             {
                 if (m_rem != 0) return;
                 
+                m_buffer = 0;
                 m_active->read((char*)&m_buffer, sizeof(m_buffer));
                 m_rem = sizeof(m_buffer)*8;
 

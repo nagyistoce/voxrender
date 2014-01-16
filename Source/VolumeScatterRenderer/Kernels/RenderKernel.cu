@@ -51,9 +51,14 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
     
-#define R3I 0.57735026918962576450914878050196f;
+#define R3I                 0.57735026918962576450914878050196f;
+#define KRNL_SS_BLOCK_W		16
+#define KRNL_SS_BLOCK_H		8
+#define KRNL_SS_BLOCK_SIZE	(KRNL_SS_BLOCK_W * KRNL_SS_BLOCK_H)
 
 namespace vox {
+    
+float RenderKernel::m_elapsedTime;
 
 namespace {
 namespace filescope {
@@ -309,6 +314,9 @@ namespace filescope {
         Ray3f & sampleRay
         )
     {
+	    __shared__ float MinT[KRNL_SS_BLOCK_SIZE];
+	    __shared__ float MaxT[KRNL_SS_BLOCK_SIZE];
+
         // Initialize the sample ray for marching
         sampleRay = gd_camera.generateRay(
                         Vector2f(px, py) + rng.sample2D(), // Pixel position
@@ -571,23 +579,19 @@ void RenderKernel::execute(size_t xstart, size_t ystart,
         (width + threads.x - 1) / threads.x,
 		(height + threads.y - 1) / threads.y 
         );
-    /*
-cudaEvent_t start, stop;
-float elapsedTime;
 
-cudaEventCreate(&start);
-cudaEventRecord(start,0);
-*/
-	// Execute the device rendering kernel
+	// Execute the kernel
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventRecord(start,0);
 	filescope::renderKernel<<<blocks,threads>>>();
-    /*
-cudaEventCreate(&stop);
-cudaEventRecord(stop,0);
-cudaEventSynchronize(stop);
+    cudaEventCreate(&stop);
+    cudaEventRecord(stop,0);
+    cudaEventSynchronize(stop);
 
-cudaEventElapsedTime(&elapsedTime, start,stop);
-printf("Elapsed time : %f ms\n" ,elapsedTime);
-*/
+    // Acquire the time for this kernel execution
+    cudaEventElapsedTime(&m_elapsedTime, start, stop);
+
 }
 
 } // namespace vox

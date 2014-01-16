@@ -70,16 +70,7 @@ public:
     }
 
     /** Resets the buffer with random content */
-    VOX_HOST void randomize()
-    {
-        size_t bufSize = size();
-
-        std::unique_ptr<unsigned int> seeds(new unsigned int[bufSize]);
-
-        for (size_t i = 0; i < bufSize; i++) seeds.get()[i] = rand(); // :TODO: replace with thread safe rand alternative
-
-        VOX_CUDA_CHECK(cudaMemcpy(m_pData, seeds.get(), bufSize, cudaMemcpyHostToDevice));
-    }
+    VOX_HOST void randomize();
 };
 
 }

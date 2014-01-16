@@ -4,7 +4,7 @@
 
 	Description: Implements the main window for the VoxRender GUI
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -397,7 +397,7 @@ void MainWindow::writeSettings()
 void MainWindow::createRecentFileActions()
 {
     // Create actions for recent files listing
-	for( int i = 0; i < MaxRecentFiles; i++ ) 
+	for (int i = 0; i < MaxRecentFiles; i++) 
     {
 		m_recentFileActions[i] = new QAction( this );
 		m_recentFileActions[i]->setVisible( false );
@@ -408,10 +408,8 @@ void MainWindow::createRecentFileActions()
 	}
 
     // Add the actions to the recent file submenu
-	for( int i = 0; i < MaxRecentFiles; i++ ) 
-    {
-		ui->menuOpen_Recent->addAction( m_recentFileActions[i] );
-	}
+	for (int i = 0; i < MaxRecentFiles; i++)
+		ui->menuOpen_Recent->addAction(m_recentFileActions[i]);
 }
 
 // ----------------------------------------------------------------------------
@@ -556,12 +554,13 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         // Attempt to parse the scene file content
         // :TODO: Interactive option specification interface for import (long-term thing) ie requires raw volume width, height, etc as "Type1" ... 
         activeScene = vox::Scene::imprt(identifier);
-        if (!activeScene.volume) throw Error(__FILE__, __LINE__, "gui", "Scene is missing volume data", Error_MissingData);
+        if (!activeScene.volume) throw Error(__FILE__, __LINE__, "GUI", "Scene is missing volume data", Error_MissingData);
         if (!activeScene.parameters)   activeScene.parameters   = RenderParams::create();
         if (!activeScene.clipGeometry) activeScene.clipGeometry = PrimGroup::create();
         if (!activeScene.lightSet)     activeScene.lightSet     = LightSet::create();
         if (!activeScene.transferMap)  activeScene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
         if (!activeScene.transfer)     activeScene.transfer     = Transfer1D::create();
+        if (!activeScene.camera)       activeScene.camera       = Camera::create();
 
         // Synchronize the scene view
         synchronizeView();
@@ -1316,8 +1315,7 @@ void MainWindow::on_pushButton_loadPlugin_clicked()
 
 // ----------------------------------------------------------------------------
 //  Callback from renderer with tonemapped framebuffer for interactive display
-//  :TODO: Need to seriously add some thread locking around this stuff
-//         and the transfer function stuff too
+//  :TODO: implement scene locking, move this stuff outside of callback
 // ----------------------------------------------------------------------------
 void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {

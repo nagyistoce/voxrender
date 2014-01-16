@@ -63,7 +63,10 @@ public:
     virtual void setRenderEventCallback(RenderCallback callback) = 0;
 
     /** Returns the runtime (in ms) of the rendering kernel */
-    //virtual float renderTime() = 0;
+    virtual float renderTime() = 0;
+    
+    /** Returns the runtime (in ms) of the tonemapping kernel */
+    virtual float tonemapTime() = 0;
 };
 
 }

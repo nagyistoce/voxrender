@@ -88,6 +88,7 @@ SOURCE_GROUP("Header Files\\Kernels"     FILES ${HEADERS_KERNELS})
 
 Set(SOURCES_CORE
     Core/VolumeScatterRenderer.cpp
+    Core/CRandomBuffer.cpp
     Core/CBuffer.cu
 )
 

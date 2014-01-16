@@ -123,6 +123,10 @@ public:
 	vox::RenderController m_renderController; ///< Application render controller
 	vox::Scene activeScene;                   ///< Current scene elements
 
+    std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
+
+	InfoWidget* infowidget; ///< Advanced info widget
+
 signals:
     /** Signal sent when the active scene is reloaded */
     void sceneChanged();
@@ -140,8 +144,6 @@ signals:
 
 private:
     Ui::MainWindow *ui;
-
-    std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
     
     /** Vox GUI Error Handler - Logs to std::clog and log tab pane */
     void voxGuiErrorHandler(char const* file, int line, int severity, 
@@ -205,7 +207,6 @@ private:
 
 	enum { NumAdvPanes = 1 };
 	PaneWidget* advpanes[NumAdvPanes];  ///< Advanced tab widget panes
-	InfoWidget* infowidget;             ///< Advanced info widget
 
 	enum { NumTransferPanes = 0 };
 	TransferWidget* transferwidget;

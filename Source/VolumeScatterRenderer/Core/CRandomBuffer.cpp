@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: Info Widget - Rendering info display widget
+	Project: GPU based Volume Scatter Renderer
     
-	Description: Implements a display for render performance statistics.
+	Description: Random buffer generator
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,39 +23,25 @@
 
 =========================================================================== */
 
-// Begin Definition
-#ifndef INFO_WIDGET_H
-#define INFO_WIDGET_H
+// Include Header
+#include "CRandomBuffer.h"
 
-// Include VoxRender
-#include "VoxLib/Core/VoxRender.h"
-
-// Include dependencies
-#include <QtWidgets/QTreeWidget>
-#include <QWidget>
-
-namespace Ui 
+namespace vox
 {
-	class InfoWidget;
+    
+// --------------------------------------------------------------------
+//  Generates random content for a buffer
+// --------------------------------------------------------------------
+void CRandomBuffer2D::randomize()
+{
+    size_t bufSize = m_width * m_height;
+
+    std::unique_ptr<unsigned int> seeds(new unsigned int[bufSize]);
+
+    auto ptr = seeds.get();
+    for (size_t i = 0; i < bufSize; i++) *ptr++ = rand(); // :TODO: replace with thread safe rand alternative
+
+    VOX_CUDA_CHECK(cudaMemcpy(m_pData, seeds.get(), bufSize*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }
 
-// Render info display widget
-class InfoWidget : public QWidget
-{
-    Q_OBJECT
-    
-public:
-    explicit InfoWidget(QWidget *parent = 0);
-    ~InfoWidget();
-
-    void updatePerformanceStatistics();
-    
-private slots:
-    void updateSceneStatistics();
-
-private:
-    Ui::InfoWidget *ui;
-};
-
-// End Definition
-#endif // INFOWIDGET_H
+} // namespace vox

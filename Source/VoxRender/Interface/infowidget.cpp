@@ -58,22 +58,39 @@ InfoWidget::~InfoWidget()
 }
 
 // -------------------------------------------------
+//  Sets the timing information in the tree view
+// -------------------------------------------------
+void InfoWidget::updatePerformanceStatistics()
+{
+    auto perfItem = ui->treeWidget->findItems( "Performance", Qt::MatchExactly ).front( );
+    
+    auto timeItem = perfItem->child(0);
+    timeItem->child(0)->setText(1, QString::number(MainWindow::instance->m_renderer->renderTime()));
+    timeItem->child(1)->setText(1, QString::number(MainWindow::instance->m_renderer->tonemapTime()));
+    ui->treeWidget->update();
+}
+
+// -------------------------------------------------
 //  Sets the scene information in the tree view
 // -------------------------------------------------
-void InfoWidget::updateSceneStatistics( )
+void InfoWidget::updateSceneStatistics()
 {
-    // :TODO: Delay update until visibility //
+    // :TODO: Delay update unless visibile //
 
     auto const& scene = MainWindow::instance->activeScene;
 
-    auto sceneItem = ui->treeWidget->findItems( "Scene", Qt::MatchExactly ).front( );
-    
+    auto sceneItem = ui->treeWidget->findItems("Scene", Qt::MatchExactly).front();
+
         // Scene volume statistics
         auto volumeItem = sceneItem->child(0);
         auto const& volume = scene.volume.get( );
         if( volume )
         {
             volumeItem->child(0)->setText(1, "Filename.txt");
+            volumeItem->child(1)->setText(1, LEX_CAST(vox::Vector4f(volume->extent()) * volume->spacing()));
+            volumeItem->child(2)->setText(1, LEX_CAST(volume->extent()));
+            volumeItem->child(3)->setText(1, LEX_CAST(volume->spacing()));
+            volumeItem->child(4)->setText(1, LEX_CAST(volume->extent().fold(&vox::mul)));
         }
         else
         {
@@ -90,7 +107,7 @@ void InfoWidget::updateSceneStatistics( )
             cameraItem->child(1)->setText(1, LEX_CAST(camera->filmHeight()));
 			cameraItem->child(2)->setText(1, LEX_CAST(camera->apertureSize()));
 			cameraItem->child(3)->setText(1, LEX_CAST(camera->focalDistance()));
-            cameraItem->child(4)->setText(1, LEX_CAST(camera->fieldOfView( )));
+            cameraItem->child(4)->setText(1, LEX_CAST(camera->fieldOfView() * 180.0f / M_PI));
         }
         else
         {

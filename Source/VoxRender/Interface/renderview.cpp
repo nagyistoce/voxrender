@@ -373,6 +373,8 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
     static vox::Image<vox::ColorRgbaLdr> m_image;
 
+    MainWindow::instance->infowidget->updatePerformanceStatistics();
+
     vox::FrameBuffer & frame = *lock->framebuffer.get();
 
     if (m_image.width() != frame.width() || m_image.height() != frame.height())
