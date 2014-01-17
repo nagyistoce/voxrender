@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "StandardImg/Common.h"
 #include "StandardImg/StandardImg.h"
+#include "StandardImg/JpegImg.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Plugin/PluginManager.h"
 
@@ -37,7 +38,8 @@ using namespace vox;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<StandardImg> exim;
+    std::shared_ptr<StandardImg> pngExim;
+    std::shared_ptr<JpegImg> jpegExim;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -97,7 +99,7 @@ char const* vendor() { return "Vox"; }
 char const* description() 
 {
     return  "The Standard Image ExIm plugin provides image import and export modules "
-            "for various image formats include: png"
+            "for various image formats including: png, jpeg"
             ;
 }
 
@@ -108,10 +110,15 @@ void enable()
 {  
     VOX_LOG_INFO(VOX_SIMG_LOG_CATEGORY, "Enabling the 'Vox.Standard Img ExIm' plugin");
     
-    filescope::exim = std::shared_ptr<StandardImg>(new StandardImg(filescope::handle));
+    filescope::pngExim = std::shared_ptr<StandardImg>(new StandardImg(filescope::handle));
+    filescope::jpegExim = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle));
 
-    vox::RawImage::registerImportModule(".png", filescope::exim);
-    vox::RawImage::registerExportModule(".png", filescope::exim);
+    vox::RawImage::registerImportModule(".png", filescope::pngExim);
+    vox::RawImage::registerExportModule(".png", filescope::pngExim);
+    vox::RawImage::registerImportModule(".jpeg", filescope::jpegExim);
+    vox::RawImage::registerExportModule(".jpeg", filescope::jpegExim);
+    vox::RawImage::registerImportModule(".jpg", filescope::jpegExim);
+    vox::RawImage::registerExportModule(".jpg", filescope::jpegExim);
 }
 
 // --------------------------------------------------------------------
@@ -121,9 +128,12 @@ void disable()
 { 
     VOX_LOG_INFO(VOX_SIMG_LOG_CATEGORY, "Disabling the 'Vox.Standard Img ExIm' plugin");
 
-    vox::RawImage::removeImportModule(filescope::exim);
-    vox::RawImage::removeExportModule(filescope::exim);
+    vox::RawImage::removeImportModule(filescope::pngExim);
+    vox::RawImage::removeExportModule(filescope::pngExim);
+    vox::RawImage::removeImportModule(filescope::jpegExim);
+    vox::RawImage::removeExportModule(filescope::jpegExim);
 
-    filescope::exim.reset();
+    filescope::pngExim.reset();
+    filescope::jpegExim.reset();
     filescope::handle.reset();
 }

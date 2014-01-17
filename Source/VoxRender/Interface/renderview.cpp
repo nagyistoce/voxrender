@@ -2,7 +2,7 @@
 
 	Project: VoxRender - RenderView
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
     Description: GraphicsView for visualizing render output
 
@@ -117,11 +117,9 @@ void RenderView::saveImageToFile(String const& identifier) const
 {
     try
     {
-        QImage image = m_voxfb->pixmap().toImage();
-        auto type = image.format();
-        RawImage(RawImage::Format_RGBX, image.width(), image.height(), 
-            8, image.bytesPerLine(), std::shared_ptr<void>((void*)image.bits(), [](void* p){}))
-            .exprt(identifier);
+        auto buffer = std::shared_ptr<void>((void*)m_image.data(), [] (void *) {});
+        RawImage(RawImage::Format_RGBX, m_image.width(), m_image.height(), 
+            8, m_image.stride(), buffer).exprt(identifier);
     }
     catch (Error & error)
     {
@@ -163,7 +161,7 @@ void RenderView::setLogoMode()
 // ------------------------------------------------------------
 void RenderView::setViewMode() 
 {
-    m_lastTime = boost::chrono::high_resolution_clock::now();
+    m_lastTime = std::chrono::high_resolution_clock::now();
 
     resetTransform();
 
@@ -371,8 +369,6 @@ void RenderView::processSceneInteractions()
 // ------------------------------------------------------------
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
-    static vox::Image<vox::ColorRgbaLdr> m_image;
-
     MainWindow::instance->infowidget->updatePerformanceStatistics();
 
     vox::FrameBuffer & frame = *lock->framebuffer.get();
@@ -392,11 +388,11 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
         m_image.stride(), QImage::Format_RGB32);
 
     // Compute the performance statistics for this frame
-    auto curr    = boost::chrono::high_resolution_clock::now();
+    auto curr    = std::chrono::high_resolution_clock::now();
     auto elapsed = curr - m_lastTime; 
     m_lastTime = curr;
 
-    auto fps = 1000000.0f / boost::chrono::duration_cast<boost::chrono::microseconds>(elapsed).count();
+    auto fps = 1000000.0f / std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
     // Draws the statistical information overlay
     {

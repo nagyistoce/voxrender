@@ -57,6 +57,7 @@ namespace filescope {
         pixel.r = high( 0.0f, low(sample.l * 255.0f, 255.0f) );
         pixel.g = high( 0.0f, low(sample.a * 255.0f, 255.0f) );
         pixel.b = high( 0.0f, low(sample.b * 255.0f, 255.0f) );
+        pixel.a = 255;
     }
 
 } // namespace anonymous

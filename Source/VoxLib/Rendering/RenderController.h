@@ -85,6 +85,9 @@ namespace vox
             ErrorCallback onError = nullptr
             );
 
+        /** Returns the current number of iterations */
+        size_t iterations() const;
+
         /** 
          * Terminates the render
          *

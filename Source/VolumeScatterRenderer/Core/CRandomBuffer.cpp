@@ -39,7 +39,7 @@ void CRandomBuffer2D::randomize()
     std::unique_ptr<unsigned int> seeds(new unsigned int[bufSize]);
 
     auto ptr = seeds.get();
-    for (size_t i = 0; i < bufSize; i++) *ptr++ = rand(); // :TODO: replace with thread safe rand alternative
+    for (size_t i = 0; i < bufSize; i++) *ptr++ = rand();
 
     VOX_CUDA_CHECK(cudaMemcpy(m_pData, seeds.get(), bufSize*sizeof(unsigned int), cudaMemcpyHostToDevice));
 }

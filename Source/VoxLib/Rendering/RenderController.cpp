@@ -42,9 +42,9 @@
 namespace vox
 {
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Initiates rendering of the currently loaded scene
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::render(
     MasterHandle  renderer,
     Scene const&  scene, 
@@ -83,17 +83,25 @@ void RenderController::render(
         new boost::thread(std::bind(&RenderController::entryPoint, this)));
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Returns the number of renderers currently registered
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 size_t RenderController::numRenderers() const
 {
     return m_renderThreads.size();
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Returns the current number of iterations during rendering
+// ----------------------------------------------------------------------------
+size_t RenderController::iterations() const
+{
+    return m_currIterations;
+}
+
+// ----------------------------------------------------------------------------
 //  Adds an additional renderer to the renderer list
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::addRenderer(SlaveHandle renderer)
 {
     boost::mutex::scoped_lock lock(m_threadsMutex);
@@ -103,33 +111,33 @@ void RenderController::addRenderer(SlaveHandle renderer)
     m_threadsChanged = true;
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Removes a renderer from the renderer list
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::removeRenderer(SlaveHandle renderer)
 {
     boost::mutex::scoped_lock lock(m_threadsMutex);
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Changes the transfer map generator at runtime
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::setTransferFunction(std::shared_ptr<Transfer> transfer)
 {
     m_scene.transfer = transfer; // :TODO: LOCK FOR CHANGE 
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Pauses the render controller
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::pause()
 {
     m_isPaused = true;
 }   
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Unpauses the render controller
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::unpause() 
 { 
     m_isPaused = false; 
@@ -137,25 +145,25 @@ void RenderController::unpause()
     m_pauseCond.notify_all(); 
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Returns true if the render controller is paused
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 bool RenderController::isPaused() const 
 { 
     return m_isPaused;
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Unpauses the render controller
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 bool RenderController::isActive() const
 { 
     return m_controlThread;
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Discontinues this controller's rendering operations
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::stop()
 {
     boost::mutex::scoped_lock lock(m_controlMutex);
@@ -169,9 +177,9 @@ void RenderController::stop()
     }
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Rendering routine for the master/control thread
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::entryPoint()
 {
     std::exception_ptr error = nullptr;
@@ -195,6 +203,8 @@ void RenderController::entryPoint()
             renderingSubroutine();       // Perform master rendering
             
             controlSubroutine();         // General control checks
+
+            m_currIterations++;
         }
     }
     catch (boost::thread_interrupted &)
@@ -212,9 +222,9 @@ void RenderController::entryPoint()
     terminateRenderThreads();
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Terminate render threads 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::terminateRenderThreads()
 {
     m_masterRenderer->shutdown(); //:TODO: Handle exception
@@ -231,10 +241,10 @@ void RenderController::terminateRenderThreads()
     m_masterRenderer.reset();
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Routine for renderer thread management - Revives and 
 //  dead render threads and performs startup for new ones
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::managementSubroutine()
 {
     if (m_threadsChanged)
@@ -253,9 +263,9 @@ void RenderController::managementSubroutine()
     }
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Routine for renderer thread management
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::synchronizationSubroutine()
 {
     if (m_scene.camera->isDirty() ||
@@ -276,19 +286,21 @@ void RenderController::synchronizationSubroutine()
         m_scene.transfer->m_contextChanged   = false;
         m_scene.parameters->m_contextChanged = false;
         m_scene.clipGeometry->setDirty(false);
+
+        m_currIterations = 0;
     }
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Routine for image update / synchronization 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::imageUpdateSubroutine()
 {
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Routine for the render control operations
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::controlSubroutine()
 {
     // Respond to user pause requests
@@ -299,17 +311,17 @@ void RenderController::controlSubroutine()
     }
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Performs the user frame display/processing callback
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::renderingSubroutine()
 {
     m_masterRenderer->render();
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Executes the user error handling as necessary 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderController::handleError(std::exception_ptr & error)
 {
     if (!(error == nullptr))

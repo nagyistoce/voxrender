@@ -67,6 +67,10 @@ void InfoWidget::updatePerformanceStatistics()
     auto timeItem = perfItem->child(0);
     timeItem->child(0)->setText(1, QString::number(MainWindow::instance->m_renderer->renderTime()));
     timeItem->child(1)->setText(1, QString::number(MainWindow::instance->m_renderer->tonemapTime()));
+
+    perfItem->child(2)->setText(1, QString::number(MainWindow::instance->m_renderController.iterations()));
+    perfItem->child(1);
+
     ui->treeWidget->update();
 }
 

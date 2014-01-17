@@ -44,7 +44,7 @@
 #include "VoxLib/Rendering/FrameBuffer.h"
 
 // 3rd party dependencies
-#include <boost/chrono.hpp>
+#include <chrono>
 
 /** View portal for in progress render */
 class RenderView : public QGraphicsView
@@ -100,6 +100,8 @@ private:
     bool  m_zoomEnabled;  ///< Flag indicating whether image zoom is enabled
     float m_zoomfactor;   ///< The current zoomfactor for the image zoom
     bool  m_overlayStats; ///< Flag indicating whether statistical overlay is enabled
+    
+    vox::Image<vox::ColorRgbaLdr> m_image; ///< Current frame image data
 
 	QGraphicsScene*      m_renderscene;   ///< Scene graph
 	QGraphicsPixmapItem* m_voxlogo;       ///< Background logo for non-render mode display
@@ -113,7 +115,7 @@ private:
     void keyReleaseEvent(QKeyEvent * event);  ///< Detects release of interaction keys
     void focusOutEvent(QFocusEvent * event);  ///< Releases any held keys
 
-    boost::chrono::high_resolution_clock::time_point m_lastTime; ///< Timepoint for latency calculation
+    std::chrono::high_resolution_clock::time_point m_lastTime; ///< Timepoint for latency calculation
 
     Tool m_activeTool;
 

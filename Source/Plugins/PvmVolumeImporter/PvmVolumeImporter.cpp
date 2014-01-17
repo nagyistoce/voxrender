@@ -259,9 +259,6 @@ namespace
             // --------------------------------------------------------------------
             Scene readPvmHelper(std::istream & stream)
             {
-                unsigned int a, b, c;
-                //readPVMvolume("C:/Users/lucas/Documents/Projects/voxrender/trunk/Models/Tooth/Spheres.pvm", &a, &b, &c);
-
                 // Verify the 'PVM' file header
                 String header;
                 std::getline(stream, header);

@@ -154,7 +154,7 @@ void HistogramGenerator::threadEntryPoint(std::shared_ptr<vox::Volume> volume)
 // ----------------------------------------------------------------------------
 void HistogramGenerator::generateDensityHistogram(std::shared_ptr<vox::Volume> volume)
 {
-    auto tbeg = boost::chrono::high_resolution_clock::now();
+    auto tbeg = std::chrono::high_resolution_clock::now();
 
     // Extracted binned density information from the volume
     auto bins   = filescope::generateBins(volume);
@@ -190,10 +190,10 @@ void HistogramGenerator::generateDensityHistogram(std::shared_ptr<vox::Volume> v
 		}
 	}
     
-    auto tend = boost::chrono::high_resolution_clock::now();
-    auto time = boost::chrono::duration_cast<boost::chrono::milliseconds>(tend-tbeg);
+    auto tend = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
 
-    VOX_LOG_INFO("GUI", format("Density histogram generation time: %1%", time));
+    VOX_LOG_INFO("GUI", format("Density histogram generation time: %1%", time.count()));
 
     emit histogramImageReady(HistogramView::DataType_Density);
 }
@@ -202,7 +202,7 @@ void HistogramGenerator::generateDensityHistogram(std::shared_ptr<vox::Volume> v
 // ----------------------------------------------------------------------------
 void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> volume)
 {
-    auto tbeg = boost::chrono::high_resolution_clock::now();
+    auto tbeg = std::chrono::high_resolution_clock::now();
 
     switch (volume->type())
     {
@@ -274,10 +274,10 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
         m_gradientImage.at(i, j).a = vox::clamp(normVal, 0, 255);
     }
 
-    auto tend = boost::chrono::high_resolution_clock::now();
-    auto time = boost::chrono::duration_cast<boost::chrono::milliseconds>(tend-tbeg);
+    auto tend = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
 
-    VOX_LOG_INFO("GUI", format("Gradient histogram generation time: %1%", time));
+    VOX_LOG_INFO("GUI", format("Gradient histogram generation time: %1%", time.count()));
 
     emit histogramImageReady(HistogramView::DataType_DensityGrad);
 }

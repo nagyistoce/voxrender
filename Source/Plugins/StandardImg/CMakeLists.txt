@@ -31,14 +31,17 @@ VOX_PROJECT(
     HEADERS
         "Common.h"
         "StandardImg.h"
+        "JpegImg.h"
         "Plugin.h"
         "Version.h"
     SOURCES
         "StandardImg.cpp"
+        "JpegImg.cpp"
         "Plugin.cpp"
     DEPENDENCIES
         VoxLib
     LIBRARIES
         ${PNG_LIBRARY}
+        ${JPEG_LIBRARY}
         ${Boost_LIBRARIES}
     )

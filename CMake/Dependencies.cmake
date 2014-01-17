@@ -34,6 +34,7 @@ SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} C:/Qt/Qt5.2.0/5.2.0/msvc2012)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/glew-1.5.5)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/curl)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libpng)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libjpeg)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/zlib)
 SET(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v5.5")
 
@@ -91,6 +92,20 @@ IF(PNG_LIBRARY AND PNG_INCLUDE_DIRS)
     INCLUDE_DIRECTORIES(${PNG_INCLUDE_DIR})
 ELSE()
     MESSAGE(STATUS "warning: libpng not found.")
+ENDIF()
+
+#===============================================#
+#                      LibJPEG                  #
+#===============================================#
+
+find_package(JPEG)
+
+IF(JPEG_FOUND)
+    MESSAGE(STATUS "libpng include directory: " "${JPEG_INCLUDE_DIR}")
+    MESSAGE(STATUS "libpng library directory: " "${JPEG_LIBRARY}")
+    INCLUDE_DIRECTORIES(${JPEG_INCLUDE_DIR})
+ELSE()
+    MESSAGE(STATUS "warning: libjpeg not found.")
 ENDIF()
 
 #===============================================#

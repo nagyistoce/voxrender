@@ -1073,9 +1073,10 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionExport_Image_triggered()
 {
+    // :TODO: Detect available export types from RawImage exporters
     QString filename = QFileDialog::getSaveFileName( 
         this, tr("Choose a scene file to open"), 
-        m_lastOpenDir, tr("PNG Image (*.png)"));
+        m_lastOpenDir, tr("PNG Image (*.png)\nJPEG Image (*.jpeg)"));
 
     std::string identifier(filename.toUtf8().data());
     if (identifier.empty()) return;
@@ -1095,7 +1096,7 @@ void MainWindow::on_actionOpen_triggered()
 
     QString filename = QFileDialog::getOpenFileName( 
         this, tr("Choose a scene file to open"), 
-        m_lastOpenDir, tr("Vox Scene Files (*.xml)\nAll Files (*)"));
+        m_lastOpenDir, tr("Vox Scene Files (*.xml)\nPVM Volume (*.pvm)\nAll Files (*)"));
 
     if (!filename.isNull()) renderNewSceneFile(filename);
 }
@@ -1173,11 +1174,11 @@ void MainWindow::on_actionFull_Screen_triggered()
 	}
 	else 
 	{
-		m_renderView->setParent( nullptr );
-		m_renderView->move( pos() ); // move renderview to same monitor as mainwindow
-		m_renderView->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-		m_renderView->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-		m_renderView->showFullScreen( );
+		m_renderView->setParent(nullptr);
+		m_renderView->move(pos()); // move renderview to same monitor as mainwindow
+		m_renderView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+		m_renderView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+		m_renderView->showFullScreen();
 		//ui->action_normalScreen->setEnabled( true );
 	}
 }
