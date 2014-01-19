@@ -66,6 +66,9 @@ private:
 	int m_index;
     bool m_dirty;
     
+protected:
+    void changeEvent(QEvent * event);
+
 private slots:
     void on_horizontalSlider_pitch_valueChanged(int value);
     void on_horizontalSlider_yaw_valueChanged(int value);

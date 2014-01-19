@@ -33,6 +33,8 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Image/RawImage.h"
 #include "VoxLib/Scene/Camera.h"
+#include "VoxLib/Scene/Scene.h"
+#include "VoxLib/Scene/PrimGroup.h"
 
 using namespace vox;
 
@@ -227,6 +229,9 @@ void RenderView::mousePressEvent(QMouseEvent* event)
         switch (m_activeTool)
         {
         case Tool_ClipPlane:
+            auto scene = MainWindow::instance->scene();
+            if (!scene.clipGeometry) return; 
+
             // Convert the position to image coordinates
             auto camera = MainWindow::instance->scene().camera;
             auto p = event->pos() - viewport()->mapToParent(mapFromScene(0, 0));
@@ -246,7 +251,7 @@ void RenderView::mousePressEvent(QMouseEvent* event)
                     // Compute the plane normal vector
                     auto cv1 = camera->projectRay(Vector2f(p1.x(), p1.y())).dir;
                     auto cv2 = camera->projectRay(Vector2f(p2.x(), p2.y())).dir;
-                    auto normal = Vector3f::cross(cv1, cv2);
+                    auto normal = Vector3f::cross(cv1, cv2).normalize();
 
                     // Compute the direction of the normal for clipping (towards the 3rd click)
                     auto sv1 = p2 - p1;
@@ -255,6 +260,7 @@ void RenderView::mousePressEvent(QMouseEvent* event)
 
                     // Add the new clipping plane to the scene
                     auto plane = vox::Plane::create(normal, Vector3f::dot(normal, camera->position()));
+                    scene.clipGeometry->add(plane);
                     MainWindow::instance->addClippingGeometry(plane);
                 }
                 m_clipLine.setP1(QPoint());

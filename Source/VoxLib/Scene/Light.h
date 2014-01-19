@@ -31,6 +31,8 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry.h"
 
+// :TODO: Make this all threadsafe
+
 // API namespace
 namespace vox
 {
@@ -60,6 +62,15 @@ namespace vox
 
         /** Adds a new light to the scene */
         std::shared_ptr<Light> addLight();
+
+        /** Unlocks the light set */
+        void lock();
+
+        /** Locks the light set for read/write operations */
+        void unlock();
+
+        /** Adds a new light to the scene */
+        void addLight(std::shared_ptr<Light> light);
 
         /** Removes an existing light from the scene */
         void removeLight(std::shared_ptr<Light> light);

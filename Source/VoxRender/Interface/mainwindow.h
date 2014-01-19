@@ -215,13 +215,13 @@ private:
     //        Would be necessary if we moved to allowing plugins for the interface components
 
     // Light panel panes
-    PaneWidget *         m_ambientPane;
-	QVector<PaneWidget*> m_lightPanes;
-    QSpacerItem *        m_spacer;
+    PaneWidget *           m_ambientPane;
+	std::list<PaneWidget*> m_lightPanes;
+    QSpacerItem *          m_spacer;
 
     // Clipping Geometry panel panes
-	QVector<PaneWidget*> m_clipPanes;
-    QSpacerItem *        m_clipSpacer;
+	std::list<PaneWidget*> m_clipPanes;
+    QSpacerItem *          m_clipSpacer;
 
     // Plugin panes
     QVector<PaneWidget*> m_pluginPanes;
@@ -266,6 +266,10 @@ private slots:
     void on_pushButton_loadPlugin_clicked();
 
     void on_pushButton_imagingApply_clicked();
+
+    // Scene element removal
+    void removeClipGeometry(PaneWidget * pane);
+    void removeLight(PaneWidget * pane);
 
 	// Device selection action slots
 	void on_pushButton_devicesAdd_clicked();

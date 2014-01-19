@@ -3,8 +3,8 @@
     Project: Standard Image ExIm Module
     
 	Description: Defines an image import module for common LDR image formats
-
-    Copyright (C) 2013 Lucas Sherman
+    
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,7 +24,7 @@
 =========================================================================== */
 
 // Include Header
-#include "StandardImg.h"
+#include "PngImg.h"
 
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
@@ -222,7 +222,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void StandardImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
+void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image);
@@ -234,7 +234,7 @@ void StandardImg::exporter(ResourceOStream & sink, OptionSet const& options, Raw
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-RawImage StandardImg::importer(ResourceIStream & source, OptionSet const& options)
+RawImage PngImg::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

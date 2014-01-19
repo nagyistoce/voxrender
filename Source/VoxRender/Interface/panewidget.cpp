@@ -41,13 +41,13 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent* event)
 	emit clicked();
 }
 
-PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& icon, bool onoffbutton, bool solobutton) : 
+PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& icon, bool onoffbutton, bool rembutton) : 
     QWidget(parent), 
     ui(new Ui::PaneWidget)
 {
 	expanded = false;
 	onofflabel = NULL;
-	sololabel = NULL;
+	remLabel = NULL;
 
 	m_Index = -1;
 
@@ -73,11 +73,10 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
 	connect(expandlabel.get(), SIGNAL(clicked()), this, SLOT(expandClicked()));
 
 	powerON = false;
-	m_SoloState = SOLO_OFF;
 	
 	if (onoffbutton) showOnOffButton();
 
-	if (solobutton) showSoloButton();
+	if (rembutton) showVisibilityButtons();
 }
 
 // --------------------------------------------------------------------
@@ -151,73 +150,50 @@ void PaneWidget::expandClicked()
 }
 
 // --------------------------------------------------------------------
-//  Toggles the display of the solo button 
+//  Toggles the display of the delete + show-hide icons 
 // --------------------------------------------------------------------
-void PaneWidget::showSoloButton(bool showbutton)
+void PaneWidget::showVisibilityButtons(bool showbutton)
 {
-	if (sololabel == nullptr) 
+	if (remLabel == nullptr) 
     {
-		sololabel.reset(new ClickableLabel("S", this));
-		sololabel->setPixmap(QPixmap(":/icons/lightdeleteicon.png"));
-		sololabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+		remLabel.reset(new ClickableLabel("S", this));
+		remLabel->setPixmap(QPixmap(":/icons/lightdeleteicon.png"));
+		remLabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
 
 		ui->gridLayout->removeWidget(expandlabel.get());
-		ui->gridLayout->addWidget(sololabel.get(), 0, 3, 1, 1);
+		ui->gridLayout->addWidget(remLabel.get(), 0, 3, 1, 1);
 		ui->gridLayout->addWidget(onofflabel.get(), 0, 4, 1, 1);
 		ui->gridLayout->addWidget(expandlabel.get(), 0, 5, 1, 1);
 
-		connect(sololabel.get(), SIGNAL(clicked()), this, SLOT(soloClicked()));
+		connect(remLabel.get(), SIGNAL(clicked()), this, SLOT(removeClicked()));
 	}
 
-	if (showbutton) sololabel->show();
-	else            sololabel->hide();
+	if (showbutton) remLabel->show();
+	else            remLabel->hide();
 }
 
 // --------------------------------------------------------------------
 //  Signals that the solo label on the pane was clicked
 // --------------------------------------------------------------------
-void PaneWidget::soloClicked()
+void PaneWidget::removeClicked()
 {
-	if (m_SoloState == SOLO_ENABLED)
-	{
-		emit signalLightGroupSolo(-1);
-	}
-	else 
-	{
-		emit signalLightGroupSolo(m_Index);
-	}
-
-	emit valuesChanged();
-}
-
-void PaneWidget::SetSolo( SoloState esolo )
-{
-	m_SoloState = esolo;
-	
-	if ( m_SoloState == SOLO_ENABLED || m_SoloState == SOLO_OFF )
-	{
-		sololabel->setPixmap(QPixmap(":/icons/plusicon.png"));
-	}
-	else
-	{
-		sololabel->setPixmap(QPixmap(":/icons/minusicon.png"));
-	}
+    emit removed(this);
 }
 
 // --------------------------------------------------------------------
 //  Toggles display of the child widget inside the pane to shown
 // --------------------------------------------------------------------
-void PaneWidget::expand( )
+void PaneWidget::expand()
 {
 	expanded = true;
 	expandlabel->setPixmap(QPixmap(":/icons/expandedicon.png"));
-	mainwidget->show( );
+	mainwidget->show();
 }
 
 // --------------------------------------------------------------------
 //  Toggles display of the child widget inside the pane to hidden
 // --------------------------------------------------------------------
-void PaneWidget::collapse( )
+void PaneWidget::collapse()
 {
 	expanded = false;
 	expandlabel->setPixmap(QPixmap(":/icons/collapsedicon.png"));
@@ -245,7 +221,7 @@ void PaneWidget::setWidget(QWidget *widget)
 // --------------------------------------------------------------------
 //  Returns the child widget for this pane
 // --------------------------------------------------------------------
-QWidget *PaneWidget::getWidget()
+QWidget * PaneWidget::getWidget()
 {
 	return mainwidget;
 }

@@ -392,6 +392,8 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 void TransferItem::onResizeEvent()
 {
     auto transfer = MainWindow::instance->scene().transfer;
+    if (!transfer) return;
+
     if (transfer->type() == Transfer1D::typeID())
     {
         BOOST_FOREACH(auto & item, m_nodes)

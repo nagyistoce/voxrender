@@ -73,9 +73,8 @@ class PaneWidget : public QWidget
 
 public:
 
-	PaneWidget( QWidget *parent, const QString& label = "", 
-		const QString& icon = "", bool onoffbutton=false, 
-		bool solobutton=false );
+	PaneWidget( QWidget *parent, const QString& label = "", const QString& icon = "", 
+        bool onoffbutton = false, bool rembutton = false);
 
     /** Sets the title which appears in the bar of the pane */
 	void setTitle(QString const& title);
@@ -89,47 +88,45 @@ public:
 	void setWidget( QWidget *widget );
 	QWidget *getWidget( );
 
-	void showOnOffButton( bool showbutton = true );
-	void showSoloButton( bool showbutton = true );
+	void showOnOffButton(bool showbutton = true);
+
+    /** Toggles the display of visibility and delete buttons */
+	void showVisibilityButtons(bool showbutton = true);
+
+    /** Expands the pane if it is collapsed */
 	void expand();
+
+    /** Collapses the pane if it is expanded*/
 	void collapse();
 
 	bool powerON;
 	
-	SoloState m_SoloState;
-	void SetSolo( SoloState );
-
 	int m_Index;
 
 	inline int  GetIndex( ) { return m_Index; }
 	inline void SetIndex( int Index ) { m_Index = Index; }
 
 private:
-
 	Ui::PaneWidget *ui;
 
-	QWidget *mainwidget;
+	QWidget * mainwidget;
 	QPixmap expandedicon, collapsedicon;
+
 	std::unique_ptr<ClickableLabel> expandlabel;
 	std::unique_ptr<ClickableLabel> onofflabel;
-	std::unique_ptr<ClickableLabel> sololabel;
+	std::unique_ptr<ClickableLabel> remLabel;
 
 	bool expanded;
 
 signals:
-
-	void valuesChanged( );
-
+	void removed(PaneWidget *);
 	void turnedOn();
 	void turnedOff();
 
-	void signalLightGroupSolo( int index );
-
 private slots:
-
-	void expandClicked( );
-	void onoffClicked( );
-	void soloClicked( );
+	void expandClicked();
+	void onoffClicked();
+	void removeClicked();
   
 };
 

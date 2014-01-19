@@ -704,20 +704,20 @@ void MainWindow::synchronizeView()
     samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
+    // Synchronize the ambient lighting control
     static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->synchronizeView();
 
-    // Remove any light panes from the previous render
-    BOOST_FOREACH (auto & pane, m_lightPanes)
-    {
-        delete pane;
-    }
+    // Synchronize the lighting controls
+    BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
     m_lightPanes.clear();
+    BOOST_FOREACH (auto & light, activeScene.lightSet->lights()) 
+        addLight(light, "Point Light");
 
-    // Create light panes for loaded lights
-    BOOST_FOREACH (auto & light, activeScene.lightSet->lights())
-    {
-        addLight(light, "EMBEDED :TODO: NAME");
-    }
+    // Synchronize the clip geometry controls
+    BOOST_FOREACH (auto & pane, m_clipPanes) delete pane;
+    m_clipPanes.clear();
+    BOOST_FOREACH (auto & clip, activeScene.clipGeometry->children())
+        addClippingGeometry(clip);
 }
 
 // ----------------------------------------------------------------------------
@@ -895,11 +895,13 @@ void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
 
     pane->SetIndex(index);
     pane->showOnOffButton();
-    pane->showSoloButton();
+    pane->showVisibilityButtons();
     pane->setTitle(name);
     pane->setIcon(":/icons/lightgroupsicon.png");
     pane->setWidget(currWidget);
     pane->expand( );
+
+    connect(pane, SIGNAL(removed(PaneWidget *)), this, SLOT(removeLight(PaneWidget *)));
 
     ui->lightsAreaLayout->addWidget(pane);
 
@@ -907,6 +909,17 @@ void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
 
     // Reinsert spacer following new pane
 	ui->lightsAreaLayout->addItem( m_spacer );
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a light from the active scene
+// ----------------------------------------------------------------------------
+void MainWindow::removeLight(PaneWidget * pane)
+{
+    m_lightPanes.remove(pane);
+
+    ui->lightsAreaLayout->removeWidget(pane);
+    delete pane;
 }
 
 // ----------------------------------------------------------------------------
@@ -931,7 +944,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
     }
     else
     {
-        // :TODO: Default hideable attribute pane
+        // :TODO: unexpandeable hideable attribute pane
 
         VOX_LOG_WARNING(Error_NotImplemented, "GUI", 
             format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->id()));
@@ -939,15 +952,17 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
         return;
     }
 
-    int index = m_clipPanes.size( );
+    int index = m_clipPanes.size();
 
     pane->SetIndex(index);
     pane->showOnOffButton();
-    pane->showSoloButton();
+    pane->showVisibilityButtons();
     pane->setTitle(QString::fromLatin1(prim->id().c_str()));
     pane->setIcon(":/icons/lightgroupsicon.png");
     pane->setWidget(currWidget);
     pane->expand();
+    
+    connect(pane, SIGNAL(removed(PaneWidget *)), this, SLOT(removeClipGeometry(PaneWidget *)));
 
     ui->clipAreaLayout->addWidget(pane);
 
@@ -955,6 +970,16 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
 
     // Reinsert spacer following new pane
 	ui->clipAreaLayout->addItem(m_clipSpacer);
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a light from the active scene
+// ----------------------------------------------------------------------------
+void MainWindow::removeClipGeometry(PaneWidget * pane)
+{
+    m_clipPanes.remove(pane);
+    ui->clipAreaLayout->removeWidget(pane);
+    delete pane;
 }
 
 // ----------------------------------------------------------------------------
@@ -1074,9 +1099,15 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 void MainWindow::on_actionExport_Image_triggered()
 {
     // :TODO: Detect available export types from RawImage exporters
+    String fileTypes;
+    fileTypes += "PNG Image (*.png)\n";
+    fileTypes += "JPEG Image (*.jpg)\n";
+    fileTypes += "BMP Image (*.bmp)\n";
+    fileTypes += "All Files (*)\n";
+
     QString filename = QFileDialog::getSaveFileName( 
-        this, tr("Choose a scene file to open"), 
-        m_lastOpenDir, tr("PNG Image (*.png)\nJPEG Image (*.jpeg)"));
+        this, tr("Choose an image destination"), 
+        m_lastOpenDir, fileTypes.c_str());
 
     std::string identifier(filename.toUtf8().data());
     if (identifier.empty()) return;
@@ -1276,7 +1307,8 @@ void MainWindow::on_pushButton_addClip_clicked()
         VOX_LOG_ERROR(Error_Bug, "GUI", "Invalid geometry type selection");
         return;
     }
-
+    
+    MainWindow::instance->scene().clipGeometry->add(prim);
     addClippingGeometry(prim);
 }
 

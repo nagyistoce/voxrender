@@ -202,6 +202,23 @@ namespace
         // Import module implementation
         class ImgImporter
         {
+        private:
+            class SourceManager
+            {
+            public:
+                SourceManager(ImgImporter * _parent) : parent(_parent) 
+                {
+                    mgr.fill_input_buffer   = ImgImporter::fillInputBuffer;
+                    mgr.init_source         = ImgImporter::initSource;
+                    mgr.resync_to_restart   = jpeg_resync_to_restart;
+                    mgr.skip_input_data     = ImgImporter::skipInputData;
+                    mgr.term_source         = ImgImporter::termSource;
+                }
+
+                jpeg_source_mgr mgr;
+                ImgImporter * parent;
+            };
+
         public:
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
@@ -219,13 +236,90 @@ namespace
             // --------------------------------------------------------------------
             RawImage readImageFile()
             {
-                return RawImage(RawImage::Format_RGB);
+                // Setup the compression options
+                struct jpeg_decompress_struct cinfo;
+                struct jpeg_error_mgr jerr;
+
+                cinfo.err = jpeg_std_error(&jerr);
+                jpeg_create_decompress(&cinfo);
+
+                SourceManager mgr(this);
+                cinfo.src = (jpeg_source_mgr*)&mgr;
+
+                jpeg_read_header(&cinfo, true);
+                size_t stride = cinfo.output_width * cinfo.output_components;
+                size_t bytes  = cinfo.output_height * stride;
+                std::shared_ptr<UInt8> buffer(new UInt8[bytes], arrayDeleter);
+
+                auto ptr = buffer.get();
+                while (cinfo.output_scanline < cinfo.output_height)
+                {
+                    jpeg_read_scanlines(&cinfo, (JSAMPARRAY)&ptr, 1);
+                    ptr += stride;
+                }
+
+                jpeg_finish_decompress(&cinfo);
+
+                jpeg_destroy_decompress(&cinfo);
+
+                RawImage::Format type;
+                switch (cinfo.out_color_space)
+                {
+                case JCS_RGB:
+                    type = RawImage::Format_RGB;
+                    break;
+                case JCS_GRAYSCALE:
+                    type = RawImage::Format_Gray;
+                    break;
+                default: 
+                    type = RawImage::Format_Unknown;
+                    break;
+                }
+
+                return RawImage(type, cinfo.output_width, cinfo.output_height, 8, stride, buffer);
             }
             
+        private:
+            static void initSource(j_decompress_ptr cinfo)
+            {
+                SourceManager * mgr = (SourceManager*)cinfo->src;
+                mgr->mgr.bytes_in_buffer = 0;
+            }
+
+            static boolean fillInputBuffer(j_decompress_ptr cinfo)
+            {
+                SourceManager * mgr = (SourceManager*)cinfo->src;
+                mgr->parent->m_source.read((char*)mgr->parent->m_buffer, BUF_SIZE);
+                mgr->mgr.bytes_in_buffer = mgr->parent->m_source.gcount();
+                mgr->mgr.next_input_byte = mgr->parent->m_buffer;
+
+                return true;
+            }
+            
+            static void skipInputData(j_decompress_ptr cinfo, long num_bytes)
+            {
+                SourceManager * mgr = (SourceManager*)cinfo->src;
+                auto left = mgr->mgr.bytes_in_buffer;
+                if (left > num_bytes)
+                {
+                    mgr->mgr.bytes_in_buffer -= num_bytes;
+                    mgr->mgr.next_input_byte += num_bytes;
+                }
+                else
+                {
+                    mgr->mgr.bytes_in_buffer = 0;
+                    mgr->parent->m_source.ignore(num_bytes-left);
+                }
+            }
+            
+            static void termSource(j_decompress_ptr cinfo) { }
+
         private:
             static int const versionMajor = 0; ///< Version major
             static int const versionMinor = 0; ///< Version minor 
             
+            UInt8 m_buffer[BUF_SIZE]; // Storage buffer :TODO: write directly to streambuf?
+
             std::shared_ptr<void> & m_handle;   ///< Plugin handle to track this DLL's usage
 
             ResourceIStream & m_source;       ///< Resource stream

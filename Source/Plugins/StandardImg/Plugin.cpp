@@ -28,7 +28,8 @@
 
 // Include Dependencies
 #include "StandardImg/Common.h"
-#include "StandardImg/StandardImg.h"
+#include "StandardImg/BmpImg.h"
+#include "StandardImg/PngImg.h"
 #include "StandardImg/JpegImg.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Plugin/PluginManager.h"
@@ -38,8 +39,9 @@ using namespace vox;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<StandardImg> pngExim;
+    std::shared_ptr<PngImg>  pngExim;
     std::shared_ptr<JpegImg> jpegExim;
+    std::shared_ptr<BmpImg>  bmpExim;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -110,15 +112,18 @@ void enable()
 {  
     VOX_LOG_INFO(VOX_SIMG_LOG_CATEGORY, "Enabling the 'Vox.Standard Img ExIm' plugin");
     
-    filescope::pngExim = std::shared_ptr<StandardImg>(new StandardImg(filescope::handle));
+    filescope::pngExim  = std::shared_ptr<PngImg> (new PngImg (filescope::handle));
     filescope::jpegExim = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle));
-
-    vox::RawImage::registerImportModule(".png", filescope::pngExim);
-    vox::RawImage::registerExportModule(".png", filescope::pngExim);
+    filescope::bmpExim  = std::shared_ptr<BmpImg> (new BmpImg (filescope::handle));
+    
+    vox::RawImage::registerImportModule(".bmp",  filescope::bmpExim);
+    vox::RawImage::registerExportModule(".bmp",  filescope::bmpExim);
+    vox::RawImage::registerImportModule(".png",  filescope::pngExim);
+    vox::RawImage::registerExportModule(".png",  filescope::pngExim);
     vox::RawImage::registerImportModule(".jpeg", filescope::jpegExim);
     vox::RawImage::registerExportModule(".jpeg", filescope::jpegExim);
-    vox::RawImage::registerImportModule(".jpg", filescope::jpegExim);
-    vox::RawImage::registerExportModule(".jpg", filescope::jpegExim);
+    vox::RawImage::registerImportModule(".jpg",  filescope::jpegExim);
+    vox::RawImage::registerExportModule(".jpg",  filescope::jpegExim);
 }
 
 // --------------------------------------------------------------------
@@ -127,12 +132,15 @@ void enable()
 void disable() 
 { 
     VOX_LOG_INFO(VOX_SIMG_LOG_CATEGORY, "Disabling the 'Vox.Standard Img ExIm' plugin");
-
+    
+    vox::RawImage::removeImportModule(filescope::bmpExim);
+    vox::RawImage::removeExportModule(filescope::bmpExim);
     vox::RawImage::removeImportModule(filescope::pngExim);
     vox::RawImage::removeExportModule(filescope::pngExim);
     vox::RawImage::removeImportModule(filescope::jpegExim);
     vox::RawImage::removeExportModule(filescope::jpegExim);
-
+    
+    filescope::bmpExim.reset();
     filescope::pngExim.reset();
     filescope::jpegExim.reset();
     filescope::handle.reset();

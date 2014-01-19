@@ -30,13 +30,15 @@ VOX_PROJECT(
     FOLDER "Plugins"
     HEADERS
         "Common.h"
-        "StandardImg.h"
+        "BmpImg.h"
         "JpegImg.h"
+        "PngImg.h"
         "Plugin.h"
         "Version.h"
     SOURCES
-        "StandardImg.cpp"
+        "BmpImg.cpp"
         "JpegImg.cpp"
+        "PngImg.cpp"
         "Plugin.cpp"
     DEPENDENCIES
         VoxLib

@@ -8,7 +8,7 @@
 	Description:
 	 Implements the interface for point light source settings
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -75,9 +75,8 @@ void AmbientLightWidget::processInteractions()
     if (m_dirty)
     {
         QColor color = m_colorButton->getColor();
-        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * 
-                            (ui->doubleSpinBox_intensity->value() / 50.0f);
-        MainWindow::instance->scene().lightSet->setAmbientLight( light );
+        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * ui->doubleSpinBox_intensity->value();
+        MainWindow::instance->scene().lightSet->setAmbientLight(light);
 
         m_dirty = false;
     }
@@ -88,6 +87,16 @@ void AmbientLightWidget::processInteractions()
 // --------------------------------------------------------------------
 void AmbientLightWidget::synchronizeView()
 {
+    auto & scene = MainWindow::instance->scene();
+    if (!scene.lightSet) return;
+
+    Vector3f ambient = scene.lightSet->ambientLight();
+    float magnitude = ambient.fold(high);
+    ambient *= 255.0f / magnitude;
+    ui->doubleSpinBox_intensity->setValue(magnitude);
+    m_colorButton->setColor( QColor((int)ambient[0], (int)ambient[1], (int)ambient[2]), true);
+
+    m_dirty = false;
 }
 
 // --------------------------------------------------------------------

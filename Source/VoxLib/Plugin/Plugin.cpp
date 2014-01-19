@@ -32,6 +32,7 @@
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/ErrorCodes.h"
 #include "VoxLib/Error/SystemError.h"
+#include "VoxLib/Error/PluginError.h"
 
 // Additional dependencies
 #include <boost/filesystem.hpp>

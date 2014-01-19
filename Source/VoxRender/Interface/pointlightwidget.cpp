@@ -5,7 +5,7 @@
 	Description:
 	 Implements the interface for point light source settings
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -27,6 +27,7 @@
 // Include Headers
 #include "ui_pointlightwidget.h"
 #include "pointlightwidget.h"
+#include "mainwindow.h"
 
 // Include Dependencies
 #include "utilities.h"
@@ -87,6 +88,9 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 // --------------------------------------------------------------------
 PointLightWidget::~PointLightWidget()
 {
+    auto & scene = MainWindow::instance->scene();
+    if (scene.lightSet) scene.lightSet->removeLight(m_light);
+
     delete m_colorButton;
     delete ui;
 }
@@ -110,12 +114,32 @@ void PointLightWidget::processInteractions()
         m_light->setPositionY(sin(latitude)       * distance);
         m_light->setPositionZ(cl * sin(longitude) * distance);
 
-        m_light->setIntensity( ui->doubleSpinBox_intensity->value() );
+        m_light->setIntensity(ui->doubleSpinBox_intensity->value());
 
         QColor color = m_colorButton->getColor();
         m_light->setColor( Vector3f(color.red()  /255.0f, 
                                     color.green()/255.0f, 
                                     color.blue() /255.0f) );
+    }
+}
+
+// --------------------------------------------------------------------
+//  Toggles the light's visibility depending on the display status
+// --------------------------------------------------------------------
+void PointLightWidget::changeEvent(QEvent * event)
+{
+    if (event->type() == QEvent::EnabledChange)
+    {
+        auto scene = MainWindow::instance->scene();
+        if (!scene.lightSet) return;
+        
+        if (!isEnabled()) scene.lightSet->removeLight(m_light);
+        else 
+        {
+            auto children = scene.lightSet->lights();
+            if (std::find(children.begin(), children.end(), m_light) == children.end())
+                scene.lightSet->addLight(m_light);
+        }
     }
 }
 

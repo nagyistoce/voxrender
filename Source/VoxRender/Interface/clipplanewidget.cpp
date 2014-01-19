@@ -57,8 +57,20 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
     m_plane(plane)
 {
 	ui->setupUi(this);
-    
-    MainWindow::instance->scene().clipGeometry->add(m_plane);
+
+    auto length = plane->normal().length();
+    auto normal = plane->normal();
+    auto pos    = normal * plane->distance();
+    ui->doubleSpinBox_x->setValue(pos[0]);
+    ui->doubleSpinBox_y->setValue(pos[1]);
+    ui->doubleSpinBox_z->setValue(pos[2]);
+
+    float partial  = sqrt(pow(normal[0], 2) + pow(normal[2], 2));
+    float phi      = asin(normal[1]) / M_PI * 180.0f;
+    float theta    = acos(normal[0] / partial)  / M_PI * 180.0f;
+
+    ui->doubleSpinBox_pitch->setValue(phi);
+    ui->doubleSpinBox_yaw->setValue(theta);
 
     m_dirty = false;
 }
@@ -102,6 +114,26 @@ void ClipPlaneWidget::processInteractions()
         m_plane->setDistance(distance);
             
         m_dirty = false; 
+    }
+}
+
+// --------------------------------------------------------------------
+//  Toggles the planes visibility depending on the display status
+// --------------------------------------------------------------------
+void ClipPlaneWidget::changeEvent(QEvent * event)
+{
+    if (event->type() == QEvent::EnabledChange)
+    {
+        auto scene = MainWindow::instance->scene();
+        if (!scene.clipGeometry) return;
+
+        if (!isEnabled()) scene.clipGeometry->remove(m_plane);
+        else 
+        {
+            auto children = scene.clipGeometry->children();
+            if (std::find(children.begin(), children.end(), m_plane) == children.end())
+                scene.clipGeometry->add(m_plane);
+        }
     }
 }
 

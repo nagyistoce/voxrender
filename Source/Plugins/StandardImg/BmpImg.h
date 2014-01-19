@@ -4,7 +4,7 @@
     
 	Description: Defines an image import module for common LDR image formats
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,8 +24,8 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_SIMG_STD_IMG_H
-#define VOX_SIMG_STD_IMG_H
+#ifndef VOX_SIMG_BMP_IMG_H
+#define VOX_SIMG_BMP_IMG_H
 
 // Include Dependencies
 #include "Plugins/StandardImg/Common.h"
@@ -43,10 +43,10 @@ namespace vox
  *
  * This module is compatible with the abstract scene import/export interface.
  */
-class VOX_SIMG_EXPORT StandardImg : public ImageExporter, public ImageImporter
+class VOX_SIMG_EXPORT BmpImg : public ImageExporter, public ImageImporter
 {
 public:
-    StandardImg(std::shared_ptr<void> handle) : m_handle(handle) { }
+    BmpImg(std::shared_ptr<void> handle) : m_handle(handle) { }
 
 	/** Vox Image File Exporter */
 	virtual void exporter(ResourceOStream & source, OptionSet const& options, RawImage const& image);
@@ -61,4 +61,4 @@ private:
 }
 
 // End definition
-#endif // VOX_SIMG_STD_IMG_H
+#endif // VOX_SIMG_BMP_IMG_H

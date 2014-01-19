@@ -8,7 +8,7 @@
 	Description:
 	 Implements the interface for point light source settings
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -62,6 +62,9 @@ public:
     void setIndex(int index) { m_index = index; }
 
     void processInteractions();
+
+protected:
+    virtual void changeEvent(QEvent * event);
 
 private:
 	Ui::PointLightWidget* ui;

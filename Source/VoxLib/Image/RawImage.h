@@ -52,6 +52,7 @@ namespace vox
             Format_RGBX,
             Format_Gray,
             Format_GrayAlpha,
+            Format_Unknown,
             Format_End
         };
 
@@ -187,7 +188,7 @@ namespace vox
         size_t channels() const { return m_channels; }
 
         /** Returns the size in bytes of an image pixel */
-        size_t elementSize() const { return m_depth*m_channels; }
+        size_t elementSize() const { return m_depth*m_channels/8; }
 
         /** Image width accessor */
         size_t width() const { return m_width; }

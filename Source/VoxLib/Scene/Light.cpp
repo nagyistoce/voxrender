@@ -4,7 +4,7 @@
 
 	Description: Defines a light for placement in the scene.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -51,6 +51,16 @@ std::shared_ptr<Light> LightSet::addLight()
     m_contextChanged = true;
 
     return light;
+}
+
+// ------------------------------------------------------------
+//  Adds a new light to the scene 
+// ------------------------------------------------------------
+void LightSet::addLight(std::shared_ptr<Light> light)
+{
+    m_lights.push_back(light);
+
+    m_contextChanged = true;
 }
 
 // ------------------------------------------------------------

@@ -37,8 +37,7 @@
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
-
-#include "Plugins/StandardImg/StandardImg.h"
+#include "VoxLib/Image/RawImage.h"
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
