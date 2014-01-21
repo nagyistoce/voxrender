@@ -26,6 +26,8 @@
 // Include Header
 #include "PrimGroup.h"
 
+#include "boost/property_tree/ptree.hpp"
+
 namespace vox {
     
 namespace {
@@ -33,14 +35,11 @@ namespace filescope {
 
     // Static member initialization
     Char const* typeId  = "PrimGroup";
-    
-    // ---------------------------------------------------------------------------- 
-    //  Parses a primitive group from a property tree node
-    // ---------------------------------------------------------------------------- 
-    //void parseFunc(boost::property_tree::ptree const& data)
-    //{
-        //BOOST_FOREACH (auto const& node, data) Primitive::imprt(node);
-    //}
+
+    // Importer registration
+    class PrimitiveForceImport { public: PrimitiveForceImport() { 
+        Primitive::registerImportModule(PrimGroup::classTypeId(), PrimGroup::imprt); } };
+    static PrimitiveForceImport a;
 
 } // namespace filescope 
 } // namespace
@@ -60,6 +59,34 @@ Char const* PrimGroup::classTypeId()
 { 
     return filescope::typeId; 
 }  
+
+// ----------------------------------------------------------------------------
+//  Parses a primitive from a property tree structure
+// ----------------------------------------------------------------------------
+std::shared_ptr<PrimGroup> PrimGroup::imprt(boost::property_tree::ptree & node)
+{
+    std::shared_ptr<PrimGroup> primGroup = PrimGroup::create();
+
+    BOOST_FOREACH (auto & child, node)
+    {
+        primGroup->add(Primitive::imprt(child.first, child.second));
+    }
+
+    return primGroup;
+}
+
+// ----------------------------------------------------------------------------
+//  Converts the primitive into a text storage format
+// ----------------------------------------------------------------------------
+void PrimGroup::exprt(boost::property_tree::ptree & node)
+{
+    BOOST_FOREACH (auto & object, m_children)
+    {
+        boost::property_tree::ptree cnode;
+        object->exprt(cnode);
+        node.add_child(object->typeId(), cnode);
+    }
+}
 
 // --------------------------------------------------------------------
 //  Adds a new child node to this primitive group

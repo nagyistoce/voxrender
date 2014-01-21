@@ -42,7 +42,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Performs reinhard based tonemapping of the input HDR image buffer
     // --------------------------------------------------------------------
-    __global__ void kernel(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer)
+    __global__ void kernel(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
     { 	
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
@@ -54,9 +54,9 @@ namespace filescope {
     
         // Store the tonemapped result in the RGB output image buffer
         auto & pixel = imageBuffer.at(px, py);
-        pixel.r = high( 0.0f, low(sample.l * 255.0f, 255.0f) );
-        pixel.g = high( 0.0f, low(sample.a * 255.0f, 255.0f) );
-        pixel.b = high( 0.0f, low(sample.b * 255.0f, 255.0f) );
+        pixel.r = high( 0.0f, low(sample.l * 255.0f * expf(exposure), 255.0f) );
+        pixel.g = high( 0.0f, low(sample.a * 255.0f * expf(exposure), 255.0f) );
+        pixel.b = high( 0.0f, low(sample.b * 255.0f * expf(exposure), 255.0f) );
         pixel.a = 255;
     }
 
@@ -68,7 +68,7 @@ float TonemapKernel::m_elapsedTime;
 // --------------------------------------------------------------------
 //  Executes the tonemapping kernel for the active device
 // --------------------------------------------------------------------
-void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer)
+void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
 {
 	// Setup the execution configuration
 	static const unsigned int BLOCK_SIZE = 16;
@@ -82,7 +82,7 @@ void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgba
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventRecord(start,0);
-    filescope::kernel<<<blocks,threads>>>(sampleBuffer, imageBuffer);
+    filescope::kernel<<<blocks,threads>>>(sampleBuffer, imageBuffer, exposure);
     cudaEventCreate(&stop);
     cudaEventRecord(stop,0);
     cudaEventSynchronize(stop);

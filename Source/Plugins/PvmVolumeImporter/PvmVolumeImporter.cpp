@@ -35,10 +35,9 @@
 #include "VoxLib/Scene/Scene.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Error/PluginError.h"
 
 #include <boost/detail/endian.hpp>
-
-#include "ddsbase.h"
 
 // API namespace
 namespace vox
@@ -153,8 +152,8 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            PvmExporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene) :
-                m_sink(sink), m_options(options), m_scene(scene)
+            PvmExporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene, std::shared_ptr<void> handle) :
+                m_sink(sink), m_options(options), m_scene(scene), m_handle(handle)
             {
                 // Compose the resource identifier for log warning entries
                 std::string filename = sink.identifier().extractFileName();
@@ -166,7 +165,7 @@ namespace
             // --------------------------------------------------------------------
             void writePvmDataFile()
             {
-                if (!m_scene.volume) throw Error(__FILE__, __LINE__, PVMI_LOG_CATEGORY, 
+                if (!m_scene.volume) throw PluginError(m_handle, __FILE__, __LINE__, PVMI_LOG_CATEGORY, 
                     "Missing volume data from scene file", Error_MissingData);
 
                 if (!m_scene.volume->extent()[3] == 1) throw Error(__FILE__, __LINE__, 
@@ -223,6 +222,8 @@ namespace
         private:
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
             static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
+
+            std::shared_ptr<void> m_handle;
 
             ResourceOStream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
@@ -314,12 +315,6 @@ namespace
                         data.push_back(value);
                         //if (data.size() == data.capacity()) data.reserve(data.size() + data.capacity());
                         ptr = &data.back();
-
-                            if (data.size() == 2097327)
-                            {
-                                int i = 0;
-                            }
-
                     }
                 }
 
@@ -351,7 +346,7 @@ namespace
                 switch (bytes)
                 {
                 case 1: type = Volume::Type_UInt8; break;
-                case 2: type = Volume::Type_UInt16; break;
+                case 2: type = Volume::Type_Int16; break;
                 default:
                     throw Error(__FILE__, __LINE__, PVMI_LOG_CATEGORY, 
                         format("Unsupported voxel size: %1% bytes", bytes));
@@ -365,12 +360,12 @@ namespace
 
                 // Convert to the native byte ordering
                 #ifdef BOOST_LITTLE_ENDIAN
-                    if (type == Volume::Type_UInt16)
-                    {
-                        UInt16 * ptr = (UInt16*)data.get();
-                        for (size_t i = 0; i < voxels; i++)
-                            ptr[i] = VOX_SWAP16(ptr[i]);
-                    }
+                if (type == Volume::Type_UInt16 || type == Volume::Type_Int16)
+                {
+                    UInt16 * ptr = (UInt16*)data.get();
+                    for (size_t i = 0; i < voxels; i++)
+                        ptr[i] = VOX_SWAP16(ptr[i]);
+                }
                 #endif
 
                 // Construct the volume object for return
@@ -446,7 +441,7 @@ namespace
 void PvmVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, Scene const& scene)
 {
     // Parse scenefile object into boost::property_tree
-    filescope::PvmExporter exportModule(sink, options, scene);
+    filescope::PvmExporter exportModule(sink, options, scene, m_handle);
 
     // Write property tree to the stream
     exportModule.writePvmDataFile();

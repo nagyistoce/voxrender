@@ -113,6 +113,7 @@ Vector2f VolumeHistogramKernel::computeValueRange(std::shared_ptr<Volume> volume
     {
         case Volume::Type_UInt8:  return filescope::maxValueRange<UInt8>(elements, data);
         case Volume::Type_UInt16: return filescope::maxValueRange<UInt16>(elements, data);
+        case Volume::Type_Int16:  return filescope::maxValueRange<Int16>(elements, data);
         default:
             throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", 
@@ -133,6 +134,7 @@ std::vector<size_t> VolumeHistogramKernel::generateHistogramImages(size_t nBins,
     {
         case Volume::Type_UInt8:  return filescope::generateHistogramBins<UInt8>(nBins, elements, data);
         case Volume::Type_UInt16: return filescope::generateHistogramBins<UInt16>(nBins, elements, data);
+        case Volume::Type_Int16: return filescope::generateHistogramBins<Int16>(nBins, elements, data);
         default:
             throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", 

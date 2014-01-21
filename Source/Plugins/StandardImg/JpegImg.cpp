@@ -31,6 +31,7 @@
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Error/PluginError.h"
 
 // Image Libraries
 #include "jpeglib.h"
@@ -67,8 +68,8 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image) :
-                m_sink(sink), m_options(options), m_image(image)
+            ImgExporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image, std::shared_ptr<void> handle) :
+                m_sink(sink), m_options(options), m_image(image), m_handle(handle)
             {
                 // Compose the resource identifier for log warning entries
                 std::string filename = sink.identifier().extractFileName();
@@ -90,12 +91,14 @@ namespace
                 cinfo.image_width = m_image.width();
                 cinfo.image_height = m_image.height();
 
+                bool swapRgb = false;
                 unsigned int stripAlpha = 0;
                 switch (m_image.type())
                 {
                 case RawImage::Format_RGB:
                     cinfo.input_components = 3;
                     cinfo.in_color_space = JCS_RGB;
+                    swapRgb = true;
                     break;
                 case RawImage::Format_RGBA:
                     VOX_LOG_WARNING(Error_Consistency, VOX_SIMG_LOG_CATEGORY, 
@@ -104,10 +107,13 @@ namespace
                     cinfo.input_components = 3;
                     cinfo.in_color_space = JCS_RGB;
                     stripAlpha = 4u;
+                    swapRgb = true;
                     break;
                 case RawImage::Format_Gray:
                     cinfo.input_components = 1;
                     cinfo.in_color_space = JCS_GRAYSCALE;
+                    if (m_image.depth() != 8) throw PluginError(m_handle, __FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
+                        format("JPEG supports only 8 bit grayscale <%1%>", m_displayName), Error_NotAllowed);
                     break;
                 case RawImage::Format_GrayAlpha:
                     cinfo.input_components = 1;
@@ -133,26 +139,36 @@ namespace
                 auto data   = (char*)m_image.data();
                 auto stride = m_image.stride();
 
-                if (!stripAlpha)
+                // Check if we can write the image data without any transforms
+                if (!stripAlpha && !swapRgb)
                 {
                     while (cinfo.next_scanline < cinfo.image_height) {
                         JSAMPROW rowPointer = (JSAMPROW)(data + cinfo.next_scanline*stride);
                         jpeg_write_scanlines(&cinfo, &rowPointer, 1);
                     }
                 }
-                else
+                else // We need 1 or more data transforms
                 {
-                    auto strippedStride = m_image.width()*m_image.depth()/8*(m_image.channels()-1);
-                    std::unique_ptr<UInt8[]> buf(new UInt8[strippedStride]);
+                    auto stride    = m_image.width()*m_image.depth()/8*(stripAlpha ? m_image.channels()-1 : 0);
+                    auto rElemSize = m_image.depth()/8 * m_image.channels();
+                    auto wElemSize = stripAlpha ? (stripAlpha - 1) : rElemSize;
+
+                    std::unique_ptr<UInt8[]> buf(new UInt8[stride]);
                     JSAMPROW rowPointer = (JSAMPROW)(buf.get());
                     while (cinfo.next_scanline < cinfo.image_height) {
                         auto writePtr = (char*)buf.get();
                         auto readPtr  = (char*)m_image.data() + m_image.stride() * cinfo.next_scanline;
                         for (size_t i = 0; i < m_image.width(); i++)
                         {
-                            memcpy(writePtr, readPtr, stripAlpha-1);
-                            writePtr += stripAlpha-1;
-                            readPtr  += stripAlpha;
+                            memcpy(writePtr, readPtr, wElemSize);
+                            if (swapRgb) 
+                            {
+                                UInt8 temp = writePtr[0];
+                                writePtr[0] = writePtr[2];
+                                writePtr[2] = temp;
+                            }
+                            writePtr += wElemSize;
+                            readPtr  += rElemSize;
                         }
                         jpeg_write_scanlines(&cinfo, &rowPointer, 1);
                     }
@@ -192,6 +208,8 @@ namespace
             static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
 
             UInt8 m_buffer[BUF_SIZE]; // Storage buffer :TODO: write directly to streambuf?
+
+            std::shared_ptr<void> m_handle; ///< Plugin handle
 
             ResourceOStream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
@@ -335,7 +353,7 @@ namespace
 void JpegImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
 {
     // Parse scenefile object into boost::property_tree
-    filescope::ImgExporter exportModule(sink, options, image);
+    filescope::ImgExporter exportModule(sink, options, image, m_handle);
 
     // Write property tree to the stream
     exportModule.writeImageFile();

@@ -27,6 +27,7 @@
 #include "Primitive.h"
 
 // Include Dependencies
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Scene/PrimGroup.h"
 
 namespace vox {
@@ -38,7 +39,13 @@ namespace filescope {
     Char const* planeTypeId  = "Plane";
     Char const* sphereTypeId = "Sphere";
 
-    static std::map<String, bool> parsers; ///< Primitive parsers
+    static std::map<String, PrimImporter> importers; // Primitive parsers
+    static boost::shared_mutex moduleMutex;          // Module access mutex for read-write locks
+
+    // Importer registration
+    class PrimitiveForceImport { public: PrimitiveForceImport() { 
+        Primitive::registerImportModule(Plane::classTypeId(), Plane::imprt); } };
+    static PrimitiveForceImport a;
 
 } // namespace filescope 
 } // namespace
@@ -50,24 +57,84 @@ void Primitive::setParent(std::shared_ptr<PrimGroup> parent)
 { 
     m_parent = parent;
 }
-//
-//// ----------------------------------------------------------------------------
-////  Parses a primitive from a property tree structure
-//// ----------------------------------------------------------------------------
-//std::shared_ptr<Primitive> Primitive::imprt(std::pair<String const&, boost::property_tree::ptree const*> data)
-//{
-//    return nullptr;
-//}
-//
-//// ----------------------------------------------------------------------------
-////  Converts the primitive into a text storage format
-//// ----------------------------------------------------------------------------
-//std::shared_ptr<boost::property_tree::ptree> Primitive::exprt(std::shared_ptr<Primitive> primitive)
-//{
-//    std::shared_ptr<boost::property_tree::ptree> data; 
-//
-//    return data;
-//}
+
+// ----------------------------------------------------------------------------
+//  Registers an import function for a given primitive type identifier
+// ----------------------------------------------------------------------------
+void Primitive::registerImportModule(String const& type, PrimImporter importer)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+    
+    if (!importer) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+        "Attempted to register empty import module", Error_NotAllowed);
+
+    filescope::importers[type] = importer; 
+}
+
+// --------------------------------------------------------------------
+//  Removes a primitive import module
+// --------------------------------------------------------------------
+void Primitive::removeImportModule(String const& type)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+ 
+    auto iter = filescope::importers.find(type);
+    if (iter != filescope::importers.end()) 
+        filescope::importers.erase(iter);
+}
+
+// --------------------------------------------------------------------
+//  Imports a primitive type registered in the importer map
+// --------------------------------------------------------------------
+std::shared_ptr<Primitive> Primitive::imprt(String const& type, boost::property_tree::ptree & node)
+{
+    // Acquire a read-lock on the modules for thread safety support
+    boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
+
+	// Execute the register import module
+    auto importer = filescope::importers.find(type);
+    if (importer != filescope::importers.end())
+    {
+        return importer->second(node);
+    }
+
+    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                "No import module found", Error_BadToken);
+}
+
+// ----------------------------------------------------------------------------
+//  Converts the primitive into a text storage format
+// ----------------------------------------------------------------------------
+void Primitive::exprt(boost::property_tree::ptree & node)
+{
+    node.add("Visible", m_visible);
+}
+
+// ----------------------------------------------------------------------------
+//  Parses a primitive from a property tree structure
+// ----------------------------------------------------------------------------
+std::shared_ptr<Primitive> Plane::imprt(boost::property_tree::ptree & node)
+{
+    std::shared_ptr<Plane> plane = Plane::create();
+    
+    plane->m_distance = node.get("Distance", plane->m_distance);
+    plane->m_normal   = node.get("Normal", plane->m_normal);
+
+    return plane;
+}
+
+// ----------------------------------------------------------------------------
+//  Converts the primitive into a text storage format
+// ----------------------------------------------------------------------------
+void Plane::exprt(boost::property_tree::ptree & node)
+{
+    Primitive::exprt(node);
+
+    node.add("Distance", m_distance);
+    node.add("Normal", m_normal);
+}
 
 // ----------------------------------------------------------------------------
 //  Returns the UID for this primitive type

@@ -52,9 +52,9 @@
 #include <math.h>
     
 #define R3I                 0.57735026918962576450914878050196f;
-#define KRNL_SS_BLOCK_W		16
-#define KRNL_SS_BLOCK_H		8
-#define KRNL_SS_BLOCK_SIZE	(KRNL_SS_BLOCK_W * KRNL_SS_BLOCK_H)
+#define KERNEL_BLOCK_W		16
+#define KERNEL_BLOCK_H		16
+#define KERNEL_BLOCK_SIZE   (KERNEL_BLOCK_W * KERNEL_BLOCK_H)
 
 namespace vox {
     
@@ -94,6 +94,7 @@ namespace filescope {
 
     texture<UInt8,3,cudaReadModeNormalizedFloat>  gd_volumeTex_UInt8;     ///< Volume data texture
     texture<UInt16,3,cudaReadModeNormalizedFloat> gd_volumeTex_UInt16;    ///< Volume data texture
+    texture<Int16,3,cudaReadModeNormalizedFloat>  gd_volumeTex_Int16;     ///< Volume data texture
 
     texture<float,3,cudaReadModeElementType>      gd_opacityTex;  // Opacity data texture
     texture<uchar4,3,cudaReadModeNormalizedFloat> gd_diffuseTex;  // Diffuse data texture
@@ -112,6 +113,13 @@ namespace filescope {
 
         switch (gd_volumeBuffer.type())
         {
+            case Volume::Type_Int16: 
+                density = static_cast<float>(tex3D(gd_volumeTex_Int16, 
+                                                x*gd_volumeBuffer.invSpacing()[0], 
+                                                y*gd_volumeBuffer.invSpacing()[1], 
+                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                break;
+
             case Volume::Type_UInt16: 
                 density = static_cast<float>(tex3D(gd_volumeTex_UInt16, 
                                                 x*gd_volumeBuffer.invSpacing()[0], 
@@ -298,7 +306,7 @@ namespace filescope {
                 auto cosTheta = - Vector3f::dot(location.dir, lightRay.dir);
                 auto phaseHG  = (0.25f / M_PI) * (1 - g*g) / pow(1.0f + g*g + 2*g*cosTheta, 1.5f);
 
-                Lv += lightIncident * phaseHG;
+                Lv += lightIncident * phaseHG * diffuse;
             }
         }
 
@@ -314,8 +322,8 @@ namespace filescope {
         Ray3f & sampleRay
         )
     {
-	    __shared__ float MinT[KRNL_SS_BLOCK_SIZE];
-	    __shared__ float MaxT[KRNL_SS_BLOCK_SIZE];
+	    __shared__ float MinT[KERNEL_BLOCK_SIZE];
+	    __shared__ float MaxT[KERNEL_BLOCK_SIZE];
 
         // Initialize the sample ray for marching
         sampleRay = gd_camera.generateRay(
@@ -444,7 +452,7 @@ void RenderKernel::setVolume(CVolumeBuffer const& volume)
     {
 	    // Volume texture sampler settings
 	    filescope::gd_volumeTex_UInt8.normalized     = false;
-        filescope::gd_volumeTex_UInt8.filterMode     = cudaFilterModeLinear; 
+        filescope::gd_volumeTex_UInt8.filterMode     = cudaFilterModeLinear; // cudaFilterModeLinear
         filescope::gd_volumeTex_UInt8.addressMode[0] = cudaAddressModeClamp;
         filescope::gd_volumeTex_UInt8.addressMode[1] = cudaAddressModeClamp;
         filescope::gd_volumeTex_UInt8.addressMode[2] = cudaAddressModeClamp;
@@ -466,6 +474,21 @@ void RenderKernel::setVolume(CVolumeBuffer const& volume)
 
 	    // Bind the volume handle to a texture for sampling
         VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_UInt16, 
+            volume.handle(), volume.formatDescriptor()));
+        break;
+    }
+    
+    case Volume::Type_Int16: 
+    {
+	    // Volume texture sampler settings
+	    filescope::gd_volumeTex_Int16.normalized     = false;
+        filescope::gd_volumeTex_Int16.filterMode     = cudaFilterModeLinear; 
+        filescope::gd_volumeTex_Int16.addressMode[0] = cudaAddressModeClamp;
+        filescope::gd_volumeTex_Int16.addressMode[1] = cudaAddressModeClamp;
+        filescope::gd_volumeTex_Int16.addressMode[2] = cudaAddressModeClamp;
+
+	    // Bind the volume handle to a texture for sampling
+        VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_Int16, 
             volume.handle(), volume.formatDescriptor()));
         break;
     }
@@ -573,8 +596,7 @@ void RenderKernel::execute(size_t xstart, size_t ystart,
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_backdropClr, &ColorLabxHdr(0.0f, 0.0f, 0.0f), sizeof(ColorLabxHdr)));
 
 	// Setup the execution configuration
-	static const unsigned int BLOCK_SIZE = 32;
-    dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 threads(KERNEL_BLOCK_W, KERNEL_BLOCK_H);
     dim3 blocks( 
         (width + threads.x - 1) / threads.x,
 		(height + threads.y - 1) / threads.y 

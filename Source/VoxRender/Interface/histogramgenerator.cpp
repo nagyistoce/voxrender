@@ -77,6 +77,11 @@ namespace filescope {
             {
                 return filescope::generateHistogramBins<UInt16>(512, volume);
             }
+            
+            case Volume::Type_Int16:
+            {
+                return filescope::generateHistogramBins<UInt16>(512, volume);
+            }
 
             default:
                 throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
@@ -208,6 +213,7 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
     {
         case Volume::Type_UInt8:  m_gradientImage.resize(256, 128); break;
         case Volume::Type_UInt16: m_gradientImage.resize(512, 256); break;
+        case Volume::Type_Int16: m_gradientImage.resize(512, 256); break;
         default:
             throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", 

@@ -42,8 +42,11 @@ Camera::Camera() :
     m_up    (0.0f, 1.0f, 0.0f),
     m_focalDistance  (0.0f),
     m_apertureSize   (0.0f),
-    m_fieldOfView    (60.0f),
+    m_fieldOfView    (M_PI / 6),
     m_eyeDistance    (0.0f),
+    m_filmWidth      (512),
+    m_filmHeight     (512),
+    m_exposure       (0.0f),
     m_contextChanged (false)
 { 
 }

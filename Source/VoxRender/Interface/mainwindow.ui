@@ -879,33 +879,6 @@
     <property name="title">
      <string>Filters</string>
     </property>
-    <widget class="QMenu" name="menuBlur">
-     <property name="title">
-      <string>Blur</string>
-     </property>
-     <addaction name="actionGaussian_Blur"/>
-     <addaction name="actionAverage_Blur"/>
-     <addaction name="actionMosaic"/>
-     <addaction name="actionSelective_Blur"/>
-    </widget>
-    <widget class="QMenu" name="menuEdge_Detect">
-     <property name="title">
-      <string>Edge-Detect</string>
-     </property>
-     <addaction name="actionCanny"/>
-     <addaction name="actionSobel"/>
-    </widget>
-    <widget class="QMenu" name="menuGeneric_2">
-     <property name="title">
-      <string>Generic</string>
-     </property>
-     <addaction name="actionConvolution"/>
-    </widget>
-    <addaction name="menuBlur"/>
-    <addaction name="actionEnhance"/>
-    <addaction name="menuEdge_Detect"/>
-    <addaction name="actionNoise"/>
-    <addaction name="menuGeneric_2"/>
    </widget>
    <widget class="QMenu" name="menuRender">
     <property name="title">

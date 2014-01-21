@@ -4,7 +4,7 @@
 
 	Description: Defines a 3D volume class
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -97,6 +97,7 @@ void Volume::updateRange()
     {
         case Volume::Type_UInt8:  m_range = filescope::maxValueRange<UInt8>(elems, ptr); break;
         case Volume::Type_UInt16: m_range = filescope::maxValueRange<UInt16>(elems, ptr); break;
+        case Volume::Type_Int16:  m_range = filescope::maxValueRange<Int16>(elems, ptr); break;
         default:
             throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
@@ -116,6 +117,7 @@ float Volume::fetchNormalized(size_t x, size_t y, size_t z) const
     {
         case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
         case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
+        case Volume::Type_Int16:  sample = (static_cast<float>(reinterpret_cast<Int16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int16>::max());; break;
         default:
             throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
                 format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),

@@ -507,13 +507,13 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
 
     // Resize the map images as necessary
     auto & diffuse = map->diffuse();
-    diffuse.resize(128, 64, 1);
+    diffuse.resize(256, 128, 1);
     diffuse.clear();
     auto & opacity = map->opacity();
-    opacity.resize(128, 64, 1);
+    opacity.resize(256, 128, 1);
     opacity.clear();
     auto & specular = map->specular();
-    specular.resize(128, 64, 1);
+    specular.resize(256, 128, 1);
     specular.clear();
     auto & emissive = map->emissive();
     emissive.resize(1, 1, 1);

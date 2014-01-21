@@ -117,6 +117,35 @@ void CameraWidget::on_spinBox_filmWidth_valueChanged(int value)
     m_filmDirty = true;
 }
 
+
+// --------------------------------------------------------------------
+//  Modify the associated double spinbox to reflect slide value change
+// --------------------------------------------------------------------
+void CameraWidget::on_horizontalSlider_exposure_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_exposure,
+        ui->horizontalSlider_exposure,
+        value);
+
+    MainWindow::instance->scene().camera->setExposure(
+        ui->doubleSpinBox_exposure->value());
+}
+
+// --------------------------------------------------------------------
+//  Modify the associated slider to reflect spinBox value change
+// --------------------------------------------------------------------
+void CameraWidget::on_doubleSpinBox_exposure_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_exposure,
+        ui->doubleSpinBox_exposure,
+        value);
+    
+    MainWindow::instance->scene().camera->setExposure(
+        ui->doubleSpinBox_exposure->value());
+}
+
 // --------------------------------------------------------------------
 //  Modify the associated double spinbox to reflect slide value change
 // --------------------------------------------------------------------

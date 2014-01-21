@@ -94,7 +94,7 @@ private:
         m_shadowStep(3.0f),
         m_occludeStep(1.0f),
         m_occludeSamples(0u),
-        m_gradCutoff(0.2f),
+        m_gradCutoff(0.0f),
         m_scatterCoefficient(0.0f),
         m_contextChanged(true)
     {

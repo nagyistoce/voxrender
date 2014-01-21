@@ -299,13 +299,7 @@ namespace
             {
                 boost::property_tree::ptree node;
                 auto graph = m_scene.clipGeometry;
-
-                BOOST_FOREACH (auto & object, graph->children())
-                {
-                    boost::property_tree::ptree node;// = object->serializeToXML();
-
-                    node.add_child(object->typeId(), node);
-                }
+                graph->exprt(node);
 
                 m_tree.add_child("Scene.ClipGeometry", node);
             }
@@ -468,20 +462,17 @@ namespace
                   if (!cameraPtr) cameraPtr = Camera::create();
                   auto & camera = *cameraPtr;
                 
-                  // :TODO: This just overwrites imported parameters, should initialize to default
-                  //        in Camera constructor and use import values as defaults for assignment
-
                   // Load direct camera projection parameters
-                  camera.setApertureSize( m_node->get(C_APERTURE, 0.0f) );
-                  camera.setFieldOfView( m_node->get(C_FOV, 60.0f) / 180.0f * (float)M_PI );
-                  camera.setFocalDistance( m_node->get(C_FOCAL_DIST, 0.0f) );
+                  camera.setApertureSize(m_node->get(C_APERTURE, camera.apertureSize()));
+                  camera.setFieldOfView(m_node->get(C_FOV, 60.0f) / 180.0f * (float)M_PI);
+                  camera.setFocalDistance(m_node->get(C_FOCAL_DIST, camera.focalDistance()));
 
                   // Load camera film dimensions
-                  camera.setFilmWidth( m_node->get(C_FWIDTH, 256) );
-                  camera.setFilmHeight( m_node->get(C_FHEIGHT, 256) );
+                  camera.setFilmWidth( m_node->get(C_FWIDTH,  camera.filmWidth()) );
+                  camera.setFilmHeight(m_node->get(C_FHEIGHT, camera.filmHeight()));
 
                   // Load camera position
-                  camera.setPosition( m_node->get(C_POSITION, Vector3f(0.0f, 0.0f, 0.0f)) );
+                  camera.setPosition(m_node->get(C_POSITION, camera.position()));
 
                   // Load camera orientation
                   auto target = m_node->get_optional<Vector3f>(C_TARGET);
@@ -722,7 +713,7 @@ namespace
                     auto & geometrySet = *geoPtr;
 
                     // Parse inline geometry specifications
-                    //Primitive::imprt(std::make_pair(String("Group"), *m_node));
+                    geoPtr = PrimGroup::imprt(*m_node);
 
                 pop();
 

@@ -49,6 +49,12 @@ namespace vox
         
         /** Returns the UID string classifying this type (classname) */
         static Char const* classTypeId();
+        
+        /** Exports the plane to a text format */
+        static std::shared_ptr<PrimGroup> imprt(boost::property_tree::ptree & node);
+
+        /** Exports the plane to a text format */
+        virtual void exprt(boost::property_tree::ptree & node);
 
         /** Adds a new child element to the group */
         void add(std::shared_ptr<Primitive> child);

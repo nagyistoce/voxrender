@@ -188,6 +188,9 @@ public:
         if (scene.camera->isDirty())
         {
             RenderKernel::setCamera(CCamera(scene.camera));
+
+            // :TODO: Move to seperate dirty flag and don't reset film
+            m_exposure = scene.camera->exposure();
         }
 
         // Clipping geometry synchronization
@@ -225,7 +228,7 @@ public:
         RenderKernel::execute(0, 0, m_hdrBuffer.width(), m_hdrBuffer.height());
 
         // Perform tonemapping on the HDR image buffer
-        TonemapKernel::execute(m_hdrBuffer, m_ldrBuffer);
+        TonemapKernel::execute(m_hdrBuffer, m_ldrBuffer, m_exposure);
 
         m_frameBuffer->wait(); // Await user lock release
 
@@ -305,6 +308,8 @@ private:
     CBuffer1D<CLight> m_lightBuffer;    ///< Array of scene lights
     CVolumeBuffer     m_volumeBuffer;   ///< Volume data buffer
     CTransferBuffer   m_transferBuffer; ///< Transfer function data buffer
+
+    float m_exposure; ///< Exposure factor
 
     RenderCallback m_callback; ///< User defined render callback
     boost::mutex   m_mutex;    ///< Mutex for callback modification

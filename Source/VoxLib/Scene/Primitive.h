@@ -32,10 +32,16 @@
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/IO/OptionSet.h"
 
+#include "boost/property_tree/ptree_fwd.hpp"
+
 // API namespace
 namespace vox
 {
     class VOX_EXPORT PrimGroup;
+
+    class VOX_EXPORT Primitive;
+
+    typedef std::function<std::shared_ptr<Primitive>(boost::property_tree::ptree &)> PrimImporter;
 
     /** Primitive geometry object */
     class VOX_EXPORT Primitive 
@@ -47,24 +53,21 @@ namespace vox
         /** Returns the type identifier for this primitive */
         virtual Char const* typeId() = 0;
 
-        ///** 
-        // * Parses a primitive specified in text format 
-        // *
-        // * @param data (first) The type of the primitive, used to associate a registered parser
-        // *             (second) The input data from which to construct the primitive 
-        // */
-        //static std::shared_ptr<Primitive> imprt(std::pair<String const&, boost::property_tree::ptree const&> data);
+        /**
+         * Exports a primitive to a text format
+         *
+         * @param primitive The primitive to export
+         */
+        virtual void exprt(boost::property_tree::ptree & tree);
+        
+        /** Registers a primitive import module */
+        static std::shared_ptr<Primitive> imprt(String const& type, boost::property_tree::ptree & node);
 
-        ///**
-        // * Exports a primitive to a text format
-        // *
-        // * @param primitive The primitive to export
-        // */
-        //static std::shared_ptr<boost::property_tree::ptree> exprt(std::shared_ptr<Primitive> primitive);
+        /** Registers a primitive import module */
+        static void registerImportModule(String const& type, PrimImporter importer);
 
-        ///** 
-        // * Registers a primitive import/export module
-        // */
+        /** Removes a registered import module */
+        static void removeImportModule(String const& type);
 
         /** Returns the UID string for this primitive */
         String const& id() { return m_id; }
@@ -124,6 +127,12 @@ namespace vox
         /** Returns the UID string classifying this type (classname) */
         virtual Char const* typeId();
  
+        /** Exports the plane to a text format */
+        static std::shared_ptr<Primitive> imprt(boost::property_tree::ptree & node);
+
+        /** Exports the plane to a text format */
+        virtual void exprt(boost::property_tree::ptree & node);
+
         /** Returns the UID string classifying this type (classname) */              
         static Char const* classTypeId();
 
