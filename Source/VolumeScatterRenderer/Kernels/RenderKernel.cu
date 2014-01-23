@@ -277,7 +277,7 @@ namespace filescope {
             float    stepSize       = gd_renderParams.shadowStepSize();
             Vector3f lightDirection = (gd_lights[lightNum].position() - location.pos).normalize();
             Ray3f    lightRay       = Ray3f(location.pos, lightDirection, 0.0f, 10000.0f);
-            Vector3f lightIncident  = gd_lights[lightNum].color() * computeTransmission(rng, lightRay, stepSize);
+            Vector3f lightIncident  = gd_lights[lightNum].color() * gd_lights.size() * computeTransmission(rng, lightRay, stepSize);
             
             // Switch to surface based shading above the gradient threshold
             // :TODO: Fix this block

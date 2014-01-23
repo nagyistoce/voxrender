@@ -41,6 +41,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace vox;
 
@@ -57,18 +58,41 @@ BOOST_AUTO_TEST_SUITE( StandardImgSuite )
     // Tests the plugins PNG load functionality
     BOOST_AUTO_TEST_CASE( PNGTest )
     {
+        size_t const N_PATTERNS = 10;
+        String const IDENTIFIER = "file:///" + boost::filesystem::current_path().generic_string() + "/test.png";
+
         // Load the vox.standard_io plugin
         auto & pluginManager = PluginManager::instance();
         pluginManager.loadFromFile("StandardImg.dll");
         pluginManager.loadFromFile("FileIO.dll");
 
-        String testFileI = "file:///" + vox::System::currentDirectory() + "/test_image.png";
-        String testFileO = "file:///" + vox::System::currentDirectory() + "/test_image_out.png";
+        // RGB test patterns
+        for (size_t i = 0; i < N_PATTERNS; i++)
+        {
+            auto w = (size_t)(rand() % 1024);
+            auto h = (size_t)(rand() % 1024);
+            auto b = w * 4 + (16 - ((w*4)%16));
+            auto s = b * h;
+            auto d = makeSharedArray(s);
 
-        auto image1 = RawImage::imprt(testFileI);
-        image1.exprt(testFileO);
-        auto image2 = RawImage::imprt(testFileO);
-        BOOST_CHECK(memcmp(image1.data(), image2.data(), image1.size()) == 0);
+            auto * ptr = d.get();
+            for (size_t x = 0; x < w; x++)
+            for (size_t y = 0; y < h; y++)
+                ((UInt32*)(ptr + b*y))[x] = 0xFF0000FF;
+
+            RawImage imageO(RawImage::Format_RGBA, w, h, 8, b, d);
+            imageO.exprt(IDENTIFIER);
+            auto imageI = RawImage::imprt(IDENTIFIER);
+
+            auto optr = (char*)imageO.data();
+            auto iptr = (char*)imageI.data();
+            for (size_t i = 0; i < imageI.height(); i++)
+            {
+                BOOST_CHECK(memcmp(optr, iptr, s) == 0);
+                optr += imageO.stride();
+                iptr += imageI.stride();
+            }
+        }
 
         pluginManager.unloadAll();
     }
