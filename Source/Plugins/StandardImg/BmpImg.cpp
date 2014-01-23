@@ -31,7 +31,6 @@
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Error/PluginError.h"
 
 // API namespace
 namespace vox
@@ -191,7 +190,7 @@ namespace
                 if (fileHeader.header != BMP_HEAD) corrupt();
 
                 BitmapInfoHeader dibHeader;
-                bytesRead += ((char*)&dibHeader, sizeof(BitmapCoreHeader));
+                bytesRead += read((char*)&dibHeader, sizeof(BitmapCoreHeader));
                 
                 // Attempt to read additional header info to ensure there is no compression (NotSupported)
                 if (dibHeader.headerSize >= sizeof(BitmapInfoHeader))
@@ -199,7 +198,7 @@ namespace
                     auto bytes = sizeof(BitmapInfoHeader) - sizeof(BitmapCoreHeader);
                     bytesRead += read(((char*)&dibHeader)+sizeof(BitmapCoreHeader), bytes);
 
-                    if (dibHeader.compressionMethod != BI_RGB) throw PluginError(m_handle,
+                    if (dibHeader.compressionMethod != BI_RGB) throw Error(
                         __FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
                         format("Bitmap reader does not support compression <%1%>", m_displayName),
                         Error_NotImplemented);
@@ -238,7 +237,7 @@ namespace
         private:
             void corrupt()
             {
-                throw PluginError(m_handle, __FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
+                throw Error(__FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
                     format("Bitmap file corrupt or invalid <%1%>", m_displayName));
             }
 

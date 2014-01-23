@@ -41,7 +41,7 @@ find_package(Qt5Widgets)
 
 IF(Qt5Widgets_FOUND)
     MESSAGE( STATUS "Qt library directory: " ${Qt5Widgets_LIBRARY_DIR} )
-    MESSAGE( STATUS "Qt include directory: " ${Qt5Widgets_INCLUDE_DIR} )
+    MESSAGE( STATUS "Qt include directory: " ${Qt5Widgets_INCLUDE_DIRS} )
     MESSAGE( STATUS "Qt binary directory: " ${Qt5Widgets_BINARY_DIR} )
     INCLUDE_DIRECTORIES(${QT_USE_FILE})
 	
@@ -168,19 +168,6 @@ IF(Qt5Widgets_FOUND)
         ${VOXQTGUI_UI_HDRS} "interface/utilities.h" "interface/utilities.cpp")
 
     INCLUDE_DIRECTORIES(../VoxLib)
-
-    #===============================================#
-    #               Qt DLL Dependency               #
-    #===============================================#
-    ADD_CUSTOM_COMMAND( 
-        TARGET VoxRender
-        POST_BUILD
-	
-        COMMAND cmake -E echo "Copying Qt DLLs to build directory: " 
-        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Widgets.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Core.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-        #COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Gui.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIGURATION>"
-    )
 
     #===============================================#
     #            QT5 Dependency Modules             #

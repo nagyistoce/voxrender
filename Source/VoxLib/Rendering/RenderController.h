@@ -31,13 +31,14 @@
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Rendering/Renderer.h"
 #include "VoxLib/Rendering/RenderThread.h"
 #include "VoxLib/Scene/Scene.h"
 
 // API namespace
 namespace vox
 {
+    class Renderer;
+
 	/** Controller class for managing the rendering of a scene */
 	class VOX_EXPORT RenderController
 	{
@@ -127,7 +128,7 @@ namespace vox
         void handleError(std::exception_ptr & error);
         void managementSubroutine();
         void controlSubroutine();
-        void synchronizationSubroutine();
+        void synchronizationSubroutine(bool force = false);
         void imageUpdateSubroutine();
         void renderingSubroutine();
         void terminateRenderThreads();

@@ -25,7 +25,7 @@
 #===========================================================================#
 
 VOX_PROJECT(
-    TARGET "StandardIO Unit Test" EXE
+    TARGET "StandardIOUnitTest" EXE
     FOLDER "Unit Tests"
     SOURCES
         Main.cpp

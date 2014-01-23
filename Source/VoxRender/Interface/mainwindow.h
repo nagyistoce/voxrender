@@ -63,13 +63,11 @@ Q_DECLARE_METATYPE(std::shared_ptr<vox::Node>);
 enum RenderState
 {
 	RenderState_Waiting,		///< Idling
-	RenderState_Parsing,		///< Parsing Scene File
+	RenderState_Loading,		///< Loading Scene File
 	RenderState_Rendering,		///< Rendering Scene
 	RenderState_Stopping,		///< Stopping Rendering
 	RenderState_Stopped,		///< Stopped Rendering
 	RenderState_Paused,			///< Paused Rendering
-	RenderState_Finished,		///< Finished Rendering
-	RenderState_Tonemapping,	///< Tonemapping
 };
 
 // Generated class
@@ -92,6 +90,9 @@ public:
     
     /** Adds a control for managing a clipping object in the render scene */
     void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
+
+    /** Returns the current render state of the application */
+    RenderState renderState() { return m_guiRenderState; }
 
     /** Current scene accessor */
     vox::Scene & scene() { return activeScene; }
@@ -266,6 +267,8 @@ private slots:
     void on_pushButton_loadPlugin_clicked();
 
     void on_pushButton_imagingApply_clicked();
+
+    void onZoomChange(float zoom);
 
     // Scene element removal
     void removeClipGeometry(PaneWidget * pane);

@@ -53,6 +53,8 @@
 #include <QtGui/QClipboard>
 #include <QSettings>
 
+#define VOX_GUI_LOG_CAT "GUI"
+
 // Singleton pointer
 MainWindow* MainWindow::instance;
 
@@ -62,7 +64,7 @@ using namespace vox;
 namespace {
 namespace filescope 
 {
-    const int logTabId = 4;  // Log tab index
+    const int logTabId = 3;  // Log tab index
 
     // --------------------------------------------------------------------
     //  Gets a datetime string using QDateTime
@@ -114,16 +116,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     catch (Error & error)
     {
-        VOX_LOG_ERROR(error.code, "GUI", "Unable to load config file: " + error.message);
+        VOX_LOG_ERROR(error.code, VOX_GUI_LOG_CAT, "Unable to load config file: " + error.message);
     }
 
     // VoxRender log configuration
     configureLoggingEnvironment();
 
     // Display and log the library version info and startup time
-    vox::Logger::addEntry(vox::Severity_Info, vox::Error_None, "GUI", 
-        vox::format("VoxRender Version: %1%", VOX_VERSION_STRING), 
-        __FILE__, __LINE__);
+    VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("VoxRender Version: %1%", VOX_VERSION_STRING));
 
 	// Window Initialization
 	createRenderTabPanes();
@@ -141,6 +141,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->frame_render_layout->addWidget(m_renderView, 0, 0, 1, 1);
     connect(this, SIGNAL(frameReady(std::shared_ptr<vox::FrameBufferLock>)), 
             m_renderView, SLOT(setImage(std::shared_ptr<vox::FrameBufferLock>)));
+    connect(m_renderView, SIGNAL(viewChanged(float)), this, SLOT(onZoomChange(float)));
+    onZoomChange(m_renderView->zoomFactor()); // Ensure the initial zoom display is correct
 
     readSettings(); // Read in the application settings
 
@@ -150,7 +152,7 @@ MainWindow::MainWindow(QWidget *parent) :
         this, std::placeholders::_1));
 
 	// Set initial render state 
-    //renderNewSceneFile( "" );
+    changeRenderState(RenderState_Waiting);
 }
 
 // ----------------------------------------------------------------------------
@@ -212,10 +214,8 @@ void MainWindow::configureLoggingEnvironment()
     }
     else
     {
-        vox::Logger::addEntry(
-            vox::Severity_Warning, vox::Error_System, "GUI", 
-            "Unable to establish output stream to log file", 
-            __FILE__, __LINE__);
+        VOX_LOG_WARNING(Error_System, VOX_GUI_LOG_CAT,
+            "Unable to establish output stream to log file");
     }
 }
 
@@ -349,6 +349,8 @@ void MainWindow::printLogEntry(
         else 
         {
 			blinkTrigger();
+			static const QIcon icon(":/icons/erroricon.png");
+            ui->tabWidget_main->setTabIcon(filescope::logTabId, icon);
 			statusMessage->setText(tr("Check Log Please")); 
         } 
     }
@@ -527,22 +529,15 @@ void MainWindow::setCurrentFile(QString const& path)
 // ----------------------------------------------------------------------------
 void MainWindow::renderNewSceneFile(QString const& filename) 
 {
-    // Terminate the current render
-    m_renderController.stop();
-    //m_renderController.reset();
-
     // Get the base filename for logging purposes
     std::string const file = boost::filesystem::path(
         filename.toUtf8().data()).filename().string();
 
     // New file loading info message
-    vox::Logger::addEntry(
-        vox::Severity_Info, vox::Error_None, VOX_LOG_CATEGORY, 
-        vox::format("Loading Scene File: %1%", file).c_str(),
-        __FILE__, __LINE__);
+    VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("Loading Scene File: %1%", file));
 
     // Update the status bar
-	changeRenderState(RenderState_Parsing);
+	changeRenderState(RenderState_Loading);
     
     // Compose the resource identifier for filesystem access
     std::string identifier(filename.toUtf8().data());
@@ -552,9 +547,8 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     try
     {
         // Attempt to parse the scene file content
-        // :TODO: Interactive option specification interface for import (long-term thing) ie requires raw volume width, height, etc as "Type1" ... 
         activeScene = vox::Scene::imprt(identifier);
-        if (!activeScene.volume) throw Error(__FILE__, __LINE__, "GUI", "Scene is missing volume data", Error_MissingData);
+        if (!activeScene.volume) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, "Scene is missing volume data", Error_MissingData);
         if (!activeScene.parameters)   activeScene.parameters   = RenderParams::create();
         if (!activeScene.clipGeometry) activeScene.clipGeometry = PrimGroup::create();
         if (!activeScene.lightSet)     activeScene.lightSet     = LightSet::create();
@@ -565,41 +559,40 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         // Synchronize the scene view
         synchronizeView();
 
-        // Update the render state
-        changeRenderState(RenderState_Rendering);
-
         setCurrentFile(filename); // Update window name
-		
-        // Initiate rendering of the new scene
-        m_renderController.render(
-            m_renderer,
-            activeScene,
-            std::numeric_limits<size_t>::max()
-            );
+
+        m_renderController.stop();
     }
     catch (vox::Error & error)
     {
-        // Append filename to error message
-        error.message = vox::format(
-            "Failed to load %1% [%2%]", file, 
-            error.message); 
-
-        // Log the exception
-        vox::Logger::addEntry(error);
-       
-        // Update the render state
-        changeRenderState(RenderState_Waiting);
+        VOX_LOG_ERROR(error.code, VOX_GUI_LOG_CAT, format(
+            "Failed to load %1% [%2%]", file, error.message)); 
     }
     catch (std::exception & error)
     {
-        Logger::addEntry(
-            Severity_Error, Error_Unknown, "GUI", 
-            format("Unexpected exception loading %1%: %2%", 
-                   file, error.what()).c_str(), 
-            __FILE__, __LINE__);
+        VOX_LOG_ERROR(Error_Unknown, VOX_GUI_LOG_CAT, format(
+            "Unexpected exception loading %1%: %2%", file, error.what()));
     }
+    
+    // Check if there is a valid scene 
+    if (activeScene.volume)
+    {
+        // Update the render state
+        changeRenderState(RenderState_Rendering);
 
-    emit sceneChanged(); // Send the scene change signal
+        // Initiate rendering of the scene
+        if (!m_renderController.isActive())
+        {
+            emit sceneChanged(); // Send the scene change signal
+
+            m_renderController.render(
+                m_renderer,
+                activeScene,
+                std::numeric_limits<size_t>::max()
+                );
+        }
+    }
+    else changeRenderState(RenderState_Waiting);
 }
 
 // ----------------------------------------------------------------------------
@@ -607,31 +600,29 @@ void MainWindow::renderNewSceneFile(QString const& filename)
 // ----------------------------------------------------------------------------
 void MainWindow::changeRenderState(RenderState state)
 {
+	m_guiRenderState = state;
+
 	switch (state) 
 	{
 		case RenderState_Waiting:
-			// Waiting for input file. Most controls disabled.
-			ui->pushButton_clipboard->setEnabled( true );
-			ui->pushButton_resume->setEnabled( true );
-			ui->pushButton_pause->setEnabled( true );
-			ui->pushButton_stop->setEnabled( true );
-			ui->tabWidget_render->setEnabled( true );
-			ui->label_resolutionIcon->setVisible( true );
-			ui->label_resolution->setVisible( true );
-			ui->label_zoomIcon->setVisible( true );
-			ui->label_zoom->setVisible( true );
-			activityMessage->setText("Idle");
-			statusProgress->setRange(0,100);
-			break;
-		case RenderState_Parsing:
 			// Waiting for input file. Most controls disabled.
 			ui->pushButton_clipboard->setEnabled( false );
 			ui->pushButton_resume->setEnabled( false );
 			ui->pushButton_pause->setEnabled( false );
 			ui->pushButton_stop->setEnabled( false );
 			ui->tabWidget_render->setEnabled( false );
-			ui->label_resolutionIcon->setVisible( false );
-			ui->label_resolution->setVisible( false );
+			ui->label_zoomIcon->setVisible( false );
+			ui->label_zoom->setVisible( false );
+			activityMessage->setText("Idle");
+			statusProgress->setRange(0,100);
+			break;
+        case RenderState_Loading:
+			// Waiting for input file. Most controls disabled.
+			ui->pushButton_clipboard->setEnabled( false );
+			ui->pushButton_resume->setEnabled( false );
+			ui->pushButton_pause->setEnabled( false );
+			ui->pushButton_stop->setEnabled( false );
+			ui->tabWidget_render->setEnabled( false );
 			ui->label_zoomIcon->setVisible( false );
 			ui->label_zoom->setVisible( false );
 			activityMessage->setText("Parsing scene file");
@@ -643,15 +634,9 @@ void MainWindow::changeRenderState(RenderState state)
 			ui->pushButton_pause->setEnabled( true );
 			ui->pushButton_stop->setEnabled( true );
 			ui->tabWidget_render->setEnabled( true );
-			ui->label_resolutionIcon->setVisible( true );
-			ui->label_resolution->setVisible( true );
 			ui->label_zoomIcon->setVisible( true );
 			ui->label_zoom->setVisible( true );
 			activityMessage->setText("Rendering...");
-			break;
-		case RenderState_Tonemapping:
-		case RenderState_Finished:
-			activityMessage->setText(tr("Render is finished"));
 			break;
 		case RenderState_Stopped:
 			ui->pushButton_clipboard->setEnabled( true );
@@ -667,7 +652,6 @@ void MainWindow::changeRenderState(RenderState state)
 			activityMessage->setText(tr("Rendering is paused"));
 			break;
 	}
-	m_guiRenderState = state;
 }
 
 // ----------------------------------------------------------------------------
@@ -700,7 +684,6 @@ bool MainWindow::canStopRendering()
 // ----------------------------------------------------------------------------
 void MainWindow::synchronizeView()
 {
-    camerawidget->synchronizeView();
     samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
@@ -938,7 +921,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
     if (prim->typeId() == Plane::classTypeId())
     {
         auto plane = std::dynamic_pointer_cast<vox::Plane>(prim);
-        if (!plane) throw Error(__FILE__, __LINE__, "GUI", 
+        if (!plane) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, 
             "Error interpreting primitive :TODO:");
         currWidget = new ClipPlaneWidget(pane, plane); 
     }
@@ -946,7 +929,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
     {
         // :TODO: unexpandeable hideable attribute pane
 
-        VOX_LOG_WARNING(Error_NotImplemented, "GUI", 
+        VOX_LOG_WARNING(Error_NotImplemented, VOX_GUI_LOG_CAT, 
             format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->id()));
 
         return;
@@ -1011,6 +994,14 @@ void MainWindow::blinkTrigger(bool active)
 		static const QIcon icon(":/icons/logtabicon.png");
         ui->tabWidget_main->setTabIcon(filescope::logTabId, icon);
 	}
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the zoom indicator icon in the main window
+// ----------------------------------------------------------------------------
+void MainWindow::onZoomChange(float zoomFactor)
+{
+    ui->label_zoom->setText(format(" %1.2f ", zoomFactor).c_str());
 }
 
 // ----------------------------------------------------------------------------
@@ -1103,7 +1094,7 @@ void MainWindow::on_actionExport_Image_triggered()
     fileTypes += "PNG Image (*.png)\n";
     fileTypes += "JPEG Image (*.jpg)\n";
     fileTypes += "BMP Image (*.bmp)\n";
-    fileTypes += "All Files (*)\n";
+    fileTypes += "All Files (*)";
 
     QString filename = QFileDialog::getSaveFileName( 
         this, tr("Choose an image destination"), 
@@ -1160,7 +1151,7 @@ void MainWindow::on_actionAbout_triggered()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionExit_triggered() 
 {
-	qApp->exit( );
+	qApp->exit();
 }
 
 // ----------------------------------------------------------------------------
@@ -1168,7 +1159,7 @@ void MainWindow::on_actionExit_triggered()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionSave_and_Exit_triggered() 
 { 
-	qApp->exit( );
+	qApp->exit();
 }
 
 // ----------------------------------------------------------------------------
@@ -1181,10 +1172,7 @@ void MainWindow::on_actionNormal_Screen_triggered()
 		delete m_renderView;
 		m_renderView = new RenderView( ui->frame_render );
 		ui->frame_render_layout->addWidget( m_renderView, 0, 0, 1, 1 );
-		//connect(renderView, SIGNAL(viewChanged()), this, SLOT(viewportChanged())); // reconnect
-		//renderView->reload( );
 		m_renderView->show( );
-		//ui->action_normalScreen->setEnabled( false );
 	}
 }
 
@@ -1198,10 +1186,7 @@ void MainWindow::on_actionFull_Screen_triggered()
 		delete m_renderView;
 		m_renderView = new RenderView( ui->frame_render );
 		ui->frame_render_layout->addWidget( m_renderView, 0, 0, 1, 1 );
-		//connect(renderView, SIGNAL(viewChanged()), this, SLOT(viewportChanged())); // reconnect
-		//renderView->reload( );
 		m_renderView->show( );
-		//ui->action_normalScreen->setEnabled( false );
 	}
 	else 
 	{
@@ -1210,7 +1195,6 @@ void MainWindow::on_actionFull_Screen_triggered()
 		m_renderView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		m_renderView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		m_renderView->showFullScreen();
-		//ui->action_normalScreen->setEnabled( true );
 	}
 }
 
@@ -1304,7 +1288,7 @@ void MainWindow::on_pushButton_addClip_clicked()
         break;
 
     default:
-        VOX_LOG_ERROR(Error_Bug, "GUI", "Invalid geometry type selection");
+        VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "Invalid geometry type selection");
         return;
     }
     

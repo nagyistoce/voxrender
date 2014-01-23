@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Format.h"
+#include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
 
 namespace vox {
@@ -181,7 +182,7 @@ void RawImage::exprt(ResourceOStream & data, OptionSet const& options, String co
 }
 
 // ----------------------------------------------------------------------------
-//  Exports a image using a matching registered exporter
+//  Initializes an image for a known image format
 // ----------------------------------------------------------------------------
 RawImage::RawImage(Format type, size_t width, size_t height, size_t bitDepth, size_t stride, std::shared_ptr<void> data) :
     m_format(type),
@@ -189,8 +190,7 @@ RawImage::RawImage(Format type, size_t width, size_t height, size_t bitDepth, si
     m_height(height),
     m_buffer(data)
 {
-    if (bitDepth == 0) m_depth = 8;
-    else m_depth = bitDepth;
+    m_depth = bitDepth ? bitDepth : 8;
 
     switch (type)
     {
@@ -211,13 +211,66 @@ RawImage::RawImage(Format type, size_t width, size_t height, size_t bitDepth, si
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, format("Unrecognized format: %1%", type));
     }
 
-    if (stride == 0) 
+    if (data) 
     {
-        m_stride = m_width*m_depth*m_channels*m_depth/8;
+        m_stride = stride ? stride : m_width * m_channels * m_depth/8;
     }
-    else m_stride = stride;
+    else pad(0, false);
+}
 
-    if (!data) m_buffer = std::shared_ptr<void>(new UInt8[m_stride*m_height]);
+// ----------------------------------------------------------------------------
+//  Initializes an image for an unknown image format
+// ----------------------------------------------------------------------------
+RawImage::RawImage(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
+                   size_t stride, std::shared_ptr<void> data) :
+    m_format(Format_Unknown),
+    m_width(width),
+    m_height(height),
+    m_channels(nChannels),
+    m_depth(bitDepth),
+    m_buffer(data)
+{
+    if (!data) pad(0, false);
+    else
+    {
+        m_stride = stride ? stride : m_width * m_depth/8 * m_channels;
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Adjusts the stride of an image
+// ----------------------------------------------------------------------------
+void RawImage::pad(size_t newStride, bool copyData)
+{
+    if (newStride == m_stride && m_buffer != nullptr) return;
+
+    if (m_width == 0 || m_height == 0) return;
+
+    auto rowSize = m_width * m_channels * m_depth / 8;
+    auto actualStride = (newStride == 0) ? rowSize + (4 - (rowSize%4)) : newStride;
+    if (actualStride < rowSize)
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Requested stride smaller than row size", Error_Range);
+
+    if (copyData)
+    {
+        auto buffer   = makeSharedArray(m_stride * m_height);
+        auto writePtr = (char*)buffer.get();
+        auto readPtr  = (char*)m_buffer.get();
+        for (size_t i = 0; i < m_height; i++)
+        {
+            memcpy(writePtr, readPtr, rowSize);
+            writePtr += actualStride;
+            readPtr  += m_stride;
+        }
+
+        m_buffer = buffer;
+    }
+    else 
+    {
+        m_buffer.reset(new UInt8[actualStride * m_height], arrayDeleter);
+    }
+
+    m_stride = actualStride;
 }
 
 } // namespace vox

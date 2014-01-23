@@ -35,7 +35,6 @@
 #include "VoxLib/Scene/Scene.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Error/PluginError.h"
 
 #include <boost/detail/endian.hpp>
 
@@ -165,7 +164,7 @@ namespace
             // --------------------------------------------------------------------
             void writePvmDataFile()
             {
-                if (!m_scene.volume) throw PluginError(m_handle, __FILE__, __LINE__, PVMI_LOG_CATEGORY, 
+                if (!m_scene.volume) throw Error(__FILE__, __LINE__, PVMI_LOG_CATEGORY, 
                     "Missing volume data from scene file", Error_MissingData);
 
                 if (!m_scene.volume->extent()[3] == 1) throw Error(__FILE__, __LINE__, 

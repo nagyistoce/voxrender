@@ -2,11 +2,7 @@
 
 	Project: VoxRender - Environment Light Interface
 
-	Based on luxrender light group widget class.
-	Lux Renderer website : http://www.luxrender.net 
-
-	Description:
-	 Implements the interface for point light source settings
+	Description: Implements the interface for point light source settings
 
     Copyright (C) 2012-2014 Lucas Sherman
 

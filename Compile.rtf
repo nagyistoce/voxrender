@@ -1,7 +1,6 @@
-{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fswiss\fcharset0 Arial;}{\f1\fmodern\fprq1\fcharset0 Courier New;}{\f2\fswiss\fprq2\fcharset0 Arial;}{\f3\fnil\fcharset0 Calibri;}}
+{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fswiss\fcharset0 Arial;}{\f1\fmodern\fprq1\fcharset0 Courier New;}{\f2\fswiss\fprq2\fcharset0 Arial;}{\f3\fnil\fcharset0 Calibri;}}
 {\colortbl ;\red0\green0\blue255;}
-{\*\generator Riched20 6.3.9600}\viewkind4\uc1 
-\pard\f0\fs28\lang1044 Building VoxRender\fs20\par
+{\*\generator Msftedit 5.41.21.2510;}\viewkind4\uc1\pard\lang1044\f0\fs28 Building VoxRender\fs20\par
 \par
 \b\fs24 Overview\b0\fs20\par
 \par
@@ -18,35 +17,35 @@ VoxRender uses the CMake build file generator available at the location listed i
 \i0\f1\tab\tab\\Windows\f2\tab\tab\i Windows platform build tools\f1\par
 \i0\tab\tab CMakeLists.txt\f2\tab\i CMake build file\i0\f0\fs20\par
 \par
-\b\fs24\lang1033 Required Libraries\par
+\lang1033\b\fs24 Required Libraries\par
 \b0\fs20\par
 List of required libraries (latest version used):\par
-\tab Boost and Boost Jam: {{\field{\*\fldinst{HYPERLINK http://www.boost.org/users/download/ }}{\fldrslt{http://www.boost.org/users/download/\ul0\cf0}}}}\f0\fs20  (1.49.0)\par
-\tab Digia's QT5: {{\field{\*\fldinst{HYPERLINK http://qt.nokia.com/downloads }}{\fldrslt{http://qt.nokia.com/downloads\ul0\cf0}}}}\f0\fs20  (5.5)\par
-\tab Cuda SDK: {{\field{\*\fldinst{HYPERLINK http://developer.nvidia.com/cuda-downloads }}{\fldrslt{http://developer.nvidia.com/cuda-downloads\ul0\cf0}}}}\f0\fs20  (5.2)\par
-\tab Cuda Toolkit: {{\field{\*\fldinst{HYPERLINK http://developer.nvidia.com/cuda-downloads }}{\fldrslt{http://developer.nvidia.com/cuda-downloads\ul0\cf0}}}}\f0\fs20  (5.2)\par
-\tab BZip: {{\field{\*\fldinst{HYPERLINK http://www.bzip.org/ }}{\fldrslt{http://www.bzip.org/\ul0\cf0}}}}\f0\fs20  (1.0.6)\par
-\tab ZLib: {{\field{\*\fldinst{HYPERLINK http://www.zlib.net/ }}{\fldrslt{http://www.zlib.net/\ul0\cf0}}}}\f0\fs20  (1.2.3)\par
+\tab Boost and Boost Jam: {\field{\*\fldinst{HYPERLINK "http://www.boost.org/users/download/"}}{\fldrslt{\ul\cf1 http://www.boost.org/users/download/}}}\f0\fs20  (1.49.0)\par
+\tab Digia's QT5: {\field{\*\fldinst{HYPERLINK "http://qt.nokia.com/downloads"}}{\fldrslt{\ul\cf1 http://qt.nokia.com/downloads}}}\f0\fs20  (5.5)\par
+\tab Cuda SDK: {\field{\*\fldinst{HYPERLINK "http://developer.nvidia.com/cuda-downloads"}}{\fldrslt{\ul\cf1 http://developer.nvidia.com/cuda-downloads}}}\f0\fs20  (5.2)\par
+\tab Cuda Toolkit: {\field{\*\fldinst{HYPERLINK "http://developer.nvidia.com/cuda-downloads"}}{\fldrslt{\ul\cf1 http://developer.nvidia.com/cuda-downloads}}}\f0\fs20  (5.2)\par
+\tab BZip: {\field{\*\fldinst{HYPERLINK "http://www.bzip.org/"}}{\fldrslt{\ul\cf1 http://www.bzip.org/}}}\f0\fs20  (1.0.6)\par
+\tab ZLib: {\field{\*\fldinst{HYPERLINK "http://www.zlib.net/"}}{\fldrslt{\ul\cf1 http://www.zlib.net/}}}\f0\fs20  (1.2.3)\par
 \par
 \b\fs24 Required Tools\b0\fs20\par
 \par
 List of required tools:\par
-\tab Doxygen: {{\field{\*\fldinst{HYPERLINK http://www.doxygen.org }}{\fldrslt{http://www.doxygen.org\ul0\cf0}}}}\f0\fs20  (optional - used for generating documentation)\par
-\tab CMake: {{\field{\*\fldinst{HYPERLINK http://www.cmake.org/cmake/resources/software.html }}{\fldrslt{http://www.cmake.org/cmake/resources/software.html\ul0\cf0}}}}\f0\fs20\par
-\tab QtDesigner: {{\field{\*\fldinst{HYPERLINK http://qt.nokia.com/downloads }}{\fldrslt{http://qt.nokia.com/downloads\ul0\cf0}}}}\f0\fs20  \par
+\tab Doxygen: {\field{\*\fldinst{HYPERLINK "http://www.doxygen.org"}}{\fldrslt{\ul\cf1 http://www.doxygen.org}}}\f0\fs20  (optional - used for generating documentation)\par
+\tab CMake: {\field{\*\fldinst{HYPERLINK "http://www.cmake.org/cmake/resources/software.html"}}{\fldrslt{\ul\cf1 http://www.cmake.org/cmake/resources/software.html}}}\f0\fs20\par
+\tab QtDesigner: {\field{\*\fldinst{HYPERLINK "http://qt.nokia.com/downloads"}}{\fldrslt{\ul\cf1 http://qt.nokia.com/downloads}}}\f0\fs20  \par
 \tab\tab (qtDesigner is a development tool used to edit GUI form files)\par
 \par
 \b\fs24 Building VoxRender\b0\fs20\par
 \par
-For anyone familiar with the CMake build system, compiling the source code should be a simple matter of configuring the dependency include paths in the \f1\fs18\lang1044 CMake\f0\fs20\lang1033 /\f1\fs18\lang1044 Dependencies.cmake \f0\fs20\lang1033 source file and running cmake on the root directory. A more detailed process is described below, including some common issues that may be encountered while trying to build the project.\par
+For anyone familiar with the CMake build system, compiling the source code should be a simple matter of configuring the dependency include paths in the \lang1044\f1\fs18 CMake\lang1033\f0\fs20 /\lang1044\f1\fs18 Dependencies.cmake \lang1033\f0\fs20 source file and running cmake on the root directory. A more detailed process is described below, including some common issues that may be encountered while trying to build the project.\par
 \par
 \b (1) Configuring 3rd Party Dependencies\par
 \par
-\b0 The first step in building any of the projects is to ensure that all of the dependencies required are going to be found by CMake. For additional information, see {{\field{\*\fldinst{HYPERLINK http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries }}{\fldrslt{http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries\ul0\cf0}}}}\f0\fs20 . CMake is not a compiler or build tool and you will be required to install a compatible C++ compiler. You should ensure that the dependencies you use for building are compatible with your chosen compiler. I recommend GCC  or the Visual Studio compiler (2010 or higher required).\par
+\b0 The first step in building any of the projects is to ensure that all of the dependencies required are going to be found by CMake. For additional information, see {\field{\*\fldinst{HYPERLINK "http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries"}}{\fldrslt{\ul\cf1 http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries}}}\f0\fs20 . CMake is not a compiler or build tool and you will be required to install a compatible C++ compiler. You should ensure that the dependencies you use for building are compatible with your chosen compiler. I recommend GCC  or the Visual Studio compiler (2010 or higher required).\par
 \par
 \i Windows\i0\par
 \par
-If you are running Windows, then the batch files provided in the Windows subdirectory can be used to automatically download and build all of the required dependencies for Visual Studio 2010 (VC10). Simply run the build-all.bat file from a Visual Studio Command Prompt (2010) and follow the provided instructions. If you only need a subset of the dependencies, then you can launch any of the build-*.bat files to download and build that specific dependency.\par
+If you are running Windows, then the batch files provided in the Windows subdirectory can be used to automatically download and build all of the required dependencies for Visual Studio 2012(VC11). Simply run the build-all.bat file from a Visual Studio Command Prompt (2012) and follow the provided instructions. If you only need a subset of the dependencies, then you can launch any of the build-*.bat files to download and build that specific dependency.\par
 \par
 \tab - If you encounter any issues using the windows bat files, the /Windows/Reports \tab\tab\tab   subdirectory keeps a collection of the build outputs for most dependencies.\par
 \par
@@ -62,8 +61,7 @@ By default, the CMake Find* scripts are used to locate the project dependencies 
 \par
 After downloading CMake, launch the included GUI. You should be presented with a window similar to the one below. Don't worry that the text field is empty.\par
 \par
-
-\pard\sl240\slmult1\f3\fs22\lang9{\pict{\*\picprop}\wmetafile8\picw17568\pich9446\picwgoal8640\pichgoal4650 
+\pard\sl240\slmult1\lang9\f3\fs22{\pict\wmetafile8\picw17568\pich9446\picwgoal8640\pichgoal4650 
 010009000003346d05000000156d050000000400000003010800050000000c029bfe9802050000
 000b020000000005000000070104000000156d0500410b2000cc0065019802000000009bfe9802
 000000002800000098020000650100000100180000000000e8d90a000000000000000000000000
@@ -18302,8 +18300,7 @@ f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0
 f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0
 f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0
 f0f0f0f0f0f0f0f0eeeeeeececece8e8e8e5e5e5e0e0e0030000000000
-}\f0\fs20\lang1033\par
-
+}\lang1033\f0\fs20\par
 \pard\par
 - The top level build directory is specified within the text box labeled "Where is the source code:"  and should point to the root directory containing this readme and a CMakeLists.txt file.\par
 \par
@@ -18327,6 +18324,6 @@ The GENERATE_DOCUMENTATION flag in the CMake options allows you to specify wheth
 \par
 If you have any issues feel free to email me at \i LucasASherman@gmail.com.\i0\par
 \par
-\f3\fs22\lang9\par
+\lang9\f3\fs22\par
 }
  

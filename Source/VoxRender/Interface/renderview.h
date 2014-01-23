@@ -110,7 +110,6 @@ private:
     void wheelEvent(QWheelEvent* event);      ///< Handles image zoom operations
     void mousePressEvent(QMouseEvent* event); ///< Initiates tracking of mouse movement
     void mouseMoveEvent(QMouseEvent* event);  ///< Initiates tracking of mouse movement
-    void resizeEvent(QResizeEvent* event);    ///< Handles resizing of the viewport
     void keyPressEvent(QKeyEvent * event);    ///< Detects keyboard-scene interaction
     void keyReleaseEvent(QKeyEvent * event);  ///< Detects release of interaction keys
     void focusOutEvent(QFocusEvent * event);  ///< Releases any held keys
@@ -131,7 +130,7 @@ private:
     float m_lastFrame;  ///< The timestamp for the last frame
 
 signals:
-	void viewChanged();
+	void viewChanged(float zoomFactor);
 };
 
 #endif // RENDERVIEW_H

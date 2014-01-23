@@ -120,10 +120,10 @@ public:
     // --------------------------------------------------------------------
     //  Binds the specified scene components to the device memory
     // --------------------------------------------------------------------
-    void syncScene(Scene const& scene)
+    void syncScene(Scene const& scene, bool force)
     {                
         // Buffer size synchronization
-        if (scene.camera->isFilmDirty())
+        if (scene.camera->isFilmDirty() || force)
         {
             size_t filmHeight = scene.camera->filmHeight();
             size_t filmWidth  = scene.camera->filmWidth();
@@ -155,7 +155,7 @@ public:
         }
 
         // Volume data synchronization
-        if (scene.volume->isDirty())
+        if (scene.volume->isDirty() || force)
         {
             m_volumeBuffer.setVolume(scene.volume);
 
@@ -165,27 +165,27 @@ public:
         // Transfer function data synchronization
         if (scene.transfer)
         {
-            if (scene.transfer->isDirty())
+            if (scene.transfer->isDirty() || force)
             {
                 scene.transfer->generateMap(scene.transferMap);
                 m_transferBuffer.setTransfer(scene.transferMap);
                 RenderKernel::setTransfer(m_transferBuffer);
             }
         }
-        else if (scene.transferMap->isDirty())
+        else if (scene.transferMap->isDirty() || force)
         {
             m_transferBuffer.setTransfer(scene.transferMap);
             RenderKernel::setTransfer(m_transferBuffer);
         }
 
         // Render settings synchronization
-        if (scene.parameters->isDirty()) 
+        if (scene.parameters->isDirty() || force) 
         {
             RenderKernel::setParameters(CRenderParams(scene.parameters));
         }
 
         // Camera data synchronization 
-        if (scene.camera->isDirty())
+        if (scene.camera->isDirty() || force)
         {
             RenderKernel::setCamera(CCamera(scene.camera));
 
@@ -194,13 +194,13 @@ public:
         }
 
         // Clipping geometry synchronization
-        if (scene.clipGeometry->isDirty())
+        if (scene.clipGeometry->isDirty() || force)
         {
             RenderKernel::setClipRoot(CClipGeometry::create(scene.clipGeometry));
         }
 
         // Light data synchronization
-        if (scene.lightSet->isDirty())
+        if (scene.lightSet->isDirty() || force)
         {
             // Construct an array of CUDA light objects
             auto lights = scene.lightSet->lights();

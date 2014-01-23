@@ -43,12 +43,9 @@ class CameraWidget : public QWidget
 public:
     explicit CameraWidget(QWidget *parent = 0);
     ~CameraWidget( );
-    
-    /** Applies control changes to the scene */
-    void processInteractions();
 
-    /** Synchronizes the controls with the current scene */
-    void synchronizeView();
+    /** Batch applies widget changes with the underlying camera */
+    void processInteractions();
 
 private:
     Ui::CameraWidget *ui;
@@ -57,6 +54,9 @@ private:
     bool m_filmDirty;
 
 private slots:
+    /** Applies control changes to the scene */
+    void sceneChanged();
+
     void on_horizontalSlider_camFov_valueChanged(int value);
     void on_doubleSpinBox_camFov_valueChanged(double value);
     void on_horizontalSlider_aperture_valueChanged(int value);

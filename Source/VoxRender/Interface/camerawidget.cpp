@@ -5,7 +5,7 @@
 	Description:
 	 Implements a widget for controlling the scene camera settings
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -42,6 +42,8 @@ CameraWidget::CameraWidget(QWidget *parent) :
     m_filmDirty(false)
 {
     ui->setupUi(this);
+    
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
     
 // --------------------------------------------------------------------
@@ -55,7 +57,7 @@ CameraWidget::~CameraWidget()
 // --------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // --------------------------------------------------------------------
-void CameraWidget::synchronizeView()
+void CameraWidget::sceneChanged()
 {
     // Synchronize the camera object controls
     vox::Camera & camera = *MainWindow::instance->scene().camera;

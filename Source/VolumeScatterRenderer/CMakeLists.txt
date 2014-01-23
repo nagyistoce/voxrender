@@ -139,7 +139,7 @@ TARGET_LINK_LIBRARIES(VolumeScatterRenderer
                       ${VOX_LIB} 
                       ${Boost_LIBRARIES} 
                       ${OPENGL_LIBRARY}
-					  ${CUDA_LIBRARIES})
+                      ${CUDA_LIBRARIES})
 
 
 

@@ -37,6 +37,7 @@
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/RenderParams.h"
 #include "VoxLib/Scene/PrimGroup.h"
+#include "VoxLib/Rendering/Renderer.h"
 
 // API namespace
 namespace vox
@@ -188,7 +189,7 @@ void RenderController::entryPoint()
     {
         m_masterRenderer->startup();
 
-        synchronizationSubroutine();
+        synchronizationSubroutine(true);
 
         while (m_targetIterations > m_currIterations)
         {
@@ -266,7 +267,7 @@ void RenderController::managementSubroutine()
 // ----------------------------------------------------------------------------
 //  Routine for renderer thread management
 // ----------------------------------------------------------------------------
-void RenderController::synchronizationSubroutine()
+void RenderController::synchronizationSubroutine(bool force)
 {
     if (m_scene.camera->isDirty() ||
         m_scene.lightSet->isDirty() ||
@@ -274,7 +275,7 @@ void RenderController::synchronizationSubroutine()
         m_scene.transfer->isDirty() ||
         m_scene.clipGeometry->isDirty())
     {
-        m_masterRenderer->syncScene(m_scene);
+        m_masterRenderer->syncScene(m_scene, force);
 
         m_scene.camera->m_contextChanged     = false;
         m_scene.camera->m_filmChanged        = false;

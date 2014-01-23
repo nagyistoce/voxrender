@@ -34,14 +34,15 @@ FUNCTION(VOX_PROJECT)
 	# TARGET              -- Name of the target library
 	# FOLDER              -- Visual Studio filter folder
 	# HEADERS, SOURCES    -- Source code files
-	# QT4_...             -- QT Resource, Moc header, and UI form files
+	# QT5_...             -- QT Resource, Moc header, and UI form files
 	# DEPENDENCIES        -- Internal library dependencies
 	# LIBRARIES           -- External library dependencies
+	# BINARIES            -- Files or folders with dependency DLLs
 	
     # Parse the project generation arguments 
     SET(options        SHARED STATIC EXE)
     SET(oneValueArgs   TARGET FOLDER)
-    SET(multiValueArgs HEADERS SOURCES QT4_UIS QT4_RCS QT4_MOC DEPENDENCIES LIBRARIES)
+    SET(multiValueArgs HEADERS SOURCES QT5_UIS QT5_RCS QT5_MOC DEPENDENCIES LIBRARIES BINARIES)
     CMAKE_PARSE_ARGUMENTS("VOX_PROJECT" "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
 	# Display begin configuration message
@@ -51,19 +52,19 @@ FUNCTION(VOX_PROJECT)
 	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}) 
 	
     # Configure the QT file build rules if applicable
-	IF(QT4_FOUND)
-        QT4_ADD_RESOURCES( resource_files_generated ${VOX_PROJECT_QT4_RCS} )
-        QT4_WRAP_UI( header_files_generated ${VOX_PROJECT_QT4_UIS} )
-        QT4_WRAP_CPP( source_files_generated ${VOX_PROJECT_QT4_MOC} )
+	IF(QT5_FOUND)
+        QT5_ADD_RESOURCES( resource_files_generated ${VOX_PROJECT_QT5_RCS} )
+        QT5_WRAP_UI( header_files_generated ${VOX_PROJECT_QT5_UIS} )
+        QT5_WRAP_CPP( source_files_generated ${VOX_PROJECT_QT5_MOC} )
         
-        SOURCE_GROUP("Resource Files" FILES ${VOX_PROJECT_QT4_RCS})
-        SOURCE_GROUP("Form Files"     FILES ${VOX_PROJECT_QT4_UIS})
-        SOURCE_GROUP("Header Files"   FILES ${VOX_PROJECT_QT4_MOC})
+        SOURCE_GROUP("Resource Files" FILES ${VOX_PROJECT_QT5_RCS})
+        SOURCE_GROUP("Form Files"     FILES ${VOX_PROJECT_QT5_UIS})
+        SOURCE_GROUP("Header Files"   FILES ${VOX_PROJECT_QT5_MOC})
 	
         SOURCE_GROUP("Resource Files\\Generated" FILES ${resource_files_generated})
         SOURCE_GROUP("Header Files\\Generated"   FILES ${header_files_generated})
         SOURCE_GROUP("Source Files\\Generated"   FILES ${source_files_generated})
-    ENDIF(QT4_FOUND)
+    ENDIF(QT5_FOUND)
 	
 	# Visual Studio solution filter arrangement
 	SOURCE_GROUP("Header Files" FILES ${VOX_PROJECT_HEADERS})
@@ -71,8 +72,8 @@ FUNCTION(VOX_PROJECT)
 
 	# Compile full listing of project source files
 	SET(ALL_FILES ${VOX_PROJECT_HEADERS} ${VOX_PROJECT_SOURCES}
-                  ${VOX_PROJECT_QT4_RCS} ${VOX_PROJECT_QT4_UIS}
-                  ${VOX_PROJECT_QT4_MOC})
+                  ${VOX_PROJECT_QT5_RCS} ${VOX_PROJECT_QT5_UIS}
+                  ${VOX_PROJECT_QT5_MOC})
 	
 	# Generate the project 
     IF(${VOX_PROJECT_EXE})
@@ -111,6 +112,17 @@ FUNCTION(VOX_PROJECT)
             TARGET_LINK_LIBRARIES(${VOX_PROJECT_TARGET} ${DEP})
         ENDIF()
 	ENDFOREACH()
+	
+	#  :TODO: Automatically copy over binary dirs 
+	#ADD_CUSTOM_COMMAND( 
+	#    TARGET VoxRender
+	#    POST_BUILD
+	#	
+	#        COMMAND cmake -E echo "Copying DLLs to build directory: " 
+	#        COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Widgets.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIGURATION}"
+	#        COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Core.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIGURATION}"
+	#        COMMAND cmake -E copy "${QT_BINARY_DIR}/Qt5Gui.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIGURATION}"
+	#    )
 	
 	# Target additional libraries for linking
 	TARGET_LINK_LIBRARIES(${VOX_PROJECT_TARGET} ${VOX_PROJECT_LIBRARIES})

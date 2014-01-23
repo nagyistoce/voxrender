@@ -31,7 +31,6 @@
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Error/PluginError.h"
 
 // Image Libraries
 #include "jpeglib.h"
@@ -112,7 +111,7 @@ namespace
                 case RawImage::Format_Gray:
                     cinfo.input_components = 1;
                     cinfo.in_color_space = JCS_GRAYSCALE;
-                    if (m_image.depth() != 8) throw PluginError(m_handle, __FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
+                    if (m_image.depth() != 8) throw Error(__FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
                         format("JPEG supports only 8 bit grayscale <%1%>", m_displayName), Error_NotAllowed);
                     break;
                 case RawImage::Format_GrayAlpha:

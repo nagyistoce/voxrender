@@ -37,13 +37,14 @@ SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFO
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libjpeg)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/zlib)
 SET(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v5.5")
-
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64")
+	
 #===============================================#
 #                  NVIDIA CUDA                  #
 #===============================================#
 
 FIND_PACKAGE(CUDA REQUIRED)
-SET(CUDA_NVCC_FLAGS "-arch;sm_30")
+SET(CUDA_NVCC_FLAGS "-arch;sm_20")
 
 message(STATUS "Cuda include directory: " "${CUDA_INCLUDE_DIRS}")
 message(STATUS "Cuda library directory: " "${CUDA_LIBRARIES}")

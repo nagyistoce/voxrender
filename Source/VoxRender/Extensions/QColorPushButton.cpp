@@ -6,12 +6,12 @@
 #include <QPaintEvent>
 
 QColorPushButton::QColorPushButton(QWidget* pParent) :
-        QPushButton(pParent),
-        m_margin(7),
-        m_radius(4),
-        m_color(Qt::white)
+    QPushButton(pParent),
+    m_margin(7),
+    m_radius(4),
+    m_color(Qt::white)
 {
-        setText("");
+    setText("");
 }
 
 QSize QColorPushButton::sizeHint() const
@@ -21,39 +21,39 @@ QSize QColorPushButton::sizeHint() const
 
 void QColorPushButton::paintEvent(QPaintEvent* pPaintEvent)
 {
-        setText("");
+    setText("");
 
-        QPushButton::paintEvent(pPaintEvent);
+    QPushButton::paintEvent(pPaintEvent);
 
-        QPainter painter(this);
+    QPainter painter(this);
 
-        // Get button rectangle
-        QRect ColorRectangle = pPaintEvent->rect();
+    // Get button rectangle
+    QRect ColorRectangle = pPaintEvent->rect();
 
-        // Deflate it
-        ColorRectangle.adjust(m_margin, m_margin, -m_margin, -m_margin);
+    // Deflate it
+    ColorRectangle.adjust(m_margin, m_margin, -m_margin, -m_margin);
 
-        // Use anti aliasing
-        painter.setRenderHint(QPainter::Antialiasing);
+    // Use anti aliasing
+    painter.setRenderHint(QPainter::Antialiasing);
 
-        // Rectangle styling
-        painter.setBrush(QBrush(isEnabled() ? m_color : Qt::lightGray));
-        painter.setPen(QPen(isEnabled() ? QColor(25, 25, 25) : Qt::darkGray, 0.5));
+    // Rectangle styling
+    painter.setBrush(QBrush(isEnabled() ? m_color : Qt::lightGray));
+    painter.setPen(QPen(isEnabled() ? QColor(25, 25, 25) : Qt::darkGray, 0.5));
 
-        // Draw
-        painter.drawRoundedRect(ColorRectangle, m_radius, Qt::AbsoluteSize);
+    // Draw
+    painter.drawRoundedRect(ColorRectangle, m_radius, Qt::AbsoluteSize);
 }
 
 void QColorPushButton::mousePressEvent(QMouseEvent* pEvent)
 {
-        QColorDialog ColorDialog;
+    QColorDialog ColorDialog;
 
-        connect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
+    connect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
 
-        ColorDialog.setCurrentColor(m_color);
-        ColorDialog.exec();
+    ColorDialog.setCurrentColor(m_color);
+    ColorDialog.exec();
 
-        disconnect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
+    disconnect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
 }
 
 int QColorPushButton::getMargin() const
@@ -80,22 +80,22 @@ void QColorPushButton::setRadius(const int& radius)
 
 QColor QColorPushButton::getColor() const
 {
-        return m_color;
+    return m_color;
 }
 
 void QColorPushButton::setColor(const QColor& color, bool stopSignals)
 {
-        blockSignals(stopSignals);
+    blockSignals(stopSignals);
 
-        m_color = color;
-        update();
+    m_color = color;
+    update();
 
-        blockSignals(false);
+    blockSignals(false);
 }
 
 void QColorPushButton::onCurrentColorChanged(const QColor& color)
 {
-        setColor(color);
+    setColor(color);
 
-        emit currentColorChanged(m_color);
+    emit currentColorChanged(m_color);
 }

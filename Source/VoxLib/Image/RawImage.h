@@ -155,8 +155,23 @@ namespace vox
         static void removeExportModule(String const& extension);
 
     public:
-		/** Initializes an empty image structure */
-		RawImage(Format type, size_t width = 0, size_t height = 0, size_t bitDepth = 0, size_t stride = 0, std::shared_ptr<void> data = nullptr);
+		/** Initializes an image object for a known image format */
+		RawImage(Format type, size_t width = 0, size_t height = 0, size_t bitDepth = 0, 
+            size_t stride = 0, std::shared_ptr<void> data = nullptr);
+
+        /** Initializes an image object for an unknown image format */
+        RawImage(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
+            size_t stride = 0, std::shared_ptr<void> data = nullptr);
+
+        /** 
+         * Adjusts the padding of the image 
+         *
+         * If newStride is set to 0, the padding will be word aligned
+         *
+         * @param newStride The new row stride (in bytes)
+         * @param copyData  If true, original image data will be retained
+         */
+        void pad(size_t newStride = 0, bool copyData = true);
 
         /** Returns the raw image data pointer */
         void * data() const { return m_buffer.get(); }

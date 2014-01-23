@@ -25,7 +25,7 @@
 #===========================================================================#
 
 VOX_PROJECT(
-    TARGET "Raw Volume ExIm Test" EXE
+    TARGET "RawVolumeExImTest" EXE
     FOLDER "Unit Tests"
     SOURCES
         Main.cpp

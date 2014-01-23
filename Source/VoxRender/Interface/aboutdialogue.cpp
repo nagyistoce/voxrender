@@ -61,9 +61,9 @@ AboutDialogue::~AboutDialogue( )
 // ---------------------------------------------------------
 AboutImage::AboutImage( QWidget *parent ) : 
     QGraphicsView(parent),
-    m_authors("The VoxRender Qt GUI is based on LuxRender.         "
-              "Voxrender's GPU based rendering algorithm is based on ExposureRender         "
-              "Visit the website at http://code.google.com/p/voxrender/.         "
+    m_authors("The VoxRender Qt GUI is based on LuxRender.    "
+              "Voxrender's GPU based rendering algorithm is based on ExposureRender    "
+              "Visit the website at http://code.google.com/p/voxrender/.    "
               "VoxRender is an open source development project."         ),
     m_version(vox::format("Version %1%", VOX_VERSION_STRING).c_str( ))
 {

@@ -63,7 +63,7 @@ void testVolumeExIm(Scene const& scene, String const& compression)
     out.close();
 
     // Import scene information
-    options.addOption("Type", "UInt8");
+    options.addOption("Type", scene.volume->typeToString(scene.volume->type()));
     options.addOption("Size", "[256 256 256 1]");
     Scene copy = Scene::imprt(identifier, options);
 
@@ -78,17 +78,30 @@ void testVolumeExIm(Scene const& scene, String const& compression)
 }
 
 // --------------------------------------------------------------------
+//  Generates a randomized volume test data set
+// --------------------------------------------------------------------
+std::shared_ptr<UInt8> generateTestData(size_t bytes)
+{
+    auto data = makeSharedArray(bytes);
+
+    auto ptr = data.get();
+    for (size_t i = 0; i < bytes; i++)
+        *ptr++ = rand() % 256;
+
+    return data;
+}
+
+// --------------------------------------------------------------------
 //  Performs tests of the Plugin load and unload functionality
 // --------------------------------------------------------------------
 BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
 
     // Tests a generated data set
-    BOOST_AUTO_TEST_CASE( GeneratedData )
+    BOOST_AUTO_TEST_CASE( DataCompression )
     {
         srand(time(nullptr));
 
         std::cout << "Testing raw volume ExIm compression modes" << std::endl;
-        std::cout << "WARNING: This test may take awhile to complete" << std::endl;
 
         // Register the raw volume file ExIm and a filesystem IO module
         auto exim = std::shared_ptr<RawVolumeFile>(new RawVolumeFile(nullptr));
@@ -103,12 +116,8 @@ BOOST_AUTO_TEST_SUITE( RawVolumeExIm )
         size_t   nVoxels = 256*256*256*1*1;
 
         // Generate a random test volume data set
-        std::shared_ptr<UInt8> data(new UInt8[nVoxels], &arrayDeleter);
+        auto data   = generateTestData(nVoxels);
         auto volume = Volume::create(data, extent, spacing);
-        for (size_t i = 256*256*128; i < nVoxels; i++)
-        {
-            data.get()[i] = static_cast<UInt8>( rand()*std::numeric_limits<UInt8>::max() );
-        }
 
         // Construct scene object for export
         Scene scene; scene.volume = volume;

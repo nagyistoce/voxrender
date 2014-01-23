@@ -214,44 +214,6 @@
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="label_resolutionIcon">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="pixmap">
-             <pixmap resource="icons.qrc">:/icons/resolutionicon.png</pixmap>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_resolution">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::Box</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Sunken</enum>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QLabel" name="label_zoomIcon">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -401,8 +363,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>677</width>
+                  <height>164</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -458,8 +420,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>677</width>
+                  <height>164</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -518,8 +480,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>677</width>
+                  <height>195</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -551,8 +513,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>677</width>
+                  <height>195</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -754,8 +716,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>756</width>
+             <height>460</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">

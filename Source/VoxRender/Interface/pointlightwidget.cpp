@@ -133,6 +133,9 @@ void PointLightWidget::changeEvent(QEvent * event)
         auto scene = MainWindow::instance->scene();
         if (!scene.lightSet) return;
         
+        if (MainWindow::instance->renderState() != RenderState_Rendering) return;
+
+        // :TODO: Add isVisible member to scene classes
         if (!isEnabled()) scene.lightSet->removeLight(m_light);
         else 
         {
