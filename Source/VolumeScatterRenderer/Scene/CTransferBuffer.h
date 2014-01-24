@@ -32,11 +32,12 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Scene/Transfer.h"
 
 // API namespace
 namespace vox
 {
+
+class TransferMap;
 
 /** Rendering Volume Class */
 class CTransferBuffer

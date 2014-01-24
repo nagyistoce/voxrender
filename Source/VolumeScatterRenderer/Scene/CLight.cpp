@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Device Side Camera
+	Project: VolumeScatterRenderer
 
-	Description: Defines a 3D Camera for use in rendering
+	Description: Defines a light element for GPU devices
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,7 +24,7 @@
 =========================================================================== */
 
 // Include Header
-#include "CCamera.h"
+#include "CLight.h"
 
 // Include Dependencies
 #include "VoxLib/Scene/Light.h"

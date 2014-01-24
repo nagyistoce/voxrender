@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "mainwindow.h"
+#include "infowidget.h"
 
 // VoxRender Dependencies
 #include "VoxLib/Core/Logging.h"
@@ -341,24 +342,31 @@ void RenderView::processSceneInteractions()
     static const float    camSpeed(5.0f);
     static const Vector2f camWSense(-0.0025f, 0.0025f);
 
-    Camera & camera   = *MainWindow::instance->scene().camera;
+    auto camera = MainWindow::instance->scene().camera;
+    if (!camera) return;
 
-    // Handle camera strafe associated with key holds
-    float duration = 1.0f;
-    float distance = camSpeed * duration;
-    if (m_ioFlags & filescope::KEY_UP)    camera.move(distance);
-    if (m_ioFlags & filescope::KEY_RIGHT) camera.moveRight(distance);
-    if (m_ioFlags & filescope::KEY_DOWN)  camera.move(-distance);
-    if (m_ioFlags & filescope::KEY_LEFT)  camera.moveLeft(distance);
+    camera->lock();
 
-    // Handle camera rotation from mouse movement
-    int dx = m_mouseDeltaX.fetchAndStoreRelaxed(0);
-    int dy = m_mouseDeltaY.fetchAndStoreRelaxed(0);
-    if (dx || dy)
-    {
-        Vector2f rotation = Vector2f(dx, dy) * camWSense;
-        camera.pitch(rotation[1]); camera.yaw(rotation[0]);
-    }
+        // Handle camera strafe associated with key holds
+        float duration = 1.0f;
+        float distance = camSpeed * duration;
+        if (m_ioFlags & filescope::KEY_UP)    { camera->move(distance);      camera->setDirty(); }
+        if (m_ioFlags & filescope::KEY_RIGHT) { camera->moveRight(distance); camera->setDirty(); }
+        if (m_ioFlags & filescope::KEY_DOWN)  { camera->move(-distance);     camera->setDirty(); }
+        if (m_ioFlags & filescope::KEY_LEFT)  { camera->moveLeft(distance);  camera->setDirty(); }
+
+        // Handle camera rotation from mouse movement
+        int dx = m_mouseDeltaX.fetchAndStoreRelaxed(0);
+        int dy = m_mouseDeltaY.fetchAndStoreRelaxed(0);
+        if (dx || dy)
+        {
+            Vector2f rotation = Vector2f(dx, dy) * camWSense;
+            camera->pitch(rotation[1]); 
+            camera->yaw(rotation[0]);
+            camera->setDirty();
+        }
+
+    camera->unlock();
 }
 
 // ------------------------------------------------------------

@@ -36,15 +36,11 @@
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
 
 // Include Dependencies
-#include "infowidget.h"
-#include "camerawidget.h"
 #include "histogramwidget.h"
 #include "panewidget.h"
 #include "renderview.h"
 #include "samplingwidget.h"
 #include "transferwidget.h"
-#include "ambientlightwidget.h"
-#include "pluginwidget.h"
 
 // QT4 Includes
 #include <QtWidgets/QFileDialog>
@@ -72,6 +68,13 @@ enum RenderState
 
 // Generated class
 namespace Ui { class MainWindow; }
+
+// Forward declarations
+class AmbientLightWidget;
+class PluginWidget;
+class CameraWidget;
+class PointLightWidget;
+class InfoWidget;
 
 // Main Application Window
 class MainWindow : public QMainWindow

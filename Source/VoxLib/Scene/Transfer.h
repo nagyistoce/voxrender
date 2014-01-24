@@ -28,11 +28,8 @@
 #define VOX_TRANSFER_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Functors.h"
-#include "VoxLib/Core/Geometry/Color.h"
-#include "VoxLib/Core/Geometry/Image.h"
-#include "VoxLib/Core/Geometry/Image3D.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Scene/Material.h"
@@ -107,7 +104,7 @@ namespace vox
     {
     public: 
         /** Initializes the default transfer function resolution */
-        Transfer() : m_contextChanged(true), m_resolution(128, 32, 1) { }
+        Transfer() : m_isDirty(true), m_resolution(128, 32, 1) { }
 
         /** Updates the input map based on the this transfer function */
         virtual void generateMap(std::shared_ptr<TransferMap> map) = 0;
@@ -116,10 +113,10 @@ namespace vox
         virtual Char const* type() = 0;
 
         /** Locks the transfer function for editing */
-        void lock() { }
+        void lock() { m_mutex.lock(); }
 
         /** Unlocks the transfer function after editing */
-        void unlock() { }
+        void unlock() { m_mutex.unlock(); }
 
         /** Sets the transfer function resolution */
         void setResolution(Vector3u const& resolution);
@@ -128,20 +125,20 @@ namespace vox
         Vector3u const& resolution() const { return m_resolution; }
 
         /** Returns true if an unprocessed context change has occured */
-        bool isDirty() const { return m_contextChanged; }
+        bool isDirty() const { return m_isDirty; }
 
         /** Sets the dirty state of the transfer function */
-        void setDirty(bool dirty = true) { m_contextChanged = dirty; }
+        void setDirty(bool dirty = true) { m_isDirty = dirty; }
 
     protected:
-        class Impl;
-        Impl * m_pImpl;
-
-        Vector3u m_resolution; ///< Transfer function map resolution
-
         friend RenderController;
 
-        bool m_contextChanged;
+        void setClean() { m_isDirty = false; }
+
+        boost::mutex m_mutex; ///< Mutex for scene locking
+
+        Vector3u m_resolution; ///< Transfer function map resolution
+        bool     m_isDirty;
     };
 
     /** 1 Dimensional Transfer Function */

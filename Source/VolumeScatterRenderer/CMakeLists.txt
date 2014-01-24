@@ -100,6 +100,7 @@ Set(SOURCES_CLIP
 Set(SOURCES_SCENE
     Scene/CCamera.cpp
     Scene/CClipGeometry.cpp
+	Scene/CLight.cpp
     Scene/CVolumeBuffer.cpp
     Scene/CTransferBuffer.cpp
 )

@@ -23,8 +23,6 @@
 
 =========================================================================== */
 
-// :TODO: Investigate use of mallocHost for Scene components
-
 // Include Header
 #include "VolumeScatterRenderer.h"
 
@@ -205,10 +203,8 @@ public:
             // Construct an array of CUDA light objects
             auto lights = scene.lightSet->lights();
             std::vector<CLight> clights;
-            BOOST_FOREACH(auto & light, lights)
-            {
-                clights.push_back( CLight(*light) );
-            }
+            BOOST_FOREACH(auto & light, lights) 
+                clights.push_back(CLight(*light));
             
             m_lightBuffer.write(clights);
 

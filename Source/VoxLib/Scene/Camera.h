@@ -28,7 +28,7 @@
 #define VOX_CAMERA_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
 
 // API namespace
@@ -43,6 +43,9 @@ class VOX_EXPORT Camera
 public:
     /** Constructs a new transfer function object */
     static std::shared_ptr<Camera> create() { return std::shared_ptr<Camera>(new Camera()); }
+
+    /** Constructor */ 
+    Camera(); 
 
     /** Destructor */
     ~Camera();
@@ -60,19 +63,19 @@ public:
     inline Vector3f const& right() const { return m_right; }
 
     /** Sets the position of the camera */
-    inline void setPosition(const Vector3f &pos) { m_pos = pos; m_contextChanged = true; }
+    inline void setPosition(const Vector3f &pos) { m_pos = pos; }
 
     /** Specifies a translation vector to apply to the camera position */
-    inline void translate(const Vector3f &vec) { m_pos += vec; m_contextChanged = true; }
+    inline void translate(const Vector3f &vec) { m_pos += vec; }
 
     /** Translates the camera a set distance along the x-axis */
-    inline void translateX(float dist) { m_pos[0] += dist; m_contextChanged = true; }
+    inline void translateX(float dist) { m_pos[0] += dist; }
     
     /** Translates the camera a set distance along the y-axis */
-    inline void translateY(float dist) { m_pos[1] += dist; m_contextChanged = true; }
+    inline void translateY(float dist) { m_pos[1] += dist; }
     
     /** Translates the camera a set distance along the z-axis */
-    inline void translateZ(float dist) { m_pos[2] += dist; m_contextChanged = true; }
+    inline void translateZ(float dist) { m_pos[2] += dist; }
     
     /** Sets the position of the camera along the x-axis */
     inline float positionX() const { return m_pos[0]; }
@@ -84,19 +87,19 @@ public:
     inline float positionZ() const { return m_pos[2]; }
     
     /** Moves the camera along its current direction vector */
-    inline void move(float dist) { m_pos += m_eye*dist; m_contextChanged = true; }
+    inline void move(float dist) { m_pos += m_eye*dist; }
     
     /** Moves the camera along its current right direction vector */
-    inline void moveRight(float dist) { m_pos += m_right*dist; m_contextChanged = true; }
+    inline void moveRight(float dist) { m_pos += m_right*dist; }
     
     /** Moves the camera along its current right direction vector */
-    inline void moveLeft(float dist) { m_pos -= m_right*dist; m_contextChanged = true; }
+    inline void moveLeft(float dist) { m_pos -= m_right*dist; }
 
     /** Moves the camera along its current up direction vector */
-    inline void moveUp(float dist) { m_pos += m_up*dist; m_contextChanged = true; }
+    inline void moveUp(float dist) { m_pos += m_up*dist; }
 
     /** Moves the camera along its current up direction vector */
-    inline void moveDown(float dist) { m_pos -= m_up*dist; m_contextChanged = true; }
+    inline void moveDown(float dist) { m_pos -= m_up*dist; }
 
     /** Executes a yaw rotation */
     void yaw(float radians);
@@ -122,13 +125,13 @@ public:
     inline void lookAt(Vector3f const& pos) { lookAt(pos, m_up); }
 
     /** Sets the camera eye orientation vector */
-    inline void setEye(Vector3f const& eye) { m_eye = eye; m_contextChanged = true; }
+    inline void setEye(Vector3f const& eye) { m_eye = eye; }
 
     /** Sets the camera right orientation vector */
-    inline void setRight(Vector3f const& right) { m_right = right; m_contextChanged = true; }
+    inline void setRight(Vector3f const& right) { m_right = right; }
 
     /** Sets the camera up orientation vector */
-    inline void setUp(Vector3f const& up) { m_up = up; m_contextChanged = true; }
+    inline void setUp(Vector3f const& up) { m_up = up; }
     
     /** Returns the camera field of view angle in radians */
     inline float fieldOfView()   const { return m_fieldOfView; }
@@ -146,28 +149,28 @@ public:
     inline size_t filmWidth() const { return m_filmWidth; }
 
     /** Sets the camera field of view angle in radians */
-    inline void setFieldOfView(float angle) { m_fieldOfView = angle; m_contextChanged = true; }
+    inline void setFieldOfView(float angle) { m_fieldOfView = angle; }
 
     /** Sets the camera focal distance */
-    inline void setFocalDistance(float dist) { m_focalDistance = dist; m_contextChanged = true; }
+    inline void setFocalDistance(float dist) { m_focalDistance = dist; }
 
     /** Sets the aperture size of the camera */
-    inline void setApertureSize(float size) { m_apertureSize = size; m_contextChanged = true; }
+    inline void setApertureSize(float size) { m_apertureSize = size; }
 
     /** Returns the aspect ratio of the film */
     inline float aspectRatio() const { return float(m_filmWidth) / m_filmHeight; }
 
     /** Film height modifier */
-    inline void setFilmHeight(size_t height) { m_filmHeight = height; m_filmChanged = true; }
+    inline void setFilmHeight(size_t height) { m_filmHeight = height; }
 
     /** Film width modifier */
-    inline void setFilmWidth(size_t width) { m_filmWidth = width; m_filmChanged = true; }
+    inline void setFilmWidth(size_t width) { m_filmWidth = width; }
 
     /** Returns true if the context change flag is set */
-    inline bool isDirty() const { return m_contextChanged || m_filmChanged; }
+    inline bool isDirty() const { return m_isDirty || m_isFilmDirty; }
 
     /** Returns true if the film dimensions change flag is set */
-    inline bool isFilmDirty() const { return m_filmChanged; }
+    inline bool isFilmDirty() const { return m_isFilmDirty; }
 
     /** Sets the exposure factor for the camera film */
     void setExposure(float exposure) { m_exposure = exposure; }
@@ -175,19 +178,25 @@ public:
     /** Returns the exposure factor for the camera film */
     float exposure() { return m_exposure; }
 
-private:
-    /**
-     * Constructor - Initalizes a scene camera to the default orientation
-     *
-     * The default camera position is at the origin facing along
-     * the z-axis. (The coordinate system is left-handed)
-     */ 
-    Camera(); 
+    /** Locks the camera for editing */
+    void lock() { m_mutex.lock(); }
 
+    /** Releases the camera lock */
+    void unlock() { m_mutex.unlock(); }
+
+    /** Marks the camera film settings as dirty */
+    void setDirty() { m_isDirty = true; }
+
+    /** Marks the camera as dirty */
+    void setFilmDirty() { m_isFilmDirty = true; }
+
+private:
     friend RenderController;
 
-    bool m_contextChanged; ///< Context change flag
-    bool m_filmChanged;    ///< Film change flag
+    void setClean() { m_isDirty = false; m_isFilmDirty = false; }
+
+    bool m_isDirty;     ///< Context change flag
+    bool m_isFilmDirty; ///< Film change flag
 
     // Camera orientation
     Vector3f m_pos;   ///< Camera position vector (mm)
@@ -205,6 +214,9 @@ private:
     // Film dimensions
     size_t m_filmWidth;  ///< Film width  (pixels)
     size_t m_filmHeight; ///< Film height (pixels)
+
+    // Synchronization mutex
+    boost::mutex m_mutex;
 };
 
 }

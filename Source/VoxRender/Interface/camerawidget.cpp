@@ -38,8 +38,7 @@
 CameraWidget::CameraWidget(QWidget *parent) :
     QWidget(parent), 
     ui(new Ui::CameraWidget),
-    m_dirty(false),
-    m_filmDirty(false)
+    m_ignore(false)
 {
     ui->setupUi(this);
     
@@ -59,48 +58,59 @@ CameraWidget::~CameraWidget()
 // --------------------------------------------------------------------
 void CameraWidget::sceneChanged()
 {
-    // Synchronize the camera object controls
-    vox::Camera & camera = *MainWindow::instance->scene().camera;
+    auto camera = MainWindow::instance->scene().camera;
+    if (!camera) return;
     
-    float fov = camera.fieldOfView() * 180.0f / M_PI;
+    m_ignore = true;
+
+    float fov = camera->fieldOfView() * 180.0f / M_PI;
     ui->doubleSpinBox_camFov->setValue( fov );
     
-    ui->doubleSpinBox_focal->setValue( camera.focalDistance() );
-    ui->doubleSpinBox_aperture->setValue( camera.apertureSize() );
-    ui->spinBox_filmWidth->setValue( camera.filmWidth() );
-    ui->spinBox_filmHeight->setValue( camera.filmHeight() );
+    ui->doubleSpinBox_focal->setValue( camera->focalDistance() );
+    ui->doubleSpinBox_aperture->setValue( camera->apertureSize() );
+    ui->spinBox_filmWidth->setValue( camera->filmWidth() );
+    ui->spinBox_filmHeight->setValue( camera->filmHeight() );
 
-    // Clean the view to prevent forced update
-    m_filmDirty = false; m_dirty = false;
+    m_ignore = false;
 }
 
 // --------------------------------------------------------------------
 //  Applies widget control changes to the scene camera 
 // --------------------------------------------------------------------
-void CameraWidget::processInteractions()
+void CameraWidget::updateCamera()
 {
-    if (m_dirty)
-    {
-        m_dirty = false;
+    if (m_ignore) return;
+    auto camera = MainWindow::instance->scene().camera;
+    if (!camera) return;
+    
+    camera->lock();
 
-        vox::Camera & camera = *MainWindow::instance->scene().camera;
-        
         float fov = ui->doubleSpinBox_camFov->value() / 180.0f * M_PI;
-        camera.setFieldOfView( fov );
+        camera->setFieldOfView( fov );
 
-        camera.setFocalDistance( ui->doubleSpinBox_focal->value() );
-        camera.setApertureSize( ui->doubleSpinBox_aperture->value() );
-    }
+        camera->setFocalDistance( ui->doubleSpinBox_focal->value() );
+        camera->setApertureSize( ui->doubleSpinBox_aperture->value() );
+        camera->setDirty();
 
-    if (m_filmDirty)
-    {
-        m_filmDirty = false;
+    camera->unlock();
+}
 
-        vox::Camera & camera = *MainWindow::instance->scene().camera;
+// --------------------------------------------------------------------
+//  Applies control changes the the scene camera's film settings
+// --------------------------------------------------------------------
+void CameraWidget::updateFilm()
+{
+    if (m_ignore) return;
+    auto camera = MainWindow::instance->scene().camera;
+    if (!camera) return;
+    
+    camera->lock();
 
-        camera.setFilmWidth( ui->spinBox_filmWidth->value() );
-        camera.setFilmHeight( ui->spinBox_filmHeight->value() );
-    }
+        camera->setFilmWidth( ui->spinBox_filmWidth->value() );
+        camera->setFilmHeight( ui->spinBox_filmHeight->value() );
+        camera->setFilmDirty();
+
+    camera->unlock();
 }
 
 // --------------------------------------------------------------------
@@ -108,7 +118,7 @@ void CameraWidget::processInteractions()
 // --------------------------------------------------------------------
 void CameraWidget::on_spinBox_filmHeight_valueChanged(int value)
 {
-    m_filmDirty = true;
+    updateFilm();
 }
 
 // --------------------------------------------------------------------
@@ -116,7 +126,7 @@ void CameraWidget::on_spinBox_filmHeight_valueChanged(int value)
 // --------------------------------------------------------------------
 void CameraWidget::on_spinBox_filmWidth_valueChanged(int value)
 {
-    m_filmDirty = true;
+    updateFilm();
 }
 
 
@@ -149,7 +159,7 @@ void CameraWidget::on_doubleSpinBox_exposure_valueChanged(double value)
 }
 
 // --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
+//  Update the camera on control element changes
 // --------------------------------------------------------------------
 void CameraWidget::on_horizontalSlider_camFov_valueChanged(int value)
 {
@@ -158,12 +168,8 @@ void CameraWidget::on_horizontalSlider_camFov_valueChanged(int value)
         ui->horizontalSlider_camFov,
         value);
     
-    m_dirty = true;
+    updateCamera();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
-// --------------------------------------------------------------------
 void CameraWidget::on_horizontalSlider_aperture_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -171,12 +177,8 @@ void CameraWidget::on_horizontalSlider_aperture_valueChanged(int value)
         ui->horizontalSlider_aperture,
         value);
     
-    m_dirty = true;
+    updateCamera();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
-// --------------------------------------------------------------------
 void CameraWidget::on_horizontalSlider_focal_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -184,12 +186,8 @@ void CameraWidget::on_horizontalSlider_focal_valueChanged(int value)
         ui->horizontalSlider_focal,
         value);
     
-    m_dirty = true;
+    updateCamera();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated slider to reflect spinBox value change
-// --------------------------------------------------------------------
 void CameraWidget::on_doubleSpinBox_camFov_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -197,12 +195,8 @@ void CameraWidget::on_doubleSpinBox_camFov_valueChanged(double value)
         ui->doubleSpinBox_camFov,
         value);
     
-    m_dirty = true;
+    updateCamera();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated slider to reflect spinBox value change
-// --------------------------------------------------------------------
 void CameraWidget::on_doubleSpinBox_aperture_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -210,18 +204,14 @@ void CameraWidget::on_doubleSpinBox_aperture_valueChanged(double value)
         ui->doubleSpinBox_aperture,
         value);
     
-    m_dirty = true;
+    updateCamera();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated slider to reflect spinBox value change
-// --------------------------------------------------------------------
 void CameraWidget::on_doubleSpinBox_focal_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_focal,
         ui->doubleSpinBox_focal,
         value);
-
-    m_dirty = true;
+    
+    updateCamera();
 }

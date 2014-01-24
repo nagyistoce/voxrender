@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Light
+	Project: VoxScene
 
 	Description: Defines a basic light for use in the scene.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -28,10 +28,8 @@
 #define VOX_LIGHT_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
-
-// :TODO: Make this all threadsafe
 
 // API namespace
 namespace vox
@@ -39,91 +37,78 @@ namespace vox
     class Light;
     class RenderController;
 
-    /** Buffer class for scene lights */
+    /** Container class for scene lights */
     class VOX_EXPORT LightSet : public std::enable_shared_from_this<LightSet>
     {
     public:
-        /** Constructs a new transfer function object */
-        static std::shared_ptr<LightSet> create() { return std::shared_ptr<LightSet>(new LightSet()); }
+        /** Convenience factor for shared_ptr construction of a light set */
+        static std::shared_ptr<LightSet> create();
 
         /** Sets the ambient lighting conditions */
-        void setAmbientLight(Vector3f const& light)
-        {
-            m_ambientLight = light;
-
-            m_ambientChanged = true;
-        }
+        void setAmbientLight(Vector3f const& light) { m_ambientLight = light; }
 
         /** Returns the ambient lighting conditions */
-        Vector3f const& ambientLight()
-        {
-            return m_ambientLight;
-        }
+        Vector3f const& ambientLight() { return m_ambientLight; }
 
-        /** Adds a new light to the scene */
-        std::shared_ptr<Light> addLight();
-
-        /** Unlocks the light set */
-        void lock();
+        /** Constructs a new light object for the scene */
+        std::shared_ptr<Light> add();
 
         /** Locks the light set for read/write operations */
-        void unlock();
+        void lock() { m_mutex.lock(); }
+        
+        /** Unlocks the light set */
+        void unlock() { m_mutex.unlock(); }
 
         /** Adds a new light to the scene */
-        void addLight(std::shared_ptr<Light> light);
+        void add(std::shared_ptr<Light> light);
 
         /** Removes an existing light from the scene */
-        void removeLight(std::shared_ptr<Light> light);
+        void remove(std::shared_ptr<Light> light);
 
         /** Returns the internal light buffer */
-        std::list<std::shared_ptr<Light>> const& lights() const 
-        { 
-            return m_lights; 
-        }
+        std::list<std::shared_ptr<Light>> const& lights() const { return m_lights;  }
 
         /** Clears all lights from the set */
-        void clear() 
-        { 
-            m_lights.clear(); 
-
-            m_contextChanged = true; 
-        }
+        void clear() { m_lights.clear(); }
 
         /** Returns true if the context change flag is set */
-        bool isDirty() const { return m_contextChanged || m_contentChanged || m_ambientChanged; }
+        bool isDirty() const { return m_isDirty; }
 
-        /** Returns true if the internal content is dirty */
-        bool isContentDirty() const
-        {
-            return m_contextChanged ? true : m_contentChanged;
-        }
-
-        /** Returns true if the ambient lighting is dirty */
-        bool isAmbientDirty() const { return m_ambientChanged; }
+        /** Marks the light set as dirty */
+        void setDirty() { m_isDirty = true; }
 
     private:
-        /** Ensure initial context change */
-        LightSet() : m_contextChanged(true) { }
+        /** Marks the light set as synchronized with the render controller */
+        void setClean() { m_isDirty = false; }
 
+    private:
         friend RenderController;
-        friend Light;
 
-        bool m_contextChanged;
-        bool m_contentChanged;
-        bool m_ambientChanged;
+        LightSet(); // Private constructor to ensure shared_from_this properly
 
-        Vector3f m_ambientLight;
+        Vector3f     m_ambientLight; ///< Ambient light
+        boost::mutex m_mutex;        ///< Mutex for scene locking
+        bool         m_isDirty;      ///< Dirty flag for tracking scene changes
 
-        std::list<std::shared_ptr<Light>> m_lights;
+        std::list<std::shared_ptr<Light>> m_lights; ///< Scene lights
     };
-
-// Context change set
-#define VOX_CC m_parent->m_contentChanged = true; m_contextChanged = true;
 
     /** Scene light model */
     class VOX_EXPORT Light
     {
     public:
+        /** Convenience factor for shared_ptr construction of a light set */
+        static std::shared_ptr<Light> create() { return std::shared_ptr<Light>(new Light()); }
+        
+        /** Constructor */
+        Light();
+
+        /** Locks the light for read/write operations */
+        void lock() { if (m_parent) m_parent->lock(); }
+        
+        /** Unlocks the light */
+        void unlock() { if (m_parent) m_parent->unlock(); }
+
         /** Light position accessor */
         Vector3f const& position() const { return m_position; }
         float positionX() const { return m_position[0]; }
@@ -133,36 +118,37 @@ namespace vox
         /** Light color accessor */
         Vector3f const& color() const { return m_color; }
 
-        /** Light intensity accessor */
-        float intensity() const { return m_intensity; }
-
         /** Light position modifiers */
-        void setPosition(Vector3f const& position) { m_position = position; VOX_CC }
-        void setPositionX(float pos) { m_position[0] = pos; VOX_CC }
-        void setPositionY(float pos) { m_position[1] = pos; VOX_CC }
-        void setPositionZ(float pos) { m_position[2] = pos; VOX_CC }
+        void setPosition(Vector3f const& position) { m_position = position; }
+        void setPositionX(float pos) { m_position[0] = pos; }
+        void setPositionY(float pos) { m_position[1] = pos; }
+        void setPositionZ(float pos) { m_position[2] = pos; }
 
         /** Light color modifier */
-        void setColor(Vector3f const& color) { m_color = color; VOX_CC }
+        void setColor(Vector3f const& color) { m_color = color; }
 
-        /** Light intensity modifier */
-        void setIntensity(float intensity) { m_intensity = intensity; VOX_CC }
+        /** Returns the dirty flag for the light */
+        bool isDirty() { return m_isDirty; }
+
+        /** Sets the dirty flag for the light */
+        void setDirty();
+
+    private:
+        /** Sets the parent light set for this light */
+        void setParent(std::shared_ptr<LightSet> parent);
+
+        /** Marks the light as synchronized with the render */
+        void setClean() { m_isDirty = true; }
 
     private:
         friend LightSet;
 
-        Light(std::shared_ptr<LightSet> parent);
-
-        bool m_contextChanged;
-
-        Vector3f m_position;  ///< Light position
-        Vector3f m_color;     ///< Light color 
-        float    m_intensity; ///< Light intensity
+        bool     m_isDirty;  ///< Flag for tracking scene changes
+        Vector3f m_position; ///< Light position
+        Vector3f m_color;    ///< Light color 
 
         std::shared_ptr<LightSet> m_parent; ///< Parent light set
     };
-    
-#undef VOX_CC
 }
 
 // End Definition

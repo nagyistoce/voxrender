@@ -112,6 +112,9 @@ namespace vox
 	private:
         friend RenderThread;
 
+        class Impl;
+        Impl * m_pImpl;
+
         void entryPoint(); ///< Control thread entry point
 
         std::list<std::shared_ptr<RenderThread>> m_renderThreads; ///< Renderer management threads

@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Environment Light Interface
+	Project: VoxRender
+    
+	Description: Implements a control interface for ambient lighting
 
-	Description: Implements the interface for ambient lighting
-
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -48,29 +48,19 @@ public:
 
 	~AmbientLightWidget();
 
-    QString title() { return m_title; }
-    int index()     { return m_index; }
-
-    void setIndex(int index) { m_index = index; }
-
-    void processInteractions();
-    void synchronizeView();
-
 private:
-	Ui::AmbientLightWidget* ui;
+    void update();
 
-	QString m_title; ///< Light identifier/name
-
-	int m_index;
-    bool m_dirty;
-
-    QColorPushButton * m_colorButton;
+	Ui::AmbientLightWidget * ui;
+    QColorPushButton *       m_colorButton;
 
 private slots:
 	void on_horizontalSlider_intensity_valueChanged(int value);
 	void on_doubleSpinBox_intensity_valueChanged(double value);
     
     void colorChanged(QColor const& color);
+
+    void sceneChanged();
 };
 
 #endif // AMBIENT_LIGHT_WIDGET_H

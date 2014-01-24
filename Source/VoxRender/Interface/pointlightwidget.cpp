@@ -1,9 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Point Light Interface
+	Project: VoxRender
 
-	Description:
-	 Implements the interface for point light source settings
+	Description: Provides a control interface for point light sources
 
     Copyright (C) 2012-2014 Lucas Sherman
 
@@ -41,46 +40,36 @@
 
 using namespace vox;
 
-// File scope namespace
-namespace {
-namespace filescope {
-    // :TODO: Use a color selector item
-    char const* stylesheet = "background-color: %1%";
-}
-}
-
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
 // --------------------------------------------------------------------
 PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> light) : 
     QWidget(parent), 
     ui(new Ui::PointLightWidget),
-    m_title("Point Light"),
     m_light(light),
     m_colorButton(new QColorPushButton())
 {
 	ui->setupUi(this);
 
     // Synchronize the widget controls with the associated light
-    float distance = light->position().length();
-    float partial  = sqrt( pow(light->positionX(), 2) + pow(light->positionZ(), 2) );
-    float phi      = asin(light->positionY() / distance) / M_PI * 180.0f;
-    float theta    = acos(light->positionX() / partial)  / M_PI * 180.0f;
+    float distance  = light->position().length();
+    float partial   = sqrt( pow(light->positionX(), 2) + pow(light->positionZ(), 2) );
+    float phi       = asin(light->positionY() / distance) / M_PI * 180.0f;
+    float theta     = acos(light->positionX() / partial)  / M_PI * 180.0f;
+    float intensity = light->color().fold(high);
     if (light->positionX() < 0) theta = - theta;
 
-    ui->doubleSpinBox_distance->setValue( distance );
-    ui->doubleSpinBox_latitude->setValue( phi );
-    ui->doubleSpinBox_longitude->setValue( theta );
-    ui->doubleSpinBox_intensity->setValue( light->intensity() );
+    ui->doubleSpinBox_distance->setValue(distance);
+    ui->doubleSpinBox_latitude->setValue(phi);
+    ui->doubleSpinBox_longitude->setValue(theta);
+    ui->doubleSpinBox_intensity->setValue(intensity);
 
+    // Initialize the color control elements
     m_colorButton = new QColorPushButton();
-    Vector3f color = light->color();
-    m_colorButton->setColor(QColor(color[0]*255, color[1]*255, color[2]*255), true); 
+    Vector3f color = intensity ? light->color() / intensity * 255.0f : Vector3f(0.0f, 0.0f, 0.0f);
+    m_colorButton->setColor(QColor(color[0], color[1], color[2]), true); 
     ui->layout_colorButton->addWidget(m_colorButton);
-
     connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
-
-    m_dirty = false;
 }
 
 // --------------------------------------------------------------------
@@ -89,7 +78,7 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 PointLightWidget::~PointLightWidget()
 {
     auto & scene = MainWindow::instance->scene();
-    if (scene.lightSet) scene.lightSet->removeLight(m_light);
+    if (scene.lightSet) scene.lightSet->remove(m_light);
 
     delete m_colorButton;
     delete ui;
@@ -98,11 +87,9 @@ PointLightWidget::~PointLightWidget()
 // --------------------------------------------------------------------
 //  Synchronizes the light widget's position controls with the scene
 // --------------------------------------------------------------------
-void PointLightWidget::processInteractions()
+void PointLightWidget::update()
 {
-    if (m_dirty)
-    {
-        m_dirty = false; // Reset tracking before read sequence //
+    m_light->lock();
 
         double latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
         double longitude = ui->doubleSpinBox_longitude->value() / 180.0 * M_PI;
@@ -114,13 +101,13 @@ void PointLightWidget::processInteractions()
         m_light->setPositionY(sin(latitude)       * distance);
         m_light->setPositionZ(cl * sin(longitude) * distance);
 
-        m_light->setIntensity(ui->doubleSpinBox_intensity->value());
-
         QColor color = m_colorButton->getColor();
-        m_light->setColor( Vector3f(color.red()  /255.0f, 
-                                    color.green()/255.0f, 
-                                    color.blue() /255.0f) );
-    }
+        float  scale = ui->doubleSpinBox_intensity->value() / 255.0f;
+        m_light->setColor(Vector3f(color.red(), color.green(), color.blue()) * scale);
+
+        m_light->setDirty();
+
+    m_light->unlock();
 }
 
 // --------------------------------------------------------------------
@@ -136,13 +123,15 @@ void PointLightWidget::changeEvent(QEvent * event)
         if (MainWindow::instance->renderState() != RenderState_Rendering) return;
 
         // :TODO: Add isVisible member to scene classes
-        if (!isEnabled()) scene.lightSet->removeLight(m_light);
-        else 
-        {
-            auto children = scene.lightSet->lights();
-            if (std::find(children.begin(), children.end(), m_light) == children.end())
-                scene.lightSet->addLight(m_light);
-        }
+        scene.lightSet->lock();
+            if (!isEnabled()) scene.lightSet->remove(m_light);
+            else 
+            {
+                auto children = scene.lightSet->lights();
+                if (std::find(children.begin(), children.end(), m_light) == children.end())
+                    scene.lightSet->add(m_light);
+            }
+        scene.lightSet->unlock();
     }
 }
 
@@ -155,8 +144,8 @@ void PointLightWidget::on_horizontalSlider_intensity_valueChanged(int value)
         ui->doubleSpinBox_intensity,
         ui->horizontalSlider_intensity,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -168,8 +157,8 @@ void PointLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
         ui->horizontalSlider_intensity,
         ui->doubleSpinBox_intensity,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -182,7 +171,7 @@ void PointLightWidget::on_horizontalSlider_latitude_valueChanged(int value)
         ui->horizontalSlider_latitude,
         value);
     
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -195,7 +184,7 @@ void PointLightWidget::on_doubleSpinBox_latitude_valueChanged(double value)
         ui->doubleSpinBox_latitude,
         value);
     
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -208,7 +197,7 @@ void PointLightWidget::on_horizontalSlider_longitude_valueChanged(int value)
         ui->horizontalSlider_longitude,
         value);
     
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -221,7 +210,7 @@ void PointLightWidget::on_doubleSpinBox_longitude_valueChanged(double value)
         ui->doubleSpinBox_longitude,
         value);
     
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -234,7 +223,7 @@ void PointLightWidget::on_horizontalSlider_distance_valueChanged(int value)
         ui->horizontalSlider_distance,
         value);
     
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -247,7 +236,7 @@ void PointLightWidget::on_doubleSpinBox_distance_valueChanged(double value)
         ui->doubleSpinBox_distance,
         value);
   
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -255,5 +244,5 @@ void PointLightWidget::on_doubleSpinBox_distance_valueChanged(double value)
 // --------------------------------------------------------------------
 void PointLightWidget::colorChanged(QColor const& color)
 {
-    m_dirty = true;
+    update();
 }

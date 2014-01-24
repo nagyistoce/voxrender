@@ -193,7 +193,6 @@ namespace
 
                     cNode.add("Color", light->color());
                     cNode.add("Position", light->position());
-                    cNode.add("Intensity", light->intensity());
 
                     node.add_child("Light", cNode);
                 }
@@ -516,10 +515,10 @@ namespace
                   {
                       auto & node = (*it).second;
                       
-                      auto light = lightSet.addLight();
-                      light->setColor( node.get<Vector3f>("Color") );
-                      light->setPosition( node.get<Vector3f>("Position") );
-                      light->setIntensity( node.get("Intensity", 1.0f) );
+                      auto light = Light::create();
+                      light->setColor(node.get<Vector3f>("Color"));
+                      light->setPosition(node.get<Vector3f>("Position"));
+                      lightSet.add(light);
                   }
 
                 pop();

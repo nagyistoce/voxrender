@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Environment Light Interface
+	Project: VoxRender 
 
-	Description: Implements the interface for point light source settings
+	Description: Implements a control interface for ambient lighting
 
     Copyright (C) 2012-2014 Lucas Sherman
 
@@ -41,18 +41,15 @@ using namespace vox;
 // --------------------------------------------------------------------
 AmbientLightWidget::AmbientLightWidget(QWidget * parent) : 
     QWidget(parent), 
-    ui(new Ui::AmbientLightWidget),
-    m_title("Ambient Light")
+    ui(new Ui::AmbientLightWidget)
 {
 	ui->setupUi(this);
 
     m_colorButton = new QColorPushButton();
-    m_colorButton->setColor(Qt::white, true); 
     ui->layout_colorButton->addWidget(m_colorButton);
 
     connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
-
-    m_dirty = false;
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
 
 // --------------------------------------------------------------------
@@ -66,33 +63,33 @@ AmbientLightWidget::~AmbientLightWidget()
 // --------------------------------------------------------------------
 //  Synchronizes the scene with the light widget's controls
 // --------------------------------------------------------------------
-void AmbientLightWidget::processInteractions()
+void AmbientLightWidget::update()
 {
-    if (m_dirty)
-    {
-        QColor color = m_colorButton->getColor();
-        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * ui->doubleSpinBox_intensity->value();
-        MainWindow::instance->scene().lightSet->setAmbientLight(light);
+    auto lightSet = MainWindow::instance->scene().lightSet;
 
-        m_dirty = false;
-    }
+    lightSet->lock();
+
+        QColor   color = m_colorButton->getColor();
+        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * ui->doubleSpinBox_intensity->value();
+        lightSet->setAmbientLight(light);
+        lightSet->setDirty();
+
+    lightSet->unlock();
 }
 
 // --------------------------------------------------------------------
 //  Synchronizes the light widget's controls with the scene
 // --------------------------------------------------------------------
-void AmbientLightWidget::synchronizeView()
+void AmbientLightWidget::sceneChanged()
 {
     auto & scene = MainWindow::instance->scene();
     if (!scene.lightSet) return;
 
     Vector3f ambient = scene.lightSet->ambientLight();
     float magnitude = ambient.fold(high);
-    ambient *= 255.0f / magnitude;
+    ambient = magnitude ? ambient * 255.0f / magnitude : Vector3f(255.0f, 255.0f, 255.0f);
     ui->doubleSpinBox_intensity->setValue(magnitude);
     m_colorButton->setColor( QColor((int)ambient[0], (int)ambient[1], (int)ambient[2]), true);
-
-    m_dirty = false;
 }
 
 // --------------------------------------------------------------------
@@ -105,7 +102,7 @@ void AmbientLightWidget::on_horizontalSlider_intensity_valueChanged(int value)
         ui->horizontalSlider_intensity,
         value);
 
-    m_dirty = true;
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -117,8 +114,8 @@ void AmbientLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
         ui->horizontalSlider_intensity,
         ui->doubleSpinBox_intensity,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
 
 // --------------------------------------------------------------------
@@ -126,5 +123,5 @@ void AmbientLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
 // --------------------------------------------------------------------
 void AmbientLightWidget::colorChanged(QColor const& color)
 {
-    m_dirty = true;
+    update();
 }

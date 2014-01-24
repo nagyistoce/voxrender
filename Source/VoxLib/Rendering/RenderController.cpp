@@ -43,6 +43,11 @@
 namespace vox
 {
 
+// Implementation class for render controller
+class RenderController::Impl
+{
+};
+
 // ----------------------------------------------------------------------------
 //  Initiates rendering of the currently loaded scene
 // ----------------------------------------------------------------------------
@@ -276,15 +281,12 @@ void RenderController::synchronizationSubroutine(bool force)
         m_scene.clipGeometry->isDirty())
     {
         m_masterRenderer->syncScene(m_scene, force);
+        
+        m_scene.lightSet->setClean();
+        m_scene.camera->setClean();
+        m_scene.transfer->setClean();
 
-        m_scene.camera->m_contextChanged     = false;
-        m_scene.camera->m_filmChanged        = false;
-        m_scene.lightSet->m_contextChanged   = false;
-        m_scene.lightSet->m_contentChanged   = false;
-        m_scene.lightSet->m_ambientChanged   = false;
         m_scene.volume->m_contextChanged     = false;
-        m_scene.transfer->m_contextChanged   = false;
-        m_scene.transfer->m_contextChanged   = false;
         m_scene.parameters->m_contextChanged = false;
         m_scene.clipGeometry->setDirty(false);
 

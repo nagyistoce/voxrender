@@ -26,51 +26,78 @@
 // Include Header
 #include "Light.h"
 
-// API Namespace
 namespace vox {
+    
+// ------------------------------------------------------------
+//  Initializes the light object
+// ------------------------------------------------------------
+Light::Light() :
+    m_color(1.0f, 1.0f, 1.0f),
+    m_position(0.0f, 0.0f, 0.0f)
+{
+}
 
 // ------------------------------------------------------------
-//  Sets the display image for the render view
+//  Sets the parent node for the light
 // ------------------------------------------------------------
-Light::Light(std::shared_ptr<LightSet> parent) :
-    m_position(0.0f, 0.0f, 0.0f),
-    m_color(255, 255, 255), 
-    m_parent(parent)
+void Light::setParent(std::shared_ptr<LightSet> parent)
 {
+    m_parent = parent;
+}
+
+// ------------------------------------------------------------
+//  Sets the dirty flag for the light and its parent node
+// ------------------------------------------------------------
+void Light::setDirty() 
+{
+    m_isDirty = true;
+
+    if (m_parent) m_parent->setDirty();
+}
+
+// ------------------------------------------------------------
+//  Shared ptr factor method for light set
+// ------------------------------------------------------------
+std::shared_ptr<LightSet> LightSet::create()
+{
+    return std::shared_ptr<LightSet>(new LightSet());
+}
+
+// ------------------------------------------------------------
+//  Initializes a new light set to default parameters
+// ------------------------------------------------------------
+LightSet::LightSet() : 
+    m_isDirty(false),
+    m_ambientLight(0.1f, 0.1f, 0.1f)
+{ 
 }
 
 // ------------------------------------------------------------
 //  Adds a new light to the scene 
 // ------------------------------------------------------------
-std::shared_ptr<Light> LightSet::addLight()
+std::shared_ptr<Light> LightSet::add()
 {
-    auto light = std::shared_ptr<Light>(new Light(shared_from_this()));
-
+    auto light = Light::create();
     m_lights.push_back(light);
-
-    m_contextChanged = true;
-
     return light;
 }
 
 // ------------------------------------------------------------
 //  Adds a new light to the scene 
 // ------------------------------------------------------------
-void LightSet::addLight(std::shared_ptr<Light> light)
+void LightSet::add(std::shared_ptr<Light> light)
 {
+    light->setParent(shared_from_this());
     m_lights.push_back(light);
-
-    m_contextChanged = true;
 }
 
 // ------------------------------------------------------------
 //  Removes an existing light from the scene
 // ------------------------------------------------------------
-void LightSet::removeLight(std::shared_ptr<Light> light)
+void LightSet::remove(std::shared_ptr<Light> light)
 { 
     m_lights.remove(light);
-
-    m_contextChanged = true; 
+    light->setParent(nullptr);
 }
 
 } // namespace vox

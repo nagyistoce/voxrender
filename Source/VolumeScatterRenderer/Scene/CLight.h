@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Light
+	Project: VolumeScatterRenderer
 
-	Description: Defines a light for placement in the scene.
+	Description: Defines a light element for GPU devices
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -33,11 +33,12 @@
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry/Color.h"
 #include "VoxLib/Core/Geometry/Vector.h"
-#include "VoxLib/Scene/Light.h"
 
 // API namespace
 namespace vox
 {
+    class Light;
+
     /** CUDA/Device light model */
     class CLight
     {
@@ -45,11 +46,7 @@ namespace vox
         VOX_HOST_DEVICE CLight() { }
         
         /** Constructs a device light for the specified light */
-        VOX_HOST CLight(Light & light) : 
-            m_position(light.position())
-        {
-            m_color = light.color() * light.intensity();
-        }
+        VOX_HOST CLight(Light const& light);
 
         /** Light position accessor */
         VOX_HOST_DEVICE Vector3f const& position() const { return m_position; }
@@ -58,10 +55,10 @@ namespace vox
         VOX_HOST_DEVICE Vector3f const& color() const { return m_color; }
 
     private:
-        Vector3f  m_position;  ///< Light position
-        float     m_packing1;  ///< Alignment component
-        Vector3f  m_color;     ///< Light color
-        float     m_packing2;  ///< Alignment component
+        Vector3f  m_position; ///< Light position
+        float     m_pack1;    ///< Alignment component
+        Vector3f  m_color;    ///< Light color
+        float     m_pack2;    ///< Alignment component
     };
 }
 

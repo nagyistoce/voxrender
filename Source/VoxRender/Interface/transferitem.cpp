@@ -36,12 +36,10 @@
 #include <QtWidgets/QGraphicsSceneMouseEvent>
 
 // Transfer function modification wrapper for auto-update
-#define DO_LOCK(T, X)       \
-    T->lock();              \
-    X                       \
-    if (true) {             \
-    T->setDirty(true);      \
-    }                       \
+#define DO_LOCK(T, X)   \
+    T->lock();          \
+    X                   \
+    T->setDirty();      \
     T->unlock();
 // :TODO: Check auto update set 
 

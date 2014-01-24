@@ -78,7 +78,6 @@ namespace filescope {
     __constant__ CRandomBuffer2D   gd_rndBuffer0;       ///< Device RNG seed buffer
     __constant__ CRandomBuffer2D   gd_rndBuffer1;       ///< Device RNG seed buffer
     __constant__ CSampleBuffer2D   gd_sampleBuffer;     ///< HDR sample data buffer
-    __constant__ CTransferBuffer   gd_transferBuffer;   ///< Transfer function info
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
     __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light

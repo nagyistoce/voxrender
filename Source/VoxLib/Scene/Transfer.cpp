@@ -4,7 +4,7 @@
 
 	Description: Transfer function applied to volume dataset
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -383,14 +383,6 @@ namespace filescope {
 } // namespace filescope
 } // namespace anonymous
 
-class Transfer::Impl
-{
-public:
-    Vector3u resolution;
-    bool     isDirty;
-    //mutex;
-};
-
 // ----------------------------------------------------------------------------
 //  Creates a new transfer function node
 // ----------------------------------------------------------------------------
@@ -436,7 +428,7 @@ void Transfer1D::addNode(std::shared_ptr<Node> node)
 // ----------------------------------------------------------------------------
 void Transfer1D::removeNode(std::shared_ptr<Node> node)
 {
-    m_contextChanged = true;
+    setDirty();
 
     m_nodes.remove(node);
 }
@@ -491,7 +483,7 @@ void Transfer2D::addQuad(std::shared_ptr<Quad> quad)
 // ----------------------------------------------------------------------------
 void Transfer2D::removeQuad(std::shared_ptr<Quad> quad)
 {
-    m_contextChanged = true;
+    setDirty();
 
     m_quads.remove(quad);
 }

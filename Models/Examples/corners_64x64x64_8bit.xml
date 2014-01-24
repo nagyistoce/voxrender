@@ -1,61 +1,65 @@
-<!-- 
-     Corner dataset for depicting camera focus
-     function behavior. Consists of 8 boxes aligned
-	 in a grid pattern 2x2x2.
--->
- 
+<?xml version="1.0" encoding="utf-8"?>
 <Scene>
-	
 	<Version>
-		<Major>1</Major>
+		<Major>0</Major>
 		<Minor>0</Minor>
 	</Version>
-	
 	<Camera>
-		<FieldOfView>30</FieldOfView>
 		<ApertureSize>12</ApertureSize>
+		<FieldOfView>30</FieldOfView>
 		<FocalDistance>170</FocalDistance>
-		<Position>[-71.2 182.4 -77.7]</Position>
-		<Target>[32 28 32]</Target>
 		<FilmWidth>512</FilmWidth>
 		<FilmHeight>512</FilmHeight>
+		<Position>[-71.2 182.4 -77.7]</Position>
+		<Up>[0.292309 -0.436949 -0.850665]</Up>
+		<Right>[0.821706 0.569818 -0.0103321]</Right>
 	</Camera>
-	
 	<Volume>
 		<Import>
-			<Resource>corners_64x64x64_8bit.raw</Resource>
 			<Options>
-				<Type>uint8</Type>
 				<Size>[64 64 64 1]</Size>
 				<Spacing>[1 1 1 1]</Spacing>
+				<Type>uint8</Type>
+				<Offset>[0 0 0]</Offset>
 			</Options>
+			<Endianess>little</Endianess>
+			<Resource>corners_64x64x64_8bit.raw</Resource>
 		</Import>
 	</Volume>
-	
-    <Lights>
-        <Light>
-            <Color>[1.0 1.0 1.0]</Color>
-            <Position>[-13 97.4 -17]</Position>
-        </Light>
-    </Lights>
-	
+	<Lights>
+		<Ambient>[0 0 0]</Ambient>
+		<Light>
+			<Color>[1 1 1]</Color>
+			<Position>[-12.9986 97.3975 -16.9953]</Position>
+		</Light>
+	</Lights>
 	<Transfer>
+		<Type>1</Type>
 		<Resolution>256</Resolution>
-		<Materials>
-			<Solid>
-				<Thickness>1.0</Thickness>
-			</Solid>
-		</Materials>
 		<Nodes>
-			<Empty>
-				<Material>Solid</Material>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>1</Thickness>
+				<Diffuse>[255 255 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
 				<Density>0.1</Density>
-			</Empty>
-			<Solid>
-				<Material>Solid</Material>
-				<Density>1.0</Density>
-			</Solid>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>1</Thickness>
+				<Diffuse>[255 255 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>1</Density>
+			</Node>
 		</Nodes>
 	</Transfer>
-	
+	<ClipGeometry/>
+	<Settings>
+		<PrimaryStepSize>2</PrimaryStepSize>
+		<ShadowStepSize>3</ShadowStepSize>
+		<OccludeStepSize>1</OccludeStepSize>
+		<OccludeSamples>0</OccludeSamples>
+	</Settings>
 </Scene>

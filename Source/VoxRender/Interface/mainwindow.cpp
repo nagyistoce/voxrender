@@ -29,12 +29,16 @@
 
 // Include Dependencies
 #include "aboutdialogue.h"
+#include "ambientlightwidget.h"
 #include "arealightwidget.h"
+#include "camerawidget.h"
+#include "infowidget.h"
 #include "pointlightwidget.h"
 #include "lightdialogue.h"
 #include "clipdialogue.h"
 #include "clipplanewidget.h"
 #include "histogramgenerator.h"
+#include "pluginwidget.h"
 
 // VoxRender Includes
 #include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
@@ -687,9 +691,6 @@ void MainWindow::synchronizeView()
     samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
-    // Synchronize the ambient lighting control
-    static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->synchronizeView();
-
     // Synchronize the lighting controls
     BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
     m_lightPanes.clear();
@@ -1023,7 +1024,7 @@ void MainWindow::on_pushButton_addLight_clicked()
     int result = lightDialogue.exec();
 
     if (!result) numLights--; // Cancelled, decrement UID generator
-    else addLight(activeScene.lightSet->addLight(), lightDialogue.nameSelected( ));
+    else addLight(activeScene.lightSet->add(), lightDialogue.nameSelected( ));
 }
 
 // ----------------------------------------------------------------------------
@@ -1344,13 +1345,6 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     {
         m_imagingUpdate = false; // Reset the image update flag
 
-        // Process any changes to the lighting control widgets
-        BOOST_FOREACH (auto & pane, m_lightPanes)
-        {
-            auto widget = static_cast<PointLightWidget*>(pane->getWidget());
-            widget->processInteractions();
-        }
-               
         // Process any changes to the clip geometry
         BOOST_FOREACH (auto & pane, m_clipPanes)
         {
@@ -1358,8 +1352,6 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
             widget->processInteractions();
         }
 
-        static_cast<AmbientLightWidget*>(m_ambientPane->getWidget())->processInteractions();
-        camerawidget->processInteractions();
         samplingwidget->processInteractions();
     }
 

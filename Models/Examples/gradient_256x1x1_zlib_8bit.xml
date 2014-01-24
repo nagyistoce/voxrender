@@ -1,64 +1,101 @@
-<!-- 
-     Gradient dataset for testing transfer
-     function behavior. Consists of a single
-	 strip of 256 samples of decreasing 
-	 density 
--->
- 
+<?xml version="1.0" encoding="utf-8"?>
 <Scene>
-	
 	<Version>
-		<Major>1</Major>
+		<Major>0</Major>
 		<Minor>0</Minor>
 	</Version>
-	
 	<Camera>
-		<FieldOfView>30</FieldOfView>
 		<ApertureSize>0</ApertureSize>
+		<FieldOfView>30</FieldOfView>
 		<FocalDistance>0</FocalDistance>
-		<Position>[32 32 -100]</Position>
-		<Target>[32 32 32]</Target>
 		<FilmWidth>512</FilmWidth>
 		<FilmHeight>512</FilmHeight>
+		<Position>[-11.1304 500.386 -50.2438]</Position>
+		<Up>[0.613255 0.301047 0.730267]</Up>
+		<Right>[-0.74331 -0.0928254 0.662475]</Right>
 	</Camera>
-	
 	<Volume>
 		<Import>
-			<Resource>gradient_256x1x1_zlib_8bit.raw</Resource>
 			<Options>
-				<Type>uint8</Type>
 				<Size>[256 1 1 1]</Size>
 				<Spacing>[1 8 64 1]</Spacing>
-				<Compression>zlib</Compression>
+				<Type>uint8</Type>
+				<Offset>[0 0 0]</Offset>
 			</Options>
+			<Endianess>little</Endianess>
+			<Resource>gradient_256x1x1_zlib_8bit.raw</Resource>
 		</Import>
 	</Volume>
-	
-    <Lights>
-        <Light>
-            <Color>[1.0 1.0 1.0]</Color>
-            <Position>[0, 100, 0]</Position>
-        </Light>
-    </Lights>
-	
+	<Lights>
+		<Ambient>[0.7 0.7 0.7]</Ambient>
+	</Lights>
 	<Transfer>
+		<Type>1</Type>
 		<Resolution>256</Resolution>
-		<Materials>
-			<Empty></Empty>
-			<Solid>
-				
-			</Solid>
-		</Materials>
 		<Nodes>
-			<Empty>
-				<Material>Empty</Material>
-				<Density>0.0</Density>
-			</Empty>
-			<Solid>
-				<Material>Solid</Material>
-				<Density>1.0</Density>
-			</Solid>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9609756</Thickness>
+				<Diffuse>[255 0 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9560975</Thickness>
+				<Diffuse>[255 0 0]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.15</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9560975</Thickness>
+				<Diffuse>[255 255 9]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.3027778</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9512195</Thickness>
+				<Diffuse>[0 255 0]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.475</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9560975</Thickness>
+				<Diffuse>[0 255 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.6472222</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9560975</Thickness>
+				<Diffuse>[0 0 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.8555555</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.9560975</Thickness>
+				<Diffuse>[255 0 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>1</Density>
+			</Node>
 		</Nodes>
 	</Transfer>
-	
+	<ClipGeometry/>
+	<Settings>
+		<PrimaryStepSize>2</PrimaryStepSize>
+		<ShadowStepSize>3</ShadowStepSize>
+		<OccludeStepSize>1</OccludeStepSize>
+		<OccludeSamples>0</OccludeSamples>
+	</Settings>
 </Scene>

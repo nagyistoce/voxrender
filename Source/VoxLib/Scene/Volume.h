@@ -97,6 +97,8 @@ public:
      * @param data    Volume density data in a grid x,y,z,t format
      * @param extent  Volume extent in x,y,z,t dimensions respectively
      * @param spacing Volume spacing in x,y,z,t dimensions respectively
+     * @param offset  The offset of the volume in world coordinates (mm^3)
+     * @param type    The format of the volume data
      */
     static std::shared_ptr<Volume> create(
            std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
@@ -123,9 +125,11 @@ public:
     
     /** Offset accessor */
     Vector3f const& offset() const { return m_offset; }
-
+    
+    /** Returns the normalized value range of the data for the underlying type */
     Vector2f const& valueRange() const { return m_range; }
 
+    /** Updates the value range of the data */
     void updateRange();
 
     /** Raw voxel data accessor */

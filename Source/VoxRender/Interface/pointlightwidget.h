@@ -1,12 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender - Point Light Interface
+	Project: VoxRender
 
-	Based on luxrender light group widget class.
-	Lux Renderer website : http://www.luxrender.net 
-
-	Description:
-	 Implements the interface for point light source settings
+	Description: Provides a control interface for point light sources
 
     Copyright (C) 2012-2014 Lucas Sherman
 
@@ -34,10 +30,7 @@
 // QT Dependencies
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QColorDialog>
-
 #include "Extensions/QColorPushButton.h"
-
-// Standard Library
 #include <memory>
 
 // Generated class
@@ -56,27 +49,17 @@ public:
 
 	~PointLightWidget();
 
-    QString title() { return m_title; }
-    int index()     { return m_index; }
-
-    void setIndex(int index) { m_index = index; }
-
-    void processInteractions();
-
 protected:
     virtual void changeEvent(QEvent * event);
 
 private:
 	Ui::PointLightWidget* ui;
 
-	QString m_title; ///< Light identifier/name
-
     std::shared_ptr<vox::Light> m_light; ///< Associated scene object
+    
+    void update();
 
-	int m_index;
-    bool m_dirty;
-
-    QColorPushButton * m_colorButton;
+    QColorPushButton * m_colorButton; ///< Customized color swatch + button widget
 
 private slots:
 	void on_horizontalSlider_intensity_valueChanged(int value);

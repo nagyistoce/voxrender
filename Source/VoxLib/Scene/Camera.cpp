@@ -47,7 +47,8 @@ Camera::Camera() :
     m_filmWidth      (512),
     m_filmHeight     (512),
     m_exposure       (0.0f),
-    m_contextChanged (false)
+    m_isDirty        (false),
+    m_isFilmDirty    (false)
 { 
 }
 
@@ -71,8 +72,6 @@ void Camera::yaw(float radians)
 
     m_eye   = neye.normalized();
     m_right = nright.normalized();
-
-    m_contextChanged = true;
 }
 
 // --------------------------------------------------------------------
@@ -88,8 +87,6 @@ void Camera::pitch(float radians)
 
     m_eye = neye.normalized();
     m_up  = nup.normalized();
-
-    m_contextChanged = true;
 }
 
 // --------------------------------------------------------------------
@@ -105,8 +102,6 @@ void Camera::roll(float radians)
 
     m_right = nright.normalized();
     m_up    = nup.normalized();
-
-    m_contextChanged = true;
 }
 
 // --------------------------------------------------------------------
@@ -119,8 +114,6 @@ void Camera::lookAt(Vector3f const& position, Vector3f const& up)
 
     m_right = Vector3f::cross(m_eye, up).normalized();
     m_up    = Vector3f::cross(m_right, m_eye).normalized();
-
-    m_contextChanged = true;
 }
 
 // --------------------------------------------------------------------
