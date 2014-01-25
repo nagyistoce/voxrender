@@ -233,6 +233,12 @@ namespace vox
         /** Releases handles to the scene's internal data components */
         void reset();
 
+        /** Clones the scene */
+        void clone(Scene & sceneCopy);
+
+        /** Returns true if any of the scene components are dirty */
+        bool isDirty() const;
+
         /** Logs warning for missing scene components */
         void issueWarningsForMissingHandles() const;
 

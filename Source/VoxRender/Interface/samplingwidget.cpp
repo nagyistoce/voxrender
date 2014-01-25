@@ -36,14 +36,19 @@
 // VoxRender Dependencies
 #include "VoxLib/Scene/RenderParams.h"
 
+using namespace vox;
+
 // ----------------------------------------------------------------------------
 //  Constuctor - Connect widget slots and signals
 // ----------------------------------------------------------------------------
 SamplingWidget::SamplingWidget(QWidget *parent) : 
 	QWidget(parent), 
-    ui(new Ui::SamplingWidget)
+    ui(new Ui::SamplingWidget),
+    m_ignore(false)
 {
 	ui->setupUi(this);
+
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
     
 // ----------------------------------------------------------------------------
@@ -57,42 +62,46 @@ SamplingWidget::~SamplingWidget()
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void SamplingWidget::synchronizeView()
+void SamplingWidget::sceneChanged()
 {
     // Synchronize the camera object controls
-    vox::RenderParams & settings = *MainWindow::instance->scene().parameters;
-    
-    ui->doubleSpinBox_primaryStep->setValue( (double)settings.primaryStepSize() );
-    ui->doubleSpinBox_shadowStep->setValue ( (double)settings.shadowStepSize()  );
-    ui->doubleSpinBox_occludeStep->setValue( (double)settings.occludeStepSize() );
-    ui->doubleSpinBox_coefficient->setValue( (double)settings.scatterCoefficient() );
-    
-    ui->doubleSpinBox_gradient->setValue( (double)settings.gradientCutoff() );
+    auto settings = MainWindow::instance->scene().parameters;
+    if (!settings) return;
 
-    ui->spinBox_occludeSamples->setValue( (int)settings.occludeSamples() );
+    m_ignore = true;
 
-    m_dirty = false;
+    ui->doubleSpinBox_primaryStep->setValue( (double)settings->primaryStepSize() );
+    ui->doubleSpinBox_shadowStep->setValue ( (double)settings->shadowStepSize()  );
+    ui->doubleSpinBox_occludeStep->setValue( (double)settings->occludeStepSize() );
+    ui->doubleSpinBox_coefficient->setValue( (double)settings->scatterCoefficient() );
+    
+    ui->doubleSpinBox_gradient->setValue( (double)settings->gradientCutoff() );
+
+    ui->spinBox_occludeSamples->setValue( (int)settings->occludeSamples() );
+
+    m_ignore = false;
 }
 
 // ----------------------------------------------------------------------------
 //  Applies widget control changes to the scene 
 // ----------------------------------------------------------------------------
-void SamplingWidget::processInteractions()
+void SamplingWidget::update()
 {
-    if (m_dirty)
-    {
-        m_dirty = false;
+    if (m_ignore) return;
 
-        vox::RenderParams & settings = *MainWindow::instance->scene().parameters;
-    
-        settings.setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
-        settings.setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
-        settings.setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
-        settings.setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
-        settings.setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
+    auto settings = MainWindow::instance->scene().parameters;
+    if (!settings) return;
 
-        settings.setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
-    }
+    settings->lock();
+        settings->setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
+        settings->setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
+        settings->setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
+        settings->setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
+        settings->setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
+
+        settings->setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
+        settings->setDirty();
+    settings->unlock();
 }
 
 // ----------------------------------------------------------------------------
@@ -105,7 +114,7 @@ void SamplingWidget::on_horizontalSlider_primaryStep_valueChanged(int value)
         ui->horizontalSlider_primaryStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_doubleSpinBox_primaryStep_valueChanged(double value)
 {
@@ -114,7 +123,7 @@ void SamplingWidget::on_doubleSpinBox_primaryStep_valueChanged(double value)
         ui->doubleSpinBox_primaryStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_horizontalSlider_shadowStep_valueChanged(int value)
 {
@@ -123,7 +132,7 @@ void SamplingWidget::on_horizontalSlider_shadowStep_valueChanged(int value)
         ui->horizontalSlider_shadowStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_doubleSpinBox_shadowStep_valueChanged(double value)
 {
@@ -132,7 +141,7 @@ void SamplingWidget::on_doubleSpinBox_shadowStep_valueChanged(double value)
         ui->doubleSpinBox_shadowStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_horizontalSlider_occludeStep_valueChanged(int value)
 {
@@ -141,7 +150,7 @@ void SamplingWidget::on_horizontalSlider_occludeStep_valueChanged(int value)
         ui->horizontalSlider_occludeStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_doubleSpinBox_occludeStep_valueChanged(double value)
 {
@@ -150,11 +159,11 @@ void SamplingWidget::on_doubleSpinBox_occludeStep_valueChanged(double value)
         ui->doubleSpinBox_occludeStep,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_horizontalSlider_occludeSamples_valueChanged(int value) 
 { 
-    m_dirty = true; 
+    update();
 }
 void SamplingWidget::on_horizontalSlider_gradient_valueChanged(int value) 
 { 
@@ -162,8 +171,8 @@ void SamplingWidget::on_horizontalSlider_gradient_valueChanged(int value)
         ui->doubleSpinBox_gradient,
         ui->horizontalSlider_gradient,
         value);
-
-    m_dirty = true; 
+    
+    update();
 }
 void SamplingWidget::on_doubleSpinBox_gradient_valueChanged(double value)
 {
@@ -172,7 +181,7 @@ void SamplingWidget::on_doubleSpinBox_gradient_valueChanged(double value)
         ui->doubleSpinBox_gradient,
         value);
     
-    m_dirty = true;
+    update();
 }
 void SamplingWidget::on_horizontalSlider_coefficient_valueChanged(int value) 
 { 
@@ -180,8 +189,8 @@ void SamplingWidget::on_horizontalSlider_coefficient_valueChanged(int value)
         ui->doubleSpinBox_coefficient,
         ui->horizontalSlider_coefficient,
         value);
-
-    m_dirty = true; 
+    
+    update();
 }
 void SamplingWidget::on_doubleSpinBox_coefficient_valueChanged(double value)
 {
@@ -190,5 +199,5 @@ void SamplingWidget::on_doubleSpinBox_coefficient_valueChanged(double value)
         ui->doubleSpinBox_coefficient,
         value);
     
-    m_dirty = true;
+    update();
 }

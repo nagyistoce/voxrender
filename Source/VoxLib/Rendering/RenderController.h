@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Render Controller
+	Project: VoxLib
 
-	Description: Manages and controls a set of renderers for a common scene
+	Description: Manages the rendering of a scene
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -30,14 +30,13 @@
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Rendering/RenderThread.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxLib/Rendering/Renderer.h"
 
 // API namespace
 namespace vox
 {
     class Renderer;
+    class Transfer;
 
 	/** Controller class for managing the rendering of a scene */
 	class VOX_EXPORT RenderController
@@ -51,10 +50,11 @@ namespace vox
         typedef std::function<void()> ErrorCallback;
 
 	public:	
-        ~RenderController() { stop(); }
+        /** Destructor */
+        ~RenderController();
 
         /** Initializes a new render control device */
-		RenderController() : m_isPaused(false), m_threadsChanged(false) { } 
+		RenderController();
 
 		/** Returns the number of renderers in this controller */
 		size_t numRenderers() const;
@@ -69,7 +69,7 @@ namespace vox
         void setTransferFunction(std::shared_ptr<Transfer> transfer);
 
 		/** Returns the scene currently being renderered */
-        Scene const& currentScene() const { return m_scene; }
+        Scene const& scene() const;
 
 		/**
 		 * Initiates rendering operations
@@ -109,45 +109,12 @@ namespace vox
         /** Render state accessor */
         bool isActive() const;
 
-	private:
-        friend RenderThread;
+        /** Returns the total active time spent on the current render (in seconds) */
+        long long renderTime() const;
 
+	private:
         class Impl;
         Impl * m_pImpl;
-
-        void entryPoint(); ///< Control thread entry point
-
-        std::list<std::shared_ptr<RenderThread>> m_renderThreads; ///< Renderer management threads
-
-        boost::posix_time::time_duration m_backupRate; ///< Rate of IPR backup 
-
-        MasterHandle  m_masterRenderer;   ///< Master renderer module for render operations 
-        ErrorCallback m_errorCallback;    ///< User callback for master renderer failure
-        size_t        m_targetIterations; ///< Targeted number of iterations
-        size_t        m_currIterations;   ///< Current number of iterations
-        Scene         m_scene;            ///< Handles to scene components 
-
-        // Render control subroutines
-        void handleError(std::exception_ptr & error);
-        void managementSubroutine();
-        void controlSubroutine();
-        void synchronizationSubroutine(bool force = false);
-        void imageUpdateSubroutine();
-        void renderingSubroutine();
-        void terminateRenderThreads();
-
-        // ControlThread syncronization context
-        std::shared_ptr<boost::thread> m_controlThread;
-        boost::mutex                   m_controlMutex;
-
-        // Pause synchronization context
-        bool            m_isPaused;
-        boost::mutex    m_pauseMutex;
-        boost::cond_var m_pauseCond;              
-
-        // RenderThread list synchronization context
-        mutable boost::mutex m_threadsMutex;  
-        bool                 m_threadsChanged;
 	};
 
 }

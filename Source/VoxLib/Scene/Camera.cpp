@@ -60,6 +60,32 @@ Camera::~Camera()
 }
 
 // --------------------------------------------------------------------
+//  Clones the camera into an existing structure
+// --------------------------------------------------------------------
+void Camera::clone(Camera & camera)
+{
+    lock(); 
+    camera.lock();
+
+    camera.m_isDirty = true;
+    camera.m_isFilmDirty = m_isFilmDirty;
+    camera.m_pos = m_pos;
+    camera.m_eye = m_eye;
+    camera.m_right = m_right;
+    camera.m_up = m_up;
+    camera.m_focalDistance = m_focalDistance;
+    camera.m_apertureSize = m_apertureSize;
+    camera.m_fieldOfView = m_fieldOfView;
+    camera.m_eyeDistance = m_eyeDistance;
+    camera.m_exposure = m_exposure;
+    camera.m_filmWidth = m_filmWidth;
+    camera.m_filmHeight = m_filmHeight;
+
+    camera.unlock();
+    unlock();
+}
+
+// --------------------------------------------------------------------
 //  Executes a yaw movement of the camera
 // --------------------------------------------------------------------
 void Camera::yaw(float radians)

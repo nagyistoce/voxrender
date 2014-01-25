@@ -4,7 +4,7 @@
 
 	Description: Manages and the rendering thread for a single renderer
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -70,7 +70,7 @@ void RenderThread::entryPoint()
     {
         m_renderer->startup(); // Notify render initiation
 
-        m_renderer->syncScene(m_controller.m_scene); // Initialize scene context
+        //m_renderer->syncScene(m_controller.m_scene); // Initialize scene context
 
         while (true)
         {
@@ -113,15 +113,15 @@ void RenderThread::entryPoint()
 // --------------------------------------------------------------------
 void RenderThread::handlePauseRequests()
 {
-    if (m_controller.m_isPaused)
-    {
-        boost::mutex::scoped_lock lock(m_controller.m_pauseMutex);
+    //if (m_controller.m_isPaused)
+    //{
+    //    boost::mutex::scoped_lock lock(m_controller.m_pauseMutex);
 
-        while (m_controller.m_isPaused) 
-        {
-            m_controller.m_pauseCond.wait(lock);
-        }
-    }
+    //    while (m_controller.m_isPaused) 
+    //    {
+    //        m_controller.m_pauseCond.wait(lock);
+    //    }
+    //}
 }
 
 // --------------------------------------------------------------------
@@ -129,30 +129,29 @@ void RenderThread::handlePauseRequests()
 // --------------------------------------------------------------------
 void RenderThread::handleError(std::exception_ptr & error)
 {
-    if (!(error == nullptr))
-    {
-        boost::mutex::scoped_lock lock(m_mutex);
+    //if (!(error == nullptr))
+    //{
+    //    boost::mutex::scoped_lock lock(m_mutex);
 
-        m_thread.reset(); // Mark render thread terminated
+    //    m_thread.reset(); // Mark render thread terminated
 
-        try
-        {
-            // Check for restart flag and notify controller if set
-            if (!(m_failed = m_renderer->exception(error)))
-            {
-                m_controller.m_threadsChanged = true;
-            }
-        }
-        catch(...)
-        {
-            Logger::addEntry(Severity_Error, Error_NotAllowed, VOX_LOG_CATEGORY,
-                             "Terminating Renderer: Exception thrown by exception handler",
-                             __FILE__, __LINE__);
+    //    try
+    //    {
+    //        // Check for restart flag and notify controller if set
+    //        if (!(m_failed = m_renderer->exception(error)))
+    //        {
+    //            m_controller.m_threadsChanged = true;
+    //        }
+    //    }
+    //    catch(...)
+    //    {
+    //        VOX_LOG_ERROR(Error_NotAllowed, VOX_LOG_CATEGORY, 
+    //            "Terminating Renderer: Exception thrown by it's exception handler")
 
-            m_failed = true;
-        }
+    //        m_failed = true;
+    //    }
 
-    }
+    //}
 }
 
 } // namespace vox

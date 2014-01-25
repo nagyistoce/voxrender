@@ -2,10 +2,10 @@
 #                                                                           #
 #   Project: VoxRender - Volume Scatter Renderer                            #
 #                                                                           #
-#   Description: Performs real-time volume rendering with a single and      #
-#                multiple scattering integrator
+#   Description: Performs real-time volume rendering with a single          #
+#                scattering integrator                                      #
 #                                                                           #
-#       Copyright (C) 2012 Lucas Sherman                                    #
+#       Copyright (C) 2012-2014 Lucas Sherman                               #
 #                                                                           #
 #       Lucas Sherman, email: LucasASherman@gmail.com                       #
 #                                                                           #
@@ -100,7 +100,8 @@ Set(SOURCES_CLIP
 Set(SOURCES_SCENE
     Scene/CCamera.cpp
     Scene/CClipGeometry.cpp
-	Scene/CLight.cpp
+    Scene/CLight.cpp
+    Scene/CRenderParams.cpp
     Scene/CVolumeBuffer.cpp
     Scene/CTransferBuffer.cpp
 )

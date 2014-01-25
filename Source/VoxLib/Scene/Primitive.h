@@ -140,13 +140,13 @@ namespace vox
         Vector3f const& normal() { return m_normal; }
 
         /** Sets a new normal vector for this plane */
-        void setNormal(Vector3f const& normal);
+        void setNormal(Vector3f const& normal) { m_normal = normal; }
 
         /** Returns the current position vector for this plane */
         float distance() { return m_distance; }
 
         /** Sets a new position vector for this plane */
-        void setDistance(float distance);
+        void setDistance(float distance) { m_distance = distance; }
 
     private:
         Plane(Vector3f const& normal, float distance) :

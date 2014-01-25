@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Camera
+	Project: VoxLib
 
 	Description: Defines a generic 3D camera applicable to general rendering
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -49,6 +49,12 @@ public:
 
     /** Destructor */
     ~Camera();
+
+    /** Camera copy constructor */
+    Camera(Camera & camera) { camera.clone(*this); }
+
+    /** Clones the camera into an existing structure */
+    void clone(Camera & camera);
 
     /** Returns the current camera position */
     inline Vector3f const& position() const { return m_pos; }

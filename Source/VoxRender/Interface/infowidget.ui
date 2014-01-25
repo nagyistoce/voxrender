@@ -96,6 +96,17 @@
          <string>ms</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Rand Seeds</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="text">
+         <string>ms</string>
+        </property>
+       </item>
       </item>
       <item>
        <property name="text">

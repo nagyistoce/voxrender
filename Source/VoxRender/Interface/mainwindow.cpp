@@ -688,7 +688,6 @@ bool MainWindow::canStopRendering()
 // ----------------------------------------------------------------------------
 void MainWindow::synchronizeView()
 {
-    samplingwidget->synchronizeView();
     transferwidget->synchronizeView();
 
     // Synchronize the lighting controls
@@ -1339,21 +1338,6 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {
     // Process scene interaction through the view
     m_renderView->processSceneInteractions();
-
-    // Process scene interactions through the interface
-    if (ui->checkBox_imagingAuto->isChecked() || m_imagingUpdate)
-    {
-        m_imagingUpdate = false; // Reset the image update flag
-
-        // Process any changes to the clip geometry
-        BOOST_FOREACH (auto & pane, m_clipPanes)
-        {
-            auto widget = static_cast<ClipPlaneWidget*>(pane->getWidget());
-            widget->processInteractions();
-        }
-
-        samplingwidget->processInteractions();
-    }
 
     // Lock the framebuffer and issue the frameReady signal
     emit frameReady(std::make_shared<FrameBufferLock>(frame));

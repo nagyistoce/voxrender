@@ -91,9 +91,12 @@ namespace filescope {
     //                        TEXTURE SAMPLERS
     // --------------------------------------------------------------------
 
-    texture<UInt8,3,cudaReadModeNormalizedFloat>  gd_volumeTex_UInt8;     ///< Volume data texture
-    texture<UInt16,3,cudaReadModeNormalizedFloat> gd_volumeTex_UInt16;    ///< Volume data texture
-    texture<Int16,3,cudaReadModeNormalizedFloat>  gd_volumeTex_Int16;     ///< Volume data texture
+#define VOX_TEXTURE(T) texture<##T,3,cudaReadModeNormalizedFloat>  gd_volumeTex_##T
+    VOX_TEXTURE(Int8);
+    VOX_TEXTURE(UInt8);
+    VOX_TEXTURE(Int16);
+    VOX_TEXTURE(UInt16);
+#undef VOX_TEXTURE
 
     texture<float,3,cudaReadModeElementType>      gd_opacityTex;  // Opacity data texture
     texture<uchar4,3,cudaReadModeNormalizedFloat> gd_diffuseTex;  // Diffuse data texture
@@ -121,6 +124,13 @@ namespace filescope {
 
             case Volume::Type_UInt16: 
                 density = static_cast<float>(tex3D(gd_volumeTex_UInt16, 
+                                                x*gd_volumeBuffer.invSpacing()[0], 
+                                                y*gd_volumeBuffer.invSpacing()[1], 
+                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                break;
+
+            case Volume::Type_Int8:
+                density = static_cast<float>(tex3D(gd_volumeTex_Int8, 
                                                 x*gd_volumeBuffer.invSpacing()[0], 
                                                 y*gd_volumeBuffer.invSpacing()[1], 
                                                 z*gd_volumeBuffer.invSpacing()[2])); 
@@ -444,53 +454,24 @@ void RenderKernel::setVolume(CVolumeBuffer const& volume)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_volumeBuffer, &volume, sizeof(volume)));
 
+#define VOX_SETUP_TEX(T)                                                   \
+    case Volume::Type_##T: {                                               \
+	    filescope::gd_volumeTex_##T.normalized     = false;                \
+        filescope::gd_volumeTex_##T.filterMode     = cudaFilterModeLinear; \
+        filescope::gd_volumeTex_##T.addressMode[0] = cudaAddressModeClamp; \
+        filescope::gd_volumeTex_##T.addressMode[1] = cudaAddressModeClamp; \
+        filescope::gd_volumeTex_##T.addressMode[2] = cudaAddressModeClamp; \
+        VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_##T, \
+            volume.handle(), volume.formatDescriptor()));                  \
+        break; }
+
     // Select the appropriate sampler for the data type
     switch (volume.type())
     {
-    case Volume::Type_UInt8: 
-    {
-	    // Volume texture sampler settings
-	    filescope::gd_volumeTex_UInt8.normalized     = false;
-        filescope::gd_volumeTex_UInt8.filterMode     = cudaFilterModeLinear; // cudaFilterModeLinear
-        filescope::gd_volumeTex_UInt8.addressMode[0] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_UInt8.addressMode[1] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_UInt8.addressMode[2] = cudaAddressModeClamp;
-
-	    // Bind the volume handle to a texture for sampling
-        VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_UInt8, 
-            volume.handle(), volume.formatDescriptor()));
-        break;
-    }
-
-    case Volume::Type_UInt16: 
-    {
-	    // Volume texture sampler settings
-	    filescope::gd_volumeTex_UInt16.normalized     = false;
-        filescope::gd_volumeTex_UInt16.filterMode     = cudaFilterModeLinear; 
-        filescope::gd_volumeTex_UInt16.addressMode[0] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_UInt16.addressMode[1] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_UInt16.addressMode[2] = cudaAddressModeClamp;
-
-	    // Bind the volume handle to a texture for sampling
-        VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_UInt16, 
-            volume.handle(), volume.formatDescriptor()));
-        break;
-    }
-    
-    case Volume::Type_Int16: 
-    {
-	    // Volume texture sampler settings
-	    filescope::gd_volumeTex_Int16.normalized     = false;
-        filescope::gd_volumeTex_Int16.filterMode     = cudaFilterModeLinear; 
-        filescope::gd_volumeTex_Int16.addressMode[0] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_Int16.addressMode[1] = cudaAddressModeClamp;
-        filescope::gd_volumeTex_Int16.addressMode[2] = cudaAddressModeClamp;
-
-	    // Bind the volume handle to a texture for sampling
-        VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTex_Int16, 
-            volume.handle(), volume.formatDescriptor()));
-        break;
-    }
+    VOX_SETUP_TEX(UInt8);
+    VOX_SETUP_TEX(UInt16);
+    VOX_SETUP_TEX(Int8);
+    VOX_SETUP_TEX(Int16);
 
     default:
         throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,

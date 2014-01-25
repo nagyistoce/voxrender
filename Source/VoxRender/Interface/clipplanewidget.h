@@ -49,23 +49,15 @@ public:
 
 	~ClipPlaneWidget();
 
-    QString title() { return m_title; }
-    int index()     { return m_index; }
-
-    void setIndex(int index) { m_index = index; }
-
-    void processInteractions();
-
 private:
 	Ui::ClipPlaneWidget* ui;
 
-	QString m_title; ///< Light identifier/name
-
     std::shared_ptr<vox::Plane> m_plane; ///< Associated scene object
-
-	int m_index;
-    bool m_dirty;
     
+    void update();
+
+    bool m_block;
+
 protected:
     void changeEvent(QEvent * event);
 

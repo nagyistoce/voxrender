@@ -32,6 +32,12 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/ErrorCodes.h"
+#include "VoxLib/Scene/Transfer.h"
+#include "VoxLib/Scene/TransferMap.h"
+#include "VoxLib/Scene/Camera.h"
+#include "VoxLib/Scene/Light.h"
+#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxLib/Scene/RenderParams.h"
 
 // API namespace
 namespace vox
@@ -205,6 +211,49 @@ void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
                     "No export module found", Error_BadToken);
     }
+}
+
+// --------------------------------------------------------------------
+//  Clones a scene, referencing the volume and copying the other comps
+// --------------------------------------------------------------------
+bool Scene::isDirty() const
+{
+    return (camera && camera->isDirty())           ||
+           (lightSet && lightSet->isDirty())       ||
+           (parameters && parameters->isDirty())   ||
+           (transfer && transfer->isDirty())       ||
+           (transferMap && transferMap->isDirty()) ||
+           (clipGeometry && clipGeometry->isDirty());
+}
+
+// --------------------------------------------------------------------
+//  Clones a scene, referencing the volume and copying the other comps
+// --------------------------------------------------------------------
+void Scene::clone(Scene & scene)
+{
+    scene.volume = volume; // Volume immutable during render
+
+    if (camera)
+    {
+        if (scene.camera) camera->clone(*scene.camera.get());
+        else scene.camera = std::shared_ptr<Camera>(new Camera(*camera));
+    }
+    else scene.camera.reset();
+    
+    if (parameters)
+    {
+        if (scene.parameters) parameters->clone(*scene.parameters.get());
+        else scene.parameters = std::shared_ptr<RenderParams>(new RenderParams(*parameters));
+    }
+    else scene.parameters.reset();
+
+    if (transfer)
+    {
+    }
+    else if (transferMap)
+    {
+    }
+    else scene.transferMap.reset();
 }
 
 // --------------------------------------------------------------------

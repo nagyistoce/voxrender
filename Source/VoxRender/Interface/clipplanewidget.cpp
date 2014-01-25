@@ -53,8 +53,8 @@ namespace filescope {
 ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane) : 
     QWidget(parent), 
     ui(new Ui::ClipPlaneWidget),
-    m_title("Clipping Plane"),
-    m_plane(plane)
+    m_plane(plane),
+    m_block(true)
 {
 	ui->setupUi(this);
 
@@ -72,7 +72,7 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
     ui->doubleSpinBox_pitch->setValue(phi);
     ui->doubleSpinBox_yaw->setValue(theta);
 
-    m_dirty = false;
+    m_block = false;
 }
 
 // --------------------------------------------------------------------
@@ -90,31 +90,30 @@ ClipPlaneWidget::~ClipPlaneWidget()
 // --------------------------------------------------------------------
 //  Synchronizes the light widget's position controls with the scene
 // --------------------------------------------------------------------
-void ClipPlaneWidget::processInteractions()
+void ClipPlaneWidget::update()
 {
-    if (m_dirty)
-    {
-        // Compute the new normal vector of the plane
-        double latitude  = ui->doubleSpinBox_pitch->value() / 180.0 * M_PI;
-        double longitude = ui->doubleSpinBox_yaw->value()   / 180.0 * M_PI;
-        float  cl        = cos(latitude);
+    if (m_block) return;
 
-        Vector3f normal = Vector3f(
-            cl * cos(longitude),
-            sin(latitude),
-            cl * sin(longitude)).normalized();
-        m_plane->setNormal(normal);
+    // Compute the new normal vector of the plane
+    double latitude  = ui->doubleSpinBox_pitch->value() / 180.0 * M_PI;
+    double longitude = ui->doubleSpinBox_yaw->value()   / 180.0 * M_PI;
+    float  cl        = cos(latitude);
 
-        // Compute the minimum distance from the origin
-        Vector3f position(
-            ui->doubleSpinBox_x->value(),
-            ui->doubleSpinBox_y->value(),
-            ui->doubleSpinBox_z->value());
-        float distance = normal.dot(position);
-        m_plane->setDistance(distance);
-            
-        m_dirty = false; 
-    }
+    Vector3f normal = Vector3f(
+        cl * cos(longitude),
+        sin(latitude),
+        cl * sin(longitude)).normalized();
+    m_plane->setNormal(normal);
+
+    // Compute the minimum distance from the origin
+    Vector3f position(
+        ui->doubleSpinBox_x->value(),
+        ui->doubleSpinBox_y->value(),
+        ui->doubleSpinBox_z->value());
+    float distance = normal.dot(position);
+    m_plane->setDistance(distance);
+    
+    m_plane->setDirty();
 }
 
 // --------------------------------------------------------------------
@@ -137,8 +136,6 @@ void ClipPlaneWidget::changeEvent(QEvent * event)
     }
 }
 
-// :TODO: Setup a macro to generate all of these
-
 // --------------------------------------------------------------------
 //  Synchronizes the slider and spinbox elements
 // --------------------------------------------------------------------
@@ -149,12 +146,8 @@ void ClipPlaneWidget::on_horizontalSlider_pitch_valueChanged(int value)
         ui->horizontalSlider_pitch,
         value);
     
-    m_dirty = true;
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_horizontalSlider_yaw_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -162,12 +155,8 @@ void ClipPlaneWidget::on_horizontalSlider_yaw_valueChanged(int value)
         ui->horizontalSlider_yaw,
         value);
     
-    m_dirty = true;
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_horizontalSlider_x_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -175,12 +164,8 @@ void ClipPlaneWidget::on_horizontalSlider_x_valueChanged(int value)
         ui->horizontalSlider_x,
         value);
     
-    m_dirty = true;
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_horizontalSlider_y_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -188,12 +173,8 @@ void ClipPlaneWidget::on_horizontalSlider_y_valueChanged(int value)
         ui->horizontalSlider_y,
         value);
     
-    m_dirty = true;
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_horizontalSlider_z_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -201,70 +182,50 @@ void ClipPlaneWidget::on_horizontalSlider_z_valueChanged(int value)
         ui->horizontalSlider_z,
         value);
     
-    m_dirty = true;
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_doubleSpinBox_pitch_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_pitch,
         ui->doubleSpinBox_pitch,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_doubleSpinBox_yaw_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_yaw,
         ui->doubleSpinBox_yaw,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_doubleSpinBox_x_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_x,
         ui->doubleSpinBox_x,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_doubleSpinBox_y_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_y,
         ui->doubleSpinBox_y,
         value);
-
-    m_dirty = true;
+    
+    update();
 }
-
-// --------------------------------------------------------------------
-//  Synchronizes the slider and spinbox elements
-// --------------------------------------------------------------------
 void ClipPlaneWidget::on_doubleSpinBox_z_valueChanged(double value)
 {
     Utilities::forceSlToSb(
         ui->horizontalSlider_z,
         ui->doubleSpinBox_z,
         value);
-
-    m_dirty = true;
+    
+    update();
 }

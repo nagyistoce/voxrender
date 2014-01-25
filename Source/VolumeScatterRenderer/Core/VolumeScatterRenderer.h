@@ -67,6 +67,9 @@ public:
     
     /** Returns the runtime (in ms) of the tonemapping kernel */
     virtual float tonemapTime() = 0;
+
+    /** Returns the runtime (in ms) of the rand seed generation */
+    virtual float rndSeedTime() = 0;
 };
 
 }

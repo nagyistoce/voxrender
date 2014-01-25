@@ -168,24 +168,4 @@ Char const* Sphere::classTypeId()
     return filescope::sphereTypeId; 
 }  
 
-// ---------------------------------------------------------------------------- 
-//  
-// ---------------------------------------------------------------------------- 
-void Plane::setNormal(Vector3f const& normal)
-{
-    m_normal = normal;
-
-    setDirty();
-}
-
-// ---------------------------------------------------------------------------- 
-//  
-// ---------------------------------------------------------------------------- 
-void Plane::setDistance(float distance)
-{
-    m_distance = distance;
-
-    setDirty();
-}
-
 } // namespace vox

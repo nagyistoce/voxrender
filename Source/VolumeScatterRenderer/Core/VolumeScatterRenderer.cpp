@@ -43,6 +43,7 @@
 #include "VoxLib/Scene/Transfer.h"
 #include "VoxLib/Scene/Volume.h"
 #include "VoxLib/Scene/PrimGroup.h"
+#include "VoxLib/Scene/RenderParams.h"
 
 // Device representations of scene components
 #include "VolumeScatterRenderer/Core/CBuffer.h"
@@ -218,7 +219,14 @@ public:
     void render()
     {
         // Generate new seeds for the CUDA RNG seed buffer
+        cudaEvent_t start, stop;
+        cudaEventCreate(&start);
+        cudaEventRecord(start,0);
         m_rndSeeds0.randomize(); m_rndSeeds1.randomize();
+        cudaEventCreate(&stop);
+        cudaEventRecord(stop,0);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&m_rndSeedTime, start, stop);
 
         // Execute one cycle of the device rendering kernel
         RenderKernel::execute(0, 0, m_hdrBuffer.width(), m_hdrBuffer.height());
@@ -292,6 +300,14 @@ public:
         return TonemapKernel::getTime();
     }
 
+    // --------------------------------------------------------------------
+    //  Returns the time for the last call to the tonemapping kernel
+    // --------------------------------------------------------------------
+    virtual float rndSeedTime()
+    {
+        return m_rndSeedTime;
+    }
+
 private:
     std::vector<int> m_devices; /// Authorized Device IDs
 
@@ -305,7 +321,9 @@ private:
     CVolumeBuffer     m_volumeBuffer;   ///< Volume data buffer
     CTransferBuffer   m_transferBuffer; ///< Transfer function data buffer
 
-    float m_exposure; ///< Exposure factor
+    float m_exposure;     ///< Exposure factor
+    float m_rndSeedTime;  ///< Time generating seeds
+    float m_callbackTime; ///< Callback time
 
     RenderCallback m_callback; ///< User defined render callback
     boost::mutex   m_mutex;    ///< Mutex for callback modification

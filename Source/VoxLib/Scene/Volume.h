@@ -112,10 +112,10 @@ public:
     }
 
     /** Spacing modifier */     
-    void setSpacing(Vector4f const& spacing) { m_spacing = spacing; m_contextChanged = true; }
+    void setSpacing(Vector4f const& spacing) { m_spacing = spacing; }
 
     /** Offset modifier */
-    void setOffset(Vector3f const& offset) { m_offset = offset; m_contextChanged = true; }
+    void setOffset(Vector3f const& offset) { m_offset = offset; }
 
     /** Spacing accessor */     
     Vector4f const& spacing() const { return m_spacing; } 
@@ -156,7 +156,7 @@ public:
     Type type() const { return m_type; }
 
     /** Returns true if the volume was changed */
-    bool isDirty() const { return m_contextChanged; }
+    bool isDirty() const { return m_isDirty; }
 
 private:
     friend RenderController;
@@ -167,6 +167,8 @@ private:
      * @param data    Volume density data in a grid x,y,z,t format
      * @param extent  Volume extent in x,y,z,t dimensions respectively
      * @param spacing Volume spacing in x,y,z,t dimensions respectively
+     * @param offset  The offset of the volume in world space
+     * @param type    The underlying type of the volume data
      */
     Volume(std::shared_ptr<UInt8>   data,
            Vector4u const&          extent,
@@ -175,7 +177,7 @@ private:
 		   Type                     type
           );
 
-    bool m_contextChanged; ///< Context change flag
+    bool m_isDirty; ///< Context change flag
 
     std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
 

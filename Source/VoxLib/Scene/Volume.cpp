@@ -61,14 +61,17 @@ namespace vox {
     } // namespace filescope
     } // namespace anonymous
     
-Volume::Volume(
-    std::shared_ptr<UInt8> data,
-    Vector4u const& extent,
-    Vector4f const& spacing,
-    Vector3f const& offset,
-	Type            type
-        ) : 
-    m_data(data), m_extent(extent), m_spacing(spacing), m_type(type), m_offset(offset)
+// ----------------------------------------------------------------------------
+//  Wraps a volume data buffer to construct a new volume object
+// ----------------------------------------------------------------------------
+Volume::Volume(std::shared_ptr<UInt8> data, Vector4u const& extent, 
+               Vector4f const& spacing, Vector3f const& offset, Type type) : 
+    m_data(data), 
+    m_extent(extent), 
+    m_spacing(spacing), 
+    m_type(type), 
+    m_offset(offset), 
+    m_isDirty(false)
 { 
     updateRange();
 }
@@ -95,6 +98,7 @@ void Volume::updateRange()
 
     switch (m_type)
     {
+        case Volume::Type_Int8:   m_range = filescope::maxValueRange<Int8>(elems, ptr); break;
         case Volume::Type_UInt8:  m_range = filescope::maxValueRange<UInt8>(elems, ptr); break;
         case Volume::Type_UInt16: m_range = filescope::maxValueRange<UInt16>(elems, ptr); break;
         case Volume::Type_Int16:  m_range = filescope::maxValueRange<Int16>(elems, ptr); break;
@@ -115,6 +119,7 @@ float Volume::fetchNormalized(size_t x, size_t y, size_t z) const
     float sample;
     switch (m_type)
     {
+        case Volume::Type_Int8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int8>::max()); break;
         case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
         case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
         case Volume::Type_Int16:  sample = (static_cast<float>(reinterpret_cast<Int16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int16>::max());; break;

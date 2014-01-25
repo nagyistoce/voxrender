@@ -44,9 +44,7 @@ class VOX_EXPORT RenderThread : public boost::noncopyable
 {
 public:
     /** Constructs control objects for this render thread */
-    RenderThread(RenderController & controller, 
-                 std::shared_ptr<Renderer> renderer) :
-      m_controller(controller),
+    RenderThread(std::shared_ptr<Renderer> renderer) :
       m_renderer(renderer),
       m_failed(false)
     {
@@ -95,8 +93,6 @@ public:
     }
 
 private:
-    RenderController & m_controller;
-
     // Render thread subroutines
     void handlePauseRequests(); 
     void handleError(std::exception_ptr & error);

@@ -367,7 +367,7 @@ namespace filescope {
         // Find the full height spanning edge
         for(int i = 0; i < 3; i++) 
         {
-            int length = edges[i].p2[1] - edges[i].p1[0];
+            int length = edges[i].p2[1] - edges[i].p1[1];
             if(length > maxLength) 
             {
                     maxLength = length;
@@ -512,7 +512,7 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
     emissive.clear();
 
     // Cycle through each quad
-    auto res = Vector2f(128.f, 64.f);
+    auto res = Vector2f(256.f, 128.f);
     BOOST_FOREACH (auto & quad, m_quads)
     {
         auto h1 = quad->heights[0] / 2;

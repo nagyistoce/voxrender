@@ -28,7 +28,7 @@
 #define VOX_RENDER_PARAMS_H
 
 // Include Dependencies
-#include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 
 // API namespace
@@ -43,14 +43,51 @@ class RenderController;
 class VOX_EXPORT RenderParams
 {
 public:
+    /** Factory method for shared_ptr construction */
     static std::shared_ptr<RenderParams> create()
     {
         return std::shared_ptr<RenderParams>(new RenderParams());
     }
-
-    /** Returns true if the context change flag is set */
-    inline bool isDirty() const { return m_contextChanged; }
     
+    /** Initializes default render parameters */
+    RenderParams() :
+        m_primaryStep(2.0f),
+        m_shadowStep(3.0f),
+        m_occludeStep(1.0f),
+        m_occludeSamples(0u),
+        m_gradCutoff(0.0f),
+        m_scatterCoefficient(0.0f),
+        m_isDirty(false)
+    {
+    }
+    
+    /** Camera copy constructor */
+    RenderParams(RenderParams & params) { params.clone(*this); }
+
+    /** Clones the camera into an existing structure */
+    void clone(RenderParams & params)
+    {
+        lock();
+        params.lock();
+
+        m_primaryStep = m_primaryStep;
+        m_shadowStep = m_shadowStep;
+        m_occludeStep = m_occludeStep;
+        m_occludeSamples = m_occludeSamples;
+        m_gradCutoff = m_gradCutoff;
+        m_scatterCoefficient = m_scatterCoefficient;
+        m_isDirty = m_isDirty;
+
+        params.unlock();
+        unlock();
+    }
+
+    /** Returns true if the dirty flag is set */
+    bool isDirty() const { return m_isDirty; }
+    
+    /** Sets the dirty flag */
+    void setDirty() { m_isDirty = true; }
+
     /** Returns the primary trace ray step size (mm) */
     float primaryStepSize() const { return m_primaryStep; }
     
@@ -73,34 +110,32 @@ public:
     void setGradientCutoff(float cutoff) { m_gradCutoff = cutoff; }
 
     /** Sets the primary trace ray step size (mm) */
-    void setPrimaryStepSize(float step) { m_primaryStep = step; m_contextChanged = true; }
+    void setPrimaryStepSize(float step) { m_primaryStep = step; }
     
     /** Sets the primary trace ray step size (mm) */
-    void setShadowStepSize(float step) { m_shadowStep = step; m_contextChanged = true; }
+    void setShadowStepSize(float step) { m_shadowStep = step; }
     
     /** Sets the primary trace ray step size (mm) */
-    void setOccludeStepSize(float step) { m_occludeStep = step; m_contextChanged = true; }
+    void setOccludeStepSize(float step) { m_occludeStep = step; }
 
     /** Sets the number of ambient occlusion sample rays cast */
-    void setOccludeSamples(unsigned int samples) { m_occludeSamples = samples; m_contextChanged = true; }
+    void setOccludeSamples(unsigned int samples) { m_occludeSamples = samples; }
 
     /** Sets the scattering function coefficient */
-    void setScatterCoefficient(float value) { m_scatterCoefficient = value; m_contextChanged = true; }
+    void setScatterCoefficient(float value) { m_scatterCoefficient = value; }
+
+    /** Locks the parameters for editing */
+    void lock() { m_mutex.lock(); }
+
+    /** Unlocks the parameters for editing */
+    void unlock() { m_mutex.unlock(); }
 
 private:
-    /** Initializes default render parameters */
-    RenderParams() :
-        m_primaryStep(2.0f),
-        m_shadowStep(3.0f),
-        m_occludeStep(1.0f),
-        m_occludeSamples(0u),
-        m_gradCutoff(0.0f),
-        m_scatterCoefficient(0.0f),
-        m_contextChanged(true)
-    {
-    }
-
     friend RenderController;
+
+    void setClean() { m_isDirty = false; }
+
+    boost::mutex m_mutex; ///< Mutex for scene locking
 
     float m_primaryStep;    ///< Step size for primary volume trace
     float m_shadowStep;     ///< Step size for shadow ray trace
@@ -111,7 +146,7 @@ private:
 
     unsigned int m_occludeSamples; ///< Number of ambient occlusion samples
 
-    bool m_contextChanged; ///< Context change flag
+    bool m_isDirty; ///< Context change flag
 };
 
 }

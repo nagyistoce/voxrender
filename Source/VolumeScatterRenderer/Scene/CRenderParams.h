@@ -4,7 +4,7 @@
     
 	Description: Wraps the management of GPU side render params
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -32,11 +32,12 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Scene/RenderParams.h"
 
 // API namespace
 namespace vox
 {
+
+class RenderParams;
 
 /** Rendering Volume Class */
 class CRenderParams
@@ -45,16 +46,7 @@ public:
     VOX_DEVICE CRenderParams() { }
 
     /** Sets the parameter structures data content */
-    VOX_HOST CRenderParams(std::shared_ptr<RenderParams> settings) :
-        m_primaryStep( settings->primaryStepSize() ),
-        m_shadowStep( settings->shadowStepSize() ),
-        m_occludeStep( settings->occludeStepSize() ),
-        m_occludeSamples( settings->occludeSamples() ),
-        m_gradientCutoff( settings->gradientCutoff() ),
-        m_scatterCoefficient( settings->scatterCoefficient() ),
-        m_backdropColor(1.0f, 1.0f, 1.0f)
-    {
-    }
+    VOX_HOST CRenderParams(std::shared_ptr<RenderParams> settings);
 
     VOX_HOST_DEVICE float        scatterCoefficient()   const { return m_scatterCoefficient; }
     VOX_HOST_DEVICE float        primaryStepSize()      const { return m_primaryStep; }

@@ -32,9 +32,7 @@
 // QT Includes
 #include <QtWidgets/QWidget>
 
-namespace Ui {
-	class SamplingWidget;
-}
+namespace Ui { class SamplingWidget; }
 
 // Volume data histogram widget
 class SamplingWidget : public QWidget
@@ -42,18 +40,16 @@ class SamplingWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit SamplingWidget( QWidget *parent = 0 );
+	explicit SamplingWidget(QWidget *parent = 0);
+
 	~SamplingWidget( );
-
-	void setEnabled( bool enabled );
-
-    void processInteractions();
-    void synchronizeView();
 
 private:
 	Ui::SamplingWidget *ui;
 
-    bool m_dirty;
+    void update();
+
+    bool m_ignore;
 
 signals:
 	void valuesChanged( );
@@ -70,6 +66,8 @@ private slots:
 	void on_horizontalSlider_occludeSamples_valueChanged(int value);
 	void on_doubleSpinBox_coefficient_valueChanged(double value);
 	void on_horizontalSlider_coefficient_valueChanged(int value);
+
+    void sceneChanged();
 };
 
 // End definition

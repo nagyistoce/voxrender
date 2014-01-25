@@ -2,9 +2,9 @@
 
 	Project: GPU based Volume Scatter Renderer
     
-	Description: Wraps the management of a CUDA 3D volume buffer
+	Description: Wraps the management of GPU side render params
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -26,10 +26,23 @@
 // Include Header
 #include "CRenderParams.h"
 
-// VoxLib Dependencies
+// Include Dependencies
 #include "VoxLib/Scene/RenderParams.h"
 
 namespace vox {
 
+// ----------------------------------------------------------------------------
+//  Initializes a GPU render param structure from the scene graph element
+// ----------------------------------------------------------------------------
+CRenderParams::CRenderParams(std::shared_ptr<RenderParams> settings) :
+    m_primaryStep( settings->primaryStepSize() ),
+    m_shadowStep( settings->shadowStepSize() ),
+    m_occludeStep( settings->occludeStepSize() ),
+    m_occludeSamples( settings->occludeSamples() ),
+    m_gradientCutoff( settings->gradientCutoff() ),
+    m_scatterCoefficient( settings->scatterCoefficient() ),
+    m_backdropColor(1.0f, 1.0f, 1.0f)
+{
+}
 
 } // namespace vox
