@@ -231,7 +231,7 @@ private:
                 renderingSubroutine();       // Perform master rendering
             
                 controlSubroutine();         // General control checks
-
+                
                 m_currIterations++;
             }
         }

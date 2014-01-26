@@ -2,7 +2,7 @@
 
 	Project: GPU based Volume Scatter Renderer
     
-	Description: Random buffer generator
+	Description: Performs initialization of the CUDA RNG states
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -23,25 +23,37 @@
 
 =========================================================================== */
 
-// Include Header
-#include "CRandomBuffer.h"
+// Begin definition
+#ifndef VSR_RANDKERNEL_H
+#define VSR_RANDKERNEL_H
 
-namespace vox
+// Common Library Header
+#include "VolumeScatterRenderer/Core/Common.h"
+
+#include <curand_kernel.h>
+
+// API namespace
+namespace vox 
 {
-    
-// --------------------------------------------------------------------
-//  Generates random content for a buffer
-// --------------------------------------------------------------------
-void CRandomBuffer2D::randomize()
+
+/** Defines the interface for initializing random generator states */
+class RandKernel
 {
-    size_t bufSize = m_width * m_height;
+public:
+    /** Executes the tonemapping kernel on the device */
+    static curandState * create(size_t width, size_t height);
 
-    std::unique_ptr<unsigned int> seeds(new unsigned int[bufSize]);
+    /** Destroys a collection of CRNG states */
+    static void destroy(curandState * states);
 
-    auto ptr = seeds.get();
-    for (size_t i = 0; i < bufSize; i++) *ptr++ = rand();
+    /** Returns the time for the last kernel execution */
+    static float getTime() { return m_elapsedTime; }
 
-    VOX_CUDA_CHECK(cudaMemcpy(m_pData, seeds.get(), bufSize*sizeof(unsigned int), cudaMemcpyHostToDevice));
-}
+private:
+    static float m_elapsedTime; ///< Kernel execution time
+};
 
 } // namespace vox
+
+// End Definition
+#endif // VSR_RANDKERNEL_H

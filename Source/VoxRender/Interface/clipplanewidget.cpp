@@ -67,7 +67,7 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
 
     float partial  = sqrt(pow(normal[0], 2) + pow(normal[2], 2));
     float phi      = asin(normal[1]) / M_PI * 180.0f;
-    float theta    = acos(normal[0] / partial)  / M_PI * 180.0f;
+    float theta    = - acos(normal[0] / partial)  / M_PI * 180.0f;
 
     ui->doubleSpinBox_pitch->setValue(phi);
     ui->doubleSpinBox_yaw->setValue(theta);

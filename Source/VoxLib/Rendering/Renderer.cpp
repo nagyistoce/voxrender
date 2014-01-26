@@ -38,8 +38,6 @@ namespace vox
 // --------------------------------------------------------------------
 bool Renderer::exception(std::exception_ptr & exception) 
 { 
-    shutdown(); // Ensure shutdown possibility
-
     try
     {
         std::rethrow_exception(exception);

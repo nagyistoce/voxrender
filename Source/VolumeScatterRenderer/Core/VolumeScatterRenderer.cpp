@@ -38,6 +38,7 @@
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Error/CudaError.h"
 #include "VoxLib/Scene/Camera.h"
+#include "VoxLib/Scene/Scene.h"
 #include "VoxLib/Scene/Film.h"
 #include "VoxLib/Scene/Light.h"
 #include "VoxLib/Scene/Transfer.h"
@@ -47,7 +48,6 @@
 
 // Device representations of scene components
 #include "VolumeScatterRenderer/Core/CBuffer.h"
-#include "VolumeScatterRenderer/Core/CRandomBuffer.h"
 #include "VolumeScatterRenderer/Core/CRandomGenerator.h"
 #include "VolumeScatterRenderer/Core/CSampleBuffer.h"
 #include "VolumeScatterRenderer/Scene/CCamera.h"
@@ -60,6 +60,7 @@
 // Interface for accessing device render kernels 
 #include "VolumeScatterRenderer/Kernels/RenderKernel.h"
 #include "VolumeScatterRenderer/Kernels/TonemapKernel.h"
+#include "VolumeScatterRenderer/Kernels/RandKernel.h"
 
 // API namespace
 namespace vox
@@ -84,11 +85,10 @@ public:
     {
         m_ldrBuffer.init();
         m_hdrBuffer.init();
-        m_rndSeeds0.init();
-        m_rndSeeds1.init();
         m_lightBuffer.init();
         m_transferBuffer.init();
         m_volumeBuffer.init();
+        m_randStates = nullptr;
     }
     
     // --------------------------------------------------------------------
@@ -103,7 +103,7 @@ public:
         catch(Error & error) 
         {
             error.message = "Error encountered during VolumeScatterRendererGPU shutdown >> " + error.message;
-            Logger::addEntry(error, Severity_Warning); // Probably not necessarily critical but could cause problems
+            VOX_LOG_EXCEPTION(Severity_Error, error); // Probably not necessarily critical but could indicate problems
         }
     }
 
@@ -131,14 +131,12 @@ public:
             {
                 // Resize the device frame buffers
                 m_hdrBuffer.resize(filmWidth, filmHeight);
-                m_rndSeeds0.resize(filmWidth, filmHeight);
-                m_rndSeeds1.resize(filmWidth, filmHeight);
                 m_ldrBuffer.resize(filmWidth, filmHeight);
+                if (m_randStates) RandKernel::destroy(m_randStates);
+                m_randStates = RandKernel::create(filmWidth, filmHeight);
 
                 // :DEBUG:
-                RenderKernel::setFrameBuffers(m_hdrBuffer,
-                                              m_rndSeeds0,
-                                              m_rndSeeds1);
+                RenderKernel::setFrameBuffers(m_hdrBuffer, m_randStates);
             }
 
             // Allocate/Resize the host side LDR framebuffer
@@ -218,16 +216,6 @@ public:
     // --------------------------------------------------------------------
     void render()
     {
-        // Generate new seeds for the CUDA RNG seed buffer
-        cudaEvent_t start, stop;
-        cudaEventCreate(&start);
-        cudaEventRecord(start,0);
-        m_rndSeeds0.randomize(); m_rndSeeds1.randomize();
-        cudaEventCreate(&stop);
-        cudaEventRecord(stop,0);
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&m_rndSeedTime, start, stop);
-
         // Execute one cycle of the device rendering kernel
         RenderKernel::execute(0, 0, m_hdrBuffer.width(), m_hdrBuffer.height());
 
@@ -276,12 +264,15 @@ public:
 	{
 		m_ldrBuffer.reset();
 		m_hdrBuffer.reset();
-		m_rndSeeds0.reset();
-		m_rndSeeds1.reset();
 		m_lightBuffer.reset();
 		m_transferBuffer.reset();
 		m_volumeBuffer.reset();
 		m_frameBuffer.reset();
+        if (m_randStates) 
+        {
+            RandKernel::destroy(m_randStates);
+            m_randStates = nullptr;
+        }
 	}
 
     // --------------------------------------------------------------------
@@ -305,7 +296,7 @@ public:
     // --------------------------------------------------------------------
     virtual float rndSeedTime()
     {
-        return m_rndSeedTime;
+        return RandKernel::getTime();
     }
 
 private:
@@ -314,15 +305,13 @@ private:
     CImgBuffer2D<ColorRgbaLdr> m_ldrBuffer;    ///< LDR post-processed image
 
     CSampleBuffer2D m_hdrBuffer;    ///< HDR raw sample data buffer
-    CRandomBuffer2D m_rndSeeds0;    ///< Seed buffer for CUDA RNG
-    CRandomBuffer2D m_rndSeeds1;    ///< Seed buffer for CUDA RNG
+    curandState *   m_randStates;   ///< States for CRNGs
 
     CBuffer1D<CLight> m_lightBuffer;    ///< Array of scene lights
     CVolumeBuffer     m_volumeBuffer;   ///< Volume data buffer
     CTransferBuffer   m_transferBuffer; ///< Transfer function data buffer
 
     float m_exposure;     ///< Exposure factor
-    float m_rndSeedTime;  ///< Time generating seeds
     float m_callbackTime; ///< Callback time
 
     RenderCallback m_callback; ///< User defined render callback

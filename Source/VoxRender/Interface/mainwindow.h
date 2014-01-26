@@ -230,8 +230,6 @@ private:
     // Plugin panes
     QVector<PaneWidget*> m_pluginPanes;
     QSpacerItem *        m_pluginSpacer;
-
-    bool m_imagingUpdate;   ///< Flags a image update signal
     
     // --------------------------------------------------------------------
     //  Do not place anything below here, the log stream must be closed 
@@ -268,8 +266,6 @@ private slots:
 
     void on_pushButton_refreshPlugins_clicked() { }
     void on_pushButton_loadPlugin_clicked();
-
-    void on_pushButton_imagingApply_clicked();
 
     void onZoomChange(float zoom);
 

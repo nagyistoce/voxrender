@@ -40,7 +40,6 @@ Set(HEADERS_CORE
 
 Set(HEADERS_CORE_IMPL
     Core/CBuffer.h
-    Core/CRandomBuffer.h
     Core/CRandomGenerator.h
     Core/CSampleBuffer.h
     Core/Intersect.h
@@ -64,6 +63,7 @@ Set(HEADERS_CLIP_IMPL
 
 Set(HEADERS_KERNELS
     Kernels/VolumeHistogramKernel.h
+    Kernels/RandKernel.h
     Kernels/RenderKernel.h
     Kernels/TonemapKernel.h
 )
@@ -88,7 +88,7 @@ SOURCE_GROUP("Header Files\\Kernels"     FILES ${HEADERS_KERNELS})
 
 Set(SOURCES_CORE
     Core/VolumeScatterRenderer.cpp
-    Core/CRandomBuffer.cpp
+    Core/FastRand.cpp
     Core/CBuffer.cu
 )
 
@@ -108,6 +108,7 @@ Set(SOURCES_SCENE
 
 Set(SOURCES_KERNELS
     Kernels/VolumeHistogramKernel.cu
+    Kernels/RandKernel.cu
     Kernels/RenderKernel.cu
     Kernels/TonemapKernel.cu
 )

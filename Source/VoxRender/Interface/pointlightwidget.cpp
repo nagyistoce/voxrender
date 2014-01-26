@@ -47,7 +47,8 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
     QWidget(parent), 
     ui(new Ui::PointLightWidget),
     m_light(light),
-    m_colorButton(new QColorPushButton())
+    m_colorButton(new QColorPushButton()),
+    m_ignore(true)
 {
 	ui->setupUi(this);
 
@@ -55,7 +56,7 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
     float distance  = light->position().length();
     float partial   = sqrt( pow(light->positionX(), 2) + pow(light->positionZ(), 2) );
     float phi       = asin(light->positionY() / distance) / M_PI * 180.0f;
-    float theta     = acos(light->positionX() / partial)  / M_PI * 180.0f;
+    float theta     = - acos(light->positionX() / partial)  / M_PI * 180.0f;
     float intensity = light->color().fold(high);
     if (light->positionX() < 0) theta = - theta;
 
@@ -70,6 +71,8 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
     m_colorButton->setColor(QColor(color[0], color[1], color[2]), true); 
     ui->layout_colorButton->addWidget(m_colorButton);
     connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
+
+    m_ignore = false;
 }
 
 // --------------------------------------------------------------------
@@ -78,7 +81,13 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 PointLightWidget::~PointLightWidget()
 {
     auto & scene = MainWindow::instance->scene();
-    if (scene.lightSet) scene.lightSet->remove(m_light);
+    if (scene.lightSet) 
+    {
+        scene.lightSet->lock();
+        scene.lightSet->remove(m_light);
+        scene.lightSet->setDirty();
+        scene.lightSet->unlock();
+    }
 
     delete m_colorButton;
     delete ui;
@@ -89,6 +98,8 @@ PointLightWidget::~PointLightWidget()
 // --------------------------------------------------------------------
 void PointLightWidget::update()
 {
+    if (m_ignore) return;
+
     m_light->lock();
 
         double latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
@@ -131,6 +142,7 @@ void PointLightWidget::changeEvent(QEvent * event)
                 if (std::find(children.begin(), children.end(), m_light) == children.end())
                     scene.lightSet->add(m_light);
             }
+        scene.lightSet->setDirty();
         scene.lightSet->unlock();
     }
 }

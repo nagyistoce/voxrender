@@ -53,6 +53,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include <curand_kernel.h>
+
 // API namespace
 namespace vox
 {
@@ -60,14 +62,16 @@ namespace vox
 	class CRandomGenerator
 	{
     public:
-        /** Initializes the seed values */
-        VOX_HOST_DEVICE CRandomGenerator(
-            unsigned int * pSeed0,
-            unsigned int * pSeed1
-            )
+        /** Initializes the CRNG state */
+        VOX_DEVICE CRandomGenerator(curandState state) :
+            m_localState(state)
         {
-            m_pSeed0 = pSeed0;
-            m_pSeed1 = pSeed1;
+        }
+
+        /** Returns the CRNG state */
+        VOX_DEVICE curandState state()
+        {
+            return m_localState;
         }
 
         /** Returns a single sample value */
@@ -91,10 +95,8 @@ namespace vox
         /** Returns a cartesian coordinate disk sample */
         VOX_DEVICE Vector2f sampleDisk()
         {
-            Vector2f sample = sample2D();
-
-            float r     = sqrtf(sample[0]);
-            float theta = 2.0f * (float)M_PI * sample[1];
+            float r     = sqrtf(sample1D());
+            float theta = 2.0f * (float)M_PI * sample1D();
 
             return Vector2f(r*cosf(theta), r*sinf(theta));
         }
@@ -124,27 +126,12 @@ namespace vox
         }
 
     private:
-        unsigned int * m_pSeed0;
-        unsigned int * m_pSeed1;
+        curandState m_localState;
 
         /** CUDA side rand() function */
-	    VOX_HOST_DEVICE float rand()
+	    VOX_DEVICE float rand()
         {
-            *m_pSeed0 = 36969 * ((*m_pSeed0) & 65535) + ((*m_pSeed0) >> 16);
-            *m_pSeed1 = 18000 * ((*m_pSeed1) & 65535) + ((*m_pSeed1) >> 16);
-
-            unsigned int ires = ((*m_pSeed0) << 16) + (*m_pSeed1);
-            
-            union
-            {
-                float f;
-                unsigned int ui;
-            } 
-            res;
-
-            res.ui = (ires & 0x007fffff) | 0x40000000;
-
-            return (res.f-2.f) / 2.f;
+            return curand_uniform(&m_localState);
         }
 	};
 }

@@ -28,7 +28,6 @@
 
 // Include Headers
 #include "VolumeScatterRenderer/Core/CBuffer.h"
-#include "VolumeScatterRenderer/Core/CRandomBuffer.h"
 #include "VolumeScatterRenderer/Core/CSampleBuffer.h"
 #include "VolumeScatterRenderer/Core/CRandomGenerator.h"
 #include "VolumeScatterRenderer/Core/Intersect.h"
@@ -75,13 +74,12 @@ namespace filescope {
 
     __constant__ CCamera           gd_camera;           ///< Device camera model
     __constant__ CBuffer1D<CLight> gd_lights;           ///< Device light buffer
-    __constant__ CRandomBuffer2D   gd_rndBuffer0;       ///< Device RNG seed buffer
-    __constant__ CRandomBuffer2D   gd_rndBuffer1;       ///< Device RNG seed buffer
     __constant__ CSampleBuffer2D   gd_sampleBuffer;     ///< HDR sample data buffer
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
     __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light
     __constant__ float             gd_occludeDist;      ///< Maximum occlude sample distance
+    __constant__ curandState *     gd_randStates;       ///< Random generator states
 
     __constant__ CClipGeometry::Clipper * gd_clipRoot;    ///< Clipping geometry root
 
@@ -384,8 +382,7 @@ namespace filescope {
             py >= gd_sampleBuffer.height()) return;
 
         // Construct the thread's random number generator
-        CRandomGenerator rng(&gd_rndBuffer0.at(px, py), 
-                             &gd_rndBuffer1.at(px, py));
+        CRandomGenerator rng(gd_randStates[px + py * gd_sampleBuffer.height()]);
         
         // Compute the volume sample point
         Ray3f sampleRay; 
@@ -402,6 +399,9 @@ namespace filescope {
         {
             gd_sampleBuffer.push(px, py, gd_backdropClr);
         }
+
+        // Store the CRNG state for subsequent launches 
+        gd_randStates[px + py * gd_sampleBuffer.height()] = rng.state();
     }
 
 } // namespace filescope
@@ -556,15 +556,10 @@ void RenderKernel::setTransfer(CTransferBuffer const& transfer)
 // --------------------------------------------------------------------
 //  Sets the device framebuffers used for rendering/post-processing
 // --------------------------------------------------------------------
-void RenderKernel::setFrameBuffers(
-    CSampleBuffer2D const& sampleBuffer,
-    CRandomBuffer2D const& rndSeeds0,
-    CRandomBuffer2D const& rndSeeds1
-    )
+void RenderKernel::setFrameBuffers(CSampleBuffer2D const& sampleBuffer, curandState * randStates)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_sampleBuffer, &sampleBuffer, sizeof(sampleBuffer)));
-    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_rndBuffer0,   &rndSeeds0,    sizeof(rndSeeds0)));
-    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_rndBuffer1,   &rndSeeds1,    sizeof(rndSeeds1)));
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_randStates, &randStates, sizeof(randStates)));
 }
 
 // --------------------------------------------------------------------
@@ -593,7 +588,6 @@ void RenderKernel::execute(size_t xstart, size_t ystart,
 
     // Acquire the time for this kernel execution
     cudaEventElapsedTime(&m_elapsedTime, start, stop);
-
 }
 
 } // namespace vox

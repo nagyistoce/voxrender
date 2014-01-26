@@ -1022,8 +1022,15 @@ void MainWindow::on_pushButton_addLight_clicked()
     LightDialogue lightDialogue(numLights);
     int result = lightDialogue.exec();
 
-    if (!result) numLights--; // Cancelled, decrement UID generator
-    else addLight(activeScene.lightSet->add(), lightDialogue.nameSelected( ));
+    if (result)
+    {
+        activeScene.lightSet->lock();
+        auto light = Light::create();
+        activeScene.lightSet->add(light);
+        addLight(light, lightDialogue.nameSelected());
+        activeScene.lightSet->setDirty();
+        activeScene.lightSet->unlock();
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1294,14 +1301,6 @@ void MainWindow::on_pushButton_addClip_clicked()
     
     MainWindow::instance->scene().clipGeometry->add(prim);
     addClippingGeometry(prim);
-}
-
-// ----------------------------------------------------------------------------
-// Flag to perform an image update for the next render callback
-// ----------------------------------------------------------------------------
-void MainWindow::on_pushButton_imagingApply_clicked()
-{
-    m_imagingUpdate = true;
 }
 
 // ----------------------------------------------------------------------------

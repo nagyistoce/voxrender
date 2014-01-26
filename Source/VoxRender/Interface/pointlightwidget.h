@@ -61,6 +61,8 @@ private:
 
     QColorPushButton * m_colorButton; ///< Customized color swatch + button widget
 
+    bool m_ignore;
+
 private slots:
 	void on_horizontalSlider_intensity_valueChanged(int value);
 	void on_doubleSpinBox_intensity_valueChanged(double value);

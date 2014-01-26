@@ -397,7 +397,8 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     auto elapsed = curr - m_lastTime; 
     m_lastTime = curr;
 
-    auto fps = 1000000.0f / std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    auto msc = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    auto fps = 1000000.0f / msc;
 
     // Draws the statistical information overlay
     {
