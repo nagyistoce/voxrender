@@ -81,7 +81,8 @@ public:
     // --------------------------------------------------------------------
     //  Prepares the renderer for use with the specified GPU device
     // --------------------------------------------------------------------
-    VolumeScatterRendererImpl()
+    VolumeScatterRendererImpl() :
+        m_exposure(0.0f)
     {
         m_ldrBuffer.init();
         m_hdrBuffer.init();
@@ -185,9 +186,6 @@ public:
         if (scene.camera->isDirty() || force)
         {
             RenderKernel::setCamera(CCamera(scene.camera));
-
-            // :TODO: Move to seperate dirty flag and don't reset film
-            m_exposure = scene.camera->exposure();
         }
 
         // Clipping geometry synchronization
@@ -235,7 +233,7 @@ public:
     // --------------------------------------------------------------------
     //  Sets the post render event callback function for this renderer
     // --------------------------------------------------------------------
-    virtual void setRenderEventCallback(RenderCallback callback)
+    void setRenderEventCallback(RenderCallback callback)
     {
         boost::mutex::scoped_lock lock(m_mutex);
 
@@ -245,22 +243,22 @@ public:
     // --------------------------------------------------------------------
     //  Exports the scene data to the output resource :TODO:
     // --------------------------------------------------------------------
-    virtual void backupIpr(std::ostream & out) { } 
+    void backupIpr(std::ostream & out) { } 
     
     // --------------------------------------------------------------------
     //  Merges the input image buffer with the internal one :TODO:
     // --------------------------------------------------------------------
-    virtual void pushIpr(IprImage const& ipr, size_t const& samples) { }
+    void pushIpr(IprImage const& ipr, size_t const& samples) { }
 
     // --------------------------------------------------------------------
     //  Pulls the current in-progress-render buffer then clears it :TODO:
     // --------------------------------------------------------------------
-    virtual void pullIpr(IprImage & img, size_t & samples) { }
+    void pullIpr(IprImage & img, size_t & samples) { }
 
     // --------------------------------------------------------------------
     //  Terminates rendering operations and clears device data buffers
     // --------------------------------------------------------------------
-	virtual void shutdown()
+    void shutdown()
 	{
 		m_ldrBuffer.reset();
 		m_hdrBuffer.reset();
@@ -274,11 +272,19 @@ public:
             m_randStates = nullptr;
         }
 	}
+    
+    // --------------------------------------------------------------------
+    //  Sets the exposure factor for the tonemapping
+    // --------------------------------------------------------------------
+    void setExposure(float exposure)
+    {
+        m_exposure = exposure;
+    }
 
     // --------------------------------------------------------------------
     //  Returns the time for the last call to the render kernel
     // --------------------------------------------------------------------
-    virtual float renderTime()
+    float renderTime()
     {
         return RenderKernel::getTime();
     }
@@ -286,7 +292,7 @@ public:
     // --------------------------------------------------------------------
     //  Returns the time for the last call to the tonemapping kernel
     // --------------------------------------------------------------------
-    virtual float tonemapTime()
+    float tonemapTime()
     {
         return TonemapKernel::getTime();
     }
@@ -294,7 +300,7 @@ public:
     // --------------------------------------------------------------------
     //  Returns the time for the last call to the tonemapping kernel
     // --------------------------------------------------------------------
-    virtual float rndSeedTime()
+    float rndSeedTime()
     {
         return RandKernel::getTime();
     }

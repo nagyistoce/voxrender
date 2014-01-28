@@ -51,7 +51,7 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image) :
+            ImgExporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image) :
                 m_sink(sink), m_options(options), m_image(image)
             {
                 // Compose the resource identifier for log warning entries
@@ -81,11 +81,11 @@ namespace
                 int colorType;
                 switch (m_image.type())
                 {
-                case RawImage::Format_RGB:       colorType = PNG_COLOR_TYPE_RGB; png_set_bgr(pngPtr); break;
-                case RawImage::Format_Gray:      colorType = PNG_COLOR_TYPE_GRAY; break;
-                case RawImage::Format_RGBA:      colorType = PNG_COLOR_TYPE_RGBA; png_set_bgr(pngPtr); break;
-                case RawImage::Format_RGBX:      colorType = PNG_COLOR_TYPE_RGBA; png_set_bgr(pngPtr); png_set_strip_alpha(pngPtr); break;
-                case RawImage::Format_GrayAlpha: colorType = PNG_COLOR_TYPE_GRAY_ALPHA; break;
+                case Bitmap::Format_RGB:       colorType = PNG_COLOR_TYPE_RGB; png_set_bgr(pngPtr); break;
+                case Bitmap::Format_Gray:      colorType = PNG_COLOR_TYPE_GRAY; break;
+                case Bitmap::Format_RGBA:      colorType = PNG_COLOR_TYPE_RGBA; png_set_bgr(pngPtr); break;
+                case Bitmap::Format_RGBX:      colorType = PNG_COLOR_TYPE_RGBA; png_set_bgr(pngPtr); png_set_strip_alpha(pngPtr); break;
+                case Bitmap::Format_GrayAlpha: colorType = PNG_COLOR_TYPE_GRAY_ALPHA; break;
                 }
                 png_set_IHDR(pngPtr, infoPtr, m_image.width(), m_image.height(), m_image.depth(), colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
                 png_write_info(pngPtr, infoPtr);
@@ -128,7 +128,7 @@ namespace
 
             ResourceOStream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
-            RawImage const&   m_image;       ///< image data
+            Bitmap const&   m_image;       ///< image data
             std::string       m_displayName; ///< Warning identifier
         };
 
@@ -150,7 +150,7 @@ namespace
             // --------------------------------------------------------------------
             //  Read in the PNG image data using libPNG
             // --------------------------------------------------------------------
-            RawImage readImageFile()
+            Bitmap readImageFile()
             {
                 // Initialize the necessary libpng data structures
                 auto pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -173,15 +173,15 @@ namespace
                 auto channels   = png_get_channels(pngPtr, infoPtr);
                 auto color_type = png_get_color_type(pngPtr, infoPtr);
 
-                RawImage::Format format;
+                Bitmap::Format format;
                 switch (color_type)
                 {
-                case PNG_COLOR_TYPE_RGB:        format = RawImage::Format_RGB; break;
-                case PNG_COLOR_TYPE_GRAY:       format = RawImage::Format_Gray; break;
-                case PNG_COLOR_TYPE_RGB_ALPHA:  format = RawImage::Format_RGBA; break;
-                case PNG_COLOR_TYPE_GRAY_ALPHA: format = RawImage::Format_GrayAlpha; break;
+                case PNG_COLOR_TYPE_RGB:        format = Bitmap::Format_RGB; break;
+                case PNG_COLOR_TYPE_GRAY:       format = Bitmap::Format_Gray; break;
+                case PNG_COLOR_TYPE_RGB_ALPHA:  format = Bitmap::Format_RGBA; break;
+                case PNG_COLOR_TYPE_GRAY_ALPHA: format = Bitmap::Format_GrayAlpha; break;
                 }
-                RawImage result(format, imgWidth, imgHeight, bitdepth, 0); 
+                Bitmap result(format, imgWidth, imgHeight, bitdepth, 0); 
 
                 // Perform the actual image decoding
                 auto stride  = result.stride(); 
@@ -222,7 +222,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
+void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image);
@@ -234,7 +234,7 @@ void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-RawImage PngImg::importer(ResourceIStream & source, OptionSet const& options)
+Bitmap PngImg::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

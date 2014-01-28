@@ -1096,7 +1096,7 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionExport_Image_triggered()
 {
-    // :TODO: Detect available export types from RawImage exporters
+    // :TODO: Detect available export types from Bitmap exporters
     String fileTypes;
     fileTypes += "PNG Image (*.png)\n";
     fileTypes += "JPEG Image (*.jpg)\n";

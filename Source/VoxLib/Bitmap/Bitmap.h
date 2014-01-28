@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxLib - Bitmap
+	Project: VoxRender - Image
+    
+	Description: Defines a generic image class
 
-	Description: Defines a bitmap class for image import/export operations
-
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,101 +24,259 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_BITMAP
-#define VOX_BITMAP
+#ifndef VOX_RAW_IMAGE_H
+#define VOX_RAW_IMAGE_H
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
-#include "VoxLib/IO/OptionSet.h"
+#include "VoxLib/Core/Types.h"
 #include "VoxLib/IO/Resource.h"
 
 // API namespace
 namespace vox
 {
+    class ImageImporter;
+    class ImageExporter;
 
-class VOX_EXPORT Bitmap;
+	/** 
+	 * @brief Image Class
+	 */
+	class VOX_EXPORT Bitmap
+	{
+    public:
+        enum Format
+        {
+            Format_Begin,
+            Format_RGB = Format_Begin,
+            Format_RGBA,
+            Format_RGBX,
+            Format_Gray,
+            Format_GrayAlpha,
+            Format_Unknown,
+            Format_End
+        };
 
-/** 
- * Bitmap Importer
- *
- * This typedef specifies the format of a bitmap file importer. The VoxLib
- * library offers a built in system for controlling the import of bitmap information. 
- * Bitmap import/export modules are registered with the Bitmap class through a static
- * interface and associated with a file type. When an attempt is made to 
- * import a Bitmap file through the Bitmap::imprt method, the BitmapImporter whose
- * type matches the provided file type will be executed.
- *
- * @sa
- *  ::BitmapExporter
- */      
-typedef std::function<Bitmap(ResourceIStream & data, OptionSet const& options)> BitmapImporter;
+	public:
+		/**
+		 * @brief Overload for imprt
+         *
+         * This function overloads the imprt function and automatically provides the 
+         * identifier as the resource identifer and matchname and the matchname for 
+         * selecting an Importer.
+		 */
+	    inline static Bitmap imprt(ResourceId const& identifier, OptionSet const& options = OptionSet())
+        {
+            return imprt(ResourceIStream(identifier), options);
+        }
 
-/** 
- * Bitmap Exporter
- *
- * This typedef specifies the format of a bitmap file exporter. The VoxLib
- * library offers a built in system for controlling the export of bitmap information. 
- * Bitmap import/export modules are registered with the Bitmap class through a static
- * interface and associated with a file type. When an attempt is made to 
- * export a Bitmap file through the Bitmap::exprt method, the BitmapExporter whose
- * type matches the provided file type will be executed.
- *
- * @sa
- *  ::BitmapExporter
- */      
-typedef std::function<void(ResourceOStream & data, OptionSet const& options, Bitmap const& bitmap)> BitmapExporter;
+		/**
+		 * @brief Imports a image using the internal image file loading mechanism.
+		 * 
+         * This function can be used as an abstract interface for importing image
+         * files. The data parameter is transparently passed to the selected 
+         * importer. Any exceptions thrown by an importer will be propogated out.
+         *
+         * @sa 
+         *  ::ImageExporter
+         *
+		 * @param data       [in] The data stream with the imported content
+         * @param matchname  [in] The match string for the importer selection
+         * @param options    [in] Optional string containing 'name: value' options 
+         *
+         * @returns The loaded image object
+         *
+         * @throws
+         *  ::Error No import module is defined which accepts the matchname
+		 */
+	    static Bitmap imprt(ResourceIStream & data, 
+                              OptionSet const&  options   = OptionSet(),
+                              String const&     extension = String()); 
 
+		/**
+		 * @brief Overload for exprt
+         *
+         * This function overloads the imprt function and automatically provides the 
+         * identifier as the resource identifer
+		 */
+	    inline void exprt(ResourceId const& identifier, OptionSet const& options = OptionSet()) const
+        {
+            return exprt(ResourceOStream(identifier), options);
+        }
 
-/** Generic bitmap class */
-class VOX_EXPORT Bitmap
-{
-public:
-    /** Bitmap data format flags */
-    enum Type
-    {
-        Type_Begin,                  ///< Begin iterator for Type enumeration
-        Type_A8R8G8B8 = Type_Begin,  ///< 8 bit per channel ARGB
-        Type_R8G8B8,                 ///< 8 bit per channel RGB
-        Type_RgbHdr,                 ///< 32 bit floating point RGB
-        Type_Gray8,                  ///< 8 bit grayscale
-        Type_Gray12,                 ///< 12 bit grayscale
-        Type_Gray16,                 ///< 16 bit grayscale
-        Type_End                     ///< End iterator for Type enumeration
-    };
+		/**
+		 * @brief Exports a image using the internal image file export mechanism.
+		 * 
+         * This function can be used as an abstract interface for exporting image
+         * files. The data parameter is transparently passed to the selected 
+         * exporter. Any exceptions thrown by an exporter will be propogated out.
+         *
+         * @sa 
+         *  ::ImageExporter
+         *
+		 * @param data       [out] The data stream for the exported content
+         * @param matchname  [in]  The match string for the exporter selection
+         *
+         * @throws
+         *  ::Error No export module is defined which accepts the matchname
+		 */
+		void exprt(ResourceOStream & data, 
+                   OptionSet const&  options   = OptionSet(), 
+                   String const&     extension = String()) const; 
 
-    /** Printable strings for Type enum */
-    static String typeStr[Type_End];
+		/**`
+		 * Registers a new image importer with the specified extension. If an importer is already 
+         * specified which has a conflicting extension, it will be overridden.
+		 * 
+		 * @param importer [in] The new image importer to be registered
+		 * @param matcher  [in] The regular expression for matching
+		 */
+        static void registerImportModule(String const& extension, std::shared_ptr<ImageImporter> importer);
 
-public:
-	inline static Bitmap imprt(ResourceId const& identifier, OptionSet const& options = OptionSet())
-    {
-        return imprt(ResourceIStream(identifier), options);
-    }
+		/**
+		 * Registers a new image exporter with the specified extension.
+         * If an exporter is already specified which has a conflicting extension 
+         * the new exporter will take precedence.
+		 * 
+		 * @param loader  [in] The new image exporter to be registered
+		 * @param matcher [in] The regular expression for matching
+		 */
+        static void registerExportModule(String const& extension, std::shared_ptr<ImageExporter> exporter);
 
-	static Bitmap imprt(ResourceIStream & data, 
-                        OptionSet const&  options   = OptionSet(),
-                        String const&     extension = String())
-    {
-        return Bitmap();
-    }
+        /** Removes an image import module */
+        static void removeImportModule(std::shared_ptr<ImageImporter> importer, String const& extension = "");
 
-	inline void exprt(ResourceId const& identifier, OptionSet const& options = OptionSet()) const
-    {
-        return exprt(ResourceOStream(identifier), options);
-    }
+        /** Removes an image export module */
+        static void removeExportModule(std::shared_ptr<ImageExporter> exporter, String const& extension = "");
+        
+        /** Removes an image import module */
+        static void removeImportModule(String const& extension);
 
-	void exprt(ResourceOStream & data, 
-                OptionSet const&  options   = OptionSet(), 
-                String const&     extension = String()) const
-    {
-    }
+        /** Removes an image export module */
+        static void removeExportModule(String const& extension);
 
-    //static void registerImportModule(String const& extension, BitmapImporter importer) { }
+    public:
+		/** Initializes an image object for a known image format */
+		Bitmap(Format type, size_t width = 0, size_t height = 0, size_t bitDepth = 0, 
+            size_t stride = 0, std::shared_ptr<void> data = nullptr);
 
-    //static void registerExportModule(String const& extension, BitmapExporter exporter) { }
-};
+        /** Initializes an image object for an unknown image format */
+        Bitmap(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
+            size_t stride = 0, std::shared_ptr<void> data = nullptr);
 
-} // namespace vox
+        /** 
+         * Adjusts the padding of the image 
+         *
+         * If newStride is set to 0, the padding will be word aligned
+         *
+         * @param newStride The new row stride (in bytes)
+         * @param copyData  If true, original image data will be retained
+         */
+        void pad(size_t newStride = 0, bool copyData = true);
+
+        /** Returns the raw image data pointer */
+        void * data() const { return m_buffer.get(); }
+
+        /** Returns the raw image data pointer */
+        void * data() { return m_buffer.get(); }
+
+        /** Resizes the image to the specified dimensions */
+        void resize(size_t width, size_t height)
+        {
+            resize(width, height, width*m_depth*m_channels);
+        }
+
+        /** Resizes the image to the specified dimensions */
+        void resize(size_t width, size_t height, size_t stride)
+        {
+            m_width = width; m_height = height; m_stride = stride;
+
+            m_buffer = std::shared_ptr<void>(new UInt8[stride*height]);
+        }
+        
+        /** Returns the format of the image */
+        Format type() const { return m_format; }
+
+        /** Returns the image bit depth */
+        size_t depth() const { return m_depth; }
+
+        /** Returns the number of channels on the image */
+        size_t channels() const { return m_channels; }
+
+        /** Returns the size in bytes of an image pixel */
+        size_t elementSize() const { return m_depth*m_channels/8; }
+
+        /** Image width accessor */
+        size_t width() const { return m_width; }
+
+        /** Image height accessor */
+        size_t height() const { return m_height; }
+
+        /** Image stride accessor */
+        size_t stride() const { return m_stride; }
+
+        /** Returns the size of the image content */
+        size_t size() const { return m_stride*m_height; }
+
+	private:
+        size_t m_height;   ///< Image height
+		size_t m_width;    ///< Image width
+		size_t m_stride;   ///< Image stride
+        size_t m_channels; ///< Number of data channels
+        Format m_format;   ///< Image data format
+        size_t m_depth;    ///< The size of an image pixel element 
+
+        std::shared_ptr<void> m_buffer;  ///< Image buffer
+	};
+
+	/** 
+	 * Image File Importer
+     *
+     * This typedef specifies the format of a image file importer. The VoxRender
+     * library offers a built in system for controlling the import of image information. 
+     * Image import/export modules are registered with the Image class through a static
+     * interface and associated with a regular expression. When an attempt is made to 
+     * import a image file through the Image::import interface, the first ImageLoader whose
+     * regular expression matches the parameter provided to load will be executed.
+     *
+     * This mechanism makes it easy to load image files by overloading the load function
+     * for different file types or transfer mechanisms. If a image file is requested from 
+     * a remote resource repository for instance, a specific importer can be setup to match 
+     * the transfer protocol and perform the file transfer before executing a load function
+     * again for the specific file format which was transferred.
+     *
+     * There are no restriction on what a image loader may throw, and any exceptions will be
+     * propogated out of the abstract load interface. As the default loaders will throw exceptions
+     * derived from vox::Error, it may be most usefull to enforce that all importers throw only
+     * exceptions derived from std::runtime_error or std::error.
+     *
+     * The option set for the load operation takes the form of 'name : value' pairs stored in
+     * a map of values to boost::any objects which represent the specific value type. These name
+     * value pairs are intended to allow more control over import/export behavior through the 
+     * abstract interface.
+     *
+     * @sa
+     *  ::ImageExporter
+	 */              
+    class ImageImporter { public: virtual Bitmap importer(ResourceIStream & data, OptionSet const& options) = 0;
+                          virtual ~ImageImporter() { } };
+
+    /**
+	 * Image File Exporter
+     *
+     * This typedef specifies the format of a image file exporter. The VoxRender
+     * library offers a built in system for controlling the export of image information. 
+     * Image import/export modules are registered with the Image class through a static
+     * interface and associated with a regular expression. When an attempt is made to 
+     * export a image file through the Image::export interface, the first ImageExporter whose
+     * extension matches the parameter provided to load will be executed.
+     *
+     * @sa
+     *  ::ImageImporter
+     */
+    class ImageExporter { public: virtual void exporter(ResourceOStream & data, OptionSet const& options, 
+                                                        Bitmap const& image) = 0; 
+                          virtual ~ImageExporter() { } };
+}
 
 // End definition
-#endif // VOX_BITMAP
+#endif // VOX_SCENE_H

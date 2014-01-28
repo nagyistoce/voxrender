@@ -67,7 +67,7 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image, std::shared_ptr<void> handle) :
+            ImgExporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image, std::shared_ptr<void> handle) :
                 m_sink(sink), m_options(options), m_image(image), m_handle(handle)
             {
                 // Compose the resource identifier for log warning entries
@@ -94,27 +94,27 @@ namespace
                 unsigned int stripAlpha = 0;
                 switch (m_image.type())
                 {
-                case RawImage::Format_RGB:
+                case Bitmap::Format_RGB:
                     cinfo.input_components = 3;
                     cinfo.in_color_space = JCS_RGB;
                     swapRgb = true;
                     break;
-                case RawImage::Format_RGBA:
+                case Bitmap::Format_RGBA:
                     VOX_LOG_WARNING(Error_Consistency, VOX_SIMG_LOG_CATEGORY, 
                         format("JPEG formatting will strip alpha channel <%1%>", m_displayName));
-                case RawImage::Format_RGBX: // "Alpha" channel information is junk anyway, no msg
+                case Bitmap::Format_RGBX: // "Alpha" channel information is junk anyway, no msg
                     cinfo.input_components = 3;
                     cinfo.in_color_space = JCS_RGB;
                     stripAlpha = 4u;
                     swapRgb = true;
                     break;
-                case RawImage::Format_Gray:
+                case Bitmap::Format_Gray:
                     cinfo.input_components = 1;
                     cinfo.in_color_space = JCS_GRAYSCALE;
                     if (m_image.depth() != 8) throw Error(__FILE__, __LINE__, VOX_SIMG_LOG_CATEGORY, 
                         format("JPEG supports only 8 bit grayscale <%1%>", m_displayName), Error_NotAllowed);
                     break;
-                case RawImage::Format_GrayAlpha:
+                case Bitmap::Format_GrayAlpha:
                     cinfo.input_components = 1;
                     cinfo.in_color_space = JCS_GRAYSCALE;
                     VOX_LOG_WARNING(Error_Consistency, VOX_SIMG_LOG_CATEGORY, 
@@ -212,7 +212,7 @@ namespace
 
             ResourceOStream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
-            RawImage const&   m_image;       ///< image data
+            Bitmap const&   m_image;       ///< image data
             std::string       m_displayName; ///< Warning identifier
         };
 
@@ -251,7 +251,7 @@ namespace
             // --------------------------------------------------------------------
             //  Read in the PNG image data using libPNG
             // --------------------------------------------------------------------
-            RawImage readImageFile()
+            Bitmap readImageFile()
             {
                 // Setup the compression options
                 struct jpeg_decompress_struct cinfo;
@@ -279,21 +279,21 @@ namespace
 
                 jpeg_destroy_decompress(&cinfo);
 
-                RawImage::Format type;
+                Bitmap::Format type;
                 switch (cinfo.out_color_space)
                 {
                 case JCS_RGB:
-                    type = RawImage::Format_RGB;
+                    type = Bitmap::Format_RGB;
                     break;
                 case JCS_GRAYSCALE:
-                    type = RawImage::Format_Gray;
+                    type = Bitmap::Format_Gray;
                     break;
                 default: 
-                    type = RawImage::Format_Unknown;
+                    type = Bitmap::Format_Unknown;
                     break;
                 }
 
-                return RawImage(type, cinfo.output_width, cinfo.output_height, 8, stride, buffer);
+                return Bitmap(type, cinfo.output_width, cinfo.output_height, 8, stride, buffer);
             }
             
         private:
@@ -349,7 +349,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void JpegImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
+void JpegImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image, m_handle);
@@ -361,7 +361,7 @@ void JpegImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImag
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-RawImage JpegImg::importer(ResourceIStream & source, OptionSet const& options)
+Bitmap JpegImg::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

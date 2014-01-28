@@ -29,6 +29,7 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
 
 // API namespace
@@ -67,6 +68,9 @@ namespace vox
 
         /** Image depth accessor */
         size_t depth() const { return m_depth; }
+
+        /** Returns the dimensions of the image as an unsigned vector */
+        Vector3u dims() const { return Vector3u(m_width, m_height, m_depth); }
 
         /** Image buffer accessor for const data access */
         T const* data() const { return m_buffer.get(); }

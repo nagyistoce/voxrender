@@ -42,7 +42,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Performs reinhard based tonemapping of the input HDR image buffer
     // --------------------------------------------------------------------
-    __global__ void kernel(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
+    __global__ void tonemapKernel(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
     { 	
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
@@ -82,7 +82,7 @@ void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgba
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventRecord(start,0);
-    filescope::kernel<<<blocks,threads>>>(sampleBuffer, imageBuffer, exposure);
+    filescope::tonemapKernel<<<blocks,threads>>>(sampleBuffer, imageBuffer, exposure);
     cudaEventCreate(&stop);
     cudaEventRecord(stop,0);
     cudaEventSynchronize(stop);

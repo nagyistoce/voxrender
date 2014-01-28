@@ -352,6 +352,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
     if (pEvent->button() == Qt::LeftButton) return;
 
     auto transfer = MainWindow::instance->scene().transfer;
+    transfer->lock();
 
     if (auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get()))
     {
@@ -381,6 +382,8 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
         MainWindow::instance->setTransferNode(nullptr);
     }
 
+    transfer->setDirty();
+    transfer->unlock();
     MainWindow::instance->transferWidget()->onTransferFunctionChanged();
 }
 

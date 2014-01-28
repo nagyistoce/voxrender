@@ -97,7 +97,7 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image) :
+            ImgExporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image) :
                 m_sink(sink), m_options(options), m_image(image)
             {
                 // Compose the resource identifier for log warning entries
@@ -158,7 +158,7 @@ namespace
 
             ResourceOStream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
-            RawImage const&   m_image;       ///< image data
+            Bitmap const&   m_image;       ///< image data
             std::string       m_displayName; ///< Warning identifier
         };
 
@@ -180,7 +180,7 @@ namespace
             // --------------------------------------------------------------------
             //  Read in the PNG image data using libPNG
             // --------------------------------------------------------------------
-            RawImage readImageFile()
+            Bitmap readImageFile()
             {
                 size_t bytesRead = 0;
 
@@ -205,14 +205,14 @@ namespace
                 }
                 
                 // Attempt to detect the type of the underlying bitmap 
-                // (RawImage doesn't support color palettes)
+                // (Bitmap doesn't support color palettes)
                 // :TODO: If there is a palette, force unknown format
-                auto type = RawImage::Format_Unknown;
+                auto type = Bitmap::Format_Unknown;
                 switch (dibHeader.bitsPerPixel)
                 {
-                case 8: type = RawImage::Format_Gray; break;
-                case 24: type = RawImage::Format_RGB; break;
-                case 32: type = RawImage::Format_RGBA; break;
+                case 8: type = Bitmap::Format_Gray; break;
+                case 24: type = Bitmap::Format_RGB; break;
+                case 32: type = Bitmap::Format_RGBA; break;
                 }
 
                 // Read the raw image data from the file
@@ -230,8 +230,8 @@ namespace
                 }
 
                 // Ensure the proper bit depth will be selected. ie format unknown require user specification
-                auto bitDepth = (type == RawImage::Format_Unknown) ? dibHeader.bitsPerPixel : 0;
-                return RawImage(type, dibHeader.imageWidth, dibHeader.imageHeight, 0, stride, data);
+                auto bitDepth = (type == Bitmap::Format_Unknown) ? dibHeader.bitsPerPixel : 0;
+                return Bitmap(type, dibHeader.imageWidth, dibHeader.imageHeight, 0, stride, data);
             }
             
         private:
@@ -267,7 +267,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void BmpImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage const& image)
+void BmpImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image);
@@ -279,7 +279,7 @@ void BmpImg::exporter(ResourceOStream & sink, OptionSet const& options, RawImage
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-RawImage BmpImg::importer(ResourceIStream & source, OptionSet const& options)
+Bitmap BmpImg::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

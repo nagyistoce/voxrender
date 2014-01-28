@@ -32,7 +32,7 @@
 
 // VoxRender Dependencies
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Image/RawImage.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 #include "VoxLib/Scene/Camera.h"
 #include "VoxLib/Scene/Scene.h"
 #include "VoxLib/Scene/PrimGroup.h"
@@ -121,7 +121,7 @@ void RenderView::saveImageToFile(String const& identifier) const
     try
     {
         auto buffer = std::shared_ptr<void>((void*)m_image.data(), [] (void *) {});
-        RawImage(RawImage::Format_RGBX, m_image.width(), m_image.height(), 
+        Bitmap(Bitmap::Format_RGBX, m_image.width(), m_image.height(), 
             8, m_image.stride(), buffer).exprt(identifier);
     }
     catch (Error & error)

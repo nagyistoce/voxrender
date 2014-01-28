@@ -178,12 +178,6 @@ public:
     /** Returns true if the film dimensions change flag is set */
     inline bool isFilmDirty() const { return m_isFilmDirty; }
 
-    /** Sets the exposure factor for the camera film */
-    void setExposure(float exposure) { m_exposure = exposure; }
-
-    /** Returns the exposure factor for the camera film */
-    float exposure() { return m_exposure; }
-
     /** Locks the camera for editing */
     void lock() { m_mutex.lock(); }
 
@@ -215,7 +209,6 @@ private:
 	float m_apertureSize;   ///< Aperture size  (mm)
     float m_fieldOfView;    ///< Field of view  (radians)
     float m_eyeDistance;    ///< Distance between eyes (mm)
-    float m_exposure;       ///< Film exposure factor
 
     // Film dimensions
     size_t m_filmWidth;  ///< Film width  (pixels)

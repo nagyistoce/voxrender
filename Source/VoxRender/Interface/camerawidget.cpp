@@ -140,7 +140,7 @@ void CameraWidget::on_horizontalSlider_exposure_valueChanged(int value)
         ui->horizontalSlider_exposure,
         value);
 
-    MainWindow::instance->scene().camera->setExposure(
+    MainWindow::instance->m_renderer->setExposure(
         ui->doubleSpinBox_exposure->value());
 }
 
@@ -154,7 +154,7 @@ void CameraWidget::on_doubleSpinBox_exposure_valueChanged(double value)
         ui->doubleSpinBox_exposure,
         value);
     
-    MainWindow::instance->scene().camera->setExposure(
+    MainWindow::instance->m_renderer->setExposure(
         ui->doubleSpinBox_exposure->value());
 }
 

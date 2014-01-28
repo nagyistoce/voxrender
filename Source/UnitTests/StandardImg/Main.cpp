@@ -37,7 +37,7 @@
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
-#include "VoxLib/Image/RawImage.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_SUITE( StandardImgSuite )
             for (size_t y = 0; y < h; y++)
                 ((UInt32*)(ptr + b*y))[x] = 0xFF0000FF;
 
-            RawImage imageO(RawImage::Format_RGBA, w, h, 8, b, d);
+            Bitmap imageO(Bitmap::Format_RGBA, w, h, 8, b, d);
             imageO.exprt(IDENTIFIER);
-            auto imageI = RawImage::imprt(IDENTIFIER);
+            auto imageI = Bitmap::imprt(IDENTIFIER);
 
             auto optr = (char*)imageO.data();
             auto iptr = (char*)imageI.data();

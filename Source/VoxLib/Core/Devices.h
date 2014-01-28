@@ -57,16 +57,16 @@ namespace vox
          *
          * @throws CudaError
          */
-		VOX_HOST static void loadDeviceInfo( );
+		VOX_HOST static void loadDeviceInfo();
 
 		/** Returns the number of available CUDA enabled devices on the system */
-		VOX_HOST static int getDeviceCount( ) { return m_deviceCount; }
+		VOX_HOST static int getDeviceCount() { return m_deviceCount; }
 
 		/** Returns a handle to the specified CUDA enabled device. */
-		VOX_HOST static Device const& getDevice( int dev ) { return m_devices[dev]; }
+		VOX_HOST static Device const& getDevice(int dev) { return m_devices[dev]; }
 
         /** Returns an std::vector containing all available devices */
-        VOX_HOST static std::vector<Device> const& devices( ) { return m_devices; }
+        VOX_HOST static std::vector<Device> const& devices() { return m_devices; }
 
 	private:
 		VOX_HOST DeviceManager( ) { }

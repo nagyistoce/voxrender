@@ -35,7 +35,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Generates a set of CRNG states
     // --------------------------------------------------------------------
-    __global__ void kernel(size_t width, size_t height, curandState * state)
+    __global__ void randKernel(size_t width, size_t height, curandState * state)
     { 	
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
@@ -71,15 +71,16 @@ curandState * RandKernel::create(size_t width, size_t height)
     
 	// Execute the kernel
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventRecord(start,0);
-    filescope::kernel<<<blocks,threads>>>(width, height, state);
-    cudaEventCreate(&stop);
-    cudaEventRecord(stop,0);
-    cudaEventSynchronize(stop);
+    VOX_CUDA_CHECK(cudaEventCreate(&start));
+    VOX_CUDA_CHECK(cudaEventRecord(start,0));
+    filescope::randKernel<<<blocks,threads>>>(width, height, state);
+    VOX_CUDA_CHECK(cudaDeviceSynchronize());
+    VOX_CUDA_CHECK(cudaEventCreate(&stop));
+    VOX_CUDA_CHECK(cudaEventRecord(stop,0));
+    VOX_CUDA_CHECK(cudaEventSynchronize(stop));
 
     // Acquire the time for this kernel execution
-    cudaEventElapsedTime(&m_elapsedTime, start, stop);
+    VOX_CUDA_CHECK(cudaEventElapsedTime(&m_elapsedTime, start, stop));
 
     return state;
 }

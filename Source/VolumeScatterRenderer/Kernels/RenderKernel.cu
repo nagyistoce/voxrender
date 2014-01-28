@@ -196,28 +196,30 @@ namespace filescope {
         float              rayStepSize
         )
     {
-        // :TODO: Trim min from ray, consider shared memory for registers here
-
         // Clip the ray to the scene geometry
         intersectVolume(sampleRay);
         
         // Offset the ray origin by a fraction of step size
         sampleRay.min += rng.sample1D() * rayStepSize;
 
+        sampleRay.dir *= rayStepSize;
+
         // Perform ray marching until the sample depth is reached
         float opacity = 0.0f;
         while (sampleRay.min < sampleRay.max)
         {
-            auto location = sampleRay.pos + sampleRay.dir * sampleRay.min;
+            sampleRay.pos += sampleRay.dir;
 
-            float absorption = sampleAbsorption(location);
+            opacity += sampleAbsorption(sampleRay.pos) * rayStepSize;
 
-            opacity += absorption * rayStepSize;
+            if (opacity > 1.0f) break;
 
             sampleRay.min += rayStepSize;
-            
-            if (sampleRay.min > sampleRay.max) break;
         }
+
+        sampleRay.dir /= rayStepSize;
+        sampleRay.min = 0;
+        sampleRay.max = 0;
 
         return max(1.0f - opacity, 0.0f);
     }
@@ -227,7 +229,7 @@ namespace filescope {
     //  This is done by casting rays out around the sample point and 
     //  computing the average attenuation over a short distance.
     // --------------------------------------------------------------------
-    VOX_DEVICE float computeAmbientOcclusion(CRandomGenerator & rng, Vector3f const& pos)
+    VOX_DEVICE float computeObscurance(CRandomGenerator & rng, Vector3f const& pos)
     {
         unsigned int samples = gd_renderParams.occludeSamples();
 
@@ -255,24 +257,21 @@ namespace filescope {
     // --------------------------------------------------------------------
     VOX_DEVICE ColorLabxHdr estimateRadiance(CRandomGenerator & rng, Ray3f & location)
     {
-        float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
-
         // Compute the gradient at the point of interest
         Vector3f gradient = sampleGradient(location.pos);
         float gradMag = gradient.length();
         gradient = gradient / gradMag;
         gradMag *= R3I;
-        if (Vector3f::dot(gradient, location.dir) > 0)
-        {
-            gradient = -gradient;
-        }
+        if (Vector3f::dot(gradient, location.dir) > 0) gradient = -gradient;
+        
+        float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
 
         // Determine the diffuse characteristic of the sample point 
         float4 sampleDiffuse = tex3D(gd_diffuseTex, density, gradMag, 0.0f); 
         Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
 
         // Compute the ambient component of the scene lighting
-        Vector3f Lv = diffuse * gd_ambient * computeAmbientOcclusion(rng, location.pos);
+        Vector3f Lv = diffuse * gd_ambient * computeObscurance(rng, location.pos);
 
         // Sample the scene lighting
         if (gd_lights.size() != 0)
@@ -281,37 +280,34 @@ namespace filescope {
             auto const lightNum = (int)floorf(rng.sample1D() * (float)gd_lights.size());
 
             // Compute the lighting properties for the selected scattering point
-            float    stepSize       = gd_renderParams.shadowStepSize();
             Vector3f lightDirection = (gd_lights[lightNum].position() - location.pos).normalize();
-            Ray3f    lightRay       = Ray3f(location.pos, lightDirection, 0.0f, 10000.0f);
-            Vector3f lightIncident  = gd_lights[lightNum].color() * gd_lights.size() * computeTransmission(rng, lightRay, stepSize);
+            float    lightStepSize  = gd_renderParams.shadowStepSize();
+            float    lightTransmit  = computeTransmission(rng, Ray3f(location.pos, lightDirection, 0.0f, 10000.0f), lightStepSize);
+            Vector3f lightIncident  = gd_lights[lightNum].color() * lightTransmit * gd_lights.size();
             
             // Switch to surface based shading above the gradient threshold
-            // :TODO: Fix this block
             if (gradMag > gd_renderParams.gradientCutoff())
             {
                 // *** Compute the diffuse component of the reflectance function ***
                 Lv += lightIncident * diffuse * abs(Vector3f::dot(gradient, lightDirection)); 
 
                 // *** Compute the specular component of the reflectance function ***
-
-                // Calculate the half vector between the light and view
-                Vector3f H = (lightDirection - location.dir).normalized();
-
-                float4 specularData = tex3D(gd_specularTex, density, gradMag, 0.0f);
+                float4   specularData = tex3D(gd_specularTex, density, gradMag, 0.0f);
+                Vector3f specular     = Vector3f(specularData.x, specularData.y, specularData.z) * lightIncident;
 
                 //Intensity of the specular light
+                Vector3f H = (lightDirection - location.dir).normalized(); // Half vector between light and view
                 float NdotH = Vector3f::dot(gradient, H);
                 float intensity = pow(saturate( NdotH ), specularData.w*100.0f + 2.0f);
  
                 // Compute the resulting specular strength
-                Lv += Vector3f(specularData.x, specularData.y, specularData.z) * lightIncident * intensity;
+                Lv += specular * intensity;
             }
             else
             {
                 auto const g  = gd_renderParams.scatterCoefficient();
-                auto cosTheta = - Vector3f::dot(location.dir, lightRay.dir);
-                auto phaseHG  = (0.25f / M_PI) * (1 - g*g) / pow(1.0f + g*g + 2*g*cosTheta, 1.5f);
+                auto cosTheta = - Vector3f::dot(location.dir, lightDirection);
+                auto phaseHG  = (1 - g*g) / pow(1.0f + g*g + 2*g*cosTheta, 1.5f);
 
                 Lv += lightIncident * phaseHG * diffuse;
             }
@@ -329,9 +325,6 @@ namespace filescope {
         Ray3f & sampleRay
         )
     {
-	    __shared__ float MinT[KERNEL_BLOCK_SIZE];
-	    __shared__ float MaxT[KERNEL_BLOCK_SIZE];
-
         // Initialize the sample ray for marching
         sampleRay = gd_camera.generateRay(
                         Vector2f(px, py) + rng.sample2D(), // Pixel position

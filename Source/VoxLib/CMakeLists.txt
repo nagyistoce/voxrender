@@ -57,10 +57,6 @@ Set(VoxLib_HEADERS_CORE
     Core/Geometry.h
 )
 
-Set(VoxLib_HEADERS_IMAGE
-    Image/RawImage.h
-)
-
 Set(VoxLib_HEADERS_CORE_GEOMETRY
     Core/Geometry/AABBox.h
     Core/Geometry/Color.h
@@ -158,10 +154,6 @@ Set(VoxLib_SOURCES_CORE
     Core/Functors.cpp
     Core/Logging.cpp
     Core/System.cpp
-)
-
-Set(VoxLib_SOURCES_IMAGE
-    Image/RawImage.cpp
 )
 
 Set(VoxLib_SOURCES_CORE_GEOMETRY

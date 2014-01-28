@@ -635,9 +635,9 @@ namespace vox
 	typedef Vector<float,2> Vector2f;
 	typedef Vector<float,3> Vector3f;
 	typedef Vector<float,4> Vector4f;
-	typedef Vector<size_t,2> Vector2u;
-	typedef Vector<size_t,3> Vector3u;
-	typedef Vector<size_t,4> Vector4u;
+	typedef Vector<unsigned int,2> Vector2u;
+	typedef Vector<unsigned int,3> Vector3u;
+	typedef Vector<unsigned int,4> Vector4u;
 }
 
 // End Definition

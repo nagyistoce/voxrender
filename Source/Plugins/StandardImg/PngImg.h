@@ -32,7 +32,7 @@
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/Resource.h"
-#include "VoxLib/Image/RawImage.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 
 // API namespace
 namespace vox 
@@ -49,10 +49,10 @@ public:
     PngImg(std::shared_ptr<void> handle) : m_handle(handle) { }
 
 	/** Vox Image File Exporter */
-	virtual void exporter(ResourceOStream & source, OptionSet const& options, RawImage const& image);
+	virtual void exporter(ResourceOStream & source, OptionSet const& options, Bitmap const& image);
 
 	/** Vox Image File Importer */
-	virtual RawImage importer(ResourceIStream & source, OptionSet const& options);
+	virtual Bitmap importer(ResourceIStream & source, OptionSet const& options);
     
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage

@@ -46,7 +46,6 @@ Camera::Camera() :
     m_eyeDistance    (0.0f),
     m_filmWidth      (512),
     m_filmHeight     (512),
-    m_exposure       (0.0f),
     m_isDirty        (false),
     m_isFilmDirty    (false)
 { 
@@ -77,7 +76,6 @@ void Camera::clone(Camera & camera)
     camera.m_apertureSize = m_apertureSize;
     camera.m_fieldOfView = m_fieldOfView;
     camera.m_eyeDistance = m_eyeDistance;
-    camera.m_exposure = m_exposure;
     camera.m_filmWidth = m_filmWidth;
     camera.m_filmHeight = m_filmHeight;
 

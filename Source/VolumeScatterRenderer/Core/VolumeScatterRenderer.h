@@ -62,6 +62,9 @@ public:
      */
     virtual void setRenderEventCallback(RenderCallback callback) = 0;
 
+    /** Sets the exposure factor for the tonemapping */
+    virtual void setExposure(float exposure) = 0;
+
     /** Returns the runtime (in ms) of the rendering kernel */
     virtual float renderTime() = 0;
     

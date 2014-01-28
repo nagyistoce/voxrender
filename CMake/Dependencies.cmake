@@ -4,7 +4,7 @@
 #                                                                           #
 #   Description: Checks the project dependencies and locates any includes.  #
 #                                                                           #
-#       Copyright (C) 2012 Lucas Sherman                                    #
+#       Copyright (C) 2012-2014 Lucas Sherman                               #
 #                                                                           #
 #       Lucas Sherman, email: LucasASherman@gmail.com                       #
 #                                                                           #
