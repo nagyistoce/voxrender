@@ -60,7 +60,7 @@ namespace filescope {
 //  Initializes a volume block loader/scheduler
 // ----------------------------------------------------------------------------
 VolumeBlocker::VolumeBlocker(Volume & volume, Vector3u apron, Volume::Type outType) : 
-    m_volume(volume), m_handle(nullptr), m_handleOut(nullptr)
+    m_volume(volume), m_handle(nullptr), m_handleOut(nullptr), m_typeOut(outType)
 {
     // Specify the format for volume data access
     m_format    = cudaCreateChannelDesc(m_volume.voxelSize()*8, 0, 0, 0, filescope::getKind(m_volume.type()));
@@ -114,6 +114,7 @@ void VolumeBlocker::begin()
     reset(); // Ensure previous data is released
 
     m_currBlock = Vector4u(0);
+    m_begin = false;
 
     // Allocate a host buffer for the output volume data set
     size_t bytes = m_volume.extent().fold(mul) * Volume::typeToSize(m_typeOut);
@@ -121,7 +122,7 @@ void VolumeBlocker::begin()
 
 	// Create a 3d array for volume data storage
 	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handle, &m_format, m_extent));
-	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handleOut, &m_formatOut, m_extentOut));
+    VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handleOut, &m_formatOut, m_extentOut, cudaArraySurfaceLoadStore));
 }
 
 // ----------------------------------------------------------------------------
@@ -151,14 +152,18 @@ bool VolumeBlocker::atEnd()
 // ----------------------------------------------------------------------------
 Vector4u VolumeBlocker::loadNext()
 {
-    // Increment the block index
-    m_currBlock[0]++;
-    if (m_currBlock[0] >= m_numBlocks[0]) { m_currBlock[0] = 0; m_currBlock[1]++; }
-    if (m_currBlock[1] >= m_numBlocks[1]) { m_currBlock[1] = 0; m_currBlock[2]++; }
-    if (m_currBlock[2] >= m_numBlocks[2]) { m_currBlock[2] = 0; m_currBlock[3]++; }
-    if (m_currBlock[3] >= m_numBlocks[3]) { m_currBlock[3] = 0; 
-        throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Exceeded block size", Error_Bug); }
-    
+    if (m_begin)
+    {
+        // Increment the block index
+        m_currBlock[0]++;
+        if (m_currBlock[0] >= m_numBlocks[0]) { m_currBlock[0] = 0; m_currBlock[1]++; }
+        if (m_currBlock[1] >= m_numBlocks[1]) { m_currBlock[1] = 0; m_currBlock[2]++; }
+        if (m_currBlock[2] >= m_numBlocks[2]) { m_currBlock[2] = 0; m_currBlock[3]++; }
+        if (m_currBlock[3] >= m_numBlocks[3]) { m_currBlock[3] = 0; 
+            throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Exceeded block size", Error_Bug); }
+    }
+    else m_begin = true;
+
     auto hostExtent = m_volume.extent();
     cudaPos pos;
     pos.x = m_currBlock[0] * m_extentOut.width;
@@ -195,7 +200,7 @@ void VolumeBlocker::readNext()
 	cudaMemcpy3DParms copyParams = {0};
     copyParams.srcArray          = m_handleOut;
     copyParams.dstPtr.pitch	     = hostExtent[0]*Volume::typeToSize(m_typeOut);
-    copyParams.dstPtr.ptr	     = (void*)m_volume.data();
+    copyParams.dstPtr.ptr	     = (void*)m_dataOut.get();
     copyParams.dstPtr.xsize      = hostExtent[0];
     copyParams.dstPtr.ysize      = hostExtent[1];
     copyParams.dstPos            = pos;

@@ -75,6 +75,7 @@ class PluginWidget;
 class CameraWidget;
 class PointLightWidget;
 class InfoWidget;
+class TimingWidget;
 
 // Main Application Window
 class MainWindow : public QMainWindow
@@ -174,6 +175,7 @@ private:
 	void changeRenderState( RenderState state );
 	bool canStopRendering();
     void synchronizeView();
+    void beginRender();
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
@@ -203,11 +205,12 @@ private:
     void readSettings();
 
 	// Render tab panes
-	enum { NumPanes = 3 };
+	enum { NumPanes = 4 };
 	PaneWidget      * panes[NumPanes]; ///< Render tab widget panes
 	HistogramWidget * histogramwidget; ///< Histogram view widget
 	SamplingWidget  * samplingwidget;  ///< Sampling parameters widget
 	CameraWidget    * camerawidget;    ///< Camera settings widget
+    TimingWidget    * timingwidget;    ///< Volume time index widget
 
 	enum { NumAdvPanes = 1 };
 	PaneWidget* advpanes[NumAdvPanes];  ///< Advanced tab widget panes
@@ -245,6 +248,9 @@ private slots:
 	void on_pushButton_clipboard_clicked();
     void on_pushButton_addLight_clicked();
     void on_pushButton_addClip_clicked();
+
+    // Filtering operations
+    void on_actionGaussian_Filter_triggered();
 
 	// Toolbar action slots
     void on_actionFull_Screen_triggered();

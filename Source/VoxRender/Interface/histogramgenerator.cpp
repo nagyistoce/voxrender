@@ -137,6 +137,15 @@ void HistogramGenerator::onHistogramImageReady(int dataType)
         }
         break;
 
+    case HistogramView::DataType_DensityLap:
+        {
+        auto gradientImage = QImage(reinterpret_cast<uchar*>(m_gradientImage.data()), 
+            m_gradientImage.width(), m_gradientImage.height(), m_gradientImage.stride(), 
+            QImage::Format_ARGB32);
+        m_laplacePixmap.convertFromImage(gradientImage);
+        }
+        break;
+
     default:
         VOX_LOG_ERROR(Error_Bug, "GUI", "Unrecognized histogram type");
         return;

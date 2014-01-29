@@ -293,7 +293,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
+                  <width>660</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -326,7 +326,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
+                  <width>660</width>
                   <height>164</height>
                  </rect>
                 </property>
@@ -383,7 +383,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
+                  <width>660</width>
                   <height>164</height>
                  </rect>
                 </property>
@@ -443,7 +443,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
+                  <width>660</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -476,7 +476,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>677</width>
+                  <width>660</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -679,8 +679,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>756</width>
+             <height>460</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -804,6 +804,13 @@
     <property name="title">
      <string>Filters</string>
     </property>
+    <widget class="QMenu" name="menuConvolution">
+     <property name="title">
+      <string>Convolution</string>
+     </property>
+     <addaction name="actionGaussian_Filter"/>
+    </widget>
+    <addaction name="menuConvolution"/>
    </widget>
    <widget class="QMenu" name="menuRender">
     <property name="title">
@@ -1011,6 +1018,11 @@
   <action name="actionExport_Image">
    <property name="text">
     <string>Export Image</string>
+   </property>
+  </action>
+  <action name="actionGaussian_Filter">
+   <property name="text">
+    <string>Gaussian</string>
    </property>
   </action>
  </widget>

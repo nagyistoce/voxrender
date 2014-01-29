@@ -5,7 +5,7 @@
 #   Description: Performs real-time rendering of volume data using volume   #
 #       ray casting techniques.                                             #
 #                                                                           #
-#       Copyright (C) 2012 Lucas Sherman                                    #
+#       Copyright (C) 2012-2014 Lucas Sherman                               #
 #                                                                           #
 #    Lucas Sherman, email: LucasASherman@gmail.com                          #
 #                                                                           #
@@ -29,13 +29,9 @@ MESSAGE(STATUS "Configuring VoxRender")
 INCLUDE_DIRECTORIES(.)
 
 #===============================================#
-#                 QT4 Dependency                #
+#                 QT5 Dependency                #
 #===============================================#
 
-# Find includes in corresponding build directories
-#set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
-# set(CMAKE_AUTOMOC ON)
 # Find the QtWidgets library
 find_package(Qt5Widgets)
 
@@ -77,6 +73,7 @@ IF(Qt5Widgets_FOUND)
         Interface/pointlightwidget.cpp
         Interface/renderview.cpp
         Interface/samplingwidget.cpp
+        Interface/timingwidget.cpp
         Interface/transferitem.cpp
         Interface/transferwidget.cpp
         Interface/voxapp.cpp
@@ -109,6 +106,7 @@ IF(Qt5Widgets_FOUND)
         Interface/pointlightwidget.h
         Interface/renderview.h
         Interface/samplingwidget.h
+        Interface/timingwidget.h
         Interface/transferitem.h
         Interface/transferwidget.h
         Interface/voxapp.h
@@ -133,6 +131,7 @@ IF(Qt5Widgets_FOUND)
         Interface/pluginwidget.ui
         Interface/pointlightwidget.ui
         Interface/samplingwidget.ui
+        Interface/timingwidget.ui
         Interface/transferwidget.ui
         )
         SOURCE_GROUP("Form Files" FILES ${VOXQTGUI_UIS})
@@ -177,12 +176,12 @@ IF(Qt5Widgets_FOUND)
     #===============================================#
     #             Project Dependencies              #
     #===============================================#
-    ADD_DEPENDENCIES(VoxRender VoxLib VolumeScatterRenderer)
+    ADD_DEPENDENCIES(VoxRender VoxLib VoxVolt VolumeScatterRenderer)
 
     #===============================================#
     #            TARGET LINK LIBRARIES              #
     #===============================================#
-    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VSR_LIB} ${Boost_LIBRARIES})
+    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VOLT_LIB} ${VSR_LIB} ${Boost_LIBRARIES})
 
 ELSE(Qt5Widgets_FOUND)
 	MESSAGE( STATUS "Warning : could not find Qt - not building Qt GUI")

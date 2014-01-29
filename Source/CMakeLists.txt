@@ -54,8 +54,8 @@ SET(VSR_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VolumeScatterRen
 
 ADD_SUBDIRECTORY(VoxVolt)
 
-SET(VOX_VOLT_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/Volt.lib
-                 debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/Volt.lib)
+SET(VOLT_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VoxVolt.lib
+             debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VoxVolt.lib)
 	
 #===============================================#
 #              VOXRENDER APPLICATION            #

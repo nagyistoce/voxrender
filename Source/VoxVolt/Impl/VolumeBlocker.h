@@ -70,6 +70,8 @@ public:
 private:
     Volume & m_volume; ///< The source volume
 
+    bool m_begin;
+
     std::shared_ptr<UInt8> m_dataOut; ///< The output volume data
     Volume::Type m_typeOut; ///< The output volume type
 

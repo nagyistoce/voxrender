@@ -37,11 +37,15 @@
 #define KERNEL_BLOCK_H		16
 #define KERNEL_BLOCK_SIZE   (KERNEL_BLOCK_W * KERNEL_BLOCK_H)
 
+#define MAX_KERNEL_SIZE 5
+
 namespace vox {
 namespace volt {
 
 namespace {
 namespace filescope {
+
+    __constant__ float gd_kernel[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
 
     static float elapsedTime = 0.0f;
 
@@ -53,22 +57,43 @@ namespace filescope {
         VOX_TEXTURE(UInt16);
     #undef VOX_TEXTURE
 
-    surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data
+    surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data output
 
     // Performs 3D convolution on a volume data set
     template<typename T>
-    __global__ void convKernel(Vector3u apron, cudaExtent blockSize)
+    __global__ void convKernel(Vector3u apron, cudaExtent blockSize, Vector2f range)
     {
+	    int x = blockIdx.x * blockDim.x + threadIdx.x;
+	    int y = blockIdx.y * blockDim.y + threadIdx.y;
+        if (x >= blockSize.width || y >= blockSize.height) return;
+
         for (int z = 0; z < blockSize.depth; z++)
         {
-            surf3Dwrite(0, gd_volumeTexOut, threadIdx.x, threadIdx.y, z);
+            float sum = 0.0f;
+            float * filter = gd_kernel;
+            // :TODO: Use shared memory
+	        // Compute point convolution
+	        int mbegin = x-apron[0]; if (mbegin < 0)               mbegin = 0;
+	        int mend   = x+apron[0]; if (mend >= blockSize.width)  mend = blockSize.width-1;
+	        int nbegin = y-apron[1]; if (nbegin < 0)               nbegin = 0;
+	        int nend   = y+apron[1]; if (nend >= blockSize.height) nend = blockSize.height-1;
+	        int obegin = z-apron[2]; if (obegin < 0)               obegin = 0;
+	        int oend   = z+apron[2]; if (oend >= blockSize.depth)  oend = blockSize.depth-1;
+	        for (int o = obegin; o <= oend; o++)
+	        for (int n = nbegin; n <= nend; n++) 
+	        for (int m = mbegin; m <= mend; m++)
+	        {//:TODO: Implement this correctly
+		        sum += *filter * tex3D(gd_volumeTexIn_UInt8, m, n, o); filter++;
+	        }
+
+            surf3Dwrite<T>((T)(range[0] + range[1]*sum), gd_volumeTexOut, x, y, z);
         }
     }
 
 #define VOX_SETUP_TEX(T)                                                     \
     case Volume::Type_##T: {                                                 \
 	    filescope::gd_volumeTexIn_##T.normalized     = false;                \
-        filescope::gd_volumeTexIn_##T.filterMode     = cudaFilterModeLinear; \
+        filescope::gd_volumeTexIn_##T.filterMode     = cudaFilterModePoint; \
         filescope::gd_volumeTexIn_##T.addressMode[0] = cudaAddressModeClamp; \
         filescope::gd_volumeTexIn_##T.addressMode[1] = cudaAddressModeClamp; \
         filescope::gd_volumeTexIn_##T.addressMode[2] = cudaAddressModeClamp; \
@@ -95,7 +120,7 @@ namespace filescope {
             Error_NotImplemented);
         }
 
-        VOX_CUDA_CHECK(cudaBindSurfaceToArray(filescope::gd_volumeTexOut, blocker.arrayOut()));
+        VOX_CUDA_CHECK(cudaBindSurfaceToArray(gd_volumeTexOut, blocker.arrayOut()));
     }
 
 } // namespace filescope
@@ -105,15 +130,26 @@ namespace filescope {
 //  Executes the convolution kernel on the input volume data
 // ----------------------------------------------------------------------------
 std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Volume::Type type)
-{    
+{   
+    // Check the kernel dimensions
+    if (kernel.width()  > MAX_KERNEL_SIZE ||
+        kernel.height() > MAX_KERNEL_SIZE ||
+        kernel.depth()  > MAX_KERNEL_SIZE)
+        throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Kernel size exceeds library limit", Error_Range);
+    Vector3u apron = (kernel.dims() - Vector3u(1)) / 2;
+
+    // Copy the kernel into device memory
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_kernel, 
+        kernel.data(), sizeof(float)*kernel.dims().fold(mul)));
+
     // Create the start event for performance timing
     cudaEvent_t start, stop;
     VOX_CUDA_CHECK(cudaEventCreate(&start));
     VOX_CUDA_CHECK(cudaEventRecord(start,0));
 
     // Initialize the volume block loader/scheduler
-    Vector3u apron = (kernel.dims() - Vector3u(1)) / 2;
-    VolumeBlocker blocker(volume, apron, type);
+    auto outType = (type == Volume::Type_End) ? volume.type() : type;
+    VolumeBlocker blocker(volume, apron, outType);
 
 	// Setup the execution configuration
     auto blockSize = blocker.blockSize();
@@ -133,7 +169,12 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
         auto blockIndex = blocker.loadNext();
 
         // Execute the convolution kernel call
-        filescope::convKernel<UInt8> <<<blocks,threads>>> (apron, blockSize);
+        switch (volume.type())
+        {
+        case Volume::Type_UInt8: filescope::convKernel<UInt8> <<<blocks,threads>>> (apron, blockSize, Vector2f(0.0f, std::numeric_limits<UInt8>::max())); break;
+        case Volume::Type_UInt16: filescope::convKernel<UInt16> <<<blocks,threads>>> (apron, blockSize, Vector2f(0.0f, std::numeric_limits<UInt16>::max())); break;
+        default: throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Unsupported volume data type", Error_NotImplemented);
+        }
         VOX_CUDA_CHECK(cudaDeviceSynchronize());
 
         blocker.readNext();

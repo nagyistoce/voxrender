@@ -39,6 +39,7 @@
 #include "clipplanewidget.h"
 #include "histogramgenerator.h"
 #include "pluginwidget.h"
+#include "timingwidget.h"
 
 // VoxRender Includes
 #include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
@@ -56,6 +57,9 @@
 #include <QtGui/QTextLayout>
 #include <QtGui/QClipboard>
 #include <QSettings>
+
+// Volume Transform Includes
+#include "VoxVolt/Conv.h"
 
 #define VOX_GUI_LOG_CAT "GUI"
 
@@ -577,7 +581,15 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         VOX_LOG_ERROR(Error_Unknown, VOX_GUI_LOG_CAT, format(
             "Unexpected exception loading %1%: %2%", file, error.what()));
     }
-    
+
+    beginRender();
+}
+
+// ----------------------------------------------------------------------------
+//  Begins rendering the currently active scene file
+// ----------------------------------------------------------------------------
+void MainWindow::beginRender()
+{
     // Check if there is a valid scene 
     if (activeScene.volume)
     {
@@ -714,10 +726,12 @@ void MainWindow::createRenderTabPanes()
 
 	// Create imaging tab panes
 	panes[0] = new PaneWidget( ui->panesAreaContents, 
-		"Sampling", ":/icons/samplingicon.png" );
+		"Sampling Parameters", ":/icons/samplingicon.png" );
 	panes[1] = new PaneWidget( ui->panesAreaContents, 
 		"Camera Settings", ":/icons/cameraicon.png" );
 	panes[2] = new PaneWidget( ui->panesAreaContents, 
+		"Volume Parameters", ":/icons/clockicon.png" );
+	panes[3] = new PaneWidget( ui->panesAreaContents, 
 		"Volume Histogram", ":/icons/histogramicon.png" );
 
 	// Sampler settings widget
@@ -730,10 +744,15 @@ void MainWindow::createRenderTabPanes()
 	panes[1]->setWidget( camerawidget );
 	ui->panesAreaLayout->addWidget( panes[1] );
 
-	// Volume data histogram widget
-	histogramwidget = new HistogramWidget( panes[2] );
-	panes[2]->setWidget( histogramwidget );
+	// Time settings widget
+	timingwidget = new TimingWidget( panes[2] );
+	panes[2]->setWidget( timingwidget );
 	ui->panesAreaLayout->addWidget( panes[2] );
+
+	// Volume data histogram widget
+	histogramwidget = new HistogramWidget( panes[3] );
+	panes[3]->setWidget( histogramwidget );
+	ui->panesAreaLayout->addWidget( panes[3] );
 
 	// Set alignment of panes within main tab layout 
 	ui->panesAreaLayout->setAlignment( Qt::AlignTop );
@@ -1145,6 +1164,46 @@ void MainWindow::onActionOpenRecentFile()
 }
 
 // ----------------------------------------------------------------------------
+//  Performs a gaussian convolution operation on the active volume data set
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionGaussian_Filter_triggered()
+{
+    try
+    {
+        m_renderController.stop();
+
+        Image3D<float> gaussian(3, 3, 3);
+        for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+        for (int z = 0; z < 3; z++)
+        {
+            float val;
+            if (x == 1 && y == 1 && z == 1) val = 1.0f;
+            else val = 0.0f;
+
+            gaussian.at(x, y, z) = val;
+        }
+
+        activeScene.volume = volt::Conv::execute(*activeScene.volume, gaussian);
+
+        float time = volt::Conv::getElapsedTime();
+    }
+    catch (Error & error)
+    {
+        error.message = "Gaussian filter error: " + error.message;
+
+        VOX_LOG_EXCEPTION(Severity_Error, error);
+    }
+    catch (std::exception & error)
+    {
+        VOX_LOG_ERROR(Error_Unknown, VOX_VOLT_LOG_CATEGORY, 
+            String("Gaussian filter error: ") + error.what());
+    }
+
+    beginRender();
+}
+
+// ----------------------------------------------------------------------------
 //  Displays the about info window
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionAbout_triggered() 
@@ -1236,7 +1295,7 @@ void MainWindow::on_actionShow_Side_Panel_triggered(bool checked)
 // ----------------------------------------------------------------------------
 void MainWindow::on_tabWidget_main_currentChanged(int tabId)
 {
-    if( tabId == filescope::logTabId ) 
+    if (tabId == filescope::logTabId) 
     {
 		blinkTrigger( false );
 		static const QIcon icon(":/icons/logtabicon.png");
@@ -1260,9 +1319,13 @@ void MainWindow::on_pushButton_stop_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_resume_clicked()
 {
-    m_renderController.unpause();
+    if (m_renderController.isPaused())
+    {
+        m_renderController.unpause();
 
-    changeRenderState(RenderState_Rendering);
+        changeRenderState(RenderState_Rendering);
+    }
+    else beginRender();
 }
 
 // ----------------------------------------------------------------------------

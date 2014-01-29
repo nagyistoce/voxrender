@@ -254,16 +254,16 @@ namespace vox
          *
          * @param value The value to fill the vector with
          */
-        VOX_HOST_DEVICE inline void fill(T const& value) 
+        VOX_HOST_DEVICE void fill(T const& value) 
         { 
             for (size_t i = 0; i < N; i++) coord[i] = value; 
         }
 
 		/** Vector magnitude */
-		VOX_HOST_DEVICE inline T length() const { return sqrt( lengthSquared( ) ); }
+		VOX_HOST_DEVICE T length() const { return sqrt( lengthSquared( ) ); }
 
 		/** Vector magnitude squared */
-		VOX_HOST_DEVICE inline T lengthSquared() const
+		VOX_HOST_DEVICE T lengthSquared() const
 		{
 			T dist = coord[0]*coord[0];
 			for (size_t i = 1; i < N; i++)
@@ -272,10 +272,10 @@ namespace vox
 		}
 
 		/** Normalizes the vector and returns a reference to self */
-		VOX_HOST_DEVICE inline Vector& normalize() { return *this /= length(); }
+		VOX_HOST_DEVICE Vector& normalize() { return *this /= length(); }
 
         /** Returns a normalized copy of the vector */
-		VOX_HOST_DEVICE inline Vector normalized() const { return *this / length(); }
+		VOX_HOST_DEVICE Vector normalized() const { return *this / length(); }
 
         /** Unary subtraction operator */
         VOX_HOST_DEVICE Vector operator-()
@@ -290,7 +290,7 @@ namespace vox
 
 		/** Assignment Operator **/
 		template< int M >
-		VOX_HOST_DEVICE inline const Vector<T,N>& operator=(Vector<T,M> rhs)
+		VOX_HOST_DEVICE const Vector<T,N>& operator=(Vector<T,M> rhs)
 		{
 			size_t max = M > N ? M : N;
 			for (size_t i = 0; i < max; i++)
@@ -299,7 +299,7 @@ namespace vox
 		}
 
 		/** Vector multiplication - { a1*b1, a2*b2, ... } etc */
-		VOX_HOST_DEVICE inline Vector operator*(Vector rhs) const
+		VOX_HOST_DEVICE Vector operator*(Vector rhs) const
 		{
 			Vector result;
 			for (size_t i = 0; i < N; i++)
@@ -308,7 +308,7 @@ namespace vox
 		}
 
         /** Vector multiplication - { a1*b1, a2*b2, ... } etc */
-		VOX_HOST_DEVICE inline Vector operator*=(Vector rhs)
+		VOX_HOST_DEVICE Vector operator*=(Vector rhs)
 		{
 			for (size_t i = 0; i < N; i++) 
                 coord[i] *= rhs[i];
@@ -316,7 +316,7 @@ namespace vox
 		}
 
 		/** Vector division - { a1/b1, a2/b2, ... } etc */
-		VOX_HOST_DEVICE inline Vector operator/(Vector rhs) const
+		VOX_HOST_DEVICE Vector operator/(Vector rhs) const
 		{
 			Vector result;
 			for (size_t i = 0; i < N; i++)
@@ -325,7 +325,7 @@ namespace vox
 		}
 
         /** Vector division - { a1/b1, a2/b2, ... } etc */
-		VOX_HOST_DEVICE inline Vector operator/=(Vector rhs)
+		VOX_HOST_DEVICE Vector operator/=(Vector rhs)
 		{
 			for (size_t i = 0; i < N; i++) 
                 coord[i] /= rhs[i];
@@ -358,26 +358,27 @@ namespace vox
 		}
         
         /** Division Operator */
-		VOX_HOST_DEVICE inline Vector operator/( float rhs ) const
+        template<typename R>
+		VOX_HOST_DEVICE Vector operator/(R const& rhs) const
 		{
 			Vector<T,N> result;
-			T inv = static_cast<T>(1) / rhs;
 			for (size_t i = 0; i < N; i++)
-				result.coord[i] = coord[i] * inv;
+				result.coord[i] = coord[i] / rhs;
 			return result;
 		}
         
         /** Division Operator */
-		VOX_HOST_DEVICE inline Vector& operator/=(float rhs)
+        template<typename R>
+		VOX_HOST_DEVICE Vector& operator/=(R const& rhs)
 		{
-			T inv = static_cast<T>(1) / rhs;
 			for (size_t i = 0; i < N; i++)
-				coord[i] *= inv;
+				coord[i] /= rhs;
 			return *this;
 		}
         
         /** Multiplication Operator */
-		VOX_HOST_DEVICE inline Vector operator*(float rhs) const
+        template<typename R>
+		VOX_HOST_DEVICE Vector operator*(R const& rhs) const
 		{
 			Vector<T,N> result;
 			for (size_t i = 0; i < N; i++)
@@ -386,7 +387,8 @@ namespace vox
 		}
         
         /** Multiplication Operator */
-		VOX_HOST_DEVICE inline Vector& operator*=(float rhs)
+        template<typename R>
+		VOX_HOST_DEVICE Vector& operator*=(R const& rhs)
 		{
 			for (size_t i = 0; i < N; i++)
 				coord[i] *= rhs;
@@ -394,7 +396,7 @@ namespace vox
 		}
         
         /** Addition Operator */
-		VOX_HOST_DEVICE inline Vector operator+(const Vector& rhs) const
+		VOX_HOST_DEVICE Vector operator+(const Vector& rhs) const
 		{
 			Vector<T,N> result;
 			for (size_t i = 0; i < N; i++)
@@ -403,7 +405,7 @@ namespace vox
 		}
         
         /** Addition Operator */
-		VOX_HOST_DEVICE inline Vector& operator+=(const Vector& rhs)
+		VOX_HOST_DEVICE Vector& operator+=(const Vector& rhs)
 		{
 			for (size_t i = 0; i < N; i++)
 				coord[i] += rhs[i];
@@ -411,7 +413,7 @@ namespace vox
 		}
         
         /** Subtraction Operator */
-		VOX_HOST_DEVICE inline Vector operator-(const Vector& rhs) const
+		VOX_HOST_DEVICE Vector operator-(const Vector& rhs) const
 		{
 			Vector<T,N> result;
 			for (size_t i = 0; i < N; i++)
