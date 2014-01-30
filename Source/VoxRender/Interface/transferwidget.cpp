@@ -1,11 +1,10 @@
 /* ===========================================================================
 
-	Project: TransferWidget - Transfer Function Widget
+	Project: VoxRender
 
-	Description:
-	 Implements an interface for interactive transfer function modification.
+	Description: Implements an interface for transfer modification.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -391,29 +390,49 @@ void TransferWidget::on_pushButton_import_clicked()
 // ----------------------------------------------------------------------------
 void TransferWidget::on_pushButton_export_clicked()
 {
-    // Get a filename from the user
-    QString filename = QFileDialog::getSaveFileName( 
-        this, tr("Choose a file location"), 
-        MainWindow::instance->lastOpenDir(), 
-        tr("Vox Scene Files (*.xml)"));
+    try
+    {
+        // Get a filename from the user
+        QString filename = QFileDialog::getSaveFileName( 
+            this, tr("Choose a file location"), 
+            MainWindow::instance->lastOpenDir(), 
+            tr("Vox Scene Files (*.xml)"));
 
-    if (filename.isNull()) return;
+        if (filename.isNull()) return;
     
-    QFileInfo info(filename);
-    MainWindow::instance->setLastOpenDir(info.absolutePath());
+        QFileInfo info(filename);
+        MainWindow::instance->setLastOpenDir(info.absolutePath());
 
-    // Compose the resource identifier for filesystem access
-    std::string identifier(filename.toUtf8().data());
-    if (identifier.front() != '/') identifier = '/' + identifier;
+        // Compose the resource identifier for filesystem access
+        std::string identifier(filename.toUtf8().data());
+        if (identifier.front() != '/') identifier = '/' + identifier;
 
-    // Attempt to parse the scene file
-    vox::OptionSet options;
-    options.addOption("ExportVolume",  false);
-    options.addOption("ExportCamera",  false);
-    options.addOption("ExportLights",  false);
-    options.addOption("ExportClipGeo", false);
-    options.addOption("ExportParams",  false);
-    MainWindow::instance->scene().exprt(identifier, options);
+        // Attempt to parse the scene file
+        vox::OptionSet options;
+        options.addOption("ExportVolume",  false);
+        options.addOption("ExportCamera",  false);
+        options.addOption("ExportLights",  false);
+        options.addOption("ExportClipGeo", false);
+        options.addOption("ExportParams",  false);
+        MainWindow::instance->scene().exprt(identifier, options);
+
+        // :DEBUG: Export the transfer function map images
+        /*
+        auto map = TransferMap::create();
+        m_transfer->generateMap(map);
+        auto diffuse = map->diffuse();
+        RawImage image(RawImage::Format_RGBX, diffuse.width(), diffuse.height(), 8, 0, diffuse.buffer());
+        image.exprt("file:///C:/Users/Lucas/Desktop/test.jpg");
+        */
+    }
+    catch (Error & error)
+    {
+        VOX_LOG_EXCEPTION(Severity_Error, error);
+    }
+    catch (...)
+    {
+        VOX_LOG_ERROR(Error_Unknown, VOX_LOG_CATEGORY, "Error exporting scene file");
+    }
 }
 
 // ----------------------------------------------------------------------------

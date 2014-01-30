@@ -183,7 +183,8 @@ namespace filescope {
               // Load the specified plugin search directories
               if (push("SearchDirectories", Optional)) 
               {
-                  auto rootPath = boost::filesystem::absolute(m_identifier, boost::filesystem::current_path()).remove_filename();
+                  auto rootPath = boost::filesystem::absolute(m_identifier, 
+                      boost::filesystem::current_path()).remove_filename();
 
                   auto & pluginManager = PluginManager::instance();
 
@@ -196,6 +197,38 @@ namespace filescope {
                           pluginManager.addPath(path.string());
                       }
                   }
+
+                  //pluginManager.findAll([] (std::shared_ptr<PluginInfo>) {}, true, true);
+
+                  pop();
+              }
+
+              // Enable any of the authorized plugins
+              if (push("Authorized", Optional))
+              {
+                  auto rootPath = boost::filesystem::absolute(m_identifier, 
+                      boost::filesystem::current_path()).remove_filename();
+
+                  auto & pluginManager = PluginManager::instance();
+
+                  BOOST_FOREACH (auto const& child, *m_node)
+                  {
+                      if (child.first == "Plugin")
+                      {
+                          auto id = child.second.get<String>("");
+                          std::vector<std::string> filters;
+                          boost::algorithm::split(filters, id, 
+                              boost::is_any_of("."), 
+                              boost::algorithm::token_compress_on);
+                          if (filters.size() != 2)
+                              VOX_LOG_WARNING(Error_BadToken, VOX_LOG_CATEGORY,
+                                format("Authorized plugin must be specified as Vendor.Name: %1%", id));
+                          
+                          pluginManager.load(pluginManager.findByNameVendor(filters[0], filters[1]));
+                      }
+                  }
+
+                  pop();
               }
 
             pop();

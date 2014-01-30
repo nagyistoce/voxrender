@@ -39,8 +39,6 @@ class TransferMap::Impl
 public:
     boost::mutex mutex; ///< Transfer map mutex
 
-    boost::condition_variable cond; ///< Locking condition
-
     Image3D<Vector<UInt8,4>> diffuse;  ///< Diffuse transfer mapping [RGBX]
     Image3D<Vector<UInt8,4>> specular; ///< Specular transfer mapping [Reflectance + Roughness]
     Image3D<Vector4f>        emissive; ///< Emissive transfer mapping

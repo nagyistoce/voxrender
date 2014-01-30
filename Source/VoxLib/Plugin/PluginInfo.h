@@ -44,6 +44,14 @@ namespace vox
             unsigned int major;
             unsigned int minor;
             unsigned int patch;
+
+            /** Comparison operator for version numbers */
+            bool operator<(Version const& rhs)
+            {
+                return (major < rhs.major) || (major == rhs.major &&
+                       (minor < rhs.minor) || (minor == rhs.minor &&
+                       (patch < rhs.patch)));
+            }
         };
 
         String name;        ///< Plugin name

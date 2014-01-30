@@ -1,6 +1,6 @@
 /* ===========================================================================
 
-	Project: Transfer - Transfer Function
+	Project: VoxRender
 
 	Description: Transfer function applied to volume dataset
 
@@ -401,7 +401,7 @@ std::shared_ptr<Node> Node::create(float density, std::shared_ptr<Material> mate
 // ----------------------------------------------------------------------------
 //  Initializes a quad to default settings
 // ----------------------------------------------------------------------------
-Quad::Quad() : position(0.5f,0.5f), heights(0.2f, 0.2f), widths(0.2f,0.2f) 
+Quad::Quad() : position(0.5f, 0.5f), heights(0.2f, 0.2f), widths(0.2f, 0.2f) 
 { 
     BOOST_FOREACH (auto & material, materials) material = Material::create();
 }

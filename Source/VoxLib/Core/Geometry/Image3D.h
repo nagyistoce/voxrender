@@ -44,9 +44,9 @@ namespace vox
 
         /** Constructs and image of the specified dimensions */
 		Image3D(size_t width, size_t height, size_t depth) :
-            m_width(width), m_height(height), m_depth(depth),
-            m_buffer(reinterpret_cast<T*>(new UInt8[width*height*depth*sizeof(T)])) 
+            m_width(width), m_height(height), m_depth(depth)
         { 
+            m_buffer = std::shared_ptr<T>(new T[width*depth*height*sizeof(T)], arrayDeleter);
         }
 
         /** Resizes the image to the specified dimensions */
@@ -54,7 +54,7 @@ namespace vox
         {
             m_width = width; m_height = height; m_depth = depth;
 
-            m_buffer = std::unique_ptr<T[]>(reinterpret_cast<T*>(new UInt8[width*depth*height*sizeof(T)]));
+            m_buffer = std::shared_ptr<T>(new T[width*depth*height*sizeof(T)], arrayDeleter);
         }
 
         /** Zeroes the image data */
@@ -74,6 +74,9 @@ namespace vox
 
         /** Image buffer accessor for const data access */
         T const* data() const { return m_buffer.get(); }
+
+        /** Internal data buffer accessor */
+        std::shared_ptr<T> buffer() { return m_buffer; }
 
         /** Image buffer accessor for mutable data access */
         T * data() { return m_buffer.get(); }
@@ -135,7 +138,7 @@ namespace vox
 		size_t m_height;  ///< Image height
         size_t m_depth;   ///< Image depth
 
-        std::unique_ptr<T[]> m_buffer;  ///< Image buffer
+        std::shared_ptr<T> m_buffer;  ///< Image buffer
 	};
 }
 

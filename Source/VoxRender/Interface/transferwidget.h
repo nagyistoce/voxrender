@@ -28,8 +28,6 @@
 #ifndef TRANSFERWIDGET_H
 #define TRANSFERWIDGET_H
 
-// :TODO: Singleton instance for subwidgets to use
-
 // Include Dependencies
 #include "histogramview.h"
 #include "Extensions/QColorPushButton.h"

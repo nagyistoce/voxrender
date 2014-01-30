@@ -196,6 +196,17 @@ namespace vox
          */
         void findAll(DiscoveryCallback callback, bool load = false, bool checkBins = false);
 
+        /** 
+         * Attempts to load a plugin associated with a given Vendor, Name identification 
+         *
+         * If multiple versions of the specified plugin ave been found, then the most recent
+         * version available will be returned.
+         *
+         * @param vendor The vendor name provided by the plugin
+         * @param name   The name provided by the plugin
+         */
+        std::shared_ptr<PluginInfo> findByNameVendor(String const& vendor, String const& name);
+
         /** Explicitly unloads any loaded plugins */
         void unloadAll();
 

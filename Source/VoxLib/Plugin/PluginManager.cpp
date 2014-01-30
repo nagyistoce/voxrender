@@ -73,6 +73,29 @@ public:
     {
         pluginHandle = std::shared_ptr<void>(container.get(), boost::bind(&Impl::unload, this, _1));
     }
+    
+    // ----------------------------------------------------------------------------
+    //  Locates the most recent version of a plugin identified by its vendor, name pairing
+    // ----------------------------------------------------------------------------
+    std::shared_ptr<PluginInfo> getByVendorName(String const& vendor, String const& name)
+    {
+        boost::recursive_mutex::scoped_lock lock(mutex);
+    
+        std::list<std::shared_ptr<PluginInfo>> matches;
+
+        std::shared_ptr<PluginInfo> result = nullptr;
+        BOOST_FOREACH (auto & plugin, plugins)
+        {
+            auto info = plugin->info();
+            if (info->name == name && info->vendor == vendor)
+            if (!result || result->version < info->version)
+            {
+                result = info;
+            }
+        }
+
+        return result;
+    }
 
 private: 
 
@@ -310,6 +333,8 @@ std::shared_ptr<PluginInfo> PluginManager::loadFromFile(String const& file, bool
 // ----------------------------------------------------------------------------
 void PluginManager::load(std::shared_ptr<PluginInfo> const& info)
 {
+    if (!info) return;
+
     boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
     
     // Unload the plugin but keep the info structure for reference
@@ -376,6 +401,14 @@ void PluginManager::softReload(String const& pluginName)
 
     throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
                 format("Requested soft reload for unknown plugin: %1%", pluginName));
+}
+
+// ----------------------------------------------------------------------------
+//  Loads a plugin based on a vendor and name. (Most recent compatible version)
+// ----------------------------------------------------------------------------
+std::shared_ptr<PluginInfo> PluginManager::findByNameVendor(String const& vendor, String const& name)
+{
+    return m_pImpl->getByVendorName(vendor, name);
 }
 
 // ----------------------------------------------------------------------------
