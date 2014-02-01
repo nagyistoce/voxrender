@@ -57,6 +57,7 @@ public:
         m_occludeSamples(0u),
         m_gradCutoff(0.0f),
         m_scatterCoefficient(0.0f),
+        m_edgeEnhancement(0.0f),
         m_isDirty(false)
     {
     }
@@ -105,6 +106,9 @@ public:
     
     /** Returns the scattering function coefficient */
     float scatterCoefficient() { return m_scatterCoefficient; }
+    
+    /** Returns the edge enhancement factor */
+    float edgeEnhancement() { return m_edgeEnhancement; }
 
     /** Sets the gradient magnitude threshhold */
     void setGradientCutoff(float cutoff) { m_gradCutoff = cutoff; }
@@ -124,6 +128,9 @@ public:
     /** Sets the scattering function coefficient */
     void setScatterCoefficient(float value) { m_scatterCoefficient = value; }
 
+    /** Sets the edge enhancement factor */
+    void setEdgeEnhancement(float enhancement) { m_edgeEnhancement = clamp(enhancement, 0.f, 100.f); }
+
     /** Locks the parameters for editing */
     void lock() { m_mutex.lock(); }
 
@@ -142,6 +149,7 @@ private:
     float m_occludeStep;    ///< Step size for ambient occlusion
     float m_gradCutoff;     ///< Transition magnitude for surface/volume shading
 
+    float m_edgeEnhancement;    ///< Edge enhancement factor
     float m_scatterCoefficient; ///< Coefficient of the scattering function
 
     unsigned int m_occludeSamples; ///< Number of ambient occlusion samples

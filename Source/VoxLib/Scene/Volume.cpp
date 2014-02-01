@@ -27,8 +27,7 @@
 #include "Volume.h"
 
 // Standard Includes
-#include <iostream>
-#include <fstream>
+#include "VoxLib/Core/Common.h"
 
 namespace vox {
 
@@ -61,17 +60,22 @@ namespace vox {
     } // namespace filescope
     } // namespace anonymous
     
+class Volume::Impl
+{
+public:
+
 // ----------------------------------------------------------------------------
 //  Wraps a volume data buffer to construct a new volume object
 // ----------------------------------------------------------------------------
-Volume::Volume(std::shared_ptr<UInt8> data, Vector4u const& extent, 
-               Vector4f const& spacing, Vector3f const& offset, Type type) : 
+Impl::Impl(std::shared_ptr<UInt8> data, Vector4u const& extent, 
+           Vector4f const& spacing, Vector3f const& offset, Type type) : 
     m_data(data), 
     m_extent(extent), 
     m_spacing(spacing), 
     m_type(type), 
     m_offset(offset), 
-    m_isDirty(false)
+    m_isDirty(false),
+    m_timeSlice(0.f)
 { 
     updateRange();
 }
@@ -79,7 +83,7 @@ Volume::Volume(std::shared_ptr<UInt8> data, Vector4u const& extent,
 // ----------------------------------------------------------------------------
 //  Sets the volume data
 // ----------------------------------------------------------------------------
-void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type)
+void setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type)
 {
     m_data   = data; 
     m_extent = extent; 
@@ -91,7 +95,7 @@ void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent,
 // ----------------------------------------------------------------------------
 //  Updates the value range for the volume voxels
 // ----------------------------------------------------------------------------
-void Volume::updateRange()
+void updateRange()
 {
     size_t       elems = m_extent.fold<size_t>(1, &mul);
     UInt8 const* ptr   = m_data.get();
@@ -112,7 +116,7 @@ void Volume::updateRange()
 // ----------------------------------------------------------------------------
 //  Fetches the normalized value at a voxel
 // ----------------------------------------------------------------------------
-float Volume::fetchNormalized(size_t x, size_t y, size_t z) const
+float fetchNormalized(size_t x, size_t y, size_t z) const
 {
     size_t i = x + y * m_extent[0] + z * m_extent[0] * m_extent[1];
         
@@ -131,5 +135,54 @@ float Volume::fetchNormalized(size_t x, size_t y, size_t z) const
         
     return (sample - m_range[0]) / (m_range[1] - m_range[0]);
 }
+
+public:
+    bool m_isDirty; ///< Context change flag
+
+    std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
+    Vector2f m_range;       ///< Volume value range (normalized to type)
+    
+    float m_timeSlice; ///< The current time slice to display
+
+    boost::mutex m_mutex;
+
+    Vector3f m_offset;      ///< Volume offset (mm)
+    Vector4f m_spacing;     ///< Spacing between voxels (mm)
+    Vector4u m_extent;      ///< Size of volume in voxels
+    Type     m_type;        ///< Volume data type
+};
+
+// ----------------------------------------------------------------------------
+//  Redirect to implementation
+// ----------------------------------------------------------------------------
+Volume::Volume(std::shared_ptr<UInt8> data, Vector4u const& extent, 
+               Vector4f const& spacing, Vector3f const& offset, Type type) : 
+    m_pImpl(new Impl(data, extent, spacing, offset, type)) { }
+Volume::~Volume() { delete m_pImpl; }
+void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type) 
+    { m_pImpl->setData(data, extent, type); }
+void Volume::updateRange() { m_pImpl->updateRange(); }
+float Volume::fetchNormalized(size_t x, size_t y, size_t z) const { return m_pImpl->fetchNormalized(x, y, z); }
+
+// ----------------------------------------------------------------------------
+//  Getters/Setters
+// ----------------------------------------------------------------------------
+UInt8 *         Volume::mutableData()      { return m_pImpl->m_data.get(); }
+UInt8 const*    Volume::data() const       { return m_pImpl->m_data.get(); }
+size_t          Volume::voxelSize() const  { return typeToSize(m_pImpl->m_type); }
+Volume::Type    Volume::type() const       { return m_pImpl->m_type; }
+void            Volume::setDirty()         { m_pImpl->m_isDirty = true; }
+void            Volume::setClean()         { m_pImpl->m_isDirty = false; }
+bool            Volume::isDirty() const    { return m_pImpl->m_isDirty; }
+Vector4f const& Volume::spacing() const     { return m_pImpl->m_spacing; } 
+Vector4u const& Volume::extent() const      { return m_pImpl->m_extent; }  
+Vector3f const& Volume::offset() const      { return m_pImpl->m_offset; }
+float           Volume::timeSlice()         { return m_pImpl->m_timeSlice; }
+Vector2f const& Volume::valueRange() const  { return m_pImpl->m_range; }
+void            Volume::setSpacing(Vector4f const& spacing) { m_pImpl->m_spacing = spacing; }
+void            Volume::setOffset(Vector3f const& offset)   { m_pImpl->m_offset = offset; }
+void            Volume::setTimeSlice(float timeSlice)       { m_pImpl->m_timeSlice = timeSlice; }
+void            Volume::lock()   { m_pImpl->m_mutex.lock(); }
+void            Volume::unlock() { m_pImpl->m_mutex.unlock(); }
 
 } // namespace vox

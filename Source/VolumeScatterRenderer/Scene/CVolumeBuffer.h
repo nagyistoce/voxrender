@@ -60,6 +60,9 @@ public:
     /** Returns the inverse spacing of the volume data */
     VOX_HOST_DEVICE inline Vector3f const& invSpacing() const { return m_invSpacing; }
 
+    /** Returns the currently loaded time slice of the volume */
+    VOX_HOST_DEVICE float timeSlice() { return m_timeSlice; }
+
     /** Returns the cudaArray storing the volume data */
     VOX_HOST inline cudaArray const* handle() const { return m_handle; }
 
@@ -76,6 +79,10 @@ public:
     }
 
 private:
+    /** Loads the volume data into the buffer */
+    VOX_HOST void loadBuffer(std::shared_ptr<Volume> volume);
+
+private:
     Volume::Type   m_type;         ///< Format of volume data
     Vector3f       m_size;         ///< Size of the volume (mm)
     Vector3f       m_invSpacing;   ///< Inverse of spacing between samples (/mm)
@@ -84,6 +91,7 @@ private:
     cudaArray *    m_handle;       ///< Handle to volume data array on device
     float          m_invRange;     ///< The range of the volume data values (for normalization)
     float          m_dataMin;      ///< The minimum of the volume data values (for normalization)
+    float          m_timeSlice;    ///< The current time slice of the volume
 
     // :TODO: Store affine transform from world->volume for volume trace Ray3f
 

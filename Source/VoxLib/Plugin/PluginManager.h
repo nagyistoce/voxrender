@@ -109,7 +109,7 @@ namespace vox
     class VOX_EXPORT PluginManager
 	{
     public:
-        typedef std::function<void(std::shared_ptr<PluginInfo>)> DiscoveryCallback;
+        typedef std::function<void(std::shared_ptr<PluginInfo>)> PluginCallback;
 
         /** Returns the global PluginManager */
         static PluginManager & instance();
@@ -185,16 +185,19 @@ namespace vox
         void softReload(String const& pluginName);
 
         /**
-         * Loads all available plugins
+         * Searches out all available plugins
          *
-         * This function causes the plugin manager to find all plugins in the available 
-         * search directories. This does not include multiple versions of the same plugin.
+         * This function causes the plugin manager to find all plugins in the available search directories. 
+         * The resulting plugins can be accessed through the forEach() and findXXX() member functions.
          *
          * @param load      If true, any detected plugins will automatically be loaded 
          * @param checkBins If true, binaries with plugin extensions (dll, so, etc) and no associated .pin will be loaded, 
          *                  for a short time, to extract plugin info. Otherwise only .pin associated files are loaded.
          */
-        void findAll(DiscoveryCallback callback, bool load = false, bool checkBins = false);
+        void search(bool load = false, bool checkBins = false);
+
+        /** Issues a callback function for each plugin on the calling thread. */
+        void forEach(PluginCallback callback);
 
         /** 
          * Attempts to load a plugin associated with a given Vendor, Name identification 
@@ -209,9 +212,6 @@ namespace vox
 
         /** Explicitly unloads any loaded plugins */
         void unloadAll();
-
-        /** Returns an info structure for a given plugin */
-        std::shared_ptr<PluginInfo> getPluginInfo(String const& name);
 
         /** 
          * Enables automatic runtime detection and loading of plugins

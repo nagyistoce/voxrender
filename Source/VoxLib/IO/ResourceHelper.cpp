@@ -198,7 +198,7 @@ namespace filescope {
                       }
                   }
 
-                  //pluginManager.findAll([] (std::shared_ptr<PluginInfo>) {}, true, true);
+                  pluginManager.search(false, true);
 
                   pop();
               }
@@ -224,7 +224,8 @@ namespace filescope {
                               VOX_LOG_WARNING(Error_BadToken, VOX_LOG_CATEGORY,
                                 format("Authorized plugin must be specified as Vendor.Name: %1%", id));
                           
-                          pluginManager.load(pluginManager.findByNameVendor(filters[0], filters[1]));
+                          auto plugin = pluginManager.findByNameVendor(filters[0], filters[1]);
+                          if (plugin) pluginManager.load(plugin);
                       }
                   }
 

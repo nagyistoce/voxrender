@@ -58,7 +58,7 @@ public:
     };
 
     /** Volume data format size conversion (runtime) */
-    static size_t typeToSize(Type const& type)
+    static unsigned int typeToSize(Type const& type)
     {
         switch(type)
         {
@@ -111,56 +111,6 @@ public:
         return std::shared_ptr<Volume>(new Volume(data, extent, spacing, offset, type));
     }
 
-    /** Spacing modifier */     
-    void setSpacing(Vector4f const& spacing) { m_spacing = spacing; }
-
-    /** Offset modifier */
-    void setOffset(Vector3f const& offset) { m_offset = offset; }
-
-    /** Spacing accessor */     
-    Vector4f const& spacing() const { return m_spacing; } 
-
-    /** Extent accessor */      
-    Vector4u const& extent() const { return m_extent; }  
-    
-    /** Offset accessor */
-    Vector3f const& offset() const { return m_offset; }
-    
-    /** Returns the normalized value range of the data for the underlying type */
-    Vector2f const& valueRange() const { return m_range; }
-
-    /** Updates the value range of the data */
-    void updateRange();
-
-    /** Raw voxel data accessor */
-    void* const& at(size_t x, size_t y, size_t z) const;
-   
-    /** Voxel data accessor */
-    float fetchNormalized(size_t x, size_t y, size_t z) const;
-
-    /** Data modifier */ 
-    void setData(std::shared_ptr<UInt8> const& data, 
-                 Vector4u               const& extent,
-				 Type                          type);
-
-    /** Raw voxel data accessor */
-    UInt8 * mutableData() { return m_data.get(); }
-
-    /** Raw voxel data accessor */
-    UInt8 const* data() const { return m_data.get(); }
-
-    /** Returns the format of the data (bytes per voxel) */
-    size_t voxelSize() const { return typeToSize(m_type); }
-
-    /** Returns the format of the data (type) */
-    Type type() const { return m_type; }
-
-    /** Returns true if the volume was changed */
-    bool isDirty() const { return m_isDirty; }
-
-private:
-    friend RenderController;
-
 	/** 
      * Loads the given data set into the volume
      *
@@ -177,15 +127,79 @@ private:
 		   Type                     type
           );
 
-    bool m_isDirty; ///< Context change flag
+    /** Destructor */
+    ~Volume();
 
-    std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
+    /** Spacing modifier */     
+    void setSpacing(Vector4f const& spacing);
 
-    Vector2f m_range;       ///< Volume value range (normalized to type)
-    Vector3f m_offset;      ///< Volume offset (mm)
-    Vector4f m_spacing;     ///< Spacing between voxels (mm)
-    Vector4u m_extent;      ///< Size of volume in voxels
-    Type     m_type;        ///< Volume data type
+    /** Offset modifier */
+    void setOffset(Vector3f const& offset);
+
+    /** Sets the current time slice */
+    void setTimeSlice(float timeSlice);
+
+    /** Spacing accessor */     
+    Vector4f const& spacing() const;
+
+    /** Extent accessor */      
+    Vector4u const& extent() const;
+    
+    /** Offset accessor */
+    Vector3f const& offset() const;
+    
+    /** Returns the time slice of the volume for display */
+    float timeSlice();
+
+    /** Returns the normalized value range of the data for the underlying type */
+    Vector2f const& valueRange() const;
+
+    /** Updates the value range of the data */
+    void updateRange();
+
+    /** Raw voxel data accessor */
+    void* const& at(size_t x, size_t y, size_t z) const;
+   
+    /** Voxel data accessor */
+    float fetchNormalized(size_t x, size_t y, size_t z) const;
+
+    /** Data modifier */ 
+    void setData(std::shared_ptr<UInt8> const& data, 
+                 Vector4u               const& extent,
+				 Type                          type);
+
+    /** Raw voxel data accessor */
+    UInt8 * mutableData();
+
+    /** Raw voxel data accessor */
+    UInt8 const* data() const;
+
+    /** Returns the format of the data (bytes per voxel) */
+    size_t voxelSize() const;
+
+    /** Returns the format of the data (type) */
+    Type type() const;
+
+    /** Marks the volume display parameters dirty */
+    void setDirty();
+
+    /** Returns true if the volume was changed */
+    bool isDirty() const;
+
+    /** Locks the volume data for editing */
+    void lock();
+
+    /** Unlocks the volume data */
+    void unlock();
+
+private:
+    friend RenderController;
+
+    /** Clears the dirty flag */
+    void setClean();
+
+    class Impl;
+    Impl * m_pImpl;
 };
 
 }

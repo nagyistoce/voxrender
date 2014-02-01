@@ -50,7 +50,14 @@ public:
      * @param kernel The volume convoltution kernel
      * @param type   The target type of the output volume data set
      */
-    static std::shared_ptr<Volume> execute(Volume & volume, Image3D<float> kernel, Volume::Type type = Volume::Type_End);
+    static std::shared_ptr<Volume> execute(Volume & volume, Image3D<float> kernel, 
+        Volume::Type type = Volume::Type_End);
+
+    static std::shared_ptr<Volume> execute(Volume & volume, std::vector<float> const& x, std::vector<float> const& y, 
+        std::vector<float> const& z, Volume::Type type = Volume::Type_End);
+
+    /** Constructs and returns a gaussian kernel of the given size */
+    static std::vector<float> gaussian(float variance, unsigned int size = 0);
 
     /** Returns the time elapsed during the last convolution operatino */
     static float getElapsedTime();

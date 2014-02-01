@@ -308,8 +308,8 @@ private:
             m_scene.camera->setClean();
             m_scene.transfer->setClean();
             m_scene.parameters->setClean();
+            m_scene.volume->setClean();
 
-            m_scene.volume->m_isDirty = false;
             m_scene.clipGeometry->setDirty(false);
             m_scene.transferMap->setDirty(false);
 

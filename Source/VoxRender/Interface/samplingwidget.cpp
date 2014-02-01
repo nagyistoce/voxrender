@@ -98,7 +98,7 @@ void SamplingWidget::update()
         settings->setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
         settings->setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
         settings->setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
-
+        settings->setEdgeEnhancement( (float)ui->doubleSpinBox_edge->value() );
         settings->setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
         settings->setDirty();
     settings->unlock();
@@ -197,6 +197,24 @@ void SamplingWidget::on_doubleSpinBox_coefficient_valueChanged(double value)
     Utilities::forceSlToSb(
         ui->horizontalSlider_coefficient,
         ui->doubleSpinBox_coefficient,
+        value);
+    
+    update();
+}
+void SamplingWidget::on_horizontalSlider_edge_valueChanged(int value) 
+{ 
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_edge,
+        ui->horizontalSlider_edge,
+        value);
+    
+    update();
+}
+void SamplingWidget::on_doubleSpinBox_edge_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_edge,
+        ui->doubleSpinBox_edge,
         value);
     
     update();

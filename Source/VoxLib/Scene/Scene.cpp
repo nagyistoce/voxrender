@@ -38,6 +38,7 @@
 #include "VoxLib/Scene/Light.h"
 #include "VoxLib/Scene/PrimGroup.h"
 #include "VoxLib/Scene/RenderParams.h"
+#include "VoxLib/Scene/Volume.h"
 
 // API namespace
 namespace vox
@@ -220,6 +221,7 @@ bool Scene::isDirty() const
 {
     return (camera && camera->isDirty())           ||
            (lightSet && lightSet->isDirty())       ||
+           (volume && volume->isDirty())           ||
            (parameters && parameters->isDirty())   ||
            (transfer && transfer->isDirty())       ||
            (transferMap && transferMap->isDirty()) ||

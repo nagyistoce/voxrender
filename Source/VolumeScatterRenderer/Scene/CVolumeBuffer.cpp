@@ -47,6 +47,7 @@ void CVolumeBuffer::reset()
         cudaFreeArray(m_handle);
 
         m_handle = nullptr;
+        m_timeSlice = -1.0f;
     }
 }
 
@@ -56,21 +57,12 @@ void CVolumeBuffer::reset()
 void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
 {
     reset(); // Ensure previous data is released
-
-    // Acquire volume data range for renormalization
-    Vector2f valueRange = VolumeHistogramKernel::computeValueRange(volume);
-    m_invRange          = 1.0f / (valueRange[1] - valueRange[0]);
-    m_dataMin           = valueRange[0];
-
-    VOX_LOG_INFO(VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
-
+    
     // Volume parameters
     m_offset     = volume->offset();
     auto spacing = volume->spacing();
     auto extent  = volume->extent();
     m_type       = volume->type();
-
-    size_t voxelSize = volume->voxelSize();
 
     // Record volume extent 
     m_extent.width  = extent[0];
@@ -86,6 +78,29 @@ void CVolumeBuffer::setVolume(std::shared_ptr<Volume> volume)
     m_invSpacing[0] = 1.0f / spacing[0];
     m_invSpacing[1] = 1.0f / spacing[1];
     m_invSpacing[2] = 1.0f / spacing[2];
+
+    // Ensure the proper time slice is loaded
+    if (m_timeSlice != volume->timeSlice())
+    {
+        m_timeSlice = volume->timeSlice();
+
+        loadBuffer(volume);
+    }
+}
+
+// --------------------------------------------------------------------
+//  Updates the data content of the volume buffer
+// --------------------------------------------------------------------
+void CVolumeBuffer::loadBuffer(std::shared_ptr<Volume> volume)
+{
+    // Acquire volume data range for renormalization
+    Vector2f valueRange = VolumeHistogramKernel::computeValueRange(volume);
+    m_invRange          = 1.0f / (valueRange[1] - valueRange[0]);
+    m_dataMin           = valueRange[0];
+
+    VOX_LOG_INFO(VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
+
+    size_t voxelSize = volume->voxelSize();
 
     // Specify the format for volume data access
     m_format = cudaCreateChannelDesc(voxelSize*8, 0, 0, 0, 

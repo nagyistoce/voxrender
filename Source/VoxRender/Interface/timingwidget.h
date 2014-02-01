@@ -51,6 +51,13 @@ private:
 
 private slots:
     void sceneChanged();
+
+    void on_doubleSpinBox_x_valueChanged(double value);
+    void on_doubleSpinBox_y_valueChanged(double value);
+    void on_doubleSpinBox_z_valueChanged(double value);
+    void on_horizontalSlider_x_valueChanged(int value);
+    void on_horizontalSlider_y_valueChanged(int value);
+    void on_horizontalSlider_z_valueChanged(int value);
 };
 
 // End definition

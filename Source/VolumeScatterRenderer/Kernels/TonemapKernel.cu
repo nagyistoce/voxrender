@@ -80,12 +80,13 @@ void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgba
     
 	// Execute the kernel
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventRecord(start,0);
+    VOX_CUDA_CHECK(cudaEventCreate(&start));
+    VOX_CUDA_CHECK(cudaEventRecord(start,0));
     filescope::tonemapKernel<<<blocks,threads>>>(sampleBuffer, imageBuffer, exposure);
-    cudaEventCreate(&stop);
-    cudaEventRecord(stop,0);
-    cudaEventSynchronize(stop);
+    VOX_CUDA_CHECK(cudaDeviceSynchronize());
+    VOX_CUDA_CHECK(cudaEventCreate(&stop));
+    VOX_CUDA_CHECK(cudaEventRecord(stop,0));
+    VOX_CUDA_CHECK(cudaEventSynchronize(stop));
 
     // Acquire the time for this kernel execution
     cudaEventElapsedTime(&m_elapsedTime, start, stop);

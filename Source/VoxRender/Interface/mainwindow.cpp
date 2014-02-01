@@ -112,11 +112,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this); instance = this;
-    
+
     // Register the QT metatypes used as signals parameters
     QMetaTypeId<std::shared_ptr<vox::FrameBufferLock>>::qt_metatype_id();
     QMetaTypeId<std::string>::qt_metatype_id();
+    
+    // VoxRender log configuration
+    configureLoggingEnvironment();
 
+    // Display and log the library version info and startup time
+    VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("VoxRender Version: %1%", VOX_VERSION_STRING));
+    
     // Load the configuration file from the current directory
     try
     {
@@ -126,12 +132,6 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         VOX_LOG_ERROR(error.code, VOX_GUI_LOG_CAT, "Unable to load config file: " + error.message);
     }
-
-    // VoxRender log configuration
-    configureLoggingEnvironment();
-
-    // Display and log the library version info and startup time
-    VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("VoxRender Version: %1%", VOX_VERSION_STRING));
 
 	// Window Initialization
 	createRenderTabPanes();
@@ -236,7 +236,7 @@ void MainWindow::configurePlugins()
 	ui->pluginsAreaLayout->addItem(m_pluginSpacer);
 
     // Enumerate all available plugins and add them to the display panel
-    vox::PluginManager::instance().findAll(boost::bind(&MainWindow::registerPlugin, this, _1), false, true);
+    vox::PluginManager::instance().forEach(boost::bind(&MainWindow::registerPlugin, this, _1));
 }
 
 // ----------------------------------------------------------------------------
@@ -251,8 +251,7 @@ void MainWindow::registerPlugin(std::shared_ptr<PluginInfo> info)
     PaneWidget *pane = new PaneWidget(ui->pluginsAreaContents);
     pane->showOnOffButton();
     pane->setTitle(QString::fromLatin1(info->name.c_str()));
-    // :TODO: allow custom icons in plugin specification -- pane->setIcon(":/icons/lightgroupsicon.png");
-    
+
     // Create the plugin widget
     QWidget * newPluginWidget = new PluginWidget(pane, info); 
     pane->setWidget(newPluginWidget);
@@ -359,7 +358,6 @@ void MainWindow::printLogEntry(
 			blinkTrigger();
 			static const QIcon icon(":/icons/erroricon.png");
             ui->tabWidget_main->setTabIcon(filescope::logTabId, icon);
-			statusMessage->setText(tr("Check Log Please")); 
         } 
     }
 }
@@ -730,7 +728,7 @@ void MainWindow::createRenderTabPanes()
 	panes[1] = new PaneWidget( ui->panesAreaContents, 
 		"Camera Settings", ":/icons/cameraicon.png" );
 	panes[2] = new PaneWidget( ui->panesAreaContents, 
-		"Volume Parameters", ":/icons/clockicon.png" );
+		"Volume Display", ":/icons/clockicon.png" );
 	panes[3] = new PaneWidget( ui->panesAreaContents, 
 		"Volume Histogram", ":/icons/histogramicon.png" );
 
@@ -1168,23 +1166,22 @@ void MainWindow::onActionOpenRecentFile()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionGaussian_Filter_triggered()
 {
+    if (!activeScene.volume) return;
+
     try
     {
         m_renderController.stop();
+        HistogramGenerator::instance()->stopGeneratingImages();
 
-        Image3D<float> gaussian(3, 3, 3);
-        for (int x = 0; x < 3; x++)
-        for (int y = 0; y < 3; y++)
-        for (int z = 0; z < 3; z++)
-        {
-            float val;
-            if (x == 1 && y == 1 && z == 1) val = 1.0f;
-            else val = 0.0f;
+        Image3D<float> gaussian(5, 5, 5);
+        auto gaussVec = volt::Conv::gaussian(0.75f, 5);
+        for (int x = 0; x < 5; x++)
+        for (int y = 0; y < 5; y++)
+        for (int z = 0; z < 5; z++)
+            gaussian.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
 
-            gaussian.at(x, y, z) = val;
-        }
-
-        activeScene.volume = volt::Conv::execute(*activeScene.volume, gaussian);
+        auto result = volt::Conv::execute(*activeScene.volume, gaussian);
+        activeScene.volume = result;
 
         float time = volt::Conv::getElapsedTime();
     }

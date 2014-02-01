@@ -65,6 +65,25 @@ void TimingWidget::sceneChanged()
 
     m_ignore = true;
 
+    // Configure the time step slider
+    auto timeSteps = volume->extent()[3]-1;
+    if (!timeSteps)
+    {
+        ui->spinBox_t->setEnabled(false);
+        ui->horizontalSlider_t->setEnabled(false);
+    }
+    else
+    {
+        ui->spinBox_t->setEnabled(true);
+        ui->horizontalSlider_t->setEnabled(true);
+    }
+
+    // Update the volume spacing controls
+    auto spacing = volume->spacing();
+    ui->doubleSpinBox_x->setValue(spacing[0]);
+    ui->doubleSpinBox_y->setValue(spacing[1]);
+    ui->doubleSpinBox_z->setValue(spacing[2]);
+
     m_ignore = false;
 }
 
@@ -74,4 +93,79 @@ void TimingWidget::sceneChanged()
 void TimingWidget::update()
 {
     if (m_ignore) return;
+
+    auto volume = MainWindow::instance->scene().volume;
+    if (!volume) return;
+
+    volume->lock();
+
+        Vector4f spacing = volume->spacing();
+        spacing[0] = ui->doubleSpinBox_x->value();
+        spacing[1] = ui->doubleSpinBox_y->value();
+        spacing[2] = ui->doubleSpinBox_z->value();
+        volume->setSpacing(spacing);
+
+        volume->setTimeSlice(ui->spinBox_t->value());
+
+        volume->setDirty();
+
+    volume->unlock();
+}
+
+// ----------------------------------------------------------------------------
+//                  Widget Value Change Detection
+// ----------------------------------------------------------------------------
+void TimingWidget::on_horizontalSlider_x_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_x,
+        ui->horizontalSlider_x,
+        value);
+    
+    update();
+}
+void TimingWidget::on_doubleSpinBox_x_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_x,
+        ui->doubleSpinBox_x,
+        value);
+    
+    update();
+}
+void TimingWidget::on_horizontalSlider_y_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_y,
+        ui->horizontalSlider_y,
+        value);
+    
+    update();
+}
+void TimingWidget::on_doubleSpinBox_y_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_y,
+        ui->doubleSpinBox_y,
+        value);
+    
+    update();
+}
+void TimingWidget::on_horizontalSlider_z_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_z,
+        ui->horizontalSlider_z,
+        value);
+    
+    update();
+}
+void TimingWidget::on_doubleSpinBox_z_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_z,
+        ui->doubleSpinBox_z,
+        value);
+    
+    update();
 }

@@ -201,7 +201,7 @@ namespace filescope {
         
         // Offset the ray origin by a fraction of step size
         sampleRay.min += rng.sample1D() * rayStepSize;
-
+        sampleRay.pos += sampleRay.dir * sampleRay.min;
         sampleRay.dir *= rayStepSize;
 
         // Perform ray marching until the sample depth is reached
@@ -262,8 +262,13 @@ namespace filescope {
         float gradMag = gradient.length();
         gradient = gradient / gradMag;
         gradMag *= R3I;
-        if (Vector3f::dot(gradient, location.dir) > 0) gradient = -gradient;
+        // -- Adjust gradient towards camera for lighting computations
+        float part = Vector3f::dot(gradient, location.dir);
+        if (part > 0) gradient = -gradient; 
         
+        // Perform edge enhancement (ie. Shade black around locations with gradients perpindicular to the eye direction)
+        if (gradMag > gd_renderParams.gradientCutoff() && abs(part) < gd_renderParams.edgeEnhancement()) return ColorLabxHdr(0.0f, 0.0f, 0.0f);
+
         float density = sampleDensity(location.pos[0], location.pos[1], location.pos[2]); // :TODO: Carry density forward with location
 
         // Determine the diffuse characteristic of the sample point 
@@ -280,9 +285,11 @@ namespace filescope {
             auto const lightNum = (int)floorf(rng.sample1D() * (float)gd_lights.size());
 
             // Compute the lighting properties for the selected scattering point
-            Vector3f lightDirection = (gd_lights[lightNum].position() - location.pos).normalize();
+            Vector3f lightDirection = gd_lights[lightNum].position() - location.pos;
+            float    lightDistance  = lightDirection.length();
+            lightDirection *= (1.0f / lightDistance);
             float    lightStepSize  = gd_renderParams.shadowStepSize();
-            float    lightTransmit  = computeTransmission(rng, Ray3f(location.pos, lightDirection, 0.0f, 10000.0f), lightStepSize);
+            float    lightTransmit  = computeTransmission(rng, Ray3f(location.pos-location.dir*gd_renderParams.primaryStepSize(), lightDirection, 0.0f, lightDistance), lightStepSize);
             Vector3f lightIncident  = gd_lights[lightNum].color() * lightTransmit * gd_lights.size();
             
             // Switch to surface based shading above the gradient threshold

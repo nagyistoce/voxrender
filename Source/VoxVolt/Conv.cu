@@ -104,7 +104,7 @@ namespace filescope {
     // Binds the buffers in a volume blocker to
     void bindBuffers(VolumeBlocker & blocker)
     {
-        auto volume = blocker.volume();
+        auto & volume = blocker.volume();
 
         // Bind the volume data buffers
         auto type = volume.type();
@@ -189,6 +189,42 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
 
     // Compute the time elapsed during GPU execution
     cudaEventElapsedTime(&filescope::elapsedTime, start, stop);
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
+//  Constructs a gaussian kernel of the given size
+// ----------------------------------------------------------------------------
+std::vector<float> Conv::gaussian(float variance, unsigned int size)
+{
+    unsigned int width = size ? size : ceil(6.f*variance);
+
+    std::vector<float> result;
+    result.resize(size);
+
+    float var2 = variance * variance;
+    float K    = 1 / (sqrt(2 * M_PI * var2));
+    unsigned int o = (width-1) / 2;
+    if (width%2)
+    {
+        for (unsigned int i = 0; i <= o; i++)
+        {
+            float val = K * expf(-(float)(i*i) / (2.f * var2));
+            result[o+i] = val;
+            result[o-i] = val;
+        }
+    }
+    else
+    {
+        for (unsigned int i = 0; i <= o; i++)
+        {
+            float x = i + 0.5f;
+            float val = K * exp(-x*x / (2 * var2));
+            result[o+i+1] = val;
+            result[o-i]   = val;
+        }
+    }
 
     return result;
 }

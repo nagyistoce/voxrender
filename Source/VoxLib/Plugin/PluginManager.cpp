@@ -81,8 +81,6 @@ public:
     {
         boost::recursive_mutex::scoped_lock lock(mutex);
     
-        std::list<std::shared_ptr<PluginInfo>> matches;
-
         std::shared_ptr<PluginInfo> result = nullptr;
         BOOST_FOREACH (auto & plugin, plugins)
         {
@@ -215,25 +213,10 @@ void PluginManager::removePath(String const& string)
 }   
     
 // ----------------------------------------------------------------------------
-//  Returns an info structure describing a loaded plugin
-// ----------------------------------------------------------------------------
-std::shared_ptr<PluginInfo> PluginManager::getPluginInfo(String const& name)
-{
-    boost::recursive_mutex::scoped_lock lock(m_pImpl->mutex);
-        
-    BOOST_FOREACH(auto & plugin, m_pImpl->plugins)
-    {
-    }
-
-    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                format("Requested info for unknown plugin: %1%", name));
-}
-    
-// ----------------------------------------------------------------------------
 //  Searches for any plugins in the set of search directories and
 //  optionally enables them.
 // ----------------------------------------------------------------------------
-void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBins)
+void PluginManager::search(bool load, bool checkBins)
 {
     BOOST_FOREACH(auto & searchPath, m_pImpl->searchPaths)
     {
@@ -251,15 +234,14 @@ void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBin
             // Check file extension for .pin or system's library extension
             if (entry.path().extension() == ".pin")
             {
-                VOX_LOG_ERROR(Error_None, VOX_LOG_CATEGORY, ".pin file");
+                VOX_LOG_WARNING(Error_NotImplemented, VOX_LOG_CATEGORY, 
+                    format("Unable to read <%1%>: PIN file support not implemented", entry.path().filename()));
             }
             else if (entry.path().extension() == ".dll" && checkBins)
             {
                 try
                 {
                     auto info = loadFromFile(entry.path().string(), load);
-
-                    callback(info);
                 }
                 catch (Error & error)
                 {
@@ -268,6 +250,14 @@ void PluginManager::findAll(DiscoveryCallback callback, bool load, bool checkBin
             }
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+//  Issues the specified callback for each available plugin
+// ----------------------------------------------------------------------------
+void PluginManager::forEach(PluginCallback callback)
+{
+    BOOST_FOREACH (auto & plugin, m_pImpl->plugins) callback(plugin->info());
 }
 
 // ----------------------------------------------------------------------------

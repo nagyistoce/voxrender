@@ -41,6 +41,7 @@ CRenderParams::CRenderParams(std::shared_ptr<RenderParams> settings) :
     m_occludeSamples( settings->occludeSamples() ),
     m_gradientCutoff( settings->gradientCutoff() ),
     m_scatterCoefficient( settings->scatterCoefficient() ),
+    m_edgeEnhancement( settings->edgeEnhancement() / 200.0f ),
     m_backdropColor(1.0f, 1.0f, 1.0f)
 {
 }

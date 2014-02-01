@@ -4,7 +4,7 @@
     
 	Description: Raw volume file import/export module
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -82,18 +82,20 @@ namespace
                 // Detect the endian mode settings
                 std::string endianess = m_options.lookup("Endianess", "little");
                 boost::algorithm::to_lower(endianess);
-                if (endianess == "little" || endianess == "lsb")
-                {
-                }
-                else if (endianess == "big" || endianess == "msb")
-                {
-                }
-                else
-                {
-                    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                bool isLittleEndian;
+                if (endianess == "little" || endianess == "lsb")   isLittleEndian = true;
+                else if (endianess == "big" || endianess == "msb") isLittleEndian = false;
+                else throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
                                 format("Invalid Endianess: %1%", endianess),
                                 Error_BadToken);
-                }
+
+                // Determine if a swap operation is necessary
+                bool swap =
+                #ifdef BOOST_LITTLE_ENDIAN
+                    ( (endianess == "big" || endianess == "msb"));
+                #else
+                    ( (endianess == "little" || endianess == "lsb"));
+                #endif
                 
                 // Detect the compression mode options 
                 std::vector<std::string> filters;
@@ -172,10 +174,10 @@ namespace
                 // Determine the volume data type
                 boost::to_lower(typeStr);
                 Volume::Type type = stringToType(typeStr);
-                size_t bytesPerVoxel = Volume::typeToSize(type);
+                auto bytesPerVoxel = Volume::typeToSize(type);
 
                 // Read the raw volume data from the filter chain
-                size_t voxels = size.fold<size_t>(1, &mul);
+                auto voxels = size.fold(mul);
                 auto data = makeSharedArray(voxels*bytesPerVoxel);
                 readInputData(bytesPerVoxel, voxels, data.get());
 				
@@ -283,11 +285,28 @@ void RawVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, S
 // --------------------------------------------------------------------
 Scene RawVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
 {
-    // Parse XML format input file into boost::property_tree
-    filescope::RawImporter importModule(source, options, m_handle);
+    // Jenky support for when multi-file raw volumes are necessary
+    // (ie when reading from raw data and not through a service interface)
+    auto multiFile = options.lookup("MultiFile", "");
+    if (!multiFile.empty())
+    {
+        // :TODO:
+        throw Error(__FILE__, __LINE__, RVI_LOG_CATEGORY, 
+            "Multi-file volume import not implemented", Error_NotImplemented);
+        auto range = options.lookup<Vector2u>("Range");
+        auto place = options.lookup<String>("Place");
+        for (unsigned int i = range[0]; i < range[1]; i++)
+        {
+        }
+    }
+    else // Single file raw load
+    {
+        // Parse XML format input file into boost::property_tree
+        filescope::RawImporter importModule(source, options, m_handle);
 
-    // Read property tree and load scene
-    return importModule.readRawDataFile();
+        // Read property tree and load scene
+        return importModule.readRawDataFile();
+    }
 }
 
 } // namespace vox
