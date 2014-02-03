@@ -285,8 +285,6 @@ namespace
                 
                 node.add(P_STEP_PRIMARY, settings->primaryStepSize());
                 node.add(P_STEP_SHADOW,  settings->shadowStepSize());
-                node.add(P_STEP_OCCLUDE, settings->occludeStepSize());
-                node.add(P_SAMPLES_OCCLUDE, settings->occludeSamples());
 
                 m_tree.add_child("Scene.Settings", node);
             }
@@ -566,8 +564,6 @@ namespace
                   // Read inline parameter specifications
                   parameters.setPrimaryStepSize(m_node->get(P_STEP_PRIMARY, parameters.primaryStepSize()));
                   parameters.setShadowStepSize(m_node->get(P_STEP_SHADOW, parameters.shadowStepSize()));
-                  parameters.setOccludeStepSize(m_node->get(P_STEP_OCCLUDE, parameters.occludeStepSize()));
-                  parameters.setOccludeSamples(m_node->get(P_SAMPLES_OCCLUDE, parameters.occludeSamples()));
 
                 pop();
 

@@ -69,5 +69,3 @@ auto Q_MATERIALS = "Materials";  ///< Material list for nodes
 
 auto P_STEP_PRIMARY    = "PrimaryStepSize"; ///< Primary sample step size (mm)
 auto P_STEP_SHADOW     = "ShadowStepSize";  ///< Shadow sample step size (mm)
-auto P_STEP_OCCLUDE    = "OccludeStepSize"; ///< Occlude sample step size (mm)
-auto P_SAMPLES_OCCLUDE = "OccludeSamples";  ///< Occlude Samples (count)

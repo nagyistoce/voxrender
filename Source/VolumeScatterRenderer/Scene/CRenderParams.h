@@ -51,8 +51,6 @@ public:
     VOX_HOST_DEVICE float        scatterCoefficient()   const { return m_scatterCoefficient; }
     VOX_HOST_DEVICE float        primaryStepSize()      const { return m_primaryStep; }
     VOX_HOST_DEVICE float        shadowStepSize()       const { return m_shadowStep; }
-    VOX_HOST_DEVICE float        occludeStepSize()      const { return m_occludeStep; }
-    VOX_HOST_DEVICE unsigned int occludeSamples()       const { return m_occludeSamples; }
     VOX_HOST_DEVICE float        gradientCutoff()       const { return m_gradientCutoff; }
     VOX_HOST_DEVICE float        edgeEnhancement()      const { return m_edgeEnhancement; }
 
@@ -61,13 +59,10 @@ private:
 
     float m_primaryStep;    ///< Step size for primary volume trace
     float m_shadowStep;     ///< Step size for shadow ray trace
-    float m_occludeStep;    ///< Step size for ambient occlusion
 
     float m_edgeEnhancement;    ///< Edge enhancement factor
     float m_scatterCoefficient; ///< Scattering coefficient for volume shading
     float m_gradientCutoff;     ///< Cutoff for surface based shading 
-
-    unsigned int m_occludeSamples; ///< Number of ambient occlusion samples
 };
 
 }

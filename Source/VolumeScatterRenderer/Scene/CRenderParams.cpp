@@ -37,8 +37,6 @@ namespace vox {
 CRenderParams::CRenderParams(std::shared_ptr<RenderParams> settings) :
     m_primaryStep( settings->primaryStepSize() ),
     m_shadowStep( settings->shadowStepSize() ),
-    m_occludeStep( settings->occludeStepSize() ),
-    m_occludeSamples( settings->occludeSamples() ),
     m_gradientCutoff( settings->gradientCutoff() ),
     m_scatterCoefficient( settings->scatterCoefficient() ),
     m_edgeEnhancement( settings->edgeEnhancement() / 200.0f ),

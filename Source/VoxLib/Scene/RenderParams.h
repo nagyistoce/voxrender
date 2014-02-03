@@ -53,8 +53,6 @@ public:
     RenderParams() :
         m_primaryStep(2.0f),
         m_shadowStep(3.0f),
-        m_occludeStep(1.0f),
-        m_occludeSamples(0u),
         m_gradCutoff(0.0f),
         m_scatterCoefficient(0.0f),
         m_edgeEnhancement(0.0f),
@@ -73,8 +71,6 @@ public:
 
         m_primaryStep = m_primaryStep;
         m_shadowStep = m_shadowStep;
-        m_occludeStep = m_occludeStep;
-        m_occludeSamples = m_occludeSamples;
         m_gradCutoff = m_gradCutoff;
         m_scatterCoefficient = m_scatterCoefficient;
         m_isDirty = m_isDirty;
@@ -95,12 +91,6 @@ public:
     /** Returns the shadow trace ray step size (mm) */
     float shadowStepSize() const { return m_shadowStep; }
     
-    /** Returns the ambient occlusion trace ray step size (mm) */
-    float occludeStepSize() const { return m_occludeStep; }
-
-    /** Returns the number of ambient occlusion rays cast */
-    unsigned int occludeSamples() const { return m_occludeSamples; }
-
     /** Returns the gradient magnitude cutoff */
     float gradientCutoff() const { return m_gradCutoff; }
     
@@ -119,12 +109,6 @@ public:
     /** Sets the primary trace ray step size (mm) */
     void setShadowStepSize(float step) { m_shadowStep = step; }
     
-    /** Sets the primary trace ray step size (mm) */
-    void setOccludeStepSize(float step) { m_occludeStep = step; }
-
-    /** Sets the number of ambient occlusion sample rays cast */
-    void setOccludeSamples(unsigned int samples) { m_occludeSamples = samples; }
-
     /** Sets the scattering function coefficient */
     void setScatterCoefficient(float value) { m_scatterCoefficient = value; }
 
@@ -146,13 +130,10 @@ private:
 
     float m_primaryStep;    ///< Step size for primary volume trace
     float m_shadowStep;     ///< Step size for shadow ray trace
-    float m_occludeStep;    ///< Step size for ambient occlusion
     float m_gradCutoff;     ///< Transition magnitude for surface/volume shading
 
     float m_edgeEnhancement;    ///< Edge enhancement factor
     float m_scatterCoefficient; ///< Coefficient of the scattering function
-
-    unsigned int m_occludeSamples; ///< Number of ambient occlusion samples
 
     bool m_isDirty; ///< Context change flag
 };

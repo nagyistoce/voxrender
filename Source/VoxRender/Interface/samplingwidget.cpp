@@ -72,12 +72,9 @@ void SamplingWidget::sceneChanged()
 
     ui->doubleSpinBox_primaryStep->setValue( (double)settings->primaryStepSize() );
     ui->doubleSpinBox_shadowStep->setValue ( (double)settings->shadowStepSize()  );
-    ui->doubleSpinBox_occludeStep->setValue( (double)settings->occludeStepSize() );
     ui->doubleSpinBox_coefficient->setValue( (double)settings->scatterCoefficient() );
     
     ui->doubleSpinBox_gradient->setValue( (double)settings->gradientCutoff() );
-
-    ui->spinBox_occludeSamples->setValue( (int)settings->occludeSamples() );
 
     m_ignore = false;
 }
@@ -95,8 +92,6 @@ void SamplingWidget::update()
     settings->lock();
         settings->setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
         settings->setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
-        settings->setOccludeStepSize( (float)ui->doubleSpinBox_occludeStep->value() );
-        settings->setOccludeSamples( (unsigned int)ui->spinBox_occludeSamples->value() );
         settings->setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
         settings->setEdgeEnhancement( (float)ui->doubleSpinBox_edge->value() );
         settings->setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
@@ -141,28 +136,6 @@ void SamplingWidget::on_doubleSpinBox_shadowStep_valueChanged(double value)
         ui->doubleSpinBox_shadowStep,
         value);
     
-    update();
-}
-void SamplingWidget::on_horizontalSlider_occludeStep_valueChanged(int value)
-{
-    Utilities::forceSbToSl(
-        ui->doubleSpinBox_occludeStep,
-        ui->horizontalSlider_occludeStep,
-        value);
-    
-    update();
-}
-void SamplingWidget::on_doubleSpinBox_occludeStep_valueChanged(double value)
-{
-    Utilities::forceSlToSb(
-        ui->horizontalSlider_occludeStep,
-        ui->doubleSpinBox_occludeStep,
-        value);
-    
-    update();
-}
-void SamplingWidget::on_horizontalSlider_occludeSamples_valueChanged(int value) 
-{ 
     update();
 }
 void SamplingWidget::on_horizontalSlider_gradient_valueChanged(int value) 

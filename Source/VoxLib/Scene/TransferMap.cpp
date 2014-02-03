@@ -43,6 +43,7 @@ public:
     Image3D<Vector<UInt8,4>> specular; ///< Specular transfer mapping [Reflectance + Roughness]
     Image3D<Vector4f>        emissive; ///< Emissive transfer mapping
     Image3D<float>           opacity;  ///< Absorption coefficient
+    Vector2f                 range[3]; ///< The value range for the transfer function (as a subset of the data set range)
 
     bool isDirty; ///< Dirty state of the TransferMap
 };

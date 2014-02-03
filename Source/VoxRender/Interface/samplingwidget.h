@@ -61,9 +61,6 @@ private slots:
 	void on_doubleSpinBox_primaryStep_valueChanged(double value);
 	void on_horizontalSlider_shadowStep_valueChanged(int value);
 	void on_doubleSpinBox_shadowStep_valueChanged(double value);
-	void on_horizontalSlider_occludeStep_valueChanged(int value);
-	void on_doubleSpinBox_occludeStep_valueChanged(double value);
-	void on_horizontalSlider_occludeSamples_valueChanged(int value);
 	void on_doubleSpinBox_coefficient_valueChanged(double value);
 	void on_horizontalSlider_coefficient_valueChanged(int value);
 	void on_doubleSpinBox_edge_valueChanged(double value);
