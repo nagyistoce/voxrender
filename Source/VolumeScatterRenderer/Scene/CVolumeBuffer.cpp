@@ -4,7 +4,7 @@
     
 	Description: Wraps the management of a CUDA 3D volume buffer
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -123,10 +123,14 @@ void CVolumeBuffer::loadBuffer(std::shared_ptr<Volume> volume)
 	// Create a 3d array for volume data storage
 	VOX_CUDA_CHECK(cudaMalloc3DArray(&m_handle, &m_format, m_extent));
 
+    // Compute the time slice offset
+    auto extent = volume->extent();
+    size_t offset = extent[0] * extent[1] * extent[2] * voxelSize;
+
     // Copy volume data to device
 	cudaMemcpy3DParms copyParams = {0};
 	copyParams.srcPtr.pitch	     = m_extent.width*voxelSize;
-    copyParams.srcPtr.ptr	     = (void*)volume->data();
+    copyParams.srcPtr.ptr	     = (void*)(volume->data() + offset*(int)m_timeSlice);
     copyParams.dstArray	         = m_handle;
     copyParams.extent	         = m_extent;
     copyParams.kind		         = cudaMemcpyHostToDevice;

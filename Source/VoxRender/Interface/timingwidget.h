@@ -58,6 +58,7 @@ private slots:
     void on_horizontalSlider_x_valueChanged(int value);
     void on_horizontalSlider_y_valueChanged(int value);
     void on_horizontalSlider_z_valueChanged(int value);
+    void on_horizontalSlider_t_valueChanged(int value);
 };
 
 // End definition

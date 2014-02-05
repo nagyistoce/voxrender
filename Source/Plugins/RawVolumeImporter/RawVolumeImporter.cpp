@@ -175,12 +175,37 @@ namespace
                 boost::to_lower(typeStr);
                 Volume::Type type = stringToType(typeStr);
                 auto bytesPerVoxel = Volume::typeToSize(type);
-
-                // Read the raw volume data from the filter chain
+                
+                // Allocate memory for the volume data
                 auto voxels = size.fold(mul);
                 auto data = makeSharedArray(voxels*bytesPerVoxel);
-                readInputData(bytesPerVoxel, voxels, data.get());
-				
+
+                // Check if we are reading the first of a multi-file series
+                // :NOTE: This is 1 file per volume, NOT 1 file per slice
+                auto multiFile = m_options.lookup("MultiFile", "");
+                if (!multiFile.empty())
+                {
+                    auto dataPtr = data.get();
+                    auto slice = voxels / size[3]; // Time slice size 
+                    auto range = m_options.lookup<Vector2u>("Range");
+                    auto place = m_options.lookup<String>("Place");
+                    for (unsigned int i = range[0]; i < range[1]; i++)
+                    {
+                        auto tag = boost::lexical_cast<String>(i);
+                        auto relative = multiFile;
+                        boost::algorithm::replace_first(relative, place, tag);
+                        ResourceId id = m_source.identifier().applyRelativeReference(relative);
+                        ResourceIStream inputStream(id);
+                        readInputData(bytesPerVoxel, slice, dataPtr);
+                        dataPtr += slice;
+                    }
+                }
+                else // Single file raw load
+                {
+                    // Read the raw volume data from the filter chain
+                    readInputData(bytesPerVoxel, voxels, data.get());
+                }
+
                 // Construct the volume object for the response
                 Scene scene;
                 scene.volume = Volume::create(data, size, spacing, offset, type);
@@ -285,28 +310,11 @@ void RawVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, S
 // --------------------------------------------------------------------
 Scene RawVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
 {
-    // Jenky support for when multi-file raw volumes are necessary
-    // (ie when reading from raw data and not through a service interface)
-    auto multiFile = options.lookup("MultiFile", "");
-    if (!multiFile.empty())
-    {
-        // :TODO:
-        throw Error(__FILE__, __LINE__, RVI_LOG_CATEGORY, 
-            "Multi-file volume import not implemented", Error_NotImplemented);
-        auto range = options.lookup<Vector2u>("Range");
-        auto place = options.lookup<String>("Place");
-        for (unsigned int i = range[0]; i < range[1]; i++)
-        {
-        }
-    }
-    else // Single file raw load
-    {
-        // Parse XML format input file into boost::property_tree
-        filescope::RawImporter importModule(source, options, m_handle);
+    // Parse XML format input file into boost::property_tree
+    filescope::RawImporter importModule(source, options, m_handle);
 
-        // Read property tree and load scene
-        return importModule.readRawDataFile();
-    }
+    // Read property tree and load scene
+    return importModule.readRawDataFile();
 }
 
 } // namespace vox

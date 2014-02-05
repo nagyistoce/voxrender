@@ -74,8 +74,11 @@ void TimingWidget::sceneChanged()
     }
     else
     {
+        ui->spinBox_t->setValue((int)volume->timeSlice());
         ui->spinBox_t->setEnabled(true);
         ui->horizontalSlider_t->setEnabled(true);
+        ui->spinBox_t->setMaximum(timeSteps);
+        ui->horizontalSlider_t->setMaximum(timeSteps);
     }
 
     // Update the volume spacing controls
@@ -115,6 +118,10 @@ void TimingWidget::update()
 // ----------------------------------------------------------------------------
 //                  Widget Value Change Detection
 // ----------------------------------------------------------------------------
+void TimingWidget::on_horizontalSlider_t_valueChanged(int value)
+{
+    update();
+}
 void TimingWidget::on_horizontalSlider_x_valueChanged(int value)
 {
     Utilities::forceSbToSl(
