@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
+#include "VoxLib/Error/Error.h"
 
 // API namespace
 namespace vox 
@@ -76,6 +77,20 @@ void TransferMap::setDirty(bool dirty)
 bool TransferMap::isDirty()
 {
     return m_pImpl->isDirty;
+}
+
+void TransferMap::setValueRange(int dim, Vector2f const& range)
+{
+    if (dim < 0 || dim > 3) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Invalid dim", Error_Range);
+
+    m_pImpl->range[dim] = range;
+}
+
+Vector2f const& TransferMap::valueRange(int dim) const
+{
+    if (dim < 0 || dim > 3) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Invalid dim", Error_Range);
+
+    return m_pImpl->range[dim];
 }
 
 Image3D<Vector<UInt8,4>> & TransferMap::diffuse() 

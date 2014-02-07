@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "Strings.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 #include "VoxLib/Core/Debug.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/Types.h"
@@ -575,7 +576,7 @@ namespace
             // --------------------------------------------------------------------
             void loadTransfer(Scene & scene)
             {                
-                if (!push("Transfer", Preferred)) return;
+                if (!push("Transfer", Optional)) loadTransferMap(scene);
 
                   // Execute a transfer function import directive if specified
                   auto transferImprt = executeImportDirectives();
@@ -588,7 +589,7 @@ namespace
                   // End
 
                   // Load the transfer function specification, only supported
-                  // xml types are the built in TransferXX classes
+                  // xml types are the built in TransferXX classes and raw images
                   size_t type = m_node->get<size_t>("Type", 1);
                   switch (type)
                   {
@@ -608,6 +609,37 @@ namespace
                 pop();
             }
             
+            // --------------------------------------------------------------------
+            // --------------------------------------------------------------------
+            void loadTransferMap(Scene & scene)
+            {
+                if (!push("TransferMap", Optional)) return;
+
+                  // Execute a transfer function import directive if specified
+                  auto transferImprt = executeImportDirectives();
+                  if (transferImprt.transfer || transferImprt.transferMap) 
+                  { 
+                      scene.transferMap = transferImprt.transferMap;
+                      return;
+                  }
+
+                  scene.transferMap = TransferMap::create();
+                  auto & tmap = *scene.transferMap.get();
+
+                  // Load the raw image files for the transfer map
+                  auto opacity  = Bitmap::imprt(m_node->get<String>("Opacity"));
+                  auto diffuse  = Bitmap::imprt(m_node->get<String>("Diffuse"));
+                  auto specular = Bitmap::imprt(m_node->get<String>("Specular"));
+                  auto emissive = Bitmap::imprt(m_node->get<String>("Emissive"));
+
+                  // Generate the transfer function map 
+                  // :TODO: Shouldn't be necessary, bug in higher level user of imprt
+                  scene.transferMap = TransferMap::create();
+                  scene.transfer->generateMap(scene.transferMap);
+
+                pop();
+            }
+
             // --------------------------------------------------------------------
             //  Loads a 1 dimensional transfer function specification
             // --------------------------------------------------------------------

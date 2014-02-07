@@ -67,7 +67,7 @@ public:
 // ----------------------------------------------------------------------------
 //  Wraps a volume data buffer to construct a new volume object
 // ----------------------------------------------------------------------------
-Impl::Impl(std::shared_ptr<UInt8> data, Vector4u const& extent, 
+Impl::Impl(std::shared_ptr<UInt8> data, Vector4s const& extent, 
            Vector4f const& spacing, Vector3f const& offset, Type type) : 
     m_data(data), 
     m_extent(extent), 
@@ -83,7 +83,7 @@ Impl::Impl(std::shared_ptr<UInt8> data, Vector4u const& extent,
 // ----------------------------------------------------------------------------
 //  Sets the volume data
 // ----------------------------------------------------------------------------
-void setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type)
+void setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent, Type type)
 {
     m_data   = data; 
     m_extent = extent; 
@@ -123,7 +123,7 @@ float fetchNormalized(size_t x, size_t y, size_t z) const
     float sample;
     switch (m_type)
     {
-        case Volume::Type_Int8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int8>::max()); break;
+        case Volume::Type_Int8:   sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int8>::max()); break;
         case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
         case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
         case Volume::Type_Int16:  sample = (static_cast<float>(reinterpret_cast<Int16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int16>::max());; break;
@@ -148,18 +148,18 @@ public:
 
     Vector3f m_offset;      ///< Volume offset (mm)
     Vector4f m_spacing;     ///< Spacing between voxels (mm)
-    Vector4u m_extent;      ///< Size of volume in voxels
+    Vector4s m_extent;      ///< Size of volume in voxels
     Type     m_type;        ///< Volume data type
 };
 
 // ----------------------------------------------------------------------------
 //  Redirect to implementation
 // ----------------------------------------------------------------------------
-Volume::Volume(std::shared_ptr<UInt8> data, Vector4u const& extent, 
+Volume::Volume(std::shared_ptr<UInt8> data, Vector4s const& extent, 
                Vector4f const& spacing, Vector3f const& offset, Type type) : 
     m_pImpl(new Impl(data, extent, spacing, offset, type)) { }
 Volume::~Volume() { delete m_pImpl; }
-void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4u const& extent, Type type) 
+void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent, Type type) 
     { m_pImpl->setData(data, extent, type); }
 void Volume::updateRange() { m_pImpl->updateRange(); }
 float Volume::fetchNormalized(size_t x, size_t y, size_t z) const { return m_pImpl->fetchNormalized(x, y, z); }
@@ -175,7 +175,7 @@ void            Volume::setDirty()         { m_pImpl->m_isDirty = true; }
 void            Volume::setClean()         { m_pImpl->m_isDirty = false; }
 bool            Volume::isDirty() const    { return m_pImpl->m_isDirty; }
 Vector4f const& Volume::spacing() const     { return m_pImpl->m_spacing; } 
-Vector4u const& Volume::extent() const      { return m_pImpl->m_extent; }  
+Vector4s const& Volume::extent() const      { return m_pImpl->m_extent; }  
 Vector3f const& Volume::offset() const      { return m_pImpl->m_offset; }
 float           Volume::timeSlice()         { return m_pImpl->m_timeSlice; }
 Vector2f const& Volume::valueRange() const  { return m_pImpl->m_range; }

@@ -30,10 +30,12 @@ VOX_PROJECT(
     HEADERS
         "Common.h"
         "Conv.h"
+        "Sample.h"
         "Impl/VolumeBlocker.h"
         "Version.h"
     SOURCES
         "Conv.cu"
+        "Sample.cu"
         "Impl/VolumeBlocker.cpp"
     DEPENDENCIES
         VoxLib

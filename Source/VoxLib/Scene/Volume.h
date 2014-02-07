@@ -102,7 +102,7 @@ public:
      */
     static std::shared_ptr<Volume> create(
            std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
-           Vector4u const&          extent    = Vector4u(0),
+           Vector4s const&          extent    = Vector4s(0),
            Vector4f const&          spacing   = Vector4f(0.0f),
            Vector3f const&          offset    = Vector3f(0.0f),
 		   Type                     type      = Type_UInt8 
@@ -121,7 +121,7 @@ public:
      * @param type    The underlying type of the volume data
      */
     Volume(std::shared_ptr<UInt8>   data,
-           Vector4u const&          extent,
+           Vector4s const&          extent,
            Vector4f const&          spacing,
            Vector3f const&          offset,
 		   Type                     type
@@ -143,7 +143,7 @@ public:
     Vector4f const& spacing() const;
 
     /** Extent accessor */      
-    Vector4u const& extent() const;
+    Vector4s const& extent() const;
     
     /** Offset accessor */
     Vector3f const& offset() const;
@@ -165,7 +165,7 @@ public:
 
     /** Data modifier */ 
     void setData(std::shared_ptr<UInt8> const& data, 
-                 Vector4u               const& extent,
+                 Vector4s               const& extent,
 				 Type                          type);
 
     /** Raw voxel data accessor */

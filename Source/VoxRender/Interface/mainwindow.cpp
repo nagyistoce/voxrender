@@ -1174,7 +1174,8 @@ void MainWindow::on_actionGaussian_Filter_triggered()
         HistogramGenerator::instance()->stopGeneratingImages();
 
         Image3D<float> gaussian(5, 5, 5);
-        auto gaussVec = volt::Conv::gaussian(0.75f, 5);
+        std::vector<float> gaussVec;
+        volt::Conv::makeGaussianKernel(gaussVec, 0.75f, 5);
         for (int x = 0; x < 5; x++)
         for (int y = 0; y < 5; y++)
         for (int z = 0; z < 5; z++)

@@ -59,6 +59,13 @@ namespace filescope {
 
     surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data output
 
+    template<typename T> VOX_DEVICE float fetchSample(int x, int y, int z) {  }
+    #define TEMPLATE(T) template<> VOX_DEVICE float fetchSample<##T>(int x, int y, int z) { return tex3D(gd_volumeTexIn_##T, x, y, z); }
+    TEMPLATE(Int8)
+    TEMPLATE(UInt8)
+    TEMPLATE(UInt16)
+    TEMPLATE(Int16)
+
     // Performs 3D convolution on a volume data set
     template<typename T>
     __global__ void convKernel(Vector3u apron, cudaExtent blockSize, Vector2f range)
@@ -71,23 +78,25 @@ namespace filescope {
         {
             float sum = 0.0f;
             float * filter = gd_kernel;
-            // :TODO: Use shared memory
+
 	        // Compute point convolution
-	        int mbegin = x-apron[0]; if (mbegin < 0)               mbegin = 0;
-	        int mend   = x+apron[0]; if (mend >= blockSize.width)  mend = blockSize.width-1;
-	        int nbegin = y-apron[1]; if (nbegin < 0)               nbegin = 0;
-	        int nend   = y+apron[1]; if (nend >= blockSize.height) nend = blockSize.height-1;
-	        int obegin = z-apron[2]; if (obegin < 0)               obegin = 0;
-	        int oend   = z+apron[2]; if (oend >= blockSize.depth)  oend = blockSize.depth-1;
+	        int mbegin = x-apron[0]; int mend = x+apron[0];
+	        int nbegin = y-apron[1]; int nend = y+apron[1];
+	        int obegin = z-apron[2]; int oend = z+apron[2];
 	        for (int o = obegin; o <= oend; o++)
 	        for (int n = nbegin; n <= nend; n++) 
 	        for (int m = mbegin; m <= mend; m++)
-	        {//:TODO: Implement this correctly
-		        sum += *filter * tex3D(gd_volumeTexIn_UInt8, m, n, o); filter++;
+	        {
+		        sum += *filter * fetchSample<T>(m, n, o); filter++;
 	        }
 
-            surf3Dwrite<T>((T)(range[0] + range[1]*sum), gd_volumeTexOut, x, y, z);
+            surf3Dwrite<T>((T)(range[0] + range[1]*sum), gd_volumeTexOut, x*sizeof(T), y, z);
         }
+    }
+
+    template<typename T>
+    __global__ void convSepKernel()
+    {
     }
 
 #define VOX_SETUP_TEX(T)                                                     \
@@ -131,7 +140,12 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Volume::Type type)
 {   
-    // Check the kernel dimensions
+    // Verify the kernel is of odd dimensions
+    if (kernel.width() % 2 || kernel.height() % 2 || kernel.depth() % 2) 
+        throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, 
+                    "Kernel size must be even", Error_Range);
+
+    // Check the kernel dimensions against the library limit
     if (kernel.width()  > MAX_KERNEL_SIZE ||
         kernel.height() > MAX_KERNEL_SIZE ||
         kernel.depth()  > MAX_KERNEL_SIZE)
@@ -171,8 +185,14 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
         // Execute the convolution kernel call
         switch (volume.type())
         {
-        case Volume::Type_UInt8: filescope::convKernel<UInt8> <<<blocks,threads>>> (apron, blockSize, Vector2f(0.0f, std::numeric_limits<UInt8>::max())); break;
-        case Volume::Type_UInt16: filescope::convKernel<UInt16> <<<blocks,threads>>> (apron, blockSize, Vector2f(0.0f, std::numeric_limits<UInt16>::max())); break;
+        case Volume::Type_Int8:   filescope::convKernel<Int8>   <<<blocks,threads>>> (apron, blockSize, 
+            Vector2f(std::numeric_limits<Int8>::min(), std::numeric_limits<Int8>::max()));   break;
+        case Volume::Type_UInt8:  filescope::convKernel<UInt8>  <<<blocks,threads>>> (apron, blockSize, 
+            Vector2f(std::numeric_limits<UInt8>::min(), std::numeric_limits<UInt8>::max()));  break;
+        case Volume::Type_UInt16: filescope::convKernel<UInt16> <<<blocks,threads>>> (apron, blockSize, 
+            Vector2f(std::numeric_limits<UInt16>::min(), std::numeric_limits<UInt16>::max())); break;
+        case Volume::Type_Int16:  filescope::convKernel<Int16>  <<<blocks,threads>>> (apron, blockSize, 
+            Vector2f(0, std::numeric_limits<Int16>::max()));  break;
         default: throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Unsupported volume data type", Error_NotImplemented);
         }
         VOX_CUDA_CHECK(cudaDeviceSynchronize());
@@ -188,7 +208,7 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
     VOX_CUDA_CHECK(cudaEventSynchronize(stop));
 
     // Compute the time elapsed during GPU execution
-    cudaEventElapsedTime(&filescope::elapsedTime, start, stop);
+    VOX_CUDA_CHECK(cudaEventElapsedTime(&filescope::elapsedTime, start, stop));
 
     return result;
 }
@@ -196,12 +216,11 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
 // ----------------------------------------------------------------------------
 //  Constructs a gaussian kernel of the given size
 // ----------------------------------------------------------------------------
-std::vector<float> Conv::gaussian(float variance, unsigned int size)
+void Conv::makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size)
 {
     unsigned int width = size ? size : ceil(6.f*variance);
 
-    std::vector<float> result;
-    result.resize(size);
+    out.resize(size);
 
     float var2 = variance * variance;
     float K    = 1 / (sqrt(2 * M_PI * var2));
@@ -211,8 +230,8 @@ std::vector<float> Conv::gaussian(float variance, unsigned int size)
         for (unsigned int i = 0; i <= o; i++)
         {
             float val = K * expf(-(float)(i*i) / (2.f * var2));
-            result[o+i] = val;
-            result[o-i] = val;
+            out[o+i] = val;
+            out[o-i] = val;
         }
     }
     else
@@ -221,12 +240,18 @@ std::vector<float> Conv::gaussian(float variance, unsigned int size)
         {
             float x = i + 0.5f;
             float val = K * exp(-x*x / (2 * var2));
-            result[o+i+1] = val;
-            result[o-i]   = val;
+            out[o+i+1] = val;
+            out[o-i]   = val;
         }
     }
+}
 
-    return result;
+// ----------------------------------------------------------------------------
+//  Constructs a mean kernel of the given size
+// ----------------------------------------------------------------------------
+void Conv::makeMeanKernel(std::vector<float> & out, unsigned int size)
+{
+    out.resize(size, 1.0f / (float)size);
 }
 
 // ----------------------------------------------------------------------------

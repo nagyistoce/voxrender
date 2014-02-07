@@ -23,61 +23,42 @@
                                                                            
 =========================================================================== */
 
-// Begin definition
-#ifndef VOX_VOLT_CONV_H
-#define VOX_VOLT_CONV_H
+// Include Header
+#include "Sample.h"
 
 // Include Dependencies
-#include "VoxVolt/Common.h"
-#include "VoxLib/Core/Geometry/Image3D.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxVolt/Impl/VolumeBlocker.h"
+#include "VoxLib/Error/CudaError.h"
 
-// API namespace
+// CUDA runtime API header
+#include <cuda_runtime_api.h>
+
+#define KERNEL_BLOCK_W		16
+#define KERNEL_BLOCK_H		16
+#define KERNEL_BLOCK_SIZE   (KERNEL_BLOCK_W * KERNEL_BLOCK_H)
+
+#define MAX_KERNEL_SIZE 5
+
 namespace vox {
-
-    class Volume;
-    
 namespace volt {
 
-/** Implements transforms for convolution operations */
-class VOX_VOLT_EXPORT Conv
-{
-public:
-    /**
-     * Performs a convolution operation on the volume data set
-     *
-     * @param volume The input volume data set
-     * @param kernel The volume convoltution kernel
-     * @param type   The target type of the output volume data set
-     */
-    static std::shared_ptr<Volume> execute(Volume & volume, Image3D<float> kernel, 
-        Volume::Type type = Volume::Type_End);
+namespace {
+namespace filescope {
 
-    /** Performs a convolution operation on the volume data set */
-    static std::shared_ptr<Volume> execute(Volume & volume, std::vector<float> const& x, std::vector<float> const& y, 
-        std::vector<float> const& z, Volume::Type type = Volume::Type_End);
+    __constant__ float gd_kernel[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
 
-    /** 
-     * Constructs and returns a gaussian kernel of the given size (seperable)
-     *
-     * @param out      [out] The gaussian kernel vector 
-     * @param variance The variance of the gaussian
-     * @param size     The size of the output, or 0 if the size should be fit to the variance
-     */
-    static void makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size = 0);
+    static float elapsedTime = 0.0f;
 
-    /** Constructs and returns a mean filter kernel of the given size (seperable) */
-    static void makeMeanKernel(std::vector<float> & out, unsigned int size);
+} // namespace filescope
+} // namespace anonymous
 
-    /** Returns the time elapsed during the last convolution operation */
-    static float getElapsedTime();
+// ----------------------------------------------------------------------------
+//  Executes the convolution kernel on the input volume data
+// ----------------------------------------------------------------------------
+void Sample::scale(Volume & volume, double shift, double scale)
+{   
 
-private:
-    Conv();
-};
+}
 
 } // namespace volt
 } // namespace vox
-
-// End definition
-#endif // VOX_VOLT_CONV_H

@@ -189,13 +189,14 @@ namespace
                     auto slice = voxels / size[3]; // Time slice size 
                     auto range = m_options.lookup<Vector2u>("Range");
                     auto place = m_options.lookup<String>("Place");
-                    for (unsigned int i = range[0]; i < range[1]; i++)
+                    for (unsigned int i = range[0]; i <= range[1]; i++)
                     {
                         auto tag = boost::lexical_cast<String>(i);
                         auto relative = multiFile;
                         boost::algorithm::replace_first(relative, place, tag);
                         ResourceId id = m_source.identifier().applyRelativeReference(relative);
-                        ResourceIStream inputStream(id);
+                        m_source.close();
+                        m_source.open(id);
                         readInputData(bytesPerVoxel, slice, dataPtr);
                         dataPtr += slice;
                     }

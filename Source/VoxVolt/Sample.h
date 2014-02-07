@@ -24,8 +24,8 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_VOLT_CONV_H
-#define VOX_VOLT_CONV_H
+#ifndef VOX_VOLT_SAMPLE_H
+#define VOX_VOLT_SAMPLE_H
 
 // Include Dependencies
 #include "VoxVolt/Common.h"
@@ -40,44 +40,40 @@ namespace vox {
 namespace volt {
 
 /** Implements transforms for convolution operations */
-class VOX_VOLT_EXPORT Conv
+class VOX_VOLT_EXPORT Sample
 {
 public:
     /**
-     * Performs a convolution operation on the volume data set
+     * Resamples the volume by downsampling or upsampling.
      *
-     * @param volume The input volume data set
-     * @param kernel The volume convoltution kernel
-     * @param type   The target type of the output volume data set
+     * The resampling will perform low pass filtering in the 3 spatial dimensions
+     * but will not resample or interpolate the 4th dimension. (Typically time)
+     *
+     * @param volume  The input volume data set
+     * @param newSize The extent of the output volume
      */
-    static std::shared_ptr<Volume> execute(Volume & volume, Image3D<float> kernel, 
-        Volume::Type type = Volume::Type_End);
-
-    /** Performs a convolution operation on the volume data set */
-    static std::shared_ptr<Volume> execute(Volume & volume, std::vector<float> const& x, std::vector<float> const& y, 
-        std::vector<float> const& z, Volume::Type type = Volume::Type_End);
+    static std::shared_ptr<Volume> resize(Volume const& volume, Vector4u newSize);
 
     /** 
-     * Constructs and returns a gaussian kernel of the given size (seperable)
+     * Changes the underlying format of the volume to the type specified. This is equivalent to
+     * performing a scale operation to the output type.
      *
-     * @param out      [out] The gaussian kernel vector 
-     * @param variance The variance of the gaussian
-     * @param size     The size of the output, or 0 if the size should be fit to the variance
+     * @param volume 
      */
-    static void makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size = 0);
+    static std::shared_ptr<Volume> changeType(Volume const& volume, Volume::Type outType = Volume::Type_Begin);
+    
+    /** Performs a linear transformation of the volume data in place */
+    static void scale(Volume & volume, double shift, double scale);
 
-    /** Constructs and returns a mean filter kernel of the given size (seperable) */
-    static void makeMeanKernel(std::vector<float> & out, unsigned int size);
-
-    /** Returns the time elapsed during the last convolution operation */
-    static float getElapsedTime();
+    /** Performs a linear transformation of the volume data and retypes */
+    static std::shared_ptr<Volume> scale(Volume const& volume, double shift, double scale, Volume::Type typeOut);
 
 private:
-    Conv();
+    Sample();
 };
 
 } // namespace volt
 } // namespace vox
 
 // End definition
-#endif // VOX_VOLT_CONV_H
+#endif // VOX_VOLT_SAMPLE_H

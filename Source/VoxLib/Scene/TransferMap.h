@@ -66,7 +66,7 @@ namespace vox
         Image3D<float> & opacity();
 
         /** Returns the value range of the transfer function */
-        Vector2f & valueRange(int dim) const;
+        Vector2f const& valueRange(int dim) const;
 
         /** Returns the value range of the transfer function */
         void setValueRange(int dim, Vector2f const& range);
