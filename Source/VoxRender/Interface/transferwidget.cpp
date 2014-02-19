@@ -381,8 +381,12 @@ void TransferWidget::on_pushButton_import_clicked()
     options.addOption("ImportParams",  false);
     auto scene = vox::Scene::imprt(identifier, options);
 
-    // Set the imported transfer function
+    // Update the scene and restart the render
+    auto mainwindow = MainWindow::instance;
+    mainwindow->stopRender();
     MainWindow::instance->scene().transfer = scene.transfer;
+    synchronizeView();
+    mainwindow->beginRender();
 }
 
 // ----------------------------------------------------------------------------

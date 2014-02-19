@@ -63,10 +63,10 @@ public:
     static std::shared_ptr<Volume> changeType(Volume const& volume, Volume::Type outType = Volume::Type_Begin);
     
     /** Performs a linear transformation of the volume data in place */
-    static void scale(Volume & volume, double shift, double scale);
+    static void scale(Volume & volume, float shift, float scale);
 
     /** Performs a linear transformation of the volume data and retypes */
-    static std::shared_ptr<Volume> scale(Volume const& volume, double shift, double scale, Volume::Type typeOut);
+    static std::shared_ptr<Volume> scale(Volume const& volume, float shift, float scale, Volume::Type typeOut);
 
 private:
     Sample();

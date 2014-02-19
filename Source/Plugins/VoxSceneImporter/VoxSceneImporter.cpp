@@ -576,7 +576,7 @@ namespace
             // --------------------------------------------------------------------
             void loadTransfer(Scene & scene)
             {                
-                if (!push("Transfer", Optional)) loadTransferMap(scene);
+                if (!push("Transfer", Optional)) { loadTransferMap(scene); return; }
 
                   // Execute a transfer function import directive if specified
                   auto transferImprt = executeImportDirectives();

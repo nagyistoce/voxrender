@@ -38,7 +38,7 @@ find_package(Qt5Widgets)
 IF(Qt5Widgets_FOUND)
     MESSAGE( STATUS "Qt library directory: " ${Qt5Widgets_LIBRARY_DIR} )
     MESSAGE( STATUS "Qt include directory: " ${Qt5Widgets_INCLUDE_DIRS} )
-    MESSAGE( STATUS "Qt binary directory: " ${Qt5Widgets_BINARY_DIR} )
+    MESSAGE( STATUS "Qt binary directory: "  ${Qt5Widgets_BINARY_DIR} )
     INCLUDE_DIRECTORIES(${QT_USE_FILE})
 	
     #===============================================#
@@ -54,6 +54,7 @@ IF(Qt5Widgets_FOUND)
         Extensions/QColorPushButton.cpp
         Interface/aboutdialogue.cpp
         Interface/ambientlightwidget.cpp
+        Interface/animatewidget.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
         Interface/clipdialogue.cpp
@@ -63,6 +64,7 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramitem.cpp
         Interface/histogramgenerator.cpp
         Interface/histogramview.cpp
+        Interface/animateview.cpp
         Interface/histogramwidget.cpp
         Interface/infowidget.cpp
         Interface/lightdialogue.cpp
@@ -87,6 +89,7 @@ IF(Qt5Widgets_FOUND)
         Extensions/QColorPushButton.h
         Interface/aboutdialogue.h
         Interface/ambientlightwidget.h
+        Interface/animatewidget.h
         Interface/arealightwidget.h
         Interface/camerawidget.h
         Interface/clipdialogue.h
@@ -96,6 +99,7 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramitem.h
         Interface/histogramgenerator.h
         Interface/histogramview.h
+        Interface/animateview.h
         Interface/histogramwidget.h
         Interface/infowidget.h
         Interface/lightdialogue.h
@@ -119,6 +123,7 @@ IF(Qt5Widgets_FOUND)
     SET(VOXQTGUI_UIS
         Interface/aboutdialogue.ui
         Interface/ambientlightwidget.ui
+        Interface/animatewidget.ui
         Interface/arealightwidget.ui
         Interface/camerawidget.ui
         Interface/clipdialogue.ui

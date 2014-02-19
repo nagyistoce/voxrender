@@ -91,6 +91,10 @@ Set(VoxLib_HEADERS_PLUGIN
     Plugin/PluginManager.h
 )
 
+Set(VoxLib_HEADERS_VIDEO
+    Video/VidStream.h
+)
+
 Set(VoxLib_HEADERS_SCENE
     Scene/Camera.h
     Scene/Light.h
@@ -123,6 +127,7 @@ set(VoxLib_HEADERS
     ${VoxLib_HEADERS_SCENE}
     ${VoxLib_HEADERS_SCENE_EXIM}
     ${VoxLib_HEADERS_RENDERING}
+    ${VoxLib_HEADERS_VIDEO}
 )
 
 SOURCE_GROUP("Header Files\\Action"                         FILES ${VoxLib_HEADERS_ACTION})
@@ -135,6 +140,7 @@ SOURCE_GROUP("Header Files\\Image"                          FILES ${VoxLib_HEADE
 SOURCE_GROUP("Header Files\\Plugin"                         FILES ${VoxLib_HEADERS_PLUGIN})
 SOURCE_GROUP("Header Files\\Rendering"                      FILES ${VoxLib_HEADERS_RENDERING})
 SOURCE_GROUP("Header Files\\Scene"                          FILES ${VoxLib_HEADERS_SCENE})
+SOURCE_GROUP("Header Files\\Video"                          FILES ${VoxLib_HEADERS_VIDEO})
 
 #===============================================#
 #                  SOURCE FILES                 #
@@ -174,6 +180,10 @@ Set(VoxLib_SOURCES_PLUGIN
     Plugin/PluginManager.cpp
 )
 
+Set(VoxLib_SOURCES_VIDEO
+    Video/VidStream.cpp
+)
+
 Set(VoxLib_SOURCES_SCENE
     Scene/Camera.cpp
     Scene/Light.cpp
@@ -204,6 +214,7 @@ set(VoxLib_SOURCES
     ${VoxLib_SOURCES_SCENE}
     ${VoxLib_SOURCES_SCENE_EXIM}
     ${VoxLib_SOURCES_RENDERING}
+    ${VoxLib_SOURCES_VIDEO}
 )
 
 SOURCE_GROUP("Source Files\\Action"                         FILES ${VoxLib_SOURCES_ACTION})
@@ -216,6 +227,7 @@ SOURCE_GROUP("Source Files\\IO"                             FILES ${VoxLib_SOURC
 SOURCE_GROUP("Source Files\\Image"                          FILES ${VoxLib_SOURCES_IMAGE})
 SOURCE_GROUP("Source Files\\Scene"                          FILES ${VoxLib_SOURCES_SCENE})
 SOURCE_GROUP("Source Files\\Rendering"                      FILES ${VoxLib_SOURCES_RENDERING})
+SOURCE_GROUP("Source Files\\Video"                          FILES ${VoxLib_SOURCES_VIDEO})
 
 #===============================================#
 #                  LIBRARY                      #

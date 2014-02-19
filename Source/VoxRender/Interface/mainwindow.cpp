@@ -38,6 +38,7 @@
 #include "clipdialogue.h"
 #include "clipplanewidget.h"
 #include "histogramgenerator.h"
+#include "animatewidget.h"
 #include "pluginwidget.h"
 #include "timingwidget.h"
 
@@ -731,6 +732,8 @@ void MainWindow::createRenderTabPanes()
 		"Volume Display", ":/icons/clockicon.png" );
 	panes[3] = new PaneWidget( ui->panesAreaContents, 
 		"Volume Histogram", ":/icons/histogramicon.png" );
+    panes[4] = new PaneWidget( ui->panesAreaContents,
+        "Animation Controls", ":/icons/cameraicon.png" );
 
 	// Sampler settings widget
 	samplingwidget = new SamplingWidget( panes[0] );
@@ -751,6 +754,11 @@ void MainWindow::createRenderTabPanes()
 	histogramwidget = new HistogramWidget( panes[3] );
 	panes[3]->setWidget( histogramwidget );
 	ui->panesAreaLayout->addWidget( panes[3] );
+
+    // Animation sequencing widget
+    animationwidget = new AnimateWidget( panes[4] );
+    panes[4]->setWidget(animationwidget);
+    ui->panesAreaLayout->addWidget( panes[4] );
 
 	// Set alignment of panes within main tab layout 
 	ui->panesAreaLayout->setAlignment( Qt::AlignTop );
@@ -1159,6 +1167,14 @@ void MainWindow::onActionOpenRecentFile()
 
     // Load the file specified in the actions log
     renderNewSceneFile( action->data( ).toString( ) );
+}
+
+// ----------------------------------------------------------------------------
+//  Stops the current render
+// ----------------------------------------------------------------------------
+void MainWindow::stopRender()
+{
+    m_renderController.stop();
 }
 
 // ----------------------------------------------------------------------------

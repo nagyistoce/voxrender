@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/keyframeicon.png</file>
     <file>icons/advancedicon.png</file>
     <file>icons/cameraicon.png</file>
     <file>icons/clipboardicon.png</file>

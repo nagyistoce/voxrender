@@ -141,9 +141,9 @@ namespace filescope {
 std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Volume::Type type)
 {   
     // Verify the kernel is of odd dimensions
-    if (kernel.width() % 2 || kernel.height() % 2 || kernel.depth() % 2) 
+    if (!(kernel.width() % 2 && kernel.height() % 2 && kernel.depth() % 2)) 
         throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, 
-                    "Kernel size must be even", Error_Range);
+                    "Kernel size must be odd", Error_Range);
 
     // Check the kernel dimensions against the library limit
     if (kernel.width()  > MAX_KERNEL_SIZE ||

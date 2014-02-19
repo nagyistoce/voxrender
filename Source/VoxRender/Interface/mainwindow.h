@@ -4,7 +4,7 @@
 
 	Description: Implements the main window for the VoxRender GUI
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -76,6 +76,7 @@ class CameraWidget;
 class PointLightWidget;
 class InfoWidget;
 class TimingWidget;
+class AnimateWidget;
 
 // Main Application Window
 class MainWindow : public QMainWindow
@@ -131,6 +132,10 @@ public:
     std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
 
 	InfoWidget* infowidget; ///< Advanced info widget
+    
+    void beginRender();
+
+    void stopRender();
 
 signals:
     /** Signal sent when the active scene is reloaded */
@@ -175,7 +180,6 @@ private:
 	void changeRenderState( RenderState state );
 	bool canStopRendering();
     void synchronizeView();
-    void beginRender();
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
@@ -205,12 +209,13 @@ private:
     void readSettings();
 
 	// Render tab panes
-	enum { NumPanes = 4 };
+	enum { NumPanes = 5 };
 	PaneWidget      * panes[NumPanes]; ///< Render tab widget panes
 	HistogramWidget * histogramwidget; ///< Histogram view widget
 	SamplingWidget  * samplingwidget;  ///< Sampling parameters widget
 	CameraWidget    * camerawidget;    ///< Camera settings widget
     TimingWidget    * timingwidget;    ///< Volume time index widget
+    AnimateWidget   * animationwidget; ///< Animation control widget
 
 	enum { NumAdvPanes = 1 };
 	PaneWidget* advpanes[NumAdvPanes];  ///< Advanced tab widget panes

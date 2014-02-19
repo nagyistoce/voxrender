@@ -72,10 +72,10 @@ namespace vox
         Scene const& scene() const;
 
 		/**
-		 * Initiates rendering operations
+		 * Initiates rendering operations on a scene
          *
-         * @param renderer      The Scene struct containing handles to scene components
-         * @param scene         The Scene struct containing handles to scene components
+         * @param renderer      The master render module
+         * @param scene         The scene to be rendered
          * @param iterations    The iteration number at which to stop rendering
          * @param errorCallback The callback function for controller exceptions
 		 */
