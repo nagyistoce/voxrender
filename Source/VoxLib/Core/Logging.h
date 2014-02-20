@@ -23,9 +23,6 @@
 
 =========================================================================== */
 
-// :TODO: Alot of implementation here should be moved to the source file or a hidden header
-// :TODO: The category list should use a sorting scheme to reduce lookup time
-
 // Begin definition
 #ifndef VOX_LOGGING_H
 #define VOX_LOGGING_H
@@ -66,54 +63,17 @@ namespace vox
 	/** API error severity levels */
 	enum Severity
 	{
-        Severity_Trace      =   0, ///< Program trace points
-		Severity_Debug      = 100, ///< Developer information 
-		Severity_Info       = 200, ///< Status information
-		Severity_Warning    = 300, ///< Something that may be an issue
-		Severity_Error      = 400, ///< Unable to complete the operation
-		Severity_Fatal      = 500  ///< The error is likely fatal
+        Severity_Trace      = 100, ///< Program trace points
+        Severity_Trace1     =  99, ///< Program trace points (2nd level)
+        Severity_Trace2     =  98, ///< Program trace points (3rd level)
+		Severity_Debug      = 200, ///< Developer information 
+		Severity_Debug2     = 199, ///< Developer information (2nd level)
+		Severity_Debug3     = 198, ///< Developer information (3rd level)
+		Severity_Info       = 300, ///< Status information
+		Severity_Warning    = 400, ///< Something that may be an issue
+		Severity_Error      = 500, ///< Unable to complete the operation
+		Severity_Fatal      = 600  ///< The error is likely fatal
 	};
-
-	/** 
-	 * VoxRender log entry
-     * 
-     * The log entry class derives from std::ostringstream and allows 
-     * for message content to be appended to the body of the log before
-     * it is sent to the backend.
-	 */
-	class VOX_EXPORT LogEntry : public std::ostringstream
-    {
-        friend Logger;
-
-    public:
-        ~LogEntry();
-
-        LogEntry(LogEntry&& original) :
-            std::ostringstream(std::move(original))
-        {
-            m_severity = original.m_severity;
-            m_code     = original.m_code;
-            m_category = original.m_category;
-            m_file     = original.m_file;
-            m_line     = original.m_line;
-        }
-        
-    private:
-        LogEntry(int severity, int code, char const* category, 
-                 char const* file, int line) :
-          m_severity(severity), m_code(code), m_line(line), m_file(file),
-          m_category(category)
-        {
-        }
-
-        LogEntry(LogEntry&) { } // Privatize copy constructor
-
-		int         m_severity; ///< Severity of associated error
-        int         m_code;     ///< Code number of associated error
-        char const* m_category; ///< Log entry category option
-        char const* m_file;     ///< Optional filename
-        int         m_line;     ///< Optional line number
-    };
 
 	/** 
 	 * VoxRender logging interface
@@ -138,11 +98,6 @@ namespace vox
      * functions.
      *
      * \section Example Usage
-     * Log entries can make their way to the log backend in one of two ways. The first method is by using 
-     * the Logger class's addEntry members. The addEntry functions, which is overloaded for use with the 
-     * internal exception object Error, immediately sends the log entry to the backend for processing. The 
-     * only overhead is in the filtering process, described in the next section. An example of this usage 
-     * is provided below:
      *
      * \code
      *  // Logging an exception object
@@ -155,26 +110,6 @@ namespace vox
      *  /// Logging an info string
      *  vox::Logger::addEntry( Severity_Info, Error_None, "category",
      *      "error message", __FILE__, __LINE__ );
-     * \endcode
-     *
-     * The other logging method allows the message portion of the log entry to be provided to a given stream 
-     * object following the initial addEntry call. The actual request will be logged as soon as the Log object 
-     * goes out of scope. In the case of cascading log entries in a single functional unit of code, it may be 
-     * benificial to wrap the log calls in a seperate { } block to ensure the entries are dispatched in the 
-     * order they are constructed. The same overloaded member function (addEntry) is used as before, but now 
-     * the  message parameter is left out and provided to the stream. An example usage follows:
-     *
-     * \code
-     *
-     *  // Logging an info string
-     *  char const* myCategory = "category";
-     * 
-     *  auto logEntry = vox::Logger::addEntry( 
-     *      Severity_Info, Error_None, 
-     *      category, __FILE__, __LINE__); 
-     *
-     *  foreach(auto x, list) entry << x;
-     * 
      * \endcode
      *
      * \section Filtering
@@ -221,20 +156,12 @@ namespace vox
 		/** 
 		 * Adds a new log entry 
          *
-         * The new log entry will be made when the LogEntry instance goes out of scope.
-         *
          * @param file     The file from which the log entry was made (use the __FILE__ macro)
          * @param line     The line from which the error was made (use the __LINE__ macro)
          * @param category The system associated with the exception (internally Vox)
          * @param code     The error code associated with the Error
+         * @param msg      The message to be entered in the log stream
 		 */
-		static inline LogEntry addEntry(int severity, int code, 
-            char const* category, char const* file = "", int line = 0)
-        {
-            return LogEntry(severity, code, category, file, line);
-        }
-
-        /** String based overload for addEntry */
         static inline void addEntry(int severity, int code, char const* category, 
             std::string const& message, char const* file = "", int line = 0)
         {

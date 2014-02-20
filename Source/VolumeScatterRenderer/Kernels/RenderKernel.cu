@@ -146,7 +146,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     VOX_DEVICE Vector3f sampleGradient(Vector3f const& location)
     {
-        // :TODO: Factor in clip plane
+        // :TODO: Factor in clipping boundaries
         float const& x = location[0];
         float const& y = location[1];
         float const& z = location[2];
@@ -247,7 +247,7 @@ namespace filescope {
         // Determine the diffuse characteristic of the sample point 
         float4 sampleDiffuse = tex3D(gd_diffuseTex, density, gradMag, 0.0f); 
         Vector3f diffuse(sampleDiffuse.x, sampleDiffuse.y, sampleDiffuse.z);
-        Vector3f Lv = gd_ambient * diffuse * computeObscurance(rng, pos);
+        Vector3f Lv = gd_ambient * diffuse * computeObscurance(rng, pos-dir*gd_renderParams.primaryStepSize());
 
         if (gd_lights.size())
         {
@@ -539,7 +539,9 @@ void RenderKernel::setFrameBuffers(CSampleBuffer2D const& sampleBuffer, curandSt
 void RenderKernel::execute(size_t xstart, size_t ystart,
                            size_t width,  size_t height)
 {
-    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_backdropClr, &ColorLabxHdr(0.0f, 0.0f, 0.0f), sizeof(ColorLabxHdr)));
+    ColorLabxHdr backdrop = ColorLabxHdr(0.0f, 0.0f, 0.0f);
+
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_backdropClr, &backdrop, sizeof(ColorLabxHdr)));
 
 	// Setup the execution configuration
     dim3 threads(KERNEL_BLOCK_W, KERNEL_BLOCK_H);

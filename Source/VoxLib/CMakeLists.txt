@@ -92,10 +92,12 @@ Set(VoxLib_HEADERS_PLUGIN
 )
 
 Set(VoxLib_HEADERS_VIDEO
+    Video/VidCodec.h
     Video/VidStream.h
 )
 
 Set(VoxLib_HEADERS_SCENE
+    Scene/Animator.h
     Scene/Camera.h
     Scene/Light.h
     Scene/Material.h
@@ -185,6 +187,7 @@ Set(VoxLib_SOURCES_VIDEO
 )
 
 Set(VoxLib_SOURCES_SCENE
+    Scene/Animator.cpp
     Scene/Camera.cpp
     Scene/Light.cpp
     Scene/Material.cpp

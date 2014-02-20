@@ -651,7 +651,7 @@ void MainWindow::changeRenderState(RenderState state)
 			ui->tabWidget_render->setEnabled( true );
 			ui->label_zoomIcon->setVisible( true );
 			ui->label_zoom->setVisible( true );
-			activityMessage->setText("Rendering...");
+			activityMessage->setText("Rendering (Interactive)");
 			break;
 		case RenderState_Stopped:
 			ui->pushButton_clipboard->setEnabled( true );

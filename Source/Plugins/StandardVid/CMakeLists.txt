@@ -1,11 +1,10 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
+#   Project: Standard Video Import/Export                                   #
 #                                                                           #
-#   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#   Description: Provides an import/export module for video formats         #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#   Copyright (C) 2014 Lucas Sherman                                        #
 #                                                                           #
 #   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
@@ -26,15 +25,19 @@
 
 INCLUDE_DIRECTORIES(.)
 
-#===============================================#
-#           INCLUDE DESIRED PLUGINS             #
-#===============================================#
-
-ADD_SUBDIRECTORY(PvmVolumeImporter)
-ADD_SUBDIRECTORY(RawVolumeImporter)
-ADD_SUBDIRECTORY(StandardImg)
-ADD_SUBDIRECTORY(VoxSceneImporter)
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(StandardVid)
-ADD_SUBDIRECTORY(FileIO)
-
+VOX_PROJECT(
+    TARGET "StandardVid" SHARED
+    FOLDER "Plugins"
+    HEADERS
+        "Common.h"
+        "AviVid.h"
+        "Plugin.h"
+        "Version.h"
+    SOURCES
+        "AviVid.cpp"
+        "Plugin.cpp"
+    DEPENDENCIES
+        VoxLib
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

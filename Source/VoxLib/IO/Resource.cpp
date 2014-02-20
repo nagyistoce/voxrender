@@ -182,7 +182,7 @@ void Resource::remove(ResourceId const& identifier, OptionSet const& options)
 // --------------------------------------------------------------------
 //  Removes the resource module for a specified scheme
 // --------------------------------------------------------------------
-static void removeModule(String const& scheme)
+void Resource::removeModule(String const& scheme)
 {
     // Acquire a write-lock on the modules for thread safe removal support
     boost::unique_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);

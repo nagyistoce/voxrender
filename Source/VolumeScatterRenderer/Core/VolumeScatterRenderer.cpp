@@ -248,12 +248,26 @@ public:
     // --------------------------------------------------------------------
     //  Merges the input image buffer with the internal one :TODO:
     // --------------------------------------------------------------------
-    void pushIpr(IprImage const& ipr, size_t const& samples) { }
+    void pushIpr(IprImage const& ipr) 
+    { 
+    }
 
     // --------------------------------------------------------------------
-    //  Pulls the current in-progress-render buffer then clears it :TODO:
+    //  Pulls the current in-progress-render buffer then clears it
     // --------------------------------------------------------------------
-    void pullIpr(IprImage & img, size_t & samples) { }
+    void pullIpr(IprImage & img) 
+    { 
+        auto buffer = m_hdrBuffer.meanBuffer();
+
+        if (img.width() != buffer.width() || img.height() != buffer.height())
+        {
+            throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY, 
+                "Mismatch in IPR image and internal buffer sizes", 
+                Error_Bug);
+        }
+
+        buffer.copy(img.buffer().get(), img.stride(), cudaMemcpyDeviceToHost);
+    }
 
     // --------------------------------------------------------------------
     //  Terminates rendering operations and clears device data buffers

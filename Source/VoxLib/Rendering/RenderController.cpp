@@ -53,7 +53,7 @@ class RenderController::Impl
 {
 public:
     // ----------------------------------------------------------------------------
-    //  Initiates rendering of the currently loaded scene
+    //  Initiates rendering of the specified
     // ----------------------------------------------------------------------------
     void render(
         MasterHandle  renderer,
@@ -94,6 +94,43 @@ public:
         // Launch the render control thread
         m_controlThread = std::shared_ptr<boost::thread>( 
             new boost::thread(std::bind(&Impl::entryPoint, this)));
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Initiates rendering of the specified animation
+    // ----------------------------------------------------------------------------
+    void renderAnimation(
+        MasterHandle renderer,
+        ErrorCallback onError)
+    {
+        boost::mutex::scoped_lock lock(m_controlMutex);
+
+        // Check for an in progress rendering operation
+        if (m_controlThread)
+        {
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                "Render operation already in progress", Error_NotAllowed);
+        }    
+    
+        // Check for missing renderer handle
+        if (!renderer)
+        {
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                "Missing master renderer handle", Error_NotAllowed);
+        }
+
+        // Initialize the execution configuration
+        m_masterRenderer   = renderer;
+        m_errorCallback    = onError;
+        m_isPaused         = false;
+        m_currIterations   = 0;
+
+        // Store the start time for render duration
+        m_startTime = std::chrono::system_clock::now();
+
+        // Launch the render control thread
+        m_controlThread = std::shared_ptr<boost::thread>( 
+            new boost::thread(std::bind(&Impl::entryPointAnimate, this)));
     }
 
     // ----------------------------------------------------------------------------
@@ -205,6 +242,58 @@ public:
     }
 
 private:
+    
+    // ----------------------------------------------------------------------------
+    //  Rendering routine for animations (sequences of interp'd scenes)
+    // ----------------------------------------------------------------------------
+    void entryPointAnimate()
+    {
+        static const unsigned int BATCH_SIZE = 50; ///< Number of samples on a frame before switching
+
+        std::exception_ptr error = nullptr;
+
+        unsigned int frameIndex = 0;
+        unsigned int frameCount = 0;
+
+        try
+        {
+            m_masterRenderer->startup();
+
+            while (m_targetIterations > m_currIterations)
+            {
+                // Swap frames as necessary
+                if (!(m_currIterations % BATCH_SIZE))
+                {
+                    auto keyframe = Scene();
+                    m_masterRenderer->syncScene(keyframe, true);
+                }
+
+                // ... Continue rendering
+                boost::this_thread::interruption_point();
+
+                managementSubroutine();      // Manages render threads
+
+                renderingSubroutine();       // Perform master rendering
+            
+                controlSubroutine();         // General control checks
+                
+                m_currIterations++;
+            }
+        }
+        catch (boost::thread_interrupted &)
+        {
+            // Do not treat interrupts as errors //
+        }
+        catch (...)
+        {
+            error = std::current_exception();
+        }
+
+        handleError(error);
+
+        terminateRenderThreads();
+    }
+
     // ----------------------------------------------------------------------------
     //  Rendering routine for the master/control thread
     // ----------------------------------------------------------------------------
@@ -255,7 +344,7 @@ private:
     // ----------------------------------------------------------------------------
     void terminateRenderThreads()
     {
-        m_masterRenderer->shutdown(); //:TODO: Handle exception
+        m_masterRenderer->shutdown();
 
         BOOST_FOREACH (auto & thread, m_renderThreads)
         {
@@ -292,7 +381,7 @@ private:
     }
 
     // ----------------------------------------------------------------------------
-    //  Routine for renderer thread management
+    //  Synchronization routine for interactive rendering mode (not animations)
     // ----------------------------------------------------------------------------
     void synchronizationSubroutine(bool force = false)
     {

@@ -4,7 +4,7 @@
     
 	Description: Provides extended functionality relating to the Resource class
 
-    Copyright (C) 2013 Lucas Sherman
+    Copyright (C) 2013-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -135,11 +135,11 @@ namespace filescope {
                 // Set the log filtering level
                 auto filterStr = m_node->get<String>("Filter", "");
                 boost::to_lower(filterStr);
-                if (filterStr == "debug")           Logger::setFilteringLevel(Severity_Debug);
-                else if (filterStr == "trace")      Logger::setFilteringLevel(Severity_Trace);
-                else if (filterStr == "error")      Logger::setFilteringLevel(Severity_Error);
-                else if (filterStr == "warning")    Logger::setFilteringLevel(Severity_Warning);
-                else if (filterStr == "fatal")      Logger::setFilteringLevel(Severity_Fatal);
+                if      (filterStr == "debug")   Logger::setFilteringLevel(Severity_Debug);
+                else if (filterStr == "trace")   Logger::setFilteringLevel(Severity_Trace);
+                else if (filterStr == "error")   Logger::setFilteringLevel(Severity_Error);
+                else if (filterStr == "warning") Logger::setFilteringLevel(Severity_Warning);
+                else if (filterStr == "fatal")   Logger::setFilteringLevel(Severity_Fatal);
                 else // :TODO: Attempt numerical cast to int, for user defined levels
                 {
                     VOX_LOG_WARNING(Error_BadToken, VOX_LOG_CATEGORY, 

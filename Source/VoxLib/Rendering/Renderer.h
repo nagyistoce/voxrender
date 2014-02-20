@@ -80,7 +80,7 @@ public:
      * is available in the queue to be merged with the control Renderer's
      * global framebuffer copy.
      */
-    virtual void pushIpr(IprImage const& ipr, size_t const& samples) = 0;
+    virtual void pushIpr(IprImage const& ipr) = 0;
 
     /**
      * Provides the renderer with an output stream to which it should
@@ -105,10 +105,10 @@ public:
      * buffer and on output should reflect the number of samples per pixel in the output 
      * buffer.
      *
-     * Following the completion of this function, the renderer may discard the written 
-     * data. 
+     * Following the completion of this function, the renderer should discard the written 
+     * samples from its internal buffer. 
      */
-    virtual void pullIpr(IprImage & img, size_t & samples) = 0;
+    virtual void pullIpr(IprImage & img) = 0;
 };
 
 

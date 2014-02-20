@@ -31,6 +31,7 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/IO/Resource.h"
+#include "VoxLib/Scene/Animator.h"
 
 // API namespace
 namespace vox
@@ -44,6 +45,7 @@ namespace vox
     class VOX_EXPORT RenderParams;
     class VOX_EXPORT PrimGroup;
     class VOX_EXPORT TransferMap;
+    class VOX_EXPORT Animator;
 
 	/** 
 	 * Scene File Importer
@@ -233,6 +235,9 @@ namespace vox
         /** Releases handles to the scene's internal data components */
         void reset();
 
+        /** Constructs a keyframe for the current state of a scene */
+        KeyFrame generateKeyFrame();
+
         /** Clones the scene */
         void clone(Scene & sceneCopy);
 
@@ -249,6 +254,7 @@ namespace vox
         std::shared_ptr<TransferMap>  transferMap;  ///< Transfer function map
 		std::shared_ptr<Volume>       volume;	    ///< Volume data
 		std::shared_ptr<Camera>       camera;	    ///< Scene camera
+        std::shared_ptr<Animator>     animator;     ///< Scene animation data
 	};
 }
 

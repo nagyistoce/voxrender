@@ -30,13 +30,11 @@
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/IO/Resource.h"
+#include "VoxLib/Video/VidCodec.h"
 
 // API namespace
 namespace vox
 {
-    class VideoEncoder;
-    class VideoDecoder;
-
 	/** 
 	 * Video output stream
 	 */
@@ -132,31 +130,6 @@ namespace vox
 
         String m_format;
     };
-
-	/** 
-	 * Video File Importer
-     *
-     * @sa
-     *  ::VideoExporter
-	 */              
-    class VideoEncoder 
-    {
-    public:
-    };
-
-    /**
-	 * Video File Exporter
-     *
-     * @sa
-     *  ::VideoImporter
-     */
-    class VideoDecoder 
-    { 
-    public:
-    };
-
-    /** Convenience class for both encode and decode support */
-    class VideoCodec : public VideoEncoder, public VideoDecoder { };
 }
 
 // End definition

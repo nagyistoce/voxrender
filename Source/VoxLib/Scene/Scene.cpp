@@ -229,6 +229,14 @@ bool Scene::isDirty() const
 }
 
 // --------------------------------------------------------------------
+//  Constructs a keyframe for the current state of this scene
+// --------------------------------------------------------------------
+KeyFrame Scene::generateKeyFrame()
+{
+    return Scene();
+}
+
+// --------------------------------------------------------------------
 //  Clones a scene, referencing the volume and copying the other comps
 // --------------------------------------------------------------------
 void Scene::clone(Scene & scene)

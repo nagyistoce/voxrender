@@ -71,7 +71,7 @@ namespace filescope {
 		CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 		GetConsoleScreenBufferInfo( hConsole, &screenBufferInfo );
 		col |= screenBufferInfo.wAttributes & static_cast<WORD>(FOREGROUND_INTENSITY | BACKGROUND_INTENSITY);
-		SetConsoleTextAttribute( hConsole, col );
+		SetConsoleTextAttribute(hConsole, col);
 #endif
 	}
 
@@ -88,15 +88,6 @@ boost::mutex      Logger::m_catMutex;
 ErrorHandler Logger::m_errorHandler = ErrorPrint;
 int Logger::m_filter                = Severity_Info;
 int Logger::m_lastError             = Error_None;
-
-// --------------------------------------------------------------------
-//  Dispatches a log entry to the logger backend
-// --------------------------------------------------------------------
-LogEntry::~LogEntry()
-{ 
-    Logger::addEntry(m_severity, m_code, m_category, 
-                     str().c_str(), m_file, m_line); 
-}
 
 // --------------------------------------------------------------------
 //  Ignores any errors regardless of severity
@@ -127,30 +118,31 @@ void ErrorPrint(char const* file, int line, int severity, int code,
 	switch (severity) 
 	{
     case Severity_Trace:
-        filescope::changeConsoleColor( WHITE );
+        filescope::changeConsoleColor(WHITE);
         break;
 	case Severity_Info:
-		filescope::changeConsoleColor( GREEN );
+		filescope::changeConsoleColor(GREEN);
 		break;
 	case Severity_Warning:
-		filescope::changeConsoleColor( YELLOW );
+		filescope::changeConsoleColor(YELLOW);
 		break;
 	case Severity_Error:
-		filescope::changeConsoleColor( RED );
+		filescope::changeConsoleColor(RED);
 		break;
 	case Severity_Fatal:
-		filescope::changeConsoleColor( RED );
+		filescope::changeConsoleColor(RED);
 		break;
 	case Severity_Debug:
-		filescope::changeConsoleColor( BLUE );
+		filescope::changeConsoleColor(BLUE);
 		break;
     default:
+        filescope::changeConsoleColor(WHITE);
         // Unknown severity level //
         break;
 	}
 
     std::clog << boost::local_time::local_sec_clock::local_time(
-        boost::local_time::time_zone_ptr( ) ) << " ";
+        boost::local_time::time_zone_ptr()) << " ";
 
 	switch (severity) 
 	{
@@ -175,7 +167,6 @@ void ErrorPrint(char const* file, int line, int severity, int code,
 	}
 	std::clog << " " << code;
 
-    // Restore default previous console color :TODO: restore previous
 	filescope::changeConsoleColor( WHITE );
 
 	std::clog << "] "; 

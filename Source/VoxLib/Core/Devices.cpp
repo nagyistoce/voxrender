@@ -28,9 +28,10 @@
 #include "Devices.h"
 
 // Include Dependencies
-#include "Error/ErrorCodes.h"
-#include "Error/CudaError.h"
-#include "Core/Logging.h"
+#include "VoxLib/Error/ErrorCodes.h"
+#include "VoxLib/Error/CudaError.h"
+#include "VoxLib/Core/Logging.h"
+#include "VoxLib/Core/Format.h"
 
 // Standard Library
 #include <iostream>
@@ -67,20 +68,15 @@ void vox::DeviceManager::loadDeviceInfo( )
     else
     {
         Logger::addEntry( Severity_Info, Error_None, 
-            VOX_LOG_CATEGORY, __FILE__, __LINE__ ) <<
-		    "Found " << m_deviceCount << " CUDA capable device(s)";
+            VOX_LOG_CATEGORY, format("Found %1% CUDA capable device(s)", m_deviceCount), 
+            __FILE__, __LINE__ );
     }
 
 	// Load device properties
-	m_devices.resize( m_deviceCount );
-	for( int dev = 0; dev < m_deviceCount; dev++ )
+	m_devices.resize(m_deviceCount);
+	for (int dev = 0; dev < m_deviceCount; dev++)
 	{	
 		m_devices[dev].id = dev;
-		if( errorId = cudaGetDeviceProperties( &m_devices[dev].props, dev ) )	
-        {
-            Logger::addEntry( Severity_Warning, Error_Device,
-                VOX_LOG_CATEGORY, __FILE__, __LINE__ ) <<
-				"Device " << dev << " does not support CUDA.";
-        }
+        VOX_CUDA_CHECK(cudaGetDeviceProperties(&m_devices[dev].props, dev));
 	}
 }
