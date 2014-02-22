@@ -69,8 +69,8 @@ public:
     /** Constructs and returns a mean filter kernel of the given size (seperable) */
     static void makeMeanKernel(std::vector<float> & out, unsigned int size);
 
-    /** Returns the time elapsed during the last convolution operation */
-    static float getElapsedTime();
+    /** Constructs a laplacian kernel */
+    static void makeLaplaceKernel(Image3D<float> & kernel);
 
 private:
     Conv();

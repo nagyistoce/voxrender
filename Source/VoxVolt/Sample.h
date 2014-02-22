@@ -39,29 +39,27 @@ namespace vox {
     
 namespace volt {
 
+/** Interpolation types */
+enum Interp
+{
+    Interp_Begin,
+    Interp_Linear = Interp_Begin,
+    Interp_Nearest,
+    Interp_End
+};
+
 /** Implements transforms for convolution operations */
 class VOX_VOLT_EXPORT Sample
 {
 public:
     /**
-     * Resamples the volume by downsampling or upsampling.
-     *
-     * The resampling will perform low pass filtering in the 3 spatial dimensions
-     * but will not resample or interpolate the 4th dimension. (Typically time)
+     * Resamples the volume using the specified filter technique
      *
      * @param volume  The input volume data set
      * @param newSize The extent of the output volume
      */
-    static std::shared_ptr<Volume> resize(Volume const& volume, Vector4u newSize);
+    static std::shared_ptr<Volume> resize(Volume const& volume, Vector4u newSize, Interp interp);
 
-    /** 
-     * Changes the underlying format of the volume to the type specified. This is equivalent to
-     * performing a scale operation to the output type.
-     *
-     * @param volume 
-     */
-    static std::shared_ptr<Volume> changeType(Volume const& volume, Volume::Type outType = Volume::Type_Begin);
-    
     /** Performs a linear transformation of the volume data in place */
     static void scale(Volume & volume, float shift, float scale);
 

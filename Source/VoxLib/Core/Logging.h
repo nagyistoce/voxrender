@@ -1,10 +1,13 @@
 /* ===========================================================================
 
-	Project: VoxRender - Logging interface
+	Project: VoxLib
 
-	Description: Implements a front-end for run-time logging
+	Description:
+	 Implements an front-end for run-time logging and error handling. 
+     The log backend prints to std::clog by default, but is modifiable via
+     a static member of the Logger class.
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -31,8 +34,13 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Error/Error.h"
 
-// Boost Dependencies
-#include <boost/thread.hpp>
+// Comment out to disable category filtering (lookup overhead + mutex lock)
+//#define VOX_CATFILL 
+#ifdef VOX_CATFILL
+# define VOX_CATCHECK(CAT) !vox::Logger::isCategoryFiltered(CAT) &&  
+#else
+# define VOX_CATCHECK(CAT)
+#endif
 
 // API namespace
 namespace vox
@@ -149,8 +157,7 @@ namespace vox
          */
         static inline void addEntry(Error const& error, int severity = Severity_Error)
         {
-            addEntry(severity, error.code, error.category, 
-                     error.message.c_str(), error.file, error.line);
+            addEntry(severity, error.code, error.category, error.message.c_str(), error.file, error.line);
         }
 
 		/** 
@@ -201,12 +208,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static void addCategoryFilter(String const& category)
-        {
-            boost::mutex::scoped_lock lock(m_catMutex);
-
-            m_catFilters.push_back(category);
-        }
+        static void addCategoryFilter(String const& category);
 
 		/** 
 		 * Removes a category from the list of filtered log categories
@@ -216,12 +218,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static void removeCategoryFilter(String const& category)
-        {
-            boost::mutex::scoped_lock lock(m_catMutex);
-
-            m_catFilters.remove(category);
-        }
+        static void removeCategoryFilter(String const& category);
 
 		/** 
 		 * Returns true if a category is in the list of filtered categories
@@ -231,10 +228,7 @@ namespace vox
 		 *
 		 * @param category The name of the category
 		 */
-        static bool isCategoryFiltered(String const& category)
-        {
-            return std::find(m_catFilters.begin(), m_catFilters.end(), category) != m_catFilters.end();
-        }
+        static bool isCategoryFiltered(String const& category);
 
 		/** 
 		 * Gets the filtering level of the logging system.
@@ -244,18 +238,14 @@ namespace vox
 		inline static int getFilteringLevel() { return m_filter; }
 
 	private:
-        static std::list<String> m_catFilters; ///< Filtered log categories
-        static boost::mutex      m_catMutex;   ///< Cat filters mutex 
-
 		static ErrorHandler m_errorHandler;	///< Error handler for logging
 		static int          m_filter;		///< Filter level for log entries
 		static int          m_lastError;	///< Code of last error logged
 	};
 
     // Logging macro incorperating user defined severity levels
-    /// :TODO: Check category map
 #define VOX_LOG(SEV, CODE, CAT, MSG)                                    \
-    if (vox::Logger::getFilteringLevel() <= SEV)                        \
+    if (VOX_CATCHECK(CAT) vox::Logger::getFilteringLevel() <= SEV)      \
     {                                                                   \
         vox::Logger::addEntry(SEV, CODE, CAT, MSG, __FILE__, __LINE__); \
     }

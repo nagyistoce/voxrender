@@ -47,7 +47,7 @@ namespace filescope {
         case Volume::Type_UInt8: case Volume::Type_UInt16:
             return cudaChannelFormatKindUnsigned;
         default:
-            throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY,
+            throw Error(__FILE__, __LINE__, VOLT_LOG_CAT,
                 format("Invalid volume data type specification (%1%)", 
                     Volume::typeToString(type)), Error_NotImplemented);
         }
@@ -160,7 +160,7 @@ Vector4u VolumeBlocker::loadNext()
         if (m_currBlock[1] >= m_numBlocks[1]) { m_currBlock[1] = 0; m_currBlock[2]++; }
         if (m_currBlock[2] >= m_numBlocks[2]) { m_currBlock[2] = 0; m_currBlock[3]++; }
         if (m_currBlock[3] >= m_numBlocks[3]) { m_currBlock[3] = 0; 
-            throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Exceeded block size", Error_Bug); }
+            throw Error(__FILE__, __LINE__, VOLT_LOG_CAT, "Exceeded block size", Error_Bug); }
     }
     else m_begin = true;
 

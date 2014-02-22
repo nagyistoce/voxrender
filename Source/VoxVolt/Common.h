@@ -28,7 +28,7 @@
 #define VOX_VOLT_COMMON_H
 
 // VoxRender log category
-static char const* VOX_VOLT_LOG_CATEGORY = "VOLT";
+static char const* VOLT_LOG_CAT = "VOLT";
 
 // Export macro
 #ifdef VoxVolt_EXPORTS
@@ -38,7 +38,7 @@ static char const* VOX_VOLT_LOG_CATEGORY = "VOLT";
 #endif
 
 // Version info
-//#include "Version.h"
+#include "Version.h"
 
 // End definition
 #endif // VOX_VOLT_COMMON_H

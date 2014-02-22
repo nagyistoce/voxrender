@@ -28,18 +28,100 @@
 
 // Include Dependencies
 #include "VoxLib/Scene/Scene.h"
+#include "VoxLib/Scene/Transfer.h"
+#include "VoxLib/Scene/Camera.h"
 
 namespace vox {
 
     class Animator::Impl
     {
     public:
+        Impl() : m_framerate(30) { }
 
-
-        std::list<std::shared_ptr<KeyFrame>> m_keys;
+        unsigned int m_framerate;
+        std::list<std::pair<unsigned int,KeyFrame>> m_keys;
     };
+    
+// --------------------------------------------------------------------
+//  Creates a new animator object
+// --------------------------------------------------------------------
+std::shared_ptr<Animator> Animator::create()
+{
+    return std::shared_ptr<Animator>(new Animator());
+}
 
-Animator::Animator() : m_pImpl(new Impl()) { }
-Animator::~Animator() { delete m_pImpl; }
+// --------------------------------------------------------------------
+//  Constructor
+// --------------------------------------------------------------------
+Animator::Animator() : m_pImpl(new Impl()) 
+{
+}
+
+// --------------------------------------------------------------------
+//  Destructor
+// --------------------------------------------------------------------
+Animator::~Animator() 
+{ 
+    delete m_pImpl; 
+}
+
+// --------------------------------------------------------------------
+//  Returns the internal map of keyframes 
+// --------------------------------------------------------------------
+std::list<std::pair<unsigned int,KeyFrame>> const& Animator::keyframes()
+{
+    return m_pImpl->m_keys;
+}
+
+// --------------------------------------------------------------------
+//  Performs keyframe interpolation
+// --------------------------------------------------------------------
+void Animator::lerp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
+{
+    k1.clone(o);
+    o.transferMap = TransferMap::create();
+    k1.transfer->generateMap(o.transferMap);
+}
+
+// --------------------------------------------------------------------
+//  Inserts a keyframe into the scene at the specified time index
+// --------------------------------------------------------------------
+void Animator::addKeyframe(KeyFrame keyFrame, unsigned int frame)
+{
+    auto iter = m_pImpl->m_keys.begin();
+    while (iter != m_pImpl->m_keys.end() && (*iter).first < frame)
+        ++iter;
+
+    m_pImpl->m_keys.insert(iter, std::make_pair(frame, keyFrame));
+}
+        
+// --------------------------------------------------------------------
+//  Removes a keyframe at the specified frame index
+// --------------------------------------------------------------------
+void Animator::removeKeyframe(unsigned int frame)
+{
+    for (auto iter = m_pImpl->m_keys.begin(); iter != m_pImpl->m_keys.end(); ++iter)
+    if ((*iter).first == frame)
+    {
+        m_pImpl->m_keys.erase(iter);
+        return;
+    }
+}
+
+// --------------------------------------------------------------------
+//  Sets the framerate
+// --------------------------------------------------------------------
+void Animator::setFramerate(unsigned int framerate) 
+{ 
+    m_pImpl->m_framerate = framerate; 
+}
+
+// --------------------------------------------------------------------
+//  Returns the framerate
+// --------------------------------------------------------------------
+unsigned int Animator::framerate() 
+{ 
+    return m_pImpl->m_framerate; 
+}
 
 } // namespace vox

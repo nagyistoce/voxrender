@@ -64,7 +64,6 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramitem.cpp
         Interface/histogramgenerator.cpp
         Interface/histogramview.cpp
-        Interface/animateview.cpp
         Interface/histogramwidget.cpp
         Interface/infowidget.cpp
         Interface/lightdialogue.cpp
@@ -99,7 +98,6 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramitem.h
         Interface/histogramgenerator.h
         Interface/histogramview.h
-        Interface/animateview.h
         Interface/histogramwidget.h
         Interface/infowidget.h
         Interface/lightdialogue.h

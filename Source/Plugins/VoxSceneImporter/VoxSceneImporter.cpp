@@ -4,7 +4,7 @@
 
     Description: A vox scene file importer module
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -67,11 +67,11 @@ namespace
         {
             boost::property_tree::ptree node;
 
-            node.add("Glossiness", material->glossiness);
-            node.add("Thickness", material->opticalThickness);
-            node.add("Diffuse", Vector3u(material->diffuse));
-            node.add("Specular", Vector3u(material->specular));
-            node.add("Emissive", Vector3u(material->emissive));
+            node.add(M_GLOSSINESS, material->glossiness);
+            node.add(M_THICKNESS, material->opticalThickness);
+            node.add(M_DIFFUSE, Vector3u(material->diffuse));
+            node.add(M_SPECULAR, Vector3u(material->specular));
+            node.add(M_EMISSIVE, Vector3u(material->emissive));
 
             return node;
         }
@@ -81,11 +81,11 @@ namespace
         {
             auto material = Material::create();
 
-            material->glossiness       = node.get("Glossiness", material->glossiness);
-            material->opticalThickness = node.get("Thickness", material->opticalThickness);
-            material->diffuse          = node.get("Diffuse", Vector3u(material->diffuse));
-            material->specular         = node.get("Specular", Vector3u(material->specular));
-            material->emissive         = node.get("Emissive", Vector3u(material->emissive));
+            material->glossiness       = node.get(M_GLOSSINESS, material->glossiness);
+            material->opticalThickness = node.get(M_THICKNESS, material->opticalThickness);
+            material->diffuse          = node.get(M_DIFFUSE, Vector3u(material->diffuse));
+            material->specular         = node.get(M_SPECULAR, Vector3u(material->specular));
+            material->emissive         = node.get(M_EMISSIVE, Vector3u(material->emissive));
             material->emissiveStrength = node.get("EmissiveStrength", material->emissiveStrength);
 
             return material;
@@ -131,6 +131,8 @@ namespace
             // --------------------------------------------------------------------
             void writeCamera()
             {
+                if (!m_scene.camera) return;
+
                 boost::property_tree::ptree node;
                 auto camera = m_scene.camera;
                 
@@ -151,6 +153,8 @@ namespace
             // --------------------------------------------------------------------
             void writeVolume() 
             {
+                if (!m_scene.volume) return;
+
                 boost::property_tree::ptree node;
                 auto const COMP_FORMAT = "gzip";
                 auto volume = m_scene.volume;
@@ -183,6 +187,8 @@ namespace
             // --------------------------------------------------------------------
             void writeLighting()
             {
+                if (!m_scene.lightSet) return;
+
                 boost::property_tree::ptree node;
                 auto lights = m_scene.lightSet;
                 
@@ -206,6 +212,8 @@ namespace
             // --------------------------------------------------------------------
             void writeTransfer()
             {
+                if (!m_scene.transfer && !m_scene.transferMap) return;
+
                 boost::property_tree::ptree node;
                 auto transfer = m_scene.transfer;
                 
@@ -281,6 +289,8 @@ namespace
             // --------------------------------------------------------------------
             void writeParams()
             {
+                if (!m_scene.parameters) return;
+
                 boost::property_tree::ptree node;
                 auto settings = m_scene.parameters;
                 
@@ -291,10 +301,26 @@ namespace
             }
 
             // --------------------------------------------------------------------
+            //  
+            // --------------------------------------------------------------------
+            void writeAnimator()
+            {
+                if (!m_scene.animator) return;
+
+                boost::property_tree::ptree node;
+
+                node.add(P_ANI_FRAME, m_scene.animator->framerate());
+
+                m_tree.add_child("Scene.Animator", node);
+            }
+
+            // --------------------------------------------------------------------
             //  Write the clipping geometry settings to the property tree
             // --------------------------------------------------------------------
             void writeClipGeometry()
             {
+                if (!m_scene.clipGeometry) return;
+
                 boost::property_tree::ptree node;
                 auto graph = m_scene.clipGeometry;
                 graph->exprt(node);
@@ -374,6 +400,7 @@ namespace
                     if (m_options.lookup("ImportLights", true)) scene.lightSet     = loadLights();
                     if (m_options.lookup("ImportParams", true)) scene.parameters   = loadParams();
                     if (m_options.lookup("ImportTransfer", true)) loadTransfer(scene);
+                    if (m_options.lookup("ImportAnimator", true)) loadAnimator();
                     scene.clipGeometry = loadClipGeometry();
                 }
 
@@ -601,11 +628,6 @@ namespace
                       break;
                   }
 
-                  // Generate the transfer function map 
-                  // :TODO: Shouldn't be necessary, bug in higher level user of imprt
-                  scene.transferMap = TransferMap::create();
-                  scene.transfer->generateMap(scene.transferMap);
-
                 pop();
             }
             
@@ -771,6 +793,33 @@ namespace
                 }
 
                 return materials;
+            }
+            
+            // --------------------------------------------------------------------
+            //  Loads animation and keyframe information
+            // --------------------------------------------------------------------
+            std::shared_ptr<Animator> loadAnimator()
+            {
+                if (!push("Animator", Preferred)) return nullptr;
+
+                    // Instantiate default volume object
+                    auto animatorPtr = executeImportDirectives().animator;
+                    if (!animatorPtr) animatorPtr = Animator::create();
+                    auto & animator = *animatorPtr;
+
+                    // Load the framerate specification
+                    auto framerate = m_node->get(P_ANI_FRAME, animator.framerate());
+                    if (framerate > 120) 
+                    {
+                        framerate = 120;
+                        VOX_LOG_WARNING(Error_Range, VSI_LOG_CATEGORY, 
+                            "Framerate clipped to maximum of 120Hz");
+                    }
+                    animator.setFramerate(framerate);
+
+                    return animatorPtr;
+
+                pop();
             }
 
             // --------------------------------------------------------------------

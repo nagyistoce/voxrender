@@ -81,7 +81,7 @@ namespace vox
         VOX_DEVICE Vector2f sampleDisk()
         {
             float r = sqrtf(sample1D());
-            float t = 2.0f * M_PI * sample1D();
+            float t = 2.0f * (float)M_PI * sample1D();
 
             return Vector2f(r*cosf(t), r*sinf(t));
         }

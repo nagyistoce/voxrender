@@ -27,11 +27,9 @@
 #ifndef ANIMATE_WIDGET_H
 #define ANIMATE_WIDGET_H
 
-// Include Dependencies
-#include "animateview.h"
-
 // QT Includes
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QGraphicsScene>
 
 namespace Ui { class AnimateWidget; }
 
@@ -46,23 +44,22 @@ public:
 	~AnimateWidget();
 
 private:
-	Ui::AnimateWidget *ui;
+	Ui::AnimateWidget * ui;
 
     void update();
 
     bool m_ignore;
 
-    float m_timeOffset; ///< Time offset to start frame in window
+    float m_frameOffset; ///< Frame at left edge of window
 
-    AnimateView * m_animateView;
-
-signals:
+    QGraphicsScene m_scene;
 
 private slots:
     void sceneChanged();
 
-    void on_pushButton_addKey_clicked();
-    void on_pushButton_deleteKey_clicked();
+    void on_pushButton_render_clicked();
+    void on_pushButton_key_clicked();
+    void on_pushButton_delete_clicked();
 };
 
 // End definition

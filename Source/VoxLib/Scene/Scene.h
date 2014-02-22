@@ -239,7 +239,7 @@ namespace vox
         KeyFrame generateKeyFrame();
 
         /** Clones the scene */
-        void clone(Scene & sceneCopy);
+        void clone(Scene & sceneCopy) const;
 
         /** Returns true if any of the scene components are dirty */
         bool isDirty() const;

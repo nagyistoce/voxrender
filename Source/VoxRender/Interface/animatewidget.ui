@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>512</width>
-    <height>336</height>
+    <height>200</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -72,60 +72,17 @@
      <item>
       <widget class="QLabel" name="label_time">
        <property name="text">
-        <string>Time Index:</string>
+        <string>Frame Index:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QDoubleSpinBox" name="spinBox_time">
-       <property name="suffix">
-        <string>s</string>
-       </property>
-       <property name="minimum">
-        <double>0.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>100.000000000000000</double>
-       </property>
-       <property name="value">
-        <double>0.000000000000000</double>
-       </property>
-      </widget>
+      <widget class="QSpinBox" name="spinBox_frame"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QFrame" name="frame_display">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-       <horstretch>255</horstretch>
-       <verstretch>255</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>255</width>
-       <height>255</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>999999</width>
-       <height>255</height>
-      </size>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
-     </property>
-     <layout class="QGridLayout" name="animateLayout">
-      <property name="margin">
-       <number>0</number>
-      </property>
-     </layout>
-    </widget>
+    <widget class="QGraphicsView" name="view"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -137,7 +94,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="spinBox_framerate">
        <property name="suffix">
         <string> (fps)</string>
        </property>
@@ -160,7 +117,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spinBox_2">
+      <widget class="QSpinBox" name="spinBox_samples">
        <property name="minimum">
         <number>100</number>
        </property>
@@ -186,7 +143,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushButton_render">
        <property name="text">
         <string>Render Animation</string>
        </property>

@@ -42,10 +42,8 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
     m_ignore(false)
 {
 	ui->setupUi(this);
-    
-    // Create the histogram view 
-	m_animateView = new AnimateView(ui->frame_display);
-	ui->animateLayout->addWidget(m_animateView, 0, 0, 1, 1);
+
+    ui->view->setScene(&m_scene);
 
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
@@ -78,13 +76,30 @@ void AnimateWidget::update()
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void AnimateWidget::on_pushButton_addKey_clicked()
+void AnimateWidget::on_pushButton_key_clicked()
 {
+    auto & scene = MainWindow::instance->scene();
+
+    auto frame = ui->spinBox_frame->value();
+    scene.animator->addKeyframe(scene.generateKeyFrame(), frame);
 }
 
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void AnimateWidget::on_pushButton_deleteKey_clicked()
+void AnimateWidget::on_pushButton_delete_clicked()
 {
+    auto & scene = MainWindow::instance->scene();
+
+    auto frame = ui->spinBox_frame->value();
+    scene.animator->removeKeyframe(frame);
+}
+
+// ----------------------------------------------------------------------------
+//  Begins rendering an animation sequence given the animation info
+// ----------------------------------------------------------------------------
+void AnimateWidget::on_pushButton_render_clicked()
+{
+    MainWindow::instance->stopRender();
+    MainWindow::instance->beginRender(ui->spinBox_samples->value(), true);
 }

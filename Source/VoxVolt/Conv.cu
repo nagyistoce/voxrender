@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "VoxVolt/Impl/VolumeBlocker.h"
 #include "VoxLib/Error/CudaError.h"
+#include "VoxLib/Core/Logging.h"
 
 // CUDA runtime API header
 #include <cuda_runtime_api.h>
@@ -46,8 +47,6 @@ namespace {
 namespace filescope {
 
     __constant__ float gd_kernel[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
-
-    static float elapsedTime = 0.0f;
 
     // Textures for the input volume data sampling
     #define VOX_TEXTURE(T) texture<##T,3,cudaReadModeNormalizedFloat>  gd_volumeTexIn_##T 
@@ -70,6 +69,8 @@ namespace filescope {
     template<typename T>
     __global__ void convKernel(Vector3u apron, cudaExtent blockSize, Vector2f range)
     {
+        extern __shared__ float cache[];
+
 	    int x = blockIdx.x * blockDim.x + threadIdx.x;
 	    int y = blockIdx.y * blockDim.y + threadIdx.y;
         if (x >= blockSize.width || y >= blockSize.height) return;
@@ -124,7 +125,7 @@ namespace filescope {
         VOX_SETUP_TEX(Int8);
         VOX_SETUP_TEX(Int16);
 
-        default: throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, 
+        default: throw Error(__FILE__, __LINE__, VOLT_LOG_CAT, 
             format("Unsupported volume data type (%1%)", Volume::typeToString(type)), 
             Error_NotImplemented);
         }
@@ -142,14 +143,14 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
 {   
     // Verify the kernel is of odd dimensions
     if (!(kernel.width() % 2 && kernel.height() % 2 && kernel.depth() % 2)) 
-        throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, 
+        throw Error(__FILE__, __LINE__, VOLT_LOG_CAT, 
                     "Kernel size must be odd", Error_Range);
 
     // Check the kernel dimensions against the library limit
     if (kernel.width()  > MAX_KERNEL_SIZE ||
         kernel.height() > MAX_KERNEL_SIZE ||
         kernel.depth()  > MAX_KERNEL_SIZE)
-        throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Kernel size exceeds library limit", Error_Range);
+        throw Error(__FILE__, __LINE__, VOLT_LOG_CAT, "Kernel size exceeds library limit", Error_Range);
     Vector3u apron = (kernel.dims() - Vector3u(1)) / 2;
 
     // Copy the kernel into device memory
@@ -172,6 +173,7 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
         (blockSize.width  + threads.x - 1) / threads.x,
         (blockSize.height + threads.y - 1) / threads.y 
         );
+    unsigned int shared = 1024;
 
     // Execute the blocked volume convolution 
     blocker.begin();
@@ -185,15 +187,15 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
         // Execute the convolution kernel call
         switch (volume.type())
         {
-        case Volume::Type_Int8:   filescope::convKernel<Int8>   <<<blocks,threads>>> (apron, blockSize, 
+        case Volume::Type_Int8:   filescope::convKernel<Int8>   <<<blocks,threads,shared>>> (apron, blockSize, 
             Vector2f(std::numeric_limits<Int8>::min(), std::numeric_limits<Int8>::max()));   break;
-        case Volume::Type_UInt8:  filescope::convKernel<UInt8>  <<<blocks,threads>>> (apron, blockSize, 
+        case Volume::Type_UInt8:  filescope::convKernel<UInt8>  <<<blocks,threads,shared>>> (apron, blockSize, 
             Vector2f(std::numeric_limits<UInt8>::min(), std::numeric_limits<UInt8>::max()));  break;
-        case Volume::Type_UInt16: filescope::convKernel<UInt16> <<<blocks,threads>>> (apron, blockSize, 
+        case Volume::Type_UInt16: filescope::convKernel<UInt16> <<<blocks,threads,shared>>> (apron, blockSize, 
             Vector2f(std::numeric_limits<UInt16>::min(), std::numeric_limits<UInt16>::max())); break;
-        case Volume::Type_Int16:  filescope::convKernel<Int16>  <<<blocks,threads>>> (apron, blockSize, 
+        case Volume::Type_Int16:  filescope::convKernel<Int16>  <<<blocks,threads,shared>>> (apron, blockSize, 
             Vector2f(0, std::numeric_limits<Int16>::max()));  break;
-        default: throw Error(__FILE__, __LINE__, VOX_VOLT_LOG_CATEGORY, "Unsupported volume data type", Error_NotImplemented);
+        default: throw Error(__FILE__, __LINE__, VOLT_LOG_CAT, "Unsupported volume data type", Error_NotImplemented);
         }
         VOX_CUDA_CHECK(cudaDeviceSynchronize());
 
@@ -208,9 +210,35 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
     VOX_CUDA_CHECK(cudaEventSynchronize(stop));
 
     // Compute the time elapsed during GPU execution
-    VOX_CUDA_CHECK(cudaEventElapsedTime(&filescope::elapsedTime, start, stop));
+    float elapsedTime;
+    VOX_CUDA_CHECK(cudaEventElapsedTime(&elapsedTime, start, stop));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Convolution completed in %1% ms", elapsedTime));
 
     return result;
+}
+
+// ----------------------------------------------------------------------------
+//  Constructs a laplace kernel
+// ----------------------------------------------------------------------------
+void Conv::makeLaplaceKernel(Image3D<float> & kernel)
+{
+    kernel.resize(3, 3, 3);
+
+    auto data = kernel.buffer().get();
+    float vals[] = { 
+                     0,   0.5, 0,
+                     0.5, 1,   0.5,
+                     0,   0.5, 0,
+                     
+                     0.5, 1,   0.5,
+                     1,   -12,  1,
+                     0.5, 1,   0.5,
+
+                     0,   0.5, 0,
+                     0.5, 1,   0.5,
+                     0,   0.5, 0,
+                   };
+    memcpy(data, vals, kernel.size()*sizeof(float));
 }
 
 // ----------------------------------------------------------------------------
@@ -252,14 +280,6 @@ void Conv::makeGaussianKernel(std::vector<float> & out, float variance, unsigned
 void Conv::makeMeanKernel(std::vector<float> & out, unsigned int size)
 {
     out.resize(size, 1.0f / (float)size);
-}
-
-// ----------------------------------------------------------------------------
-//  Executes the convolution kernel on the input volume data
-// ----------------------------------------------------------------------------
-float Conv::getElapsedTime()
-{
-    return filescope::elapsedTime;
 }
 
 } // namespace volt

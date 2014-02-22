@@ -61,6 +61,7 @@ enum RenderState
 	RenderState_Waiting,		///< Idling
 	RenderState_Loading,		///< Loading Scene File
 	RenderState_Rendering,		///< Rendering Scene
+    RenderState_Animating,      ///< Rendering Animation
 	RenderState_Stopping,		///< Stopping Rendering
 	RenderState_Stopped,		///< Stopped Rendering
 	RenderState_Paused,			///< Paused Rendering
@@ -77,6 +78,9 @@ class PointLightWidget;
 class InfoWidget;
 class TimingWidget;
 class AnimateWidget;
+
+// Convenience typedef for a volume filtering function
+typedef std::function<std::shared_ptr<vox::Volume>(std::shared_ptr<vox::Volume>)> VolumeFilter;
 
 // Main Application Window
 class MainWindow : public QMainWindow
@@ -100,13 +104,10 @@ public:
     RenderState renderState() { return m_guiRenderState; }
 
     /** Current scene accessor */
-    vox::Scene & scene() { return activeScene; }
+    vox::Scene & scene() { return m_activeScene; }
 
     /** Returns the currently active renderer */ 
-    vox::VolumeScatterRenderer & renderer() 
-    { 
-        return *m_renderer; 
-    }
+    vox::VolumeScatterRenderer & renderer() { return *m_renderer; }
 
     /** Returns the transfer widget object handle */
     TransferWidget * transferWidget() { return transferwidget; }
@@ -122,19 +123,22 @@ public:
         emit transferQuadSelected(quad, node);
     }
 
+    /** Returns the last directory accessed by the user */
     QString const& lastOpenDir() { return m_lastOpenDir; }
 
+    /** Updates the last directory accessed by the user */
     void setLastOpenDir(QString const& lastOpenDir) { m_lastOpenDir = lastOpenDir; } 
 
 	vox::RenderController m_renderController; ///< Application render controller
-	vox::Scene activeScene;                   ///< Current scene elements
 
     std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
 
-	InfoWidget* infowidget; ///< Advanced info widget
+	InfoWidget* m_infowidget; ///< Advanced info widget
     
-    void beginRender();
+    /** Initiates rendering operations for the scene (or the animator, if specified) */
+    void beginRender(size_t samples = std::numeric_limits<size_t>::max(), bool animation = false);
 
+    /** Stops the current rendering operation */
     void stopRender();
 
 signals:
@@ -180,6 +184,9 @@ private:
 	void changeRenderState( RenderState state );
 	bool canStopRendering();
     void synchronizeView();
+
+    /** Helper method for executing a volume filtering operation */
+    void performFiltering(VolumeFilter filter);
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
@@ -239,6 +246,8 @@ private:
     QVector<PaneWidget*> m_pluginPanes;
     QSpacerItem *        m_pluginSpacer;
     
+	vox::Scene m_activeScene; ///< Current scene
+
     // --------------------------------------------------------------------
     //  Do not place anything below here, the log stream must be closed 
     //  after all other object have been shutdown 
@@ -256,6 +265,7 @@ private slots:
 
     // Filtering operations
     void on_actionGaussian_Filter_triggered();
+    void on_actionLaplace_Filter_triggered();
 
 	// Toolbar action slots
     void on_actionFull_Screen_triggered();

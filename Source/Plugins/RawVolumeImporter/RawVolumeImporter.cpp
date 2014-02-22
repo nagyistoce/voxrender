@@ -131,7 +131,7 @@ namespace
                 // Output raw volume data in the specified endian format
                 size_t bytesPerVoxel = Volume::typeToSize(m_scene.volume->type());
                 auto bytesToWrite    = m_scene.volume->extent().fold<size_t>(1, &mul) * bytesPerVoxel;
-                size_t bytesWritten  = boost::iostreams::write(chain, 
+                auto bytesWritten    = boost::iostreams::write(chain, 
                     reinterpret_cast<char const*>(m_scene.volume->data()), bytesToWrite);
             }
 
@@ -176,6 +176,26 @@ namespace
                 Volume::Type type = stringToType(typeStr);
                 auto bytesPerVoxel = Volume::typeToSize(type);
                 
+                // Detect the endian mode settings and determine if we must swap
+                bool swap = false;
+                std::string endianess = m_options.lookup("Endianess", "little");
+                boost::algorithm::to_lower(endianess);
+                if (bytesPerVoxel > 1)
+                if (endianess == "little" || endianess == "lsb")
+                {
+                #ifndef BOOST_LITTLE_ENDIAN
+                    swap = true;
+                #endif
+                }
+                else if (endianess == "big" || endianess == "msb")
+                {
+                #ifdef BOOST_LITTLE_ENDIAN
+                    swap = true;
+                #endif
+                }
+                else throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Invalid Endianess: %1%", endianess), Error_BadToken);
+
                 // Allocate memory for the volume data
                 auto voxels = size.fold(mul);
                 auto data = makeSharedArray(voxels*bytesPerVoxel);
@@ -207,6 +227,14 @@ namespace
                     readInputData(bytesPerVoxel, voxels, data.get());
                 }
 
+                // Convert to the native byte ordering
+                if (swap)
+                {
+                    UInt16 * ptr = (UInt16*)data.get();
+                    for (size_t i = 0; i < voxels; i++)
+                        ptr[i] = VOX_SWAP16(ptr[i]);
+                }
+
                 // Construct the volume object for the response
                 Scene scene;
                 scene.volume = Volume::create(data, size, spacing, offset, type);
@@ -221,22 +249,6 @@ namespace
             inline void readInputData(size_t bpv, size_t voxels, UInt8* data)
             {
                 auto chain = boost::iostreams::filtering_streambuf<boost::iostreams::input>();
-
-                // Detect the endian mode settings
-                std::string endianess = m_options.lookup("Endianess", "little");
-                boost::algorithm::to_lower(endianess);
-                if (endianess == "little")
-                {
-                }
-                else if (endianess == "big")
-                {
-                }
-                else
-                {
-                    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                                format("Invalid Endianess: %1%", endianess),
-                                Error_BadToken);
-                }
                 
                 // Detect the compression mode options 
                 std::vector<std::string> filters;

@@ -27,10 +27,8 @@
 #include "infowidget.h"
 #include "ui_infowidget.h"
 
-// VoxRender Includes
-#include "VoxLib/Core/VoxRender.h"
-
 // Include Dependencies
+#include "VoxLib/Core/VoxRender.h"
 #include "mainwindow.h"
 
 #define LEX_CAST(x) boost::lexical_cast<std::string>(x).c_str()
@@ -45,8 +43,7 @@ InfoWidget::InfoWidget(QWidget *parent) :
     ui->setupUi(this);
 
     // Connect scene change signal to the scene update slot :TODO: Change to recurring onFrame Callback and run on Xth cycles
-    connect( MainWindow::instance, SIGNAL(sceneChanged( )), 
-		this, SLOT(updateSceneStatistics( )) );
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(updateSceneStatistics()));
 }
     
 // -------------------------------------------------
@@ -60,9 +57,9 @@ InfoWidget::~InfoWidget()
 // -------------------------------------------------
 //  Sets the timing information in the tree view
 // -------------------------------------------------
-void InfoWidget::updatePerformanceStatistics()
+void InfoWidget::updatePerfStats(std::shared_ptr<vox::FrameBufferLock>)
 {
-    auto perfItem = ui->treeWidget->findItems( "Performance", Qt::MatchExactly ).front( );
+    auto perfItem = ui->treeWidget->findItems( "Performance", Qt::MatchExactly ).front();
     
     auto timeItem = perfItem->child(0);
     timeItem->child(0)->setText(1, QString::number(MainWindow::instance->m_renderer->renderTime()));
@@ -83,7 +80,7 @@ void InfoWidget::updateSceneStatistics()
 {
     // :TODO: Delay update unless visibile //
 
-    auto const& scene = MainWindow::instance->activeScene;
+    auto const& scene = MainWindow::instance->scene();
 
     auto sceneItem = ui->treeWidget->findItems("Scene", Qt::MatchExactly).front();
 

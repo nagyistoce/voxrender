@@ -148,6 +148,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	// Configure the render view + interaction widget
 	m_renderView = new RenderView(ui->frame_render);
 	ui->frame_render_layout->addWidget(m_renderView, 0, 0, 1, 1);
+    connect(this, SIGNAL(frameReady(std::shared_ptr<vox::FrameBufferLock>)),
+            m_infowidget, SLOT(updatePerfStats(std::shared_ptr<vox::FrameBufferLock>)));
     connect(this, SIGNAL(frameReady(std::shared_ptr<vox::FrameBufferLock>)), 
             m_renderView, SLOT(setImage(std::shared_ptr<vox::FrameBufferLock>)));
     connect(m_renderView, SIGNAL(viewChanged(float)), this, SLOT(onZoomChange(float)));
@@ -173,7 +175,7 @@ MainWindow::~MainWindow()
 
     HistogramGenerator::instance()->stopGeneratingImages();
 
-    activeScene.reset();
+    m_activeScene.reset();
     m_renderController.stop();
     m_renderer.reset();
 
@@ -554,14 +556,15 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     try
     {
         // Attempt to parse the scene file content
-        activeScene = vox::Scene::imprt(identifier);
-        if (!activeScene.volume) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, "Scene is missing volume data", Error_MissingData);
-        if (!activeScene.parameters)   activeScene.parameters   = RenderParams::create();
-        if (!activeScene.clipGeometry) activeScene.clipGeometry = PrimGroup::create();
-        if (!activeScene.lightSet)     activeScene.lightSet     = LightSet::create();
-        if (!activeScene.transferMap)  activeScene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
-        if (!activeScene.transfer)     activeScene.transfer     = Transfer1D::create();
-        if (!activeScene.camera)       activeScene.camera       = Camera::create();
+        m_activeScene = vox::Scene::imprt(identifier);
+        if (!m_activeScene.volume) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, "Scene is missing volume data", Error_MissingData);
+        if (!m_activeScene.parameters)   m_activeScene.parameters   = RenderParams::create();
+        if (!m_activeScene.clipGeometry) m_activeScene.clipGeometry = PrimGroup::create();
+        if (!m_activeScene.lightSet)     m_activeScene.lightSet     = LightSet::create();
+        if (!m_activeScene.transferMap)  m_activeScene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
+        if (!m_activeScene.transfer)     m_activeScene.transfer     = Transfer1D::create();
+        if (!m_activeScene.camera)       m_activeScene.camera       = Camera::create();
+        if (!m_activeScene.animator)     m_activeScene.animator     = Animator::create();
 
         // Synchronize the scene view
         synchronizeView();
@@ -587,27 +590,31 @@ void MainWindow::renderNewSceneFile(QString const& filename)
 // ----------------------------------------------------------------------------
 //  Begins rendering the currently active scene file
 // ----------------------------------------------------------------------------
-void MainWindow::beginRender()
+void MainWindow::beginRender(size_t samples, bool animation)
 {
-    // Check if there is a valid scene 
-    if (activeScene.volume)
+    // Check if we are already in a rendering state
+    if (m_renderController.isActive()) 
+    {
+        VOX_LOG_ERROR(Error_NotAllowed, VOX_GUI_LOG_CAT, "A render operation is already in progress");
+        return;
+    }
+
+    // attempt to begin the render
+    try
     {
         // Update the render state
-        changeRenderState(RenderState_Rendering);
+        changeRenderState(animation ? RenderState_Animating : RenderState_Rendering);
 
         // Initiate rendering of the scene
-        if (!m_renderController.isActive())
+        if (animation) m_renderController.render(m_renderer, m_activeScene.animator, samples);
+        else
         {
             emit sceneChanged(); // Send the scene change signal
 
-            m_renderController.render(
-                m_renderer,
-                activeScene,
-                std::numeric_limits<size_t>::max()
-                );
+            m_renderController.render(m_renderer, m_activeScene, samples);
         }
     }
-    else changeRenderState(RenderState_Waiting);
+    catch (Error & error) { VOX_LOG_EXCEPTION(Severity_Error, error); }
 }
 
 // ----------------------------------------------------------------------------
@@ -704,13 +711,13 @@ void MainWindow::synchronizeView()
     // Synchronize the lighting controls
     BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
     m_lightPanes.clear();
-    BOOST_FOREACH (auto & light, activeScene.lightSet->lights()) 
+    BOOST_FOREACH (auto & light, m_activeScene.lightSet->lights()) 
         addLight(light, "Point Light");
 
     // Synchronize the clip geometry controls
     BOOST_FOREACH (auto & pane, m_clipPanes) delete pane;
     m_clipPanes.clear();
-    BOOST_FOREACH (auto & clip, activeScene.clipGeometry->children())
+    BOOST_FOREACH (auto & clip, m_activeScene.clipGeometry->children())
         addClippingGeometry(clip);
 }
 
@@ -804,8 +811,8 @@ void MainWindow::createRenderTabPanes()
 		"Scene Information", ":/icons/logtabicon.png" );
 
 	// Scene information widget
-	infowidget = new InfoWidget( advpanes[0] );
-	advpanes[0]->setWidget( infowidget );
+	m_infowidget = new InfoWidget( advpanes[0] );
+	advpanes[0]->setWidget( m_infowidget );
 	ui->advancedAreaLayout->addWidget( advpanes[0] );
 
 	// Set alignment of panes within advanced tab layout 
@@ -1049,12 +1056,12 @@ void MainWindow::on_pushButton_addLight_clicked()
 
     if (result)
     {
-        activeScene.lightSet->lock();
+        m_activeScene.lightSet->lock();
         auto light = Light::create();
-        activeScene.lightSet->add(light);
+        m_activeScene.lightSet->add(light);
         addLight(light, lightDialogue.nameSelected());
-        activeScene.lightSet->setDirty();
-        activeScene.lightSet->unlock();
+        m_activeScene.lightSet->setDirty();
+        m_activeScene.lightSet->unlock();
     }
 }
 
@@ -1182,36 +1189,52 @@ void MainWindow::stopRender()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionGaussian_Filter_triggered()
 {
-    if (!activeScene.volume) return;
-
-    try
-    {
-        m_renderController.stop();
-        HistogramGenerator::instance()->stopGeneratingImages();
-
-        Image3D<float> gaussian(5, 5, 5);
+    performFiltering([] (std::shared_ptr<Volume> volume) -> std::shared_ptr<Volume> { 
+        Image3D<float> kernel(5, 5, 5);
         std::vector<float> gaussVec;
         volt::Conv::makeGaussianKernel(gaussVec, 0.75f, 5);
         for (int x = 0; x < 5; x++)
         for (int y = 0; y < 5; y++)
         for (int z = 0; z < 5; z++)
-            gaussian.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
+            kernel.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
+        return volt::Conv::execute(*volume, kernel);
+    });
+}
 
-        auto result = volt::Conv::execute(*activeScene.volume, gaussian);
-        activeScene.volume = result;
+// ----------------------------------------------------------------------------
+//  Performs a laplacian convolution operation on the active volume data set
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionLaplace_Filter_triggered()
+{
+    performFiltering([] (std::shared_ptr<Volume> volume) -> std::shared_ptr<Volume> { 
+        Image3D<float> kernel;
+        volt::Conv::makeLaplaceKernel(kernel);
+        return volt::Conv::execute(*volume, kernel);
+    });
+}
 
-        float time = volt::Conv::getElapsedTime();
+// ----------------------------------------------------------------------------
+//  Performs a filtering function on the active volume data set
+// ----------------------------------------------------------------------------
+void MainWindow::performFiltering(VolumeFilter filter)
+{
+    if (!m_activeScene.volume) return;
+
+    try
+    {
+        m_renderController.stop();
+        HistogramGenerator::instance()->stopGeneratingImages();
+        m_activeScene.volume = filter(m_activeScene.volume);
     }
     catch (Error & error)
     {
-        error.message = "Gaussian filter error: " + error.message;
+        error.message = "Filtering error: " + error.message;
 
         VOX_LOG_EXCEPTION(Severity_Error, error);
     }
     catch (std::exception & error)
     {
-        VOX_LOG_ERROR(Error_Unknown, VOX_VOLT_LOG_CATEGORY, 
-            String("Gaussian filter error: ") + error.what());
+        VOX_LOG_ERROR(Error_Unknown, VOX_GUI_LOG_CAT, String("Filtering error: ") + error.what());
     }
 
     beginRender();

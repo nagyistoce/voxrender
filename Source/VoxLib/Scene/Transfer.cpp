@@ -438,7 +438,7 @@ void Transfer1D::removeNode(std::shared_ptr<Node> node)
 // ----------------------------------------------------------------------------
 void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
 {
-	m_nodes.sort(filescope::slt<Node>);
+    m_nodes.sort(filescope::slt<Node>);
 
     VOX_ASSERT(map);
 

@@ -1,13 +1,13 @@
 /* ===========================================================================
 
-	Project: VoxRender - Logging interface
+	Project: VoxLib
 
 	Description:
 	 Implements an front-end for run-time logging and error handling. 
      The log backend prints to std::clog by default, but is modifiable via
      a static member of the Logger class.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -32,6 +32,7 @@
 // Include dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/System.h"
+#include <boost/thread.hpp>
 
 // Disable MSVC warnings
 #ifdef _MSC_VER
@@ -57,6 +58,9 @@
 #   define BLUE   0
 #endif
 
+// API namespace
+namespace vox {
+
 // Filescope namespace
 namespace {
 namespace filescope {
@@ -75,19 +79,46 @@ namespace filescope {
 #endif
 	}
 
+    static std::list<String> catFilters;
+    static boost::mutex      catMutex;
+
 } // namespace filescope
 } // namespace anonymous
 
-// API namespace
-namespace vox {
 
 //  Static member initialization
-std::list<String> Logger::m_catFilters;
-boost::mutex      Logger::m_catMutex;
-
 ErrorHandler Logger::m_errorHandler = ErrorPrint;
 int Logger::m_filter                = Severity_Info;
 int Logger::m_lastError             = Error_None;
+
+// --------------------------------------------------------------------
+//  Adds a category to the category filter list
+// --------------------------------------------------------------------
+void Logger::addCategoryFilter(String const& category)
+{
+    boost::mutex::scoped_lock lock(filescope::catMutex);
+
+    filescope::catFilters.push_back(category);
+}
+
+// --------------------------------------------------------------------
+//  Removes a category from the category filter list
+// --------------------------------------------------------------------
+void removeCategoryFilter(String const& category)
+{
+    boost::mutex::scoped_lock lock(filescope::catMutex);
+
+    filescope::catFilters.remove(category);
+}
+
+// --------------------------------------------------------------------
+//  Checks if a category is filtered from logging
+// --------------------------------------------------------------------
+bool isCategoryFiltered(String const& category)
+{
+    auto iter = std::find(filescope::catFilters.begin(), filescope::catFilters.end(), category);
+    return (iter != filescope::catFilters.end());
+}
 
 // --------------------------------------------------------------------
 //  Ignores any errors regardless of severity

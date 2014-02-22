@@ -86,6 +86,21 @@ namespace vox
             ErrorCallback onError = nullptr
             );
 
+		/**
+		 * Initiates rendering operations on an animation sequence
+         *
+         * @param renderer      The master render module
+         * @param animator      The keyframe animation sequence
+         * @param iterations    The number of iterations to run PER FRAME
+         * @param errorCallback The callback function for controller exceptions
+		 */
+        void render(
+            MasterHandle  renderer,
+            std::shared_ptr<Animator> animator, 
+            size_t        iterations,
+            ErrorCallback onError = nullptr
+            );
+        
         /** Returns the current number of iterations */
         size_t iterations() const;
 

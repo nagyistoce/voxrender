@@ -809,6 +809,7 @@
       <string>Convolution</string>
      </property>
      <addaction name="actionGaussian_Filter"/>
+     <addaction name="actionLaplace_Filter"/>
     </widget>
     <addaction name="menuConvolution"/>
    </widget>
@@ -1023,6 +1024,11 @@
   <action name="actionGaussian_Filter">
    <property name="text">
     <string>Gaussian</string>
+   </property>
+  </action>
+  <action name="actionLaplace_Filter">
+   <property name="text">
+    <string>Laplace</string>
    </property>
   </action>
  </widget>

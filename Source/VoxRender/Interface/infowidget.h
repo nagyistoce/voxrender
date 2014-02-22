@@ -50,6 +50,9 @@ public:
 
     void updatePerformanceStatistics();
     
+public slots:
+        void updatePerfStats(std::shared_ptr<vox::FrameBufferLock>);
+
 private slots:
     void updateSceneStatistics();
 

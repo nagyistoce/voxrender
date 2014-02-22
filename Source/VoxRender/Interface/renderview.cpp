@@ -186,7 +186,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 	if (!m_zoomEnabled) return;
 
 	const float zoomsteps[] = { 0.1, .125, 0.17, 0.25, 0.33, 0.45, 0.50, 0.67, 0.75, 1, 
-		1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 16 };
+		1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20 };
 	
 	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
 
@@ -374,8 +374,6 @@ void RenderView::processSceneInteractions()
 // ------------------------------------------------------------
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
-    MainWindow::instance->infowidget->updatePerformanceStatistics();
-
     vox::FrameBuffer & frame = *lock->framebuffer.get();
 
     if (m_image.width() != frame.width() || m_image.height() != frame.height())

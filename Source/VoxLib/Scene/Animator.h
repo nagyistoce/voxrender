@@ -46,17 +46,23 @@ namespace vox
 	class VOX_EXPORT Animator
 	{
     public:
-        /** Constructor */
-        Animator();
+        /** Creates a new animator */
+        static std::shared_ptr<Animator> create();
 
         /** Destructor */
         ~Animator();
 
+        /** Returns a list of the keyframes */
+        std::list<std::pair<unsigned int,KeyFrame>> const& keyframes();
+
+        /** Generates an interpolated keyframe for rendering: k1*f + k2*(1-f) */
+        void lerp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
+
         /** Adds a keyframe to the animation */
-        void addKeyframe(KeyFrame keyFrame, float time);
+        void addKeyframe(KeyFrame keyFrame, unsigned int frame);
 
         /** Deletes a keyframe from the animation */
-        void removeKeyframe(KeyFrame keyFrame);
+        void removeKeyframe(unsigned int frame);
 
         /** Sets the animation framerate (in frames per second) */
         void setFramerate(unsigned int framerate);
@@ -65,6 +71,9 @@ namespace vox
         unsigned int framerate();
 
     private:
+        /** Constructor */
+        Animator();
+
         class Impl;
         Impl * m_pImpl;
 	};

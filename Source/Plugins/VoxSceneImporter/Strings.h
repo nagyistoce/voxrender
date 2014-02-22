@@ -4,7 +4,7 @@
 
     Description: Defines the string constants for the XML format scene files
 
-    Copyright (C) 2012-2013 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -53,8 +53,11 @@ auto T_TYPE       = "Type";         ///< Transfer function type (# of dimensions
 
 // |-> Materials
 
-auto M_GLOSSINESS = "Glossiness";       ///< Material specularity
-auto M_THICKNESS  = "Thickness";        ///< Optical thickness (/mm)
+auto M_GLOSSINESS = "Glossiness";  ///< Material specularity
+auto M_THICKNESS  = "Thickness";   ///< Optical thickness (/mm)
+auto M_DIFFUSE    = "Diffuse";     ///< Diffuse color
+auto M_SPECULAR   = "Specular";    ///< Specular color
+auto M_EMISSIVE   = "Emissive";    ///< Emissive color
 
 // |-> Node
 
@@ -69,3 +72,7 @@ auto Q_MATERIALS = "Materials";  ///< Material list for nodes
 
 auto P_STEP_PRIMARY    = "PrimaryStepSize"; ///< Primary sample step size (mm)
 auto P_STEP_SHADOW     = "ShadowStepSize";  ///< Shadow sample step size (mm)
+
+// Animator
+
+auto P_ANI_FRAME = "Framerate"; ///< Animation framerate (Hz)

@@ -233,27 +233,36 @@ bool Scene::isDirty() const
 // --------------------------------------------------------------------
 KeyFrame Scene::generateKeyFrame()
 {
-    return Scene();
+    Scene scene;
+    clone(scene);
+    return scene;
 }
 
 // --------------------------------------------------------------------
 //  Clones a scene, referencing the volume and copying the other comps
 // --------------------------------------------------------------------
-void Scene::clone(Scene & scene)
+void Scene::clone(Scene & scene) const
 {
     scene.volume = volume; // Volume immutable during render
 
+    // :TODO:
+    scene.clipGeometry = clipGeometry;
+    scene.animator = nullptr;
+    scene.lightSet = lightSet;
+    scene.transfer = transfer;
+    //
+
     if (camera)
     {
-        if (scene.camera) camera->clone(*scene.camera.get());
-        else scene.camera = std::shared_ptr<Camera>(new Camera(*camera));
+        if (!scene.camera) scene.camera = Camera::create();
+        camera->clone(*scene.camera.get());
     }
     else scene.camera.reset();
     
     if (parameters)
     {
-        if (scene.parameters) parameters->clone(*scene.parameters.get());
-        else scene.parameters = std::shared_ptr<RenderParams>(new RenderParams(*parameters));
+        if (!scene.parameters) scene.parameters = RenderParams::create();
+        parameters->clone(*scene.parameters.get());
     }
     else scene.parameters.reset();
 

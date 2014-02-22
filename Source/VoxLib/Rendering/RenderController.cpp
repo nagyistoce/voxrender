@@ -53,55 +53,29 @@ class RenderController::Impl
 {
 public:
     // ----------------------------------------------------------------------------
-    //  Initiates rendering of the specified
+    //  Initiates rendering of the specified scene
     // ----------------------------------------------------------------------------
-    void render(
-        MasterHandle  renderer,
-        Scene const&  scene, 
-        size_t        iterations,
-        ErrorCallback onError
-        )
+    void render(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError)
     {
-        boost::mutex::scoped_lock lock(m_controlMutex);
-
-        // Check for an in progress rendering operation
-        if (m_controlThread)
-        {
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                "Render operation already in progress", Error_NotAllowed);
-        }    
-    
-        // Check for missing renderer handle
-        if (!renderer)
-        {
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                "Missing master renderer handle", Error_NotAllowed);
-        }
-
-        scene.issueWarningsForMissingHandles(); // Context warnings
-
-        // Initialize the execution configuration
-        m_masterRenderer   = renderer;
-        m_targetIterations = iterations;
-        m_errorCallback    = onError;
-        m_scene            = scene;
-        m_isPaused         = false;
-        m_currIterations   = 0;
-
-        // Store the start time for render duration
-        m_startTime = std::chrono::system_clock::now();
-
-        // Launch the render control thread
-        m_controlThread = std::shared_ptr<boost::thread>( 
-            new boost::thread(std::bind(&Impl::entryPoint, this)));
+        initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPoint, this));
     }
     
     // ----------------------------------------------------------------------------
     //  Initiates rendering of the specified animation
     // ----------------------------------------------------------------------------
-    void renderAnimation(
-        MasterHandle renderer,
-        ErrorCallback onError)
+    void render(MasterHandle renderer, std::shared_ptr<Animator> animator, size_t iterations, ErrorCallback onError)
+    {
+        if (animator->keyframes().size() < 2) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            "Animator must contain at least 2 keyframes", Error_MissingData);
+
+        Scene scene; scene.animator = animator;
+        initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPointAnimate, this));
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Initializes the rendering process
+    // ----------------------------------------------------------------------------
+    void initRender(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError, std::function<void()> entry)
     {
         boost::mutex::scoped_lock lock(m_controlMutex);
 
@@ -124,30 +98,29 @@ public:
         m_errorCallback    = onError;
         m_isPaused         = false;
         m_currIterations   = 0;
+        m_scene            = scene;
 
         // Store the start time for render duration
         m_startTime = std::chrono::system_clock::now();
+        
+        // Initialize the execution configuration
+        m_masterRenderer   = renderer;
+        m_targetIterations = iterations;
+        m_errorCallback    = onError;
 
         // Launch the render control thread
-        m_controlThread = std::shared_ptr<boost::thread>( 
-            new boost::thread(std::bind(&Impl::entryPointAnimate, this)));
+        m_controlThread = std::shared_ptr<boost::thread>(new boost::thread(entry));
     }
 
     // ----------------------------------------------------------------------------
     //  Returns the number of renderers currently registered
     // ----------------------------------------------------------------------------
-    size_t numRenderers() const
-    {
-        return m_renderThreads.size();
-    }
+    size_t numRenderers() const { return m_renderThreads.size(); }
 
     // ----------------------------------------------------------------------------
     //  Returns the current number of iterations during rendering
     // ----------------------------------------------------------------------------
-    size_t iterations() const
-    {
-        return m_currIterations;
-    }
+    size_t iterations() const { return m_currIterations; }
     
     // ----------------------------------------------------------------------------
     //  Returns the current scene being used for rendering
@@ -248,36 +221,51 @@ private:
     // ----------------------------------------------------------------------------
     void entryPointAnimate()
     {
-        static const unsigned int BATCH_SIZE = 50; ///< Number of samples on a frame before switching
-
         std::exception_ptr error = nullptr;
 
-        unsigned int frameIndex = 0;
-        unsigned int frameCount = 0;
+        auto keys = m_scene.animator->keyframes();
+        auto currFrame   = keys.front().first;
+        auto targetFrame = keys.back().first; 
+        auto prevIter = keys.begin();
+        auto nextIter = ++keys.begin();
+        Scene interpScene;
 
         try
         {
             m_masterRenderer->startup();
 
-            while (m_targetIterations > m_currIterations)
+            while (targetFrame > currFrame)
             {
-                // Swap frames as necessary
-                if (!(m_currIterations % BATCH_SIZE))
+                // Advance iterators
+                if (nextIter->first == currFrame)
                 {
-                    auto keyframe = Scene();
-                    m_masterRenderer->syncScene(keyframe, true);
+                    prevIter = nextIter;
+                    ++nextIter;
                 }
 
-                // ... Continue rendering
-                boost::this_thread::interruption_point();
+                // Interpolate the scene for the next frame
+                auto f1 = prevIter->first;
+                auto f2 = nextIter->first;
+                auto f = (float)(currFrame - f1) / (float)(f2 - f1);
+                m_scene.animator->lerp(prevIter->second, nextIter->second, interpScene, f);
+                m_masterRenderer->syncScene(interpScene, true);
 
-                managementSubroutine();      // Manages render threads
+                // Render the next frame
+                while (m_targetIterations > m_currIterations)
+                {
+                    boost::this_thread::interruption_point();
 
-                renderingSubroutine();       // Perform master rendering
+                    managementSubroutine();      // Manages render threads
+
+                    renderingSubroutine();       // Perform master rendering
             
-                controlSubroutine();         // General control checks
+                    controlSubroutine();         // General control checks
                 
-                m_currIterations++;
+                    m_currIterations++;
+                }
+
+                m_currIterations = 0;
+                currFrame++;
             }
         }
         catch (boost::thread_interrupted &)
@@ -390,6 +378,13 @@ private:
             // Clone the scene data to prevent sync issues
             m_scene.clone(m_sceneCopy);
 
+            // Detect changes to the transfer map generator
+            if (m_scene.transfer && m_scene.transfer->isDirty())
+            {
+                if (!m_scene.transferMap) m_scene.transferMap = TransferMap::create();
+                m_scene.transfer->generateMap(m_scene.transferMap);
+            }
+
             // Synchronize the scene with the master renderer
             m_masterRenderer->syncScene(m_scene, force);
 
@@ -494,6 +489,11 @@ void RenderController::render(MasterHandle renderer, Scene const& scene,
                               size_t iterations, ErrorCallback onError) 
 { 
     m_pImpl->render(renderer, scene, iterations, onError); 
+}
+void RenderController::render(MasterHandle renderer, std::shared_ptr<Animator> animator, 
+                              size_t iterations, ErrorCallback onError) 
+{ 
+    m_pImpl->render(renderer, animator, iterations, onError); 
 }
 size_t RenderController::iterations() const { return m_pImpl->iterations(); }
 void RenderController::stop() { m_pImpl->stop(); }
