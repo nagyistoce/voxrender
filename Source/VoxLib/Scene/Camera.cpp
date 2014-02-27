@@ -84,6 +84,35 @@ void Camera::clone(Camera & camera)
 }
 
 // --------------------------------------------------------------------
+//  Interpolates between camera keyframes
+// --------------------------------------------------------------------
+std::shared_ptr<Camera> Camera::interp(std::shared_ptr<Camera> k2, float f)
+{
+    std::shared_ptr<Camera> result = Camera::create();
+
+    auto key1 = this;
+    auto key2 = k2.get();
+
+#define VOX_LERP(ATTR) result->ATTR = key1->ATTR*(1-f) + key2->ATTR*f;
+
+    VOX_LERP(m_pos);
+    VOX_LERP(m_apertureSize);
+    VOX_LERP(m_fieldOfView);
+    VOX_LERP(m_focalDistance);
+
+    VOX_LERP(m_eye); result->m_eye.normalize(); // :TODO:
+    VOX_LERP(m_up); result->m_up.normalize();
+    result->setRight(Vector3f::cross(result->m_eye, result->m_up).normalized());
+
+    result->m_filmWidth  = m_filmWidth;
+    result->m_filmHeight = m_filmHeight;
+        
+#undef VOX_LERP
+
+    return result;
+}
+
+// --------------------------------------------------------------------
 //  Executes a yaw movement of the camera
 // --------------------------------------------------------------------
 void Camera::yaw(float radians)

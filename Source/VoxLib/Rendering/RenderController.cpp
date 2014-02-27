@@ -57,6 +57,8 @@ public:
     // ----------------------------------------------------------------------------
     void render(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError)
     {
+        if (!scene.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Cannot render scene: not valid", Error_MissingData);
         initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPoint, this));
     }
     
@@ -213,6 +215,11 @@ public:
         auto duration = std::chrono::system_clock::now() - m_startTime;
         return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     }
+    
+    // ----------------------------------------------------------------------------
+    //  Sets the progress callback issued during rendering routines
+    // ----------------------------------------------------------------------------
+    void setProgressCallback(ProgressCallback callback) { m_progressCallback = callback; }
 
 private:
     
@@ -223,6 +230,7 @@ private:
     {
         std::exception_ptr error = nullptr;
 
+        // Initialize the keyframe iterators
         auto keys = m_scene.animator->keyframes();
         auto currFrame   = keys.front().first;
         auto targetFrame = keys.back().first; 
@@ -247,7 +255,7 @@ private:
                 auto f1 = prevIter->first;
                 auto f2 = nextIter->first;
                 auto f = (float)(currFrame - f1) / (float)(f2 - f1);
-                m_scene.animator->lerp(prevIter->second, nextIter->second, interpScene, f);
+                m_scene.animator->interp(prevIter->second, nextIter->second, interpScene, f);
                 m_masterRenderer->syncScene(interpScene, true);
 
                 // Render the next frame
@@ -255,17 +263,26 @@ private:
                 {
                     boost::this_thread::interruption_point();
 
-                    managementSubroutine();      // Manages render threads
+                    managementSubroutine(); // Manages render threads
 
-                    renderingSubroutine();       // Perform master rendering
+                    renderingSubroutine();  // Perform master rendering
             
-                    controlSubroutine();         // General control checks
+                    controlSubroutine();    // General control checks
                 
                     m_currIterations++;
                 }
 
+                // Store the final frame in the temp directory
+                auto outDir = m_scene.animator->tempLocation();
+                outDir.path += format("frame_%1%.png", currFrame);
+                ResourceOStream ostream(outDir);
+                m_masterRenderer->writeFrame(ostream);
+
+                // Reset the loop iterators
                 m_currIterations = 0;
                 currFrame++;
+
+                if (m_progressCallback) m_progressCallback((float)currFrame/targetFrame);
             }
         }
         catch (boost::thread_interrupted &)
@@ -309,6 +326,8 @@ private:
             
                 controlSubroutine();         // General control checks
                 
+                if (m_progressCallback) m_progressCallback((float)m_currIterations/m_targetIterations);
+
                 m_currIterations++;
             }
         }
@@ -456,6 +475,8 @@ private:
  
     std::chrono::system_clock::time_point m_startTime;  ///< Start time of the current render
 
+    ProgressCallback m_progressCallback; ///< Progress callback
+
     MasterHandle  m_masterRenderer;   ///< Master renderer module for render operations 
     ErrorCallback m_errorCallback;    ///< User callback for master renderer failure
     size_t        m_targetIterations; ///< Targeted number of iterations
@@ -502,5 +523,6 @@ void RenderController::unpause() { m_pImpl->unpause(); }
 bool RenderController::isPaused() const { return m_pImpl->isPaused(); }
 bool RenderController::isActive() const { return m_pImpl->isActive(); }
 long long RenderController::renderTime() const { return m_pImpl->renderTime(); }
+void RenderController::setProgressCallback(ProgressCallback callback) { m_pImpl->setProgressCallback(callback); }
 
 } // namespace vox

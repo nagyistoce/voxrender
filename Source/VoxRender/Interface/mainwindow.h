@@ -145,6 +145,9 @@ signals:
     /** Signal sent when the active scene is reloaded */
     void sceneChanged();
 
+    /** Progress change callback */
+    void progressChanged(int progress);
+
     /** Signal sent when the working transfer node is changed */
     void transferNodeSelected(std::shared_ptr<vox::Node> node); 
     void transferQuadSelected(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node); 
@@ -289,6 +292,8 @@ private slots:
     void on_pushButton_loadPlugin_clicked();
 
     void onZoomChange(float zoom);
+
+    void onProgressChanged(int progress);
 
     // Scene element removal
     void removeClipGeometry(PaneWidget * pane);

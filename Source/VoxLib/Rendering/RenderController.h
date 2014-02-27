@@ -38,6 +38,9 @@ namespace vox
     class Renderer;
     class Transfer;
 
+    /** Progress callback for rendering operations */
+    typedef std::function<void(float)> ProgressCallback;
+
 	/** Controller class for managing the rendering of a scene */
 	class VOX_EXPORT RenderController
 	{
@@ -67,6 +70,9 @@ namespace vox
 
         /** Sets the transfer function that generates the scene transfer map */
         void setTransferFunction(std::shared_ptr<Transfer> transfer);
+
+        /** Sets the progress callback for a rendering operation */
+        void setProgressCallback(ProgressCallback callback);
 
 		/** Returns the scene currently being renderered */
         Scene const& scene() const;

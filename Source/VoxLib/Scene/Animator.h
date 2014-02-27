@@ -30,6 +30,7 @@
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
+#include "VoxLib/IO/ResourceId.h"
 
 // API namespace
 namespace vox
@@ -55,8 +56,26 @@ namespace vox
         /** Returns a list of the keyframes */
         std::list<std::pair<unsigned int,KeyFrame>> const& keyframes();
 
+        /** Clears the list of keyframe data */
+        void clear();
+
+        /** Sets the base URI for the temporary storage of frame information */
+        void setTempLocation(ResourceId const& identifier, String const& baseName);
+        
+        /** Returns the base URI for temporary frame storage during rendering */
+        ResourceId const& tempLocation();
+
+        /** Returns the base filename for temporary frames produced during rendering */
+        String const& baseName();
+
+        /** Sets the video output URI */
+        void setOutputUri(ResourceId const& output);
+
+        /** Returns the current output URI for the video */
+        ResourceId const& outputUri();
+
         /** Generates an interpolated keyframe for rendering: k1*f + k2*(1-f) */
-        void lerp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
+        void interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
 
         /** Adds a keyframe to the animation */
         void addKeyframe(KeyFrame keyFrame, unsigned int frame);

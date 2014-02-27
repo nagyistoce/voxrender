@@ -107,6 +107,9 @@ public:
     /** Moves the camera along its current up direction vector */
     inline void moveDown(float dist) { m_pos -= m_up*dist; }
 
+    /** Interpolates a keyframe towards the next consecutive keyframe by a factor f */
+    std::shared_ptr<Camera> interp(std::shared_ptr<Camera> k2, float f);
+
     /** Executes a yaw rotation */
     void yaw(float radians);
     

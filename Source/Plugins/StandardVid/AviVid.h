@@ -31,10 +31,31 @@
 #include "StandardVid/Common.h"
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Video/VidCodec.h"
+#include "VoxLib/IO/Resource.h"
 
 // API namespace
 namespace vox 
 {
+    
+/** Writes an AVI format video file */
+class VOX_SVID_EXPORT AviWriter : public VideoWriter
+{
+public:
+    AviWriter(std::shared_ptr<void> handle) : m_handle(handle) { }
+
+private:
+    std::shared_ptr<void> m_handle;
+};
+
+/** Reads an AVI format video file */
+class VOX_SVID_EXPORT AviReader : public VideoReader
+{
+public:
+    AviReader(std::shared_ptr<void> handle) : m_handle(handle) { }
+
+private:
+    std::shared_ptr<void> m_handle;
+};
 
 /**
  * Standard video file import / export module
@@ -46,6 +67,10 @@ class VOX_SVID_EXPORT AviVid : public VideoCodec
 public:
     AviVid(std::shared_ptr<void> handle) : m_handle(handle) { }
     
+    std::shared_ptr<VideoWriter> writer() { return std::make_shared<AviWriter>(m_handle); }
+    
+    std::shared_ptr<VideoReader> reader() { return std::make_shared<AviReader>(m_handle); }
+
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
 };

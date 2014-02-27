@@ -35,9 +35,7 @@
 // API namespace
 namespace vox
 {
-	/** 
-	 * Video output stream
-	 */
+	/** Audio-Video output stream */
 	class VOX_EXPORT VidOStream
 	{
     public:
@@ -52,10 +50,11 @@ namespace vox
          */
         void open(ResourceId const& uri, OptionSet options = OptionSet(), String const& format = "");
 
-        /**
-         * Terminates the internal filter chain and releases the associated video codec
-         */
+        /** Marks the end of the video output */
         void close();
+
+        /** Returns true if the video is opened */
+        bool isOpen();
 
         /** Pushes a singe frame into the video stream */
         void push();
@@ -73,12 +72,12 @@ namespace vox
         static void removeEncoder(String const& format, std::shared_ptr<VideoEncoder> encoder = nullptr);
 
     private:
-        std::shared_ptr<VideoEncoder> m_encoder;
+        std::shared_ptr<VideoWriter> m_device;
 
         String m_format;
 	};
 
-    /** */
+    /** Audio-Video input stream */
     class VOX_EXPORT VidIStream
     {
     public: 
@@ -97,6 +96,12 @@ namespace vox
          * Terminates the internal filter chain and releases the associated video codec
          */
         void close();
+        
+        /** Returns true if the video is opened */
+        bool isOpen();
+
+        /** Performs a high level seek of the video data */
+        void seek();
 
         /** Pulls a singe frame from the video stream*/
         void pull();
@@ -126,7 +131,7 @@ namespace vox
         unsigned frameSize();
 
     private:
-        std::shared_ptr<VideoDecoder> m_decoder;
+        std::shared_ptr<VideoReader> m_device;
 
         String m_format;
     };

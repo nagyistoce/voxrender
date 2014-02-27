@@ -50,8 +50,14 @@ namespace vox
         /** Returns the ambient lighting conditions */
         Vector3f const& ambientLight() { return m_ambientLight; }
 
+        /** Interpolates between transfer function keyframes */
+        std::shared_ptr<LightSet> interp(std::shared_ptr<LightSet> k2, float f);
+
         /** Constructs a new light object for the scene */
         std::shared_ptr<Light> add();
+
+        /** Clones the light set */
+        std::shared_ptr<LightSet> clone();
 
         /** Locks the light set for read/write operations */
         void lock() { m_mutex.lock(); }

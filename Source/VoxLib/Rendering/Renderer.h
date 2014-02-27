@@ -87,6 +87,12 @@ public:
      * send the raw image pixels in the Labx format, row major ordering.
      */ 
     virtual void backupIpr(std::ostream & out) = 0;
+
+    /**
+     * Extracts a tonemapped image of the current render (Only needs to
+     * be implemented for renderers that will be rendering animations)
+     */
+    virtual void writeFrame(ResourceOStream & out) = 0;
 };
 
 /** Control Renderer for interactive display work */

@@ -154,6 +154,8 @@ MainWindow::MainWindow(QWidget *parent) :
             m_renderView, SLOT(setImage(std::shared_ptr<vox::FrameBufferLock>)));
     connect(m_renderView, SIGNAL(viewChanged(float)), this, SLOT(onZoomChange(float)));
     onZoomChange(m_renderView->zoomFactor()); // Ensure the initial zoom display is correct
+    
+    connect(this, SIGNAL(progressChanged(int)), this, SLOT(onProgressChanged(int)));
 
     readSettings(); // Read in the application settings
 
@@ -602,6 +604,13 @@ void MainWindow::beginRender(size_t samples, bool animation)
     // attempt to begin the render
     try
     {
+        m_renderController.setProgressCallback([this] (float p) 
+            { 
+                int value = (int)(p*100.f);
+                if (value != statusProgress->value())
+                    progressChanged(value);
+            });
+
         // Update the render state
         changeRenderState(animation ? RenderState_Animating : RenderState_Rendering);
 
@@ -615,6 +624,14 @@ void MainWindow::beginRender(size_t samples, bool animation)
         }
     }
     catch (Error & error) { VOX_LOG_EXCEPTION(Severity_Error, error); }
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the progress bar on the main window
+// ----------------------------------------------------------------------------
+void MainWindow::onProgressChanged(int progress)
+{
+    statusProgress->setValue(progress);
 }
 
 // ----------------------------------------------------------------------------

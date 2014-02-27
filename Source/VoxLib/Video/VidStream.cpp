@@ -43,6 +43,22 @@ namespace filescope {
 } // namespace anonymous
 
 // --------------------------------------------------------------------
+//  Closes the underlying video write device
+// --------------------------------------------------------------------
+void VidIStream::close()
+{
+    m_device.reset();
+}
+
+// --------------------------------------------------------------------
+//  Closes the underlying video write device
+// --------------------------------------------------------------------
+void VidOStream::close()
+{
+    m_device.reset();
+}
+
+// --------------------------------------------------------------------
 //  Registers a new resource encoder module 
 // --------------------------------------------------------------------
 void VidIStream::registerDecoder(String const& format, std::shared_ptr<VideoDecoder> module)

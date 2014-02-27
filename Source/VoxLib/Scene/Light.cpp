@@ -100,4 +100,17 @@ void LightSet::remove(std::shared_ptr<Light> light)
     light->setParent(nullptr);
 }
 
+// ------------------------------------------------------------
+//  Interpolates between lighting sets
+// ------------------------------------------------------------
+std::shared_ptr<LightSet> LightSet::interp(std::shared_ptr<LightSet> k2, float f)
+{ 
+    BOOST_FOREACH (auto & light, k2->lights())
+    {
+           
+    }
+
+    return k2;
+}
+
 } // namespace vox

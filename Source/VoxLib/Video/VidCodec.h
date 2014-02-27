@@ -29,6 +29,7 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/ResourceId.h"
 
@@ -36,20 +37,40 @@
 namespace vox
 {
 
-/** */
+typedef Vector<UInt8,4> FourCC; ///< FourCC compression code
+
+/** Handles the writing of video content to a stream */
+class VOX_EXPORT VideoWriter
+{
+    virtual void start() { };
+
+    virtual void stop() { };
+};
+
+/** Handles the reading of video content from a stream */
+class VOX_EXPORT VideoReader
+{
+    virtual void start() { };
+
+    virtual void stop() { };
+};
+
+/** Supplies video writers for OStreams */
 class VOX_EXPORT VideoEncoder
 {
 public:
-    virtual ~VideoEncoder() {}
+    virtual ~VideoEncoder() { }
 
+    virtual std::shared_ptr<VideoWriter> writer() = 0;
 };
 
-/** */
+/** Supplies video readers for IStreams */
 class VOX_EXPORT VideoDecoder
 {
 public:
-    virtual ~VideoDecoder() {}
+    virtual ~VideoDecoder() { }
 
+    virtual std::shared_ptr<VideoReader> reader() = 0;
 };
 
 /** Convenience class for both encode and decode support */

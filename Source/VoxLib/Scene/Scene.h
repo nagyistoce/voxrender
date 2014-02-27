@@ -245,7 +245,7 @@ namespace vox
         bool isDirty() const;
 
         /** Logs warning for missing scene components */
-        void issueWarningsForMissingHandles() const;
+        bool isValid() const;
 
         std::shared_ptr<RenderParams> parameters;   ///< Rendering parameters
         std::shared_ptr<LightSet>     lightSet;     ///< Lighting Data

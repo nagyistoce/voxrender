@@ -50,13 +50,13 @@ bool Renderer::exception(std::exception_ptr & exception)
 
     catch (std::exception const& error)
     {
-        Logger::addEntry(Severity_Error, Error_Unknown, "VOX",
+        Logger::addEntry(Severity_Error, Error_Unknown, VOX_LOG_CATEGORY,
                             error.what(), __FILE__, __LINE__);
     }
 
     catch (...) 
     { 
-        Logger::addEntry(Severity_Error, Error_Unknown, "VOX",
+        Logger::addEntry(Severity_Error, Error_Unknown, VOX_LOG_CATEGORY,
                             "Unknown Render Thread Failure",
                             __FILE__, __LINE__);
     }

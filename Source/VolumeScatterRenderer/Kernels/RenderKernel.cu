@@ -221,8 +221,8 @@ namespace filescope {
     // --------------------------------------------------------------------
     VOX_DEVICE float computeObscurance(CRandomGenerator & rng, Vector3f const& pos)
     {
-            Ray3f ray(pos, rng.sampleSphere(), 0.0f, 10.0f);
-            return computeTransmission(rng, ray);
+        Ray3f ray(pos, rng.sampleSphere(), 0.0f, 10.0f);
+        return computeTransmission(rng, ray);
     }
 
     // --------------------------------------------------------------------
@@ -304,9 +304,7 @@ namespace filescope {
         )
     {
         // Initialize the sample ray for marching
-        auto sampleRay = gd_camera.generateRay(
-                            Vector2f(px, py) + rng.sample2D(), // Pixel position
-                            rng.sampleDisk());                 // Aperture position
+        auto sampleRay = gd_camera.generateRay(Vector2f(px, py) + rng.sample2D(), rng.sampleDisk());
 
         // Clip the sample ray to the scene geometry
         intersectVolume(sampleRay);

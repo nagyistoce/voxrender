@@ -36,10 +36,15 @@ namespace vox {
     class Animator::Impl
     {
     public:
-        Impl() : m_framerate(30) { }
+        Impl() : m_framerate(30) 
+        {
+            m_uri = "file:///" + boost::filesystem::current_path().string() + "/Temp/";
+        }
 
         unsigned int m_framerate;
         std::list<std::pair<unsigned int,KeyFrame>> m_keys;
+        ResourceId m_uri;
+        String m_base;
     };
     
 // --------------------------------------------------------------------
@@ -74,13 +79,50 @@ std::list<std::pair<unsigned int,KeyFrame>> const& Animator::keyframes()
 }
 
 // --------------------------------------------------------------------
+//  Sets the output directory for temporary storage during rendering
+// --------------------------------------------------------------------
+void Animator::setTempLocation(ResourceId const& identifier, String const& baseName)
+{
+    m_pImpl->m_uri = identifier;
+    m_pImpl->m_base = baseName;
+}
+
+// --------------------------------------------------------------------
+//  Sets the output directory for temporary storage during rendering
+// --------------------------------------------------------------------
+ResourceId const& Animator::tempLocation()
+{
+    return m_pImpl->m_uri;
+}
+
+// --------------------------------------------------------------------
+//  Sets the output directory for temporary storage during rendering
+// --------------------------------------------------------------------
+String const& Animator::baseName()
+{
+    return m_pImpl->m_base;
+}
+
+// --------------------------------------------------------------------
 //  Performs keyframe interpolation
 // --------------------------------------------------------------------
-void Animator::lerp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
+void Animator::interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
 {
     k1.clone(o);
+
+    o.camera = k1.camera->interp(k2.camera, f);
+    //o.transfer = k1.transfer->interp(k2.transfer, f);
+
     o.transferMap = TransferMap::create();
     k1.transfer->generateMap(o.transferMap);
+}
+
+// --------------------------------------------------------------------
+//  Clears the internal list of keyframes
+// --------------------------------------------------------------------
+void Animator::clear()
+{
+    m_pImpl->m_keys.clear();
 }
 
 // --------------------------------------------------------------------
@@ -88,9 +130,19 @@ void Animator::lerp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
 // --------------------------------------------------------------------
 void Animator::addKeyframe(KeyFrame keyFrame, unsigned int frame)
 {
+    if (!keyFrame.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+        "Keyframe is invalid", Error_MissingData);
+
     auto iter = m_pImpl->m_keys.begin();
     while (iter != m_pImpl->m_keys.end() && (*iter).first < frame)
         ++iter;
+
+    if (iter != m_pImpl->m_keys.end() && iter->first == frame)
+    {
+        auto old = iter; 
+        ++iter;
+        m_pImpl->m_keys.erase(old);
+    }
 
     m_pImpl->m_keys.insert(iter, std::make_pair(frame, keyFrame));
 }

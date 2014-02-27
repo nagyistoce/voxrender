@@ -52,16 +52,6 @@ namespace filescope {
 
     static boost::shared_mutex moduleMutex; // Module access mutex for read-write locks
 
-    // --------------------------------------------------------------------
-    //  Helper function for issuing warning for missing scene data
-    // --------------------------------------------------------------------
-    void issueWarning(char const* com)
-    {
-        Logger::addEntry(Severity_Warning, Error_MissingData, VOX_LOG_CATEGORY,
-                         format("%1% handle is not present in scene context", com),
-                         __FILE__, __LINE__);
-    }
-
 } // namespace filescope
 } // namespace anonymous
 
@@ -276,16 +266,11 @@ void Scene::clone(Scene & scene) const
 }
 
 // --------------------------------------------------------------------
-//  Logs warning message for any missing scene components
+//  Returns true if the scene is a valid render scene
 // --------------------------------------------------------------------
-void Scene::issueWarningsForMissingHandles() const
+bool Scene::isValid() const
 {
-    if (!camera)        filescope::issueWarning("Camera");
-    if (!volume)        filescope::issueWarning("Volume");
-    if (!lightSet)      filescope::issueWarning("LightSet");
-    if (!transfer)      filescope::issueWarning("Transfer Function");
-    if (!clipGeometry)  filescope::issueWarning("Clipping Geometry");
-    if (!parameters)    filescope::issueWarning("Render Parameters");
+    return camera && volume && lightSet && transfer && clipGeometry && parameters && (transfer || transferMap);
 }
 
 } // namespace vox

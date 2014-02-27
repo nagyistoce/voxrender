@@ -358,7 +358,7 @@ namespace
                 stream.read((char*)data.get(), total);
 
                 // Convert to the native byte ordering
-                #ifdef BOOST_LITTLE_ENDIAN
+                #ifdef BOOST_BIG_ENDIAN
                 if (type == Volume::Type_UInt16 || type == Volume::Type_Int16)
                 {
                     UInt16 * ptr = (UInt16*)data.get();

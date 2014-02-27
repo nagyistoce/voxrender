@@ -32,6 +32,7 @@
 #include "math_constants.h"
 
 // Include Dependencies
+#include "VoxLib/Bitmap/Bitmap.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Core/Logging.h"
@@ -198,6 +199,18 @@ public:
 
             RenderKernel::setLights(m_lightBuffer, scene.lightSet->ambientLight());
         }
+    }
+    
+    // --------------------------------------------------------------------
+    //  Writes a completed frame to the specified destination
+    // --------------------------------------------------------------------
+    void writeFrame(ResourceOStream & out)
+    {
+        m_frameBuffer->wait(); // Await user lock release
+
+        Bitmap bitmap(Bitmap::Format_RGBX, m_frameBuffer->width(), m_frameBuffer->height(), 
+            8, m_frameBuffer->stride(), m_frameBuffer->buffer()); 
+        bitmap.exprt(out);
     }
 
     // --------------------------------------------------------------------
