@@ -31,6 +31,7 @@
 // Include Dependencies
 #include "mainwindow.h"
 #include "utilities.h"
+#include "VoxScene/Camera.h"
 
 // --------------------------------------------------------------------
 //  Constructor

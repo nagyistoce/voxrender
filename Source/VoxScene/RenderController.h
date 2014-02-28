@@ -27,10 +27,13 @@
 #ifndef VOX_RENDERER_CONTROLLER_H
 #define VOX_RENDERER_CONTROLLER_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/Renderer.h"
+
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Rendering/Renderer.h"
 
 // API namespace
 namespace vox
@@ -42,7 +45,7 @@ namespace vox
     typedef std::function<void(float)> ProgressCallback;
 
 	/** Controller class for managing the rendering of a scene */
-	class VOX_EXPORT RenderController
+	class VOXS_EXPORT RenderController
 	{
     public:
         /** Typdefs for shared pointer renderers */

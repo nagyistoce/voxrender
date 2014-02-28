@@ -28,6 +28,7 @@
 #define VOX_ANIMATOR_H
 
 // Include Dependencies
+#include "VoxScene/Common.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/IO/ResourceId.h"
@@ -35,7 +36,7 @@
 // API namespace
 namespace vox
 {
-    class VOX_EXPORT Scene;
+    class VOXS_EXPORT Scene;
     typedef Scene KeyFrame;
 
 	/** 
@@ -44,7 +45,7 @@ namespace vox
      * This class encapsulates animation keyframes associated with a specific
      * scene instance. It also includes settings for the animation parameters.
 	 */
-	class VOX_EXPORT Animator
+	class VOXS_EXPORT Animator
 	{
     public:
         /** Creates a new animator */

@@ -27,13 +27,16 @@
 #ifndef VOX_TRANSFER_H
 #define VOX_TRANSFER_H
 
-// Include Dependencies
+// Internal Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/Material.h"
+#include "VoxScene/TransferMap.h"
+
+// External Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Types.h"
-#include "VoxLib/Scene/Material.h"
-#include "VoxLib/Scene/TransferMap.h"
 
 // API Namespace
 namespace vox
@@ -45,7 +48,7 @@ namespace vox
     typedef std::shared_ptr<Node> NodeH;
 
     /** Transfer function node */
-    class VOX_EXPORT Node
+    class VOXS_EXPORT Node
     {
     public:
         /** Constructs a new transfer function object */
@@ -69,7 +72,7 @@ namespace vox
     };
 
     /** 2D Transfer function block */
-    class VOX_EXPORT Quad
+    class VOXS_EXPORT Quad
     {
     public:
         /** Node position indices */
@@ -100,7 +103,7 @@ namespace vox
     };
 
     /** Transfer function interface */
-    class VOX_EXPORT Transfer : public std::enable_shared_from_this<Transfer>
+    class VOXS_EXPORT Transfer : public std::enable_shared_from_this<Transfer>
     {
     public: 
         /** Initializes the default transfer function resolution */
@@ -142,7 +145,7 @@ namespace vox
     };
 
     /** 1 Dimensional Transfer Function */
-    class VOX_EXPORT Transfer1D : public Transfer
+    class VOXS_EXPORT Transfer1D : public Transfer
     {
     public:
         /** Constructs a new transfer function object */
@@ -180,7 +183,7 @@ namespace vox
     };
 
     /** 2 Dimensional Transfer Function */
-    class VOX_EXPORT Transfer2D : public Transfer
+    class VOXS_EXPORT Transfer2D : public Transfer
     {
     public:
         /** Constructs a new transfer function object */

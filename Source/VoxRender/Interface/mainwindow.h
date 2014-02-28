@@ -28,9 +28,14 @@
 #define MAINWINDOW_H
 
 // API Header
-#include "VoxLib/Core/VoxRender.h"
+#include "VoxScene/RenderController.h"
+#include "VoxScene/Scene.h"
+#include "VoxScene/Light.h"
+#include "VoxScene/Transfer.h"
+#include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Primitive.h"
 #include "VoxLib/Plugin/PluginManager.h"
-#include "VoxLib/Scene/Primitive.h"
+#include "VoxLib/Core/Logging.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
@@ -42,7 +47,7 @@
 #include "samplingwidget.h"
 #include "transferwidget.h"
 
-// QT4 Includes
+// QT Includes
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMainWindow.h>
 #include <QtWidgets/QProgressBar>

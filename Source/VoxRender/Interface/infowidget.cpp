@@ -28,7 +28,9 @@
 #include "ui_infowidget.h"
 
 // Include Dependencies
-#include "VoxLib/Core/VoxRender.h"
+#include "VoxScene/RenderController.h"
+#include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Volume.h"
 #include "mainwindow.h"
 
 #define LEX_CAST(x) boost::lexical_cast<std::string>(x).c_str()
@@ -41,9 +43,6 @@ InfoWidget::InfoWidget(QWidget *parent) :
     ui(new Ui::InfoWidget)
 {
     ui->setupUi(this);
-
-    // Connect scene change signal to the scene update slot :TODO: Change to recurring onFrame Callback and run on Xth cycles
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(updateSceneStatistics()));
 }
     
 // -------------------------------------------------
@@ -71,50 +70,4 @@ void InfoWidget::updatePerfStats(std::shared_ptr<vox::FrameBufferLock>)
     perfItem->child(3)->setText(1, QString::number(MainWindow::instance->m_renderController.renderTime()));
 
     ui->treeWidget->update();
-}
-
-// -------------------------------------------------
-//  Sets the scene information in the tree view
-// -------------------------------------------------
-void InfoWidget::updateSceneStatistics()
-{
-    // :TODO: Delay update unless visibile //
-
-    auto const& scene = MainWindow::instance->scene();
-
-    auto sceneItem = ui->treeWidget->findItems("Scene", Qt::MatchExactly).front();
-
-        // Scene volume statistics
-        auto volumeItem = sceneItem->child(0);
-        auto const& volume = scene.volume.get( );
-        if( volume )
-        {
-            volumeItem->child(0)->setText(1, "Filename.txt");
-            volumeItem->child(1)->setText(1, LEX_CAST(vox::Vector4f(volume->extent()) * volume->spacing()));
-            volumeItem->child(2)->setText(1, LEX_CAST(volume->extent()));
-            volumeItem->child(3)->setText(1, LEX_CAST(volume->spacing()));
-            volumeItem->child(4)->setText(1, LEX_CAST(volume->extent().fold(&vox::mul)));
-        }
-        else
-        {
-            for( int i = 0; i < volumeItem->childCount( ); i++ )
-                volumeItem->child(i)->setText(1, "");
-        }
-
-        // Camera statistics
-        auto cameraItem = sceneItem->child(1);
-        auto const& camera = scene.camera.get( );
-        if (camera)
-        {
-			cameraItem->child(0)->setText(1, LEX_CAST(camera->filmWidth()));
-            cameraItem->child(1)->setText(1, LEX_CAST(camera->filmHeight()));
-			cameraItem->child(2)->setText(1, LEX_CAST(camera->apertureSize()));
-			cameraItem->child(3)->setText(1, LEX_CAST(camera->focalDistance()));
-            cameraItem->child(4)->setText(1, LEX_CAST(camera->fieldOfView() * 180.0f / M_PI));
-        }
-        else
-        {
-            for( int i = 0; i < cameraItem->childCount( ); i++ )
-                volumeItem->child(i)->setText(1, "");
-        }
 }

@@ -44,7 +44,7 @@
 // VoxRender Includes
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Scene/Transfer.h"
+#include "VoxScene/Transfer.h"
 
 // Include Dependencies 
 #include "mainwindow.h"

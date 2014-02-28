@@ -27,6 +27,9 @@
 #ifndef VOX_CAMERA_H
 #define VOX_CAMERA_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
@@ -38,7 +41,7 @@ namespace vox
 class RenderController;
 
 /** Camera Class */
-class VOX_EXPORT Camera
+class VOXS_EXPORT Camera
 {
 public:
     /** Constructs a new transfer function object */

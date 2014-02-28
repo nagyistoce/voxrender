@@ -28,6 +28,7 @@
 #define VOX_MATERIAL_H
 
 // Include Dependencies
+#include "VoxScene/Common.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry/Color.h"
 
@@ -35,7 +36,7 @@
 namespace vox
 {
     /** Defines the material properties of a volume. */
-    class VOX_EXPORT Material
+    class VOXS_EXPORT Material
     {
     public:
         static std::shared_ptr<Material> create() 

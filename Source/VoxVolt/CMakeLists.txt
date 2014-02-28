@@ -37,6 +37,7 @@ VOX_PROJECT(
         "Impl/VolumeBlocker.cpp"
     DEPENDENCIES
         VoxLib
+        VoxScene
     LIBRARIES
         ${Boost_LIBRARIES}
     )

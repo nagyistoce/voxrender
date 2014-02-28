@@ -33,8 +33,8 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/format.h"
-#include "VoxLib/Scene/Primitive.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxScene/Primitive.h"
+#include "VoxScene/PrimGroup.h"
 
 // QT Includes
 #include <QtWidgets/QMessageBox>

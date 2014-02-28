@@ -308,7 +308,7 @@ namespace vox
 		}
 
         /** Vector multiplication - { a1*b1, a2*b2, ... } etc */
-		VOX_HOST_DEVICE Vector operator*=(Vector rhs)
+		VOX_HOST_DEVICE void operator*=(Vector rhs)
 		{
 			for (size_t i = 0; i < N; i++) 
                 coord[i] *= rhs[i];

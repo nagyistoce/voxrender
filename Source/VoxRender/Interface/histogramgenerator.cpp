@@ -26,8 +26,11 @@
 // Include Header
 #include "histogramgenerator.h"
 
-using namespace vox;
+// Include Dependencies
+#include "VoxScene/Volume.h"
+#include "VoxLib/Core/Logging.h"
 
+using namespace vox;
 
 namespace {
 namespace filescope {

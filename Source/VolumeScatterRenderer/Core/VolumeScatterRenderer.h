@@ -34,9 +34,9 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Devices.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Rendering/Renderer.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Renderer.h"
+#include "VoxScene/Scene.h"
 
 // API namespace
 namespace vox 

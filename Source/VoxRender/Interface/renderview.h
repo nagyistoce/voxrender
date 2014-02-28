@@ -41,7 +41,7 @@
 
 // VoxRender Dependencies
 #include "VoxLib/Core/Geometry/Color.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
+#include "VoxScene/FrameBuffer.h"
 
 // 3rd party dependencies
 #include <chrono>

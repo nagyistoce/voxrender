@@ -42,14 +42,26 @@
 #include "pluginwidget.h"
 #include "timingwidget.h"
 
-// VoxRender Includes
-#include "VoxLib/Core/VoxRender.h" // :TODO: Get rid of the batch incudes
+// VoxLib Includes 
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
-#include "VoxLib/Scene/RenderParams.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxLib/Core/System.h"
+#include "VoxLib/Core/Logging.h"
 
-// Qt4 Includes
+// VoxScene Bundle
+#include "VoxScene/Camera.h"
+#include "VoxScene/Light.h"
+#include "VoxScene/Animator.h"
+#include "VoxScene/PrimGroup.h"
+#include "VoxScene/RenderParams.h"
+#include "VoxScene/Scene.h"
+#include "VoxScene/Transfer.h"
+#include "VoxScene/Volume.h"
+#include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Renderer.h"
+#include "VoxScene/RenderThread.h"
+
+// Qt Includes
 #include <QtCore/QDateTime>
 #include <QtCore/QTextStream>
 #include <QtGui/QStandardItemModel>

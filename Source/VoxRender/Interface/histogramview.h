@@ -27,9 +27,6 @@
 #ifndef HISTOGRAM_VIEW_H
 #define HISTOGRAM_VIEW_H
 
-// API Includes
-#include "VoxLib/Core/VoxRender.h"
-
 // Include Dependencies
 #include "griditem.h"
 

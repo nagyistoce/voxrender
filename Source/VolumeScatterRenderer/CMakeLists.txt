@@ -136,11 +136,11 @@ CUDA_ADD_LIBRARY(VolumeScatterRenderer SHARED
 #             Project Dependencies              #
 #===============================================#
 
-ADD_DEPENDENCIES(VolumeScatterRenderer VoxLib)
+ADD_DEPENDENCIES(VolumeScatterRenderer VoxLib VoxScene)
 TARGET_LINK_LIBRARIES(VolumeScatterRenderer 
                       ${VOX_LIB} 
+                      ${VOX_SCENE}
                       ${Boost_LIBRARIES} 
-                      ${OPENGL_LIBRARY}
                       ${CUDA_LIBRARIES})
 
 

@@ -27,7 +27,7 @@
 #include "Material.h"
 
 // Include Dependencies
-#include "VoxLib/Scene/Transfer.h"
+#include "VoxScene/Transfer.h"
 
 namespace vox {
 

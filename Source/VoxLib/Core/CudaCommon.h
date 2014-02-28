@@ -31,14 +31,10 @@
 #define VOX_CUDA_COMMON_H
 
 // Export configurations
-#if defined(VoxLib_SHARED) 
-#   ifdef VoxLib_EXPORTS
+#ifdef VoxLib_EXPORTS
 #       define VOX_EXPORT __declspec(dllexport)
-#   else
-#       define VOX_EXPORT __declspec(dllimport)
-#   endif
 #else
-#	define VOX_EXPORT
+#       define VOX_EXPORT __declspec(dllimport)
 #endif
 
 // VoxRender log category

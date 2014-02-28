@@ -29,7 +29,7 @@
 
 // Include Dependencies
 #include "VoxVolt/Common.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Volume.h"
 
 // API namespace
 namespace vox {

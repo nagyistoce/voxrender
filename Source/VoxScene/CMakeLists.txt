@@ -1,12 +1,12 @@
 #===========================================================================#
 #                                                                           #
-#   Project: Raw Volume Import                                              #
+#   Project: VoxScene                                                       #
 #                                                                           #
-#   Description: Provides a VoxScene import module for raw format volumes   #
+#   Description: Defines classes encapsulating scene graph elements         #
 #                                                                           #
-#   Copyright (C) 2013 Lucas Sherman                                        #
+#       Copyright (C) 2014 Lucas Sherman                                    #
 #                                                                           #
-#   Lucas Sherman, email: LucasASherman@gmail.com                           #
+#       Lucas Sherman, email: LucasASherman@gmail.com                       #
 #                                                                           #
 #   This program is free software: you can redistribute it and/or modify    #
 #   it under the terms of the GNU General Public License as published by    #
@@ -23,22 +23,52 @@
 #                                                                           #
 #===========================================================================#
 
+MESSAGE(STATUS "Configuring VoxScene")
+
 INCLUDE_DIRECTORIES(.)
 
 VOX_PROJECT(
-    TARGET "PvmVolumeImporter" SHARED
-    FOLDER "Plugins"
+    TARGET "VoxScene" SHARED
     HEADERS
-        "Common.h"
-        "PvmVolumeImporter.h"
-        "Plugin.h"
-        "Version.h"
+        Version.h
+        Common.h
+        Animator.h
+        Camera.h
+        Light.h
+        Material.h
+        Primitive.h
+        PrimGroup.h
+        RenderParams.h
+        Scene.h
+        Transfer.h
+        TransferMap.h
+        Volume.h
+        FrameBuffer.h
+        Renderer.h
+        RenderController.h
+        RenderThread.h
     SOURCES
-        "PvmVolumeImporter.cpp"
-        "Plugin.cpp"
+        Animator.cpp
+        Camera.cpp
+        Light.cpp
+        Material.cpp
+        Primitive.cpp
+        PrimGroup.cpp
+        Scene.cpp
+        Transfer.cpp
+        TransferMap.cpp
+        Volume.cpp
+        RenderController.cpp
+        Renderer.cpp
+        RenderThread.cpp
     DEPENDENCIES
         VoxLib
-        VoxScene
     LIBRARIES
         ${Boost_LIBRARIES}
     )
+
+
+
+
+
+

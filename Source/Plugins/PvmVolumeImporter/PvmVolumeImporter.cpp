@@ -31,8 +31,8 @@
 
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
-#include "VoxLib/Scene/Volume.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxScene/Volume.h"
+#include "VoxScene/Scene.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Logging.h"
 

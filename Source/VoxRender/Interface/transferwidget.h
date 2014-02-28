@@ -33,7 +33,7 @@
 #include "Extensions/QColorPushButton.h"
 
 // VoxLib Includes
-#include "VoxLib/Core/VoxRender.h"
+#include "VoxScene/Transfer.h"
 
 // QT Includes
 #include <QtWidgets/QWidget>

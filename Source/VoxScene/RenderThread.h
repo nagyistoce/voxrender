@@ -28,11 +28,14 @@
 #define VOX_RENDER_THREAD_H
 
 // Include Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/Renderer.h"
+#include "VoxScene/Scene.h"
+
+// Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Rendering/Renderer.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxScene/FrameBuffer.h"
 
 // API namespace
 namespace vox {
@@ -40,7 +43,7 @@ namespace vox {
     class RenderController;
 
 /** Wrapper class for managing render thread resources */
-class VOX_EXPORT RenderThread : public boost::noncopyable
+class VOXS_EXPORT RenderThread : public boost::noncopyable
 {
 public:
     /** Constructs control objects for this render thread */

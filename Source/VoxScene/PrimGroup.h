@@ -27,15 +27,18 @@
 #ifndef VOX_PRIMITIVE_GROUP_H
 #define VOX_PRIMITIVE_GROUP_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/Primitive.h"
+
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
-#include "VoxLib/Scene/Primitive.h"
 
 // API namespace
 namespace vox
 {
     /** Buffer class for scene lights */
-    class VOX_EXPORT PrimGroup : public Primitive, public std::enable_shared_from_this<PrimGroup>
+    class VOXS_EXPORT PrimGroup : public Primitive, public std::enable_shared_from_this<PrimGroup>
     {
     public:
         /** Ensure initial context change */

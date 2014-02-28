@@ -27,9 +27,9 @@
 #include "CCamera.h"
 
 // Include Dependencies
-#include "VoxLib/Scene/Camera.h"
-#include "VoxLib/Scene/Film.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxScene/Camera.h"
+#include "VoxScene/Film.h"
+#include "VoxScene/Scene.h"
 
 // API namespace
 namespace vox

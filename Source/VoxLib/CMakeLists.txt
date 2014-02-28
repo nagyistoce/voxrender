@@ -53,7 +53,6 @@ Set(VoxLib_HEADERS_CORE
     Core/System.h
     Core/Types.h
     Core/Version.h
-    Core/VoxRender.h
     Core/Geometry.h
 )
 
@@ -96,20 +95,6 @@ Set(VoxLib_HEADERS_VIDEO
     Video/VidStream.h
 )
 
-Set(VoxLib_HEADERS_SCENE
-    Scene/Animator.h
-    Scene/Camera.h
-    Scene/Light.h
-    Scene/Material.h
-    Scene/Primitive.h
-    Scene/PrimGroup.h
-    Scene/RenderParams.h
-    Scene/Scene.h
-    Scene/Transfer.h
-    Scene/TransferMap.h
-    Scene/Volume.h
-)
-
 Set(VoxLib_HEADERS_RENDERING
     Rendering/FrameBuffer.h
     Rendering/Renderer.h
@@ -126,9 +111,6 @@ set(VoxLib_HEADERS
     ${VoxLib_HEADERS_IO}
     ${VoxLib_HEADERS_IMAGE}
     ${VoxLib_HEADERS_PLUGIN}
-    ${VoxLib_HEADERS_SCENE}
-    ${VoxLib_HEADERS_SCENE_EXIM}
-    ${VoxLib_HEADERS_RENDERING}
     ${VoxLib_HEADERS_VIDEO}
 )
 
@@ -140,8 +122,6 @@ SOURCE_GROUP("Header Files\\Error"                          FILES ${VoxLib_HEADE
 SOURCE_GROUP("Header Files\\IO"                             FILES ${VoxLib_HEADERS_IO})
 SOURCE_GROUP("Header Files\\Image"                          FILES ${VoxLib_HEADERS_IMAGE})
 SOURCE_GROUP("Header Files\\Plugin"                         FILES ${VoxLib_HEADERS_PLUGIN})
-SOURCE_GROUP("Header Files\\Rendering"                      FILES ${VoxLib_HEADERS_RENDERING})
-SOURCE_GROUP("Header Files\\Scene"                          FILES ${VoxLib_HEADERS_SCENE})
 SOURCE_GROUP("Header Files\\Video"                          FILES ${VoxLib_HEADERS_VIDEO})
 
 #===============================================#
@@ -165,9 +145,12 @@ Set(VoxLib_SOURCES_CORE
 )
 
 Set(VoxLib_SOURCES_CORE_GEOMETRY
+    Core/Geometry/Color.cpp
 )
 
 Set(VoxLib_SOURCES_ERROR
+    Error/Error.cpp
+    Error/CudaError.cpp
 )
 
 Set(VoxLib_SOURCES_IO
@@ -186,25 +169,6 @@ Set(VoxLib_SOURCES_VIDEO
     Video/VidStream.cpp
 )
 
-Set(VoxLib_SOURCES_SCENE
-    Scene/Animator.cpp
-    Scene/Camera.cpp
-    Scene/Light.cpp
-    Scene/Material.cpp
-    Scene/Primitive.cpp
-    Scene/PrimGroup.cpp
-    Scene/Scene.cpp
-    Scene/Transfer.cpp
-    Scene/TransferMap.cpp
-    Scene/Volume.cpp
-)
-
-Set(VoxLib_SOURCES_RENDERING
-    Rendering/RenderController.cpp
-    Rendering/Renderer.cpp
-    Rendering/RenderThread.cpp
-)
-
 set(VoxLib_SOURCES
     ${VoxLib_SOURCES_ACTION}
     ${VoxLib_SOURCES_BITMAP}
@@ -214,9 +178,6 @@ set(VoxLib_SOURCES
     ${VoxLib_SOURCES_IO}
     ${VoxLib_SOURCES_IMAGE}
     ${VoxLib_SOURCES_PLUGIN}
-    ${VoxLib_SOURCES_SCENE}
-    ${VoxLib_SOURCES_SCENE_EXIM}
-    ${VoxLib_SOURCES_RENDERING}
     ${VoxLib_SOURCES_VIDEO}
 )
 
@@ -228,21 +189,13 @@ SOURCE_GROUP("Source Files\\Plugin"                         FILES ${VoxLib_SOURC
 SOURCE_GROUP("Source Files\\Error"                          FILES ${VoxLib_SOURCES_ERROR})
 SOURCE_GROUP("Source Files\\IO"                             FILES ${VoxLib_SOURCES_IO})
 SOURCE_GROUP("Source Files\\Image"                          FILES ${VoxLib_SOURCES_IMAGE})
-SOURCE_GROUP("Source Files\\Scene"                          FILES ${VoxLib_SOURCES_SCENE})
-SOURCE_GROUP("Source Files\\Rendering"                      FILES ${VoxLib_SOURCES_RENDERING})
 SOURCE_GROUP("Source Files\\Video"                          FILES ${VoxLib_SOURCES_VIDEO})
 
 #===============================================#
 #                  LIBRARY                      #
 #===============================================#
 
-IF(VoxLib_SHARED)
-    SET(Linkage SHARED)
-ELSE()
-    SET(Linkage STATIC)
-ENDIF()
-
-CUDA_ADD_LIBRARY(VoxLib ${Linkage}
+CUDA_ADD_LIBRARY(VoxLib SHARED
                  ${VoxLib_SOURCES} 
                  ${VoxLib_HEADERS})
 

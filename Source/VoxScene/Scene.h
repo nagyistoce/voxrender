@@ -28,24 +28,27 @@
 #define VOX_SCENE_H
 
 // Include Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/Animator.h"
+
+// Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/IO/Resource.h"
-#include "VoxLib/Scene/Animator.h"
 
 // API namespace
 namespace vox
 {
     // Forward Decls
-    class VOX_EXPORT Camera;
-	class VOX_EXPORT Scene;
-    class VOX_EXPORT Transfer;
-    class VOX_EXPORT Volume;
-    class VOX_EXPORT LightSet;
-    class VOX_EXPORT RenderParams;
-    class VOX_EXPORT PrimGroup;
-    class VOX_EXPORT TransferMap;
-    class VOX_EXPORT Animator;
+    class VOXS_EXPORT Camera;
+	class VOXS_EXPORT Scene;
+    class VOXS_EXPORT Transfer;
+    class VOXS_EXPORT Volume;
+    class VOXS_EXPORT LightSet;
+    class VOXS_EXPORT RenderParams;
+    class VOXS_EXPORT PrimGroup;
+    class VOXS_EXPORT TransferMap;
+    class VOXS_EXPORT Animator;
 
 	/** 
 	 * Scene File Importer
@@ -132,7 +135,7 @@ namespace vox
      * There are also several static functions for managing the import and export of 
      * the scene data in an abstract manner.
 	 */
-	class VOX_EXPORT Scene
+	class VOXS_EXPORT Scene
 	{
 	public:
 		/**

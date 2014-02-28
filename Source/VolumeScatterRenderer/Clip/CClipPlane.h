@@ -31,7 +31,7 @@
 #include "VolumeScatterRenderer/Core/Common.h"
 #include "VolumeScatterRenderer/Scene/CClipGeometry.h"
 #include "VoxLib/Core/Geometry/Ray.h"
-#include "VoxLib/Scene/Primitive.h"
+#include "VoxScene/Primitive.h"
 
 // API namespace
 namespace vox {

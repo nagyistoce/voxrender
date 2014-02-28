@@ -32,7 +32,7 @@
 #include "mainwindow.h"
 
 // VoxLib Dependencies
-#include "VoxLib/Scene/Light.h"
+#include "VoxScene/Light.h"
 
 using namespace vox;
 

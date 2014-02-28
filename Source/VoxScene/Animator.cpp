@@ -27,9 +27,9 @@
 #include "Animator.h"
 
 // Include Dependencies
-#include "VoxLib/Scene/Scene.h"
-#include "VoxLib/Scene/Transfer.h"
-#include "VoxLib/Scene/Camera.h"
+#include "VoxScene/Scene.h"
+#include "VoxScene/Transfer.h"
+#include "VoxScene/Camera.h"
 
 namespace vox {
 

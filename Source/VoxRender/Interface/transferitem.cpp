@@ -30,7 +30,7 @@
 #include "mainwindow.h"
 
 // VoxLib Dependencies
-#include "VoxLib/Scene/Transfer.h"
+#include "VoxScene/Transfer.h"
 
 // QT Dependencies
 #include <QtWidgets/QGraphicsSceneMouseEvent>

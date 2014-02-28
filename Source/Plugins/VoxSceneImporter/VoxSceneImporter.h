@@ -32,7 +32,7 @@
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/Resource.h"
-#include "VoxLib/Scene/Scene.h"
+#include "VoxScene/Scene.h"
 
 // API namespace
 namespace vox 

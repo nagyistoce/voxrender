@@ -34,7 +34,7 @@
 #include "utilities.h"
 
 // VoxRender Dependencies
-#include "VoxLib/Scene/RenderParams.h"
+#include "VoxScene/RenderParams.h"
 
 using namespace vox;
 

@@ -27,12 +27,14 @@
 #ifndef INFO_WIDGET_H
 #define INFO_WIDGET_H
 
-// Include VoxRender
-#include "VoxLib/Core/VoxRender.h"
-
 // Include dependencies
 #include <QtWidgets/QTreeWidget>
 #include <QWidget>
+
+// 
+#include "VoxLib/Core/CudaCommon.h"
+
+namespace vox { class FrameBufferLock; }
 
 namespace Ui 
 {
@@ -52,9 +54,6 @@ public:
     
 public slots:
         void updatePerfStats(std::shared_ptr<vox::FrameBufferLock>);
-
-private slots:
-    void updateSceneStatistics();
 
 private:
     Ui::InfoWidget *ui;

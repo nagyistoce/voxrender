@@ -40,7 +40,9 @@ IF(Qt5Widgets_FOUND)
     MESSAGE( STATUS "Qt include directory: " ${Qt5Widgets_INCLUDE_DIRS} )
     MESSAGE( STATUS "Qt binary directory: "  ${Qt5Widgets_BINARY_DIR} )
     INCLUDE_DIRECTORIES(${QT_USE_FILE})
-	
+
+    # ADD_DEFINITIONS(-DQT_NO_KEYWORDS) # The foreach macro breaks alot of 3rd party code
+
     #===============================================#
     #                  Entry Point                  #
     #===============================================#
@@ -179,12 +181,12 @@ IF(Qt5Widgets_FOUND)
     #===============================================#
     #             Project Dependencies              #
     #===============================================#
-    ADD_DEPENDENCIES(VoxRender VoxLib VoxVolt VolumeScatterRenderer)
+    ADD_DEPENDENCIES(VoxRender VoxLib VoxScene VoxVolt VolumeScatterRenderer)
 
     #===============================================#
     #            TARGET LINK LIBRARIES              #
     #===============================================#
-    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VOLT_LIB} ${VSR_LIB} ${Boost_LIBRARIES})
+    TARGET_LINK_LIBRARIES(VoxRender ${VOX_LIB} ${VOX_SCENE} ${VOLT_LIB} ${VSR_LIB} ${Boost_LIBRARIES})
 
 ELSE(Qt5Widgets_FOUND)
 	MESSAGE( STATUS "Warning : could not find Qt - not building Qt GUI")

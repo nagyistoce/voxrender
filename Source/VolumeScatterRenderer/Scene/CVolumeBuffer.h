@@ -32,7 +32,7 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Volume.h"
 
 // API namespace
 namespace vox

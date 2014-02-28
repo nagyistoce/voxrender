@@ -27,6 +27,9 @@
 #ifndef VOX_LIGHT_H
 #define VOX_LIGHT_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry.h"
@@ -38,7 +41,7 @@ namespace vox
     class RenderController;
 
     /** Container class for scene lights */
-    class VOX_EXPORT LightSet : public std::enable_shared_from_this<LightSet>
+    class VOXS_EXPORT LightSet : public std::enable_shared_from_this<LightSet>
     {
     public:
         /** Convenience factor for shared_ptr construction of a light set */
@@ -100,7 +103,7 @@ namespace vox
     };
 
     /** Scene light model */
-    class VOX_EXPORT Light
+    class VOXS_EXPORT Light
     {
     public:
         /** Convenience factor for shared_ptr construction of a light set */

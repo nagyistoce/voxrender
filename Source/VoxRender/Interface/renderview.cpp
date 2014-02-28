@@ -33,9 +33,9 @@
 // VoxRender Dependencies
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Bitmap/Bitmap.h"
-#include "VoxLib/Scene/Camera.h"
-#include "VoxLib/Scene/Scene.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxScene/Camera.h"
+#include "VoxScene/Scene.h"
+#include "VoxScene/PrimGroup.h"
 
 using namespace vox;
 

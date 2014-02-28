@@ -58,7 +58,7 @@ namespace filescope {
 
     surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data output
 
-    template<typename T> VOX_DEVICE float fetchSample(int x, int y, int z) {  }
+    template<typename T> VOX_DEVICE float fetchSample(int x, int y, int z) { return 0.f; }
     #define TEMPLATE(T) template<> VOX_DEVICE float fetchSample<##T>(int x, int y, int z) { return tex3D(gd_volumeTexIn_##T, x, y, z); }
     TEMPLATE(Int8)
     TEMPLATE(UInt8)

@@ -34,8 +34,8 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/IO/Resource.h"
 #include "VoxLib/IO/ResourceId.h"
-#include "VoxLib/Scene/Scene.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Scene.h"
+#include "VoxScene/Volume.h"
 #include "Plugins/FileIO/FileIO.h"
 #include "Plugins/RawVolumeImporter/RawVolumeImporter.h"
 

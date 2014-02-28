@@ -33,6 +33,7 @@
 
 // VoxLib Dependencies
 #include "VoxLib/Core/Geometry/Vector.h"
+#include "VoxLib/Core/Logging.h"
 
 // QT Includes
 #include <QtWidgets/QMessageBox>

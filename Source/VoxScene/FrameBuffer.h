@@ -27,7 +27,10 @@
 #ifndef VOX_FRAME_BUFFER_H
 #define VOX_FRAME_BUFFER_H
 
-// Include Dependencies
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
+// External Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry/Image.h"
 #include "VoxLib/Core/Geometry/Color.h"
@@ -36,7 +39,7 @@
 namespace vox
 {
 	/** Rendering frame buffer class */
-    class VOX_EXPORT FrameBuffer : public Image<ColorRgbaLdr>
+    class VOXS_EXPORT FrameBuffer : public Image<ColorRgbaLdr>
 	{
 	public:
         /** Constructs and image of the specified dimensions */
@@ -81,7 +84,7 @@ namespace vox
 	};
 
     /** Render callback structure */
-    class VOX_EXPORT FrameBufferLock
+    class VOXS_EXPORT FrameBufferLock
     {
     public:
         /** Initiates a lock around the input framebuffer */

@@ -1,12 +1,12 @@
 /* ===========================================================================
 
-	Project: VolumeScatterRenderer
+    Project: VoxScene
+    
+	Description: Defines scene graph elements for rendering
 
-	Description: Defines a light element for GPU devices
+    Copyright (C) 2014 Lucas Sherman
 
-    Copyright (C) 2012-2014 Lucas Sherman
-
-	Lucas Sherman, email: LucasASherman@gmail.com
+    Lucas Sherman, email: LucasASherman@gmail.com
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,23 +23,26 @@
 
 =========================================================================== */
 
-// Include Header
-#include "CLight.h"
+// Begin definition
+#ifndef VOXS_VERSION_H
+#define VOXS_VERSION_H
 
-// Include Dependencies
-#include "VoxScene/Light.h"
+// Stringify macro
+#define VOXS_XSTR(v) #v
+#define VOXS_STR(v) VOXS_XSTR(v)
 
-// API namespace
-namespace vox
-{
+// Plugin version info
+#define VOXS_VERSION_MAJOR 1
+#define VOXS_VERSION_MINOR 0
+#define VOXS_VERSION_PATCH 0
 
-// --------------------------------------------------------------------
-//  Constructs a light object for device side rendering 
-// --------------------------------------------------------------------
-CLight::CLight(Light const& light) :
-    m_position(light.position()),
-    m_color(light.color())
-{
-}
+// API support version info
+#define VOXS_API_VERSION_MIN_STR "0.0.0"
+#define VOXS_API_VERSION_MAX_STR "999.999.999"
 
-}
+// Plugin version string
+#define VOXS_VERSION_STRING VOXS_STR(VOXS_VERSION_MAJOR) \
+	"." VOXS_STR(VOXS_VERSION_MINOR) "." VOXS_STR(VOXS_VERSION_PATCH)
+
+// End definition
+#endif // VOXS_VERSION_H

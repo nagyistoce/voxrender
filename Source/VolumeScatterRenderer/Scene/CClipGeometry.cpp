@@ -30,8 +30,8 @@
 #include "VolumeScatterRenderer/Clip/CClipGroup.h"
 #include "VolumeScatterRenderer/Clip/CClipPlane.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Scene/Primitive.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxScene/Primitive.h"
+#include "VoxScene/PrimGroup.h"
 
 namespace vox {
 

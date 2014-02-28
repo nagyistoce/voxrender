@@ -28,7 +28,7 @@
 
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxScene/PrimGroup.h"
 
 namespace vox {
 

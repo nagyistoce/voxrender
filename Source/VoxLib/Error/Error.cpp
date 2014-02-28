@@ -1,10 +1,11 @@
 /* ===========================================================================
 
-	Project: VolumeScatterRenderer
+	Project: VoxRender - Error
 
-	Description: Defines a light element for GPU devices
+	Defines the base exception class from which all other internal exception
+    objects derive. This base class itself derives from std::exception.
 
-    Copyright (C) 2012-2014 Lucas Sherman
+    Copyright (C) 2012 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,22 +25,4 @@
 =========================================================================== */
 
 // Include Header
-#include "CLight.h"
-
-// Include Dependencies
-#include "VoxScene/Light.h"
-
-// API namespace
-namespace vox
-{
-
-// --------------------------------------------------------------------
-//  Constructs a light object for device side rendering 
-// --------------------------------------------------------------------
-CLight::CLight(Light const& light) :
-    m_position(light.position()),
-    m_color(light.color())
-{
-}
-
-}
+#include "Error.h"

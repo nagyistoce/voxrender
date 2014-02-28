@@ -33,14 +33,14 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Error/FileError.h"
-#include "VoxLib/Scene/Camera.h"
-#include "VoxLib/Scene/Film.h"
-#include "VoxLib/Scene/Light.h"
-#include "VoxLib/Scene/RenderParams.h"
-#include "VoxLib/Scene/Transfer.h"
-#include "VoxLib/Scene/Volume.h"
-#include "VoxLib/Scene/Material.h"
-#include "VoxLib/Scene/PrimGroup.h"
+#include "VoxScene/Camera.h"
+#include "VoxScene/Film.h"
+#include "VoxScene/Light.h"
+#include "VoxScene/RenderParams.h"
+#include "VoxScene/Transfer.h"
+#include "VoxScene/Volume.h"
+#include "VoxScene/Material.h"
+#include "VoxScene/PrimGroup.h"
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>

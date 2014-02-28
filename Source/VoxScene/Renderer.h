@@ -27,11 +27,14 @@
 #ifndef VOX_RENDERER_H
 #define VOX_RENDERER_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+#include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Scene.h"
+
 // VoxLib Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry/Color.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Scene/Scene.h"
 
 // API namespace
 namespace vox 
@@ -40,7 +43,7 @@ namespace vox
 typedef Image<ColorLabxHdr> IprImage; // Internal image format
 
 /** Abstract Renderer */
-class VOX_EXPORT Renderer
+class VOXS_EXPORT Renderer
 {
 public:
     virtual ~Renderer() { }
@@ -70,7 +73,7 @@ public:
 };
 
 /** Control Renderer for interactive display work */
-class VOX_EXPORT MasterRenderer : virtual public Renderer
+class VOXS_EXPORT MasterRenderer : virtual public Renderer
 {
 public:
     /**
@@ -96,7 +99,7 @@ public:
 };
 
 /** Control Renderer for interactive display work */
-class VOX_EXPORT SlaveRenderer : virtual public Renderer
+class VOXS_EXPORT SlaveRenderer : virtual public Renderer
 {
 public:
     /** 

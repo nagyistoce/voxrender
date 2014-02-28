@@ -31,10 +31,10 @@
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Core/Logging.h"
-#include "VoxLib/Rendering/RenderController.h"
-#include "VoxLib/Scene/Film.h"
-#include "VoxLib/Scene/Volume.h"
-#include "VoxLib/Scene/Camera.h"
+#include "VoxScene/RenderController.h"
+#include "VoxScene/Film.h"
+#include "VoxScene/Volume.h"
+#include "VoxScene/Camera.h"
 
 // API namespace
 namespace vox

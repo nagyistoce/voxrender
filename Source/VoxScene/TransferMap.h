@@ -27,7 +27,10 @@
 #ifndef VOX_TRANSFER_MAP_H
 #define VOX_TRANSFER_MAP_H
 
-// Include Dependencies
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
+// External Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry/Image3D.h"
 #include "VoxLib/Core/Geometry/Vector.h"
@@ -41,7 +44,7 @@ namespace vox
 	 * A transfer function mapping is a mapping structure used by renderers
 	 * for sampling the transfer function content. 
 	 */
-    class VOX_EXPORT TransferMap
+    class VOXS_EXPORT TransferMap
     {
     public:
         /** Create a new transfer function map */

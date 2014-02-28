@@ -32,7 +32,7 @@
 #include "utilities.h"
 
 // VoxLib Dependencies
-#include "VoxLib/Scene/Light.h"
+#include "VoxScene/Light.h"
 #include "VoxLib/Core/format.h"
 
 // QT Includes

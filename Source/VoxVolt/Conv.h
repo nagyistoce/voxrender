@@ -30,7 +30,7 @@
 // Include Dependencies
 #include "VoxVolt/Common.h"
 #include "VoxLib/Core/Geometry/Image3D.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Volume.h"
 
 // API namespace
 namespace vox {

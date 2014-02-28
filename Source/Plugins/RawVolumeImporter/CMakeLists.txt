@@ -38,6 +38,7 @@ VOX_PROJECT(
         "Plugin.cpp"
     DEPENDENCIES
         VoxLib
+        VoxScene
     LIBRARIES
         ${Boost_LIBRARIES}
     )

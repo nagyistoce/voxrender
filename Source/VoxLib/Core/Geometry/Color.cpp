@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxRender - Postprocessing model
+	Project: VoxRender - Color
 
-	Description: Abstract base class which defines postprocessing modules
+	Defines a class for handling color information in various common formats.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2013 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,29 +23,5 @@
 
 =========================================================================== */
 
-// Begin definition
-#ifndef VOX_POSTPROCESSOR_H
-#define VOX_POSTPROCESSOR_H
-
-// VoxLib Dependencies
-#include "VoxLib/Core/CudaCommon.h"
-#include "VoxLib/Core/Geometry/Color.h"
-#include "VoxLib/Core/Logging.h"
-#include "VoxLib/Rendering/FrameBuffer.h"
-#include "VoxLib/Scene/Scene.h"
-
-// API namespace
-namespace vox 
-{
-
-/** Abstract Postprocessor Model */
-VOX_EXPORT class Postprocessor
-{
-public:
-    virtual ~Postprocessor() { }
-};
-
-}
-
-// End definition
-#endif // VOX_POSTPROCESSOR_H
+// Include Header
+#include "Color.h"

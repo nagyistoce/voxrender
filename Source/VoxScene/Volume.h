@@ -27,6 +27,9 @@
 #ifndef VOX_VOLUME_H
 #define VOX_VOLUME_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Format.h"
@@ -41,7 +44,7 @@ namespace vox
 class RenderController;
 
 /** 3D/4D Volume Class */
-class VOX_EXPORT Volume
+class VOXS_EXPORT Volume
 {
 public:
     /** Volume data formats */

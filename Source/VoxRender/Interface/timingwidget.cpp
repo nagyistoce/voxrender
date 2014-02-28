@@ -31,6 +31,9 @@
 #include "mainwindow.h"
 #include "utilities.h"
 
+// VoxScene Bundles
+#include "VoxScene/Volume.h"
+
 using namespace vox;
 
 // ----------------------------------------------------------------------------

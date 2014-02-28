@@ -30,7 +30,7 @@
 #include "VoxLib/Core/Format.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/CudaError.h"
-#include "VoxLib/Scene/TransferMap.h"
+#include "VoxScene/TransferMap.h"
 
 namespace vox {
     

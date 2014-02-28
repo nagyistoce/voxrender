@@ -32,13 +32,13 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/ErrorCodes.h"
-#include "VoxLib/Scene/Transfer.h"
-#include "VoxLib/Scene/TransferMap.h"
-#include "VoxLib/Scene/Camera.h"
-#include "VoxLib/Scene/Light.h"
-#include "VoxLib/Scene/PrimGroup.h"
-#include "VoxLib/Scene/RenderParams.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Transfer.h"
+#include "VoxScene/TransferMap.h"
+#include "VoxScene/Camera.h"
+#include "VoxScene/Light.h"
+#include "VoxScene/PrimGroup.h"
+#include "VoxScene/RenderParams.h"
+#include "VoxScene/Volume.h"
 
 // API namespace
 namespace vox

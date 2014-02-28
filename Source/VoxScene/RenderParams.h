@@ -28,6 +28,9 @@
 #define VOX_RENDER_PARAMS_H
 
 // Include Dependencies
+#include "VoxScene/Common.h"
+
+// Include Dependencies
 #include "VoxLib/Core/Common.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 
@@ -40,7 +43,7 @@ class RenderController;
 /** 
  * Class for managing additional rendering parameters not associated with a scene element
  */
-class VOX_EXPORT RenderParams
+class VOXS_EXPORT RenderParams
 {
 public:
     /** Factory method for shared_ptr construction */

@@ -27,7 +27,7 @@
 #include "CRenderParams.h"
 
 // Include Dependencies
-#include "VoxLib/Scene/RenderParams.h"
+#include "VoxScene/RenderParams.h"
 
 namespace vox {
 

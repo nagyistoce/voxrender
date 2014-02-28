@@ -27,6 +27,9 @@
 #ifndef VOX_PRIMITIVES_H
 #define VOX_PRIMITIVES_H
 
+// Internal Dependencies
+#include "VoxScene/Common.h"
+
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry/Vector.h"
@@ -37,14 +40,14 @@
 // API namespace
 namespace vox
 {
-    class VOX_EXPORT PrimGroup;
+    class VOXS_EXPORT PrimGroup;
 
-    class VOX_EXPORT Primitive;
+    class VOXS_EXPORT Primitive;
 
     typedef std::function<std::shared_ptr<Primitive>(boost::property_tree::ptree &)> PrimImporter;
 
     /** Primitive geometry object */
-    class VOX_EXPORT Primitive 
+    class VOXS_EXPORT Primitive 
     {
     public:
         /** Prerequisite virtualized destructor for inheritance */
@@ -112,7 +115,7 @@ namespace vox
     };
 
 	/** Plane structure */
-    class VOX_EXPORT Plane : public Primitive
+    class VOXS_EXPORT Plane : public Primitive
 	{
     public:
         /** Factory method for plane primitive */
@@ -159,7 +162,7 @@ namespace vox
 	};
 
     /** Sphere structure */
-	class VOX_EXPORT Sphere : public Primitive
+	class VOXS_EXPORT Sphere : public Primitive
 	{
     public:
         /** Returns the UID string classifying this type (classname) */

@@ -27,17 +27,22 @@
 INCLUDE_DIRECTORIES(.)
 
 #===============================================#
-#               VOXRENDER LIBRARY               #
+#                VOX CORE LIBRARY               #
 #===============================================#
-
-IF( VoxLib_SHARED )
-    ADD_DEFINITIONS(-DVoxLib_SHARED)
-ENDIF( )
 
 ADD_SUBDIRECTORY(VoxLib)
 
 SET(VOX_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VoxLib.lib
             debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VoxLib.lib)
+
+#===============================================#
+#                VOX SCENE LIBRARY              #
+#===============================================#
+
+ADD_SUBDIRECTORY(VoxScene)
+
+SET(VOX_SCENE optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VoxScene.lib
+              debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VoxScene.lib)
 
 #===============================================#
 #            VOLUME SCATTER RENDERER            #
