@@ -238,9 +238,14 @@ void Scene::clone(Scene & scene) const
     // :TODO:
     scene.clipGeometry = clipGeometry;
     scene.animator = nullptr;
-    scene.lightSet = lightSet;
     scene.transfer = transfer;
     //
+
+    if (lightSet)
+    {
+        if (!scene.lightSet) scene.lightSet = LightSet::create();
+        lightSet->clone(*scene.lightSet.get());
+    }
 
     if (camera)
     {

@@ -27,6 +27,7 @@
 #include "VidStream.h"
 
 // Include Dependencies
+#include "VoxLib/Core/Functors.h"
 
 namespace vox {
 
@@ -43,11 +44,41 @@ namespace filescope {
 } // namespace anonymous
 
 // --------------------------------------------------------------------
+//  Opens a resource stream and initializes a video writer
+// --------------------------------------------------------------------
+void VidOStream::open(ResourceId const& uri, OptionSet options, String const& format)
+{
+    auto type = format.empty() ? uri.extractFileExtension() : format;
+    
+    m_ostr = std::shared_ptr<ResourceOStream>(new ResourceOStream(uri));
+
+    getWriter(type);
+
+    m_device->begin(*m_ostr, options);
+}
+
+// --------------------------------------------------------------------
+//  Opens a resource stream and initializes a video writer
+// --------------------------------------------------------------------
+void VidOStream::open(ResourceOStream & ostr, OptionSet options, String const& format)
+{
+    auto type = format.empty() ? ostr.identifier().extractFileExtension() : format;
+    
+    m_ostr = std::shared_ptr<ResourceOStream>(&ostr, nullDeleter);
+
+    getWriter(type);
+
+    m_device->begin(*m_ostr, options);
+}
+
+// --------------------------------------------------------------------
 //  Closes the underlying video write device
 // --------------------------------------------------------------------
 void VidIStream::close()
 {
+    m_device->end(*m_istr);
     m_device.reset();
+    m_istr.reset();
 }
 
 // --------------------------------------------------------------------
@@ -55,7 +86,83 @@ void VidIStream::close()
 // --------------------------------------------------------------------
 void VidOStream::close()
 {
+    m_device->end(*m_ostr);
     m_device.reset();
+    m_ostr.reset();
+}
+
+// --------------------------------------------------------------------
+//  Closes the underlying video read device
+// --------------------------------------------------------------------
+bool VidIStream::isOpen()
+{
+    return m_istr;
+}
+
+// --------------------------------------------------------------------
+//  Closes the underlying video write device
+// --------------------------------------------------------------------
+bool VidOStream::isOpen()
+{
+    return m_ostr;
+}
+
+// --------------------------------------------------------------------
+//  Closes the underlying video read device
+// --------------------------------------------------------------------
+void VidIStream::pull()
+{
+}
+
+// --------------------------------------------------------------------
+//  Pushes a frame to the output stream
+// --------------------------------------------------------------------
+void VidOStream::push(Bitmap const& frame)
+{
+    if (!m_device) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+        "Video stream must be open to push", Error_BadStream);
+
+    m_device->addFrame(frame);
+}
+
+// --------------------------------------------------------------------
+//  Acquires a video reader from a codec matching the format
+// --------------------------------------------------------------------
+void VidIStream::getReader(String const& format)
+{
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::unique_lock<decltype(filescope::decodeMutex)> lock(filescope::decodeMutex);
+
+    // Verify the video format has a registered encoder
+    auto & module = filescope::decoders.find(format);
+    if (module == filescope::decoders.end())
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                    "No Video Decoder found", Error_BadToken);
+    }
+
+    // Acquire the resource streambuffer from the retriever
+    m_device = module->second->reader();
+}
+
+// --------------------------------------------------------------------
+//  Acquires a video writer from a codec matching the format
+// --------------------------------------------------------------------
+void VidOStream::getWriter(String const& format)
+{
+    // Acquire a read-lock on the modules for thread safe removal support
+    boost::unique_lock<decltype(filescope::encodeMutex)> lock(filescope::encodeMutex);
+
+    // Verify the video format has a registered encoder
+    auto & module = filescope::encoders.find(format);
+    if (module == filescope::encoders.end())
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                    "No Video Encoder found", Error_BadToken);
+    }
+
+    // Acquire the resource streambuffer from the retriever
+    m_device = module->second->writer();
 }
 
 // --------------------------------------------------------------------

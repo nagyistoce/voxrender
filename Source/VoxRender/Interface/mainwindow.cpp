@@ -991,7 +991,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
         // :TODO: unexpandeable hideable attribute pane
 
         VOX_LOG_WARNING(Error_NotImplemented, VOX_GUI_LOG_CAT, 
-            format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->id()));
+            format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->idString()));
 
         return;
     }
@@ -1001,7 +1001,7 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
     pane->SetIndex(index);
     pane->showOnOffButton();
     pane->showVisibilityButtons();
-    pane->setTitle(QString::fromLatin1(prim->id().c_str()));
+    pane->setTitle(QString::fromLatin1(prim->idString().c_str()));
     pane->setIcon(":/icons/lightgroupsicon.png");
     pane->setWidget(currWidget);
     pane->expand();

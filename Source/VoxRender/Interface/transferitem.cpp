@@ -246,7 +246,7 @@ void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
         }
 
         transfer->unlock();
-        transfer->setDirty(true);
+        transfer->setDirty();
 
         updateQuad(quadItem->quad);
     }
@@ -362,7 +362,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
         auto thickness = (pos.y()-ext.top()) / ext.height();
         auto node = Node::create(density);
         node->material->opticalThickness = 1.0f - thickness;
-        transfer1D->addNode(node);
+        transfer1D->add(node);
 
         MainWindow::instance->setTransferNode(node);
     }
@@ -375,7 +375,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
         auto quad = Quad::create();
         quad->position[0] = density;
         quad->position[1] = 1.f - gradient;
-        transfer2D->addQuad(quad);
+        transfer2D->add(quad);
 
         auto pos = pEvent->pos();
 

@@ -29,6 +29,7 @@
 
 // Internal Dependencies
 #include "VoxScene/Common.h"
+#include "VoxScene/Object.h"
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -44,7 +45,7 @@ namespace vox
 class RenderController;
 
 /** 3D/4D Volume Class */
-class VOXS_EXPORT Volume
+class VOXS_EXPORT Volume : public Object
 {
 public:
     /** Volume data formats */
@@ -104,11 +105,11 @@ public:
      * @param type    The format of the volume data
      */
     static std::shared_ptr<Volume> create(
-           std::shared_ptr<UInt8>   data      = std::shared_ptr<UInt8>(),
-           Vector4s const&          extent    = Vector4s(0),
-           Vector4f const&          spacing   = Vector4f(0.0f),
-           Vector3f const&          offset    = Vector3f(0.0f),
-		   Type                     type      = Type_UInt8 
+           std::shared_ptr<UInt8> data = std::shared_ptr<UInt8>(),
+           Vector4s const& extent  = Vector4s(0),
+           Vector4f const& spacing = Vector4f(0.0f),
+           Vector3f const& offset  = Vector3f(0.0f),
+		   Type            type    = Type_UInt8 
           )
     { 
         return std::shared_ptr<Volume>(new Volume(data, extent, spacing, offset, type));
@@ -123,11 +124,11 @@ public:
      * @param offset  The offset of the volume in world space
      * @param type    The underlying type of the volume data
      */
-    Volume(std::shared_ptr<UInt8>   data,
-           Vector4s const&          extent,
-           Vector4f const&          spacing,
-           Vector3f const&          offset,
-		   Type                     type
+    Volume(std::shared_ptr<UInt8> data,
+           Vector4s const& extent,
+           Vector4f const& spacing,
+           Vector3f const& offset,
+		   Type            type
           );
 
     /** Destructor */
@@ -183,23 +184,8 @@ public:
     /** Returns the format of the data (type) */
     Type type() const;
 
-    /** Marks the volume display parameters dirty */
-    void setDirty();
-
-    /** Returns true if the volume was changed */
-    bool isDirty() const;
-
-    /** Locks the volume data for editing */
-    void lock();
-
-    /** Unlocks the volume data */
-    void unlock();
-
 private:
     friend RenderController;
-
-    /** Clears the dirty flag */
-    void setClean();
 
     class Impl;
     Impl * m_pImpl;

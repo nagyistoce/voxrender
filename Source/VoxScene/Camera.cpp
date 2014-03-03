@@ -46,7 +46,6 @@ Camera::Camera() :
     m_eyeDistance    (0.0f),
     m_filmWidth      (512),
     m_filmHeight     (512),
-    m_isDirty        (false),
     m_isFilmDirty    (false)
 { 
 }
@@ -66,7 +65,8 @@ void Camera::clone(Camera & camera)
     lock(); 
     camera.lock();
 
-    camera.m_isDirty = true;
+    camera.m_id = m_id;
+    camera.m_isDirty = m_isDirty;
     camera.m_isFilmDirty = m_isFilmDirty;
     camera.m_pos = m_pos;
     camera.m_eye = m_eye;

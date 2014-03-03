@@ -41,14 +41,22 @@ namespace vox
 namespace {
 namespace filescope {
 
-    FourCC RIFF = FourCC('R', 'I', 'F', 'F');
-    FourCC LIST = FourCC('L', 'I', 'S', 'T');
+    FourCC RIFF = 'FFIR';
+    FourCC LIST = 'TSIL';
     
-    FourCC FOURCC_AVI  = FourCC('A', 'V', 'I', ' ');
-    FourCC FOURCC_AVIX = FourCC('A', 'V', 'I', 'X');
-    FourCC FOURCC_VIDS = FourCC('v', 'i', 'd', 's');
-    FourCC FOURCC_AUDS = FourCC('a', 'u', 'd', 's');
-    FourCC FOURCC_TXTS = FourCC('t', 'x', 't', 's');
+    FourCC AVI  = ' IVA';
+    FourCC AVIX = 'XIVA';
+    FourCC HDRL = 'lrdh';
+    FourCC STRL = 'lrts';
+    FourCC STRH = 'hrts';
+    FourCC STRF = 'frts';
+    FourCC STRN = 'nrts';
+    FourCC VIDS = 'sdiv';
+    FourCC AUDS = 'sdua';
+    FourCC TXTS = 'stxt';
+    FourCC INDX = 'xdni';
+    FourCC AVIH = 'hiva';
+    FourCC MOVI = 'ivom';
 
     // AVI chunk atom
     struct Chunk
@@ -68,15 +76,17 @@ namespace filescope {
     };
 
     // AVI file header
-    struct Header
+    struct AviHeaderChunk
     {
+        UInt32 fourCC;
+        UInt32 size;
         UInt32 microSecPerFrame;    ///< Frame display rate (generally unreliable)
         UInt32 maxBytesPerSec;      ///< Highest data rate demanded for playback
         UInt32 paddingGranularity;  ///< The file is padded to a multiple of this size
 
         UInt32 flags;               ///< Generic flags
         UInt32 totalFrames;         ///< Frames in ONLY the RIFF-AVI list (generally unreliable)
-        UInt32 initialFrames;       ///< WTF 
+        UInt32 initialFrames;       ///< Delay before audio stream in the file 
         UInt32 streams;             ///< Number of data streams in the file
         UInt32 suggestedBufferSize; ///< Suggested buffer size during read
 
@@ -84,11 +94,68 @@ namespace filescope {
         UInt32 height;  ///< Height of the video stream
 
         UInt32 reserved[4];
+
+        AviHeaderChunk() 
+        { 
+            memset(this, 0, sizeof(AviHeaderChunk)); 
+            fourCC = AVIH;
+            size   = sizeof(AviHeaderChunk) - 2 * sizeof(UInt32);
+        }
+    };
+
+    // Super index chunk for header list
+    struct SuperIndexChunk
+    {
+        FourCC fourCC;
+        UInt32 size;
+        Int16  longsPerEntry;
+        Int8   indexSubType;
+        Int8   indexType;
+        UInt32 entriesInUse;
+        UInt32 chunkId;
+        UInt32 reserved[3];
+    };
+
+    // Entry for super index chunk
+    struct SuperIndexEntry
+    {
+        Int64 offset;
+        UInt32 size;
+        UInt32 duration;
+    };
+
+    // AVI indexing chunk
+    struct StandardIndexChunk
+    {
+        UInt32 fourCC;
+        UInt32 size;
+        Int16  longsPerEntry;
+        Int8   indexSubType;
+        Int8   indexType;
+        UInt32 entriesInUse;
+        UInt32 chunkId;
+        Int64  baseOffset;
+        UInt32 reserved[3];
+
+        StandardIndexChunk() 
+        { 
+            memset(this, 0, sizeof(StandardIndexChunk)); 
+            fourCC = INDX;
+        }
+    };
+
+    // AVI index entry
+    struct IndexEntry
+    {
+        UInt32 offset;
+        UInt32 size;
     };
 
     // Stream header list element
-    struct StreamHeader
+    struct StreamHeaderChunk
     {
+        UInt32 fourCC;
+        UInt32 size;
         FourCC fccType;             ///< Stream type: vids, auds or text
         FourCC fccHandler;          ///< FourCC of the codec to be used
         UInt32 flags;       
@@ -103,9 +170,119 @@ namespace filescope {
         UInt32 quality;             ///< (Unimportant) stream quality
         UInt32 sampleSize;          ///< Minimum number of bytes in one stream atom
         Int32  frame[4];
+
+        StreamHeaderChunk() 
+        { 
+            memset(this, sizeof(StreamHeaderChunk), 0); 
+            fourCC = STRH;
+            size   = sizeof(StreamHeaderChunk) - 2 * sizeof(UInt32);
+        }
+    };
+           
+    // Bitmap info header for video list
+    struct BitmapInfoHeaderChunk
+    {
+        UInt32 fourCC;
+        UInt32 size;
+        UInt32 headerSize;
+        UInt32 imageWidth;
+        UInt32 imageHeight;
+        UInt16 nColorPlanes;
+        UInt16 bitsPerPixel;
+        UInt32 compressionMethod;
+        UInt32 imageSize;
+        Int32  horizontalResolution;
+        Int32  verticalResolution;
+        UInt32 nColors;
+        UInt32 nImportantColors;
+
+        BitmapInfoHeaderChunk() 
+        { 
+            memset(this, 0, sizeof(BitmapInfoHeaderChunk)); 
+            fourCC = STRF;
+            size   = sizeof(BitmapInfoHeaderChunk) - 2 * sizeof(UInt32);
+        }
     };
 
 } // namespace filescope
 } // namespace anonymous
+
+// ----------------------------------------------------------------------------
+//  Constructor
+// ----------------------------------------------------------------------------
+AviWriter::AviWriter(std::shared_ptr<void> handle) : m_handle(handle) 
+{ 
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
+{
+    // Write the RIFF AVI header list
+    filescope::List riff;
+    riff.list   = filescope::RIFF;
+    riff.size   = 0; // Placeholder (written back on close)
+    riff.fourCC = filescope::AVI;
+    ostr.write((char*)&riff, sizeof(riff));
+
+    // Write the AVI header list
+    filescope::List hdrl;
+    hdrl.list   = filescope::LIST;
+    hdrl.size   = 0; // Placeholder
+    hdrl.fourCC = filescope::HDRL;
+    ostr.write((char*)&hdrl, sizeof(hdrl));
+
+    // Write the AVI header
+    filescope::AviHeaderChunk avih;
+    avih.streams = 1;
+    avih.width   = 0; // :TODO:
+    avih.height  = 0;
+
+    // Write the stream video header list
+    if (true)
+    {
+        auto size = sizeof(filescope::StreamHeaderChunk) +
+                    sizeof(filescope::BitmapInfoHeaderChunk);
+        filescope::List strlVideo;
+        strlVideo.list   = filescope::LIST;
+        strlVideo.size   = size;
+        strlVideo.fourCC = filescope::STRL;
+        ostr.write((char*)&strlVideo, sizeof(strlVideo));
+
+        filescope::StreamHeaderChunk strh;
+        strh.fccType    = filescope::VIDS;
+        strh.fccHandler = 0;
+        ostr.write((char*)&strh, sizeof(strh));
+
+        filescope::BitmapInfoHeaderChunk strf;
+        ostr.write((char*)&strf, sizeof(strf));
+    }
+    
+    // Allocate a block of memory for indexing data
+    // :TODO:
+    m_indexPos = ostr.tellp();
+
+    // Begin the video data list
+    filescope::List movi;
+    movi.fourCC = filescope::MOVI;
+    movi.list   = filescope::LIST;
+    movi.size   = 0;
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void AviWriter::addFrame(Bitmap const& bitmap)
+{
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void AviWriter::end(ResourceOStream & ostr)
+{
+    // Finalize the chunk/list sizes and indexing
+
+    // Close the output stream
+    ostr.close();
+}
 
 } // namespace vox

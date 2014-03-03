@@ -26,12 +26,14 @@
 // Include Header
 #include "ActionManager.h"
 
+// Include Dependencies
+#include "VoxLib/Core/Common.h"
+
 namespace vox {
 
 namespace {
 namespace filescope {
 
-    // :TODO: Move to IMPL header
     /** Basic action class element */
     class BasicAction : Action
     {
@@ -67,18 +69,20 @@ namespace filescope {
         std::function<void()> m_redoFunction;
     };
 
-    // :TODO: Move to IMPL header
     /** A node in the action history which stores branch information */
     class ActionNode
     {
         std::list<std::shared_ptr<Action>> m_branches; /// Oldest -> Newest == Front -> Back
     };
 
-    // Stack for action history information (Actually a list for
-    // dropping history)
+    // Stack for action history information
     static std::list<ActionNode> m_actionHistory;
 
 } // namespace filescope
 } // namespace anonymous
+
+void ActionManager::push(std::shared_ptr<Action> action)
+{
+}
 
 } // namespace vox

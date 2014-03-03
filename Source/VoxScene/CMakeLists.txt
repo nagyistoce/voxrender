@@ -40,6 +40,7 @@ VOX_PROJECT(
         PrimGroup.h
         RenderParams.h
         Scene.h
+        Object.h
         Transfer.h
         TransferMap.h
         Volume.h
@@ -55,6 +56,7 @@ VOX_PROJECT(
         Primitive.cpp
         PrimGroup.cpp
         Scene.cpp
+        Object.cpp
         Transfer.cpp
         TransferMap.cpp
         Volume.cpp

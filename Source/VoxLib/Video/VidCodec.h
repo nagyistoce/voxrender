@@ -28,31 +28,43 @@
 #define VOX_VID_CODEC_H
 
 // Include Dependencies
+#include "VoxLib/Bitmap/Bitmap.h"
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/IO/ResourceId.h"
+#include "VoxLib/IO/Resource.h"
 
 // API Namespace
 namespace vox
 {
 
-typedef Vector<UInt8,4> FourCC; ///< FourCC compression code
+typedef UInt32 FourCC; ///< FourCC compression code
 
 /** Handles the writing of video content to a stream */
 class VOX_EXPORT VideoWriter
 {
-    virtual void start() { };
+public:
+    virtual ~VideoWriter() { }
 
-    virtual void stop() { };
+    virtual void begin(ResourceOStream & ostr, OptionSet const& options) { }
+
+    virtual void addFrame(Bitmap const& frame) { }
+    
+    virtual void end(ResourceOStream & ostr) { }
 };
 
 /** Handles the reading of video content from a stream */
 class VOX_EXPORT VideoReader
 {
-    virtual void start() { };
+public:
+    virtual ~VideoReader() { }
 
-    virtual void stop() { };
+    virtual void begin(ResourceIStream & ostr, OptionSet const& options) { }
+    
+    virtual void getFrame() { }
+
+    virtual void end(ResourceIStream & ostr) { }
 };
 
 /** Supplies video writers for OStreams */

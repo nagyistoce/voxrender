@@ -29,6 +29,7 @@
 
 // Internal Dependencies
 #include "VoxScene/Common.h"
+#include "VoxScene/Object.h"
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -44,10 +45,11 @@ namespace vox
 
     class VOXS_EXPORT Primitive;
 
+    /**  */
     typedef std::function<std::shared_ptr<Primitive>(boost::property_tree::ptree &)> PrimImporter;
 
     /** Primitive geometry object */
-    class VOXS_EXPORT Primitive 
+    class VOXS_EXPORT Primitive : public SubObject
     {
     public:
         /** Prerequisite virtualized destructor for inheritance */
@@ -73,7 +75,7 @@ namespace vox
         static void removeImportModule(String const& type);
 
         /** Returns the UID string for this primitive */
-        String const& id() { return m_id; }
+        String const& idString() { return m_id; }
 
         /** Returns true if the primitive is visible */
         bool isVisible() { return m_visible; }
@@ -84,32 +86,13 @@ namespace vox
             if (m_visible == visible) return;
 
             m_visible = visible; 
-            m_dirty = true;
+            setDirty();
         }
-
-        /** Returns true if the geometry should be updated */
-        bool isDirty() { return m_dirty; }
-
-        /** Notifies the object that it's geometry should be updated */
-        void setDirty(bool dirty = true) 
-        { 
-            m_dirty = dirty; 
-        
-            if (m_parent) m_parent->setDirty();
-        }
-
-    private:
-        friend PrimGroup;
-
-        std::shared_ptr<Primitive> m_parent;
-
-        void setParent(std::shared_ptr<PrimGroup> parent);
-
-        bool m_visible;   ///< The visibility status of this primitive
-        bool m_dirty;     ///< The update flag for this primitive
 
     protected:
         Primitive() {}
+
+        bool m_visible;
 
         String m_id;
     };

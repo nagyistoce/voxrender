@@ -417,7 +417,7 @@ void Transfer::setResolution(Vector3u const& resolution)
 // ----------------------------------------------------------------------------
 //  Adds a new node to the transfer function  
 // ----------------------------------------------------------------------------
-void Transfer1D::addNode(std::shared_ptr<Node> node)
+void Transfer1D::add(std::shared_ptr<Node> node)
 {
     auto iter = std::lower_bound(m_nodes.begin(), m_nodes.end(), node, filescope::slt<Node>);
     m_nodes.insert(iter, node);
@@ -426,11 +426,28 @@ void Transfer1D::addNode(std::shared_ptr<Node> node)
 // ----------------------------------------------------------------------------
 //  Removes a node from the transfer function  
 // ----------------------------------------------------------------------------
-void Transfer1D::removeNode(std::shared_ptr<Node> node)
+void Transfer1D::remove(std::shared_ptr<Node> node)
 {
     setDirty();
 
     m_nodes.remove(node);
+}
+
+// ----------------------------------------------------------------------------
+//  Performs 1D transfer function interpolation
+// ----------------------------------------------------------------------------
+std::shared_ptr<Transfer> Transfer1D::interp(std::shared_ptr<Transfer> k2, float f)
+{
+    auto result = Transfer1D::create();
+
+    if (auto key2 = dynamic_cast<Transfer1D*>(k2.get()))
+    {
+        BOOST_FOREACH (auto & node, m_nodes)
+        {
+        }
+    }
+    
+    return result;
 }
 
 // ----------------------------------------------------------------------------
@@ -465,7 +482,7 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
         opacity.clear();
     }
 
-    map->setDirty(true);
+    map->setDirty();
 
     map->unlock();
 }
@@ -473,7 +490,7 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
 // ----------------------------------------------------------------------------
 //  Adds a new quad to the transfer function  
 // ----------------------------------------------------------------------------
-void Transfer2D::addQuad(std::shared_ptr<Quad> quad)
+void Transfer2D::add(std::shared_ptr<Quad> quad)
 {
     m_quads.push_back(quad);
 }
@@ -481,7 +498,7 @@ void Transfer2D::addQuad(std::shared_ptr<Quad> quad)
 // ----------------------------------------------------------------------------
 //  Removes a quad from the transfer function
 // ----------------------------------------------------------------------------
-void Transfer2D::removeQuad(std::shared_ptr<Quad> quad)
+void Transfer2D::remove(std::shared_ptr<Quad> quad)
 {
     setDirty();
 
@@ -529,7 +546,7 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
             (quad->position + Vector2f(-w2, -h1))*res, quad->materials[Quad::Node_LL]);
     }
 
-    map->setDirty(true);
+    map->setDirty();
 
     map->unlock();
 }

@@ -66,6 +66,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="suffix">
+        <string> mm</string>
+       </property>
        <property name="decimals">
         <number>2</number>
        </property>
@@ -85,6 +88,9 @@
      </item>
      <item row="1" column="2">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_shadowStep">
+       <property name="suffix">
+        <string> mm</string>
+       </property>
        <property name="decimals">
         <number>2</number>
        </property>
@@ -177,6 +183,9 @@
      </item>
      <item row="4" column="2">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_edge">
+       <property name="suffix">
+        <string>%</string>
+       </property>
        <property name="maximum">
         <double>100.000000000000000</double>
        </property>

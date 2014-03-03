@@ -40,12 +40,12 @@
 #include <QtWidgets/QFileDialog>
 
 // Transfer function modification wrapper for auto-update
-#define DO_LOCK(X)              \
-    m_transfer->lock();         \
-    X                           \
-    if (true) {                 \
-    m_transfer->setDirty(true); \
-    }                           \
+#define DO_LOCK(X)          \
+    m_transfer->lock();     \
+    X                       \
+    if (true) {             \
+    m_transfer->setDirty(); \
+    }                       \
     m_transfer->unlock();
 // :TODO: Check auto update set 
 
@@ -515,13 +515,13 @@ void TransferWidget::on_pushButton_delete_clicked()
     if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
         if (!m_currentNode) return;
-        DO_LOCK(transfer1D->removeNode(m_currentNode);)
+        DO_LOCK(transfer1D->remove(m_currentNode);)
         setSelectedNode(nullptr);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
     {
         if (!m_currentQuad) return;
-        DO_LOCK(transfer2D->removeQuad(m_currentQuad);)
+        DO_LOCK(transfer2D->remove(m_currentQuad);)
         setSelectedQuad(nullptr);
     }
 

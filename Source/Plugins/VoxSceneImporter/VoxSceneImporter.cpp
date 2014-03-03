@@ -680,7 +680,7 @@ namespace
                         // Create a new node for insertion
                         auto node = Node::create(
                             region.second.get<float>("Density"));
-                        transfer->addNode(node);
+                        transfer->add(node);
 
                         // Determine the node's material properties
                         auto materialOpt = region.second.get_optional<String>("Material");
@@ -725,7 +725,7 @@ namespace
                         if (auto node = region.second.get_child_optional("UR")) quad->materials[Quad::Node_UR] = toMaterial(*node);
                         if (auto node = region.second.get_child_optional("LL")) quad->materials[Quad::Node_LL] = toMaterial(*node);
                         if (auto node = region.second.get_child_optional("LR")) quad->materials[Quad::Node_LR] = toMaterial(*node);
-                        transfer->addQuad(quad);
+                        transfer->add(quad);
                     }
 
                     pop();

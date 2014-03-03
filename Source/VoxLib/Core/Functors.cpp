@@ -42,4 +42,9 @@ std::shared_ptr<UInt8> makeSharedArray(size_t bytes)
 // --------------------------------------------------------------------
 void arrayDeleter(void* data) { delete[] data; }
 
+// --------------------------------------------------------------------
+//  Implements a convenience null deleter for std::shared_ptr
+// --------------------------------------------------------------------
+void nullDeleter(void* data) { }
+
 } // namespace vox

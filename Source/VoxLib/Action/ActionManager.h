@@ -31,6 +31,8 @@
 #include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Action/Action.h"
 
+namespace vox {
+
 /** 
  * A class for managing an undo/redo/branch history of an application 
  *
@@ -116,6 +118,8 @@ public:
     /** Returns the current maximum stack depth */
     static unsigned int maxDepth();
 };
+
+} // namespace vox
 
 // End definition
 #endif // VOX_ACTION_MANAGER_H

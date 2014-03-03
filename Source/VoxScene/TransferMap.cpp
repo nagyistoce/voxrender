@@ -38,15 +38,11 @@ namespace vox
 class TransferMap::Impl
 {
 public:
-    boost::mutex mutex; ///< Transfer map mutex
-
     Image3D<Vector<UInt8,4>> diffuse;  ///< Diffuse transfer mapping [RGBX]
     Image3D<Vector<UInt8,4>> specular; ///< Specular transfer mapping [Reflectance + Roughness]
     Image3D<Vector4f>        emissive; ///< Emissive transfer mapping
     Image3D<float>           opacity;  ///< Absorption coefficient
     Vector2f                 range[3]; ///< The value range for the transfer function (as a subset of the data set range)
-
-    bool isDirty; ///< Dirty state of the TransferMap
 };
 
 TransferMap::TransferMap()
@@ -57,26 +53,6 @@ TransferMap::TransferMap()
 TransferMap::~TransferMap()
 {
     delete m_pImpl;
-}
-
-void TransferMap::lock()
-{
-    m_pImpl->mutex.lock();
-}
-
-void TransferMap::unlock()
-{
-    m_pImpl->mutex.unlock();
-}
-
-void TransferMap::setDirty(bool dirty)
-{
-    m_pImpl->isDirty = dirty;
-}
-
-bool TransferMap::isDirty()
-{
-    return m_pImpl->isDirty;
 }
 
 void TransferMap::setValueRange(int dim, Vector2f const& range)

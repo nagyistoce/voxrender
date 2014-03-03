@@ -88,6 +88,9 @@ namespace vox
 
     /** Functional array deleter method for shared_ptr */
     VOX_EXPORT VOX_HOST void arrayDeleter(void* data);
+    
+    /** Null deleter method for shared_ptr */
+    VOX_EXPORT VOX_HOST void nullDeleter(void* data);
 }
 
 #undef VOX_FUNCTOR_LIMIT

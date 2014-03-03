@@ -34,6 +34,7 @@
 #include "VoxLib/IO/ResourceId.h"
 
 // Boost socket dependencies
+#include <boost/asio.hpp>
 
 // API namespace
 namespace vox
@@ -54,7 +55,26 @@ std::shared_ptr<std::streambuf> UdpSocketIO::access(
     unsigned int     openMode
     )
 {
-    return nullptr;
+    using namespace boost::asio::ip;
+
+    typedef boost::asio::basic_socket_streambuf<boost::asio::ip::udp> UdpStreambuf;
+    
+    auto streambuf = std::shared_ptr<UdpStreambuf>(new UdpStreambuf());
+
+    if (identifier.authority.empty() && !(openMode & Resource::Mode_Output))
+    {
+        udp::endpoint endpoint(udp::v4(), identifier.extractPortNumber());
+        streambuf->open(udp::v4());
+        streambuf->bind(endpoint);
+    }
+    else
+    {
+        auto host = address::from_string(identifier.authority);
+        udp::endpoint endpoint(host, identifier.extractPortNumber());
+        streambuf->connect(endpoint);
+    }
+
+    return streambuf;
 }
 
 // --------------------------------------------------------------------

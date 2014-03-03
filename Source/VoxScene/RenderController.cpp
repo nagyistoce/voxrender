@@ -30,6 +30,8 @@
 #include "VoxLib/Core/Functors.h"
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxLib/Video/VidStream.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 #include "VoxScene/Camera.h"
 #include "VoxScene/Light.h"
 #include "VoxScene/Animator.h"
@@ -137,7 +139,7 @@ public:
     {
         boost::mutex::scoped_lock lock(m_threadsMutex);
 
-        m_renderThreads.push_back( std::make_shared<RenderThread>(renderer) );
+        m_renderThreads.push_back(std::make_shared<RenderThread>(renderer));
 
         m_threadsChanged = true;
     }
@@ -243,6 +245,7 @@ private:
         {
             m_masterRenderer->startup();
 
+            // Generate the animation frame images
             while (targetFrame > currFrame)
             {
                 // Advance iterators
@@ -285,6 +288,18 @@ private:
 
                 if (m_progressCallback) m_progressCallback((float)currFrame/targetFrame);
             }
+
+            // Compile the finalized images into a video file
+            ResourceId uri("Test.avi");
+            VidOStream vidstr(uri);
+            for (unsigned int i = 0; i < targetFrame; i++)
+            {
+                auto frameUri = m_scene.animator->tempLocation();
+                frameUri.path += format("frame_%1%.png", currFrame);
+                auto frame = Bitmap::imprt(frameUri);
+                vidstr.push(frame);
+            }
+            vidstr.close();
         }
         catch (boost::thread_interrupted &)
         {
@@ -413,9 +428,8 @@ private:
             m_scene.transfer->setClean();
             m_scene.parameters->setClean();
             m_scene.volume->setClean();
-
-            m_scene.clipGeometry->setDirty(false);
-            m_scene.transferMap->setDirty(false);
+            m_scene.clipGeometry->setClean();
+            m_scene.transferMap->setClean();
 
             // Reset the rendering timestamp
             m_startTime = std::chrono::system_clock::now();

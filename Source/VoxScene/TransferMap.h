@@ -29,6 +29,7 @@
 
 // Internal Dependencies
 #include "VoxScene/Common.h"
+#include "VoxScene/Object.h"
 
 // External Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -44,7 +45,7 @@ namespace vox
 	 * A transfer function mapping is a mapping structure used by renderers
 	 * for sampling the transfer function content. 
 	 */
-    class VOXS_EXPORT TransferMap
+    class VOXS_EXPORT TransferMap : public Object
     {
     public:
         /** Create a new transfer function map */
@@ -73,18 +74,6 @@ namespace vox
 
         /** Returns the value range of the transfer function */
         void setValueRange(int dim, Vector2f const& range);
-
-        /** Locks the transfer function map for editing */
-        void lock();
-
-        /** Releases a locked transfer function mapping */
-        void unlock();
-
-        /** Sets the dirty state of the map */
-        void setDirty(bool dirty);
-
-        /** Returns the dirty state of the map */
-        bool isDirty();
 
     private:
         /** Constructor */

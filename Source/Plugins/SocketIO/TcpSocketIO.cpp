@@ -36,8 +36,6 @@
 // Boost socket dependencies
 #include <boost/asio.hpp>
 
-using boost::asio::ip::tcp;
-
 // API namespace
 namespace vox
 {
@@ -57,7 +55,26 @@ std::shared_ptr<std::streambuf> TcpSocketIO::access(
     unsigned int     openMode
     )
 {
-    return std::shared_ptr<boost::asio::ip::tcp::iostream>();
+    using namespace boost::asio::ip;
+
+    typedef boost::asio::basic_socket_streambuf<tcp> TcpStreambuf;
+
+    auto streambuf = std::shared_ptr<TcpStreambuf>(new TcpStreambuf());
+
+    if (identifier.authority.empty() && !(openMode & Resource::Mode_Output))
+    {
+        tcp::endpoint endpoint(tcp::v4(), identifier.extractPortNumber());
+        streambuf->open(tcp::v4());
+        streambuf->bind(endpoint);
+    }
+    else
+    {
+        auto host = address::from_string(identifier.authority);
+        tcp::endpoint endpoint(host, identifier.extractPortNumber());
+        streambuf->connect(endpoint);
+    }
+
+    return streambuf;
 }
 
 // --------------------------------------------------------------------
@@ -68,9 +85,7 @@ std::shared_ptr<QueryResult> TcpSocketIO::query(
     OptionSet const&  options
     )
 {
-    auto result = std::make_shared<QueryResult>();
-    
-    return result;
+    return std::make_shared<QueryResult>();
 }
 
 // --------------------------------------------------------------------

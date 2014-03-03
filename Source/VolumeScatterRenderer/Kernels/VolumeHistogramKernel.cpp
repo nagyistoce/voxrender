@@ -35,22 +35,6 @@ namespace {
 namespace filescope {
 
     // --------------------------------------------------------------------
-    //                        TEXTURE SAMPLERS
-    // --------------------------------------------------------------------
-    
-    texture<UInt8,3,cudaReadModeElementType>  gd_volumeTexE_UInt8;     ///< Volume data texture
-    texture<UInt16,3,cudaReadModeElementType> gd_volumeTexE_UInt16;    ///< Volume data texture
-
-    // --------------------------------------------------------------------
-    //  Uses vector reduction techniques to compute the max value range
-    // --------------------------------------------------------------------
-    template<typename T> __global__ void maxValueRangeKernel()
-    { 	
-	    int x = blockIdx.x * blockDim.x + threadIdx.x;
-	    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    }
-    
-    // --------------------------------------------------------------------
     // :TODO:
     // --------------------------------------------------------------------
     template<typename T> Vector2f maxValueRange(size_t elements, UInt8 const* raw)

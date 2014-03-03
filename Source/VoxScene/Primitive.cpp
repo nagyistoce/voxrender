@@ -51,14 +51,6 @@ namespace filescope {
 } // namespace
 
 // ----------------------------------------------------------------------------
-//  Sets the parent group of a primitive 
-// ----------------------------------------------------------------------------
-void Primitive::setParent(std::shared_ptr<PrimGroup> parent) 
-{ 
-    m_parent = parent;
-}
-
-// ----------------------------------------------------------------------------
 //  Registers an import function for a given primitive type identifier
 // ----------------------------------------------------------------------------
 void Primitive::registerImportModule(String const& type, PrimImporter importer)

@@ -29,6 +29,7 @@
 
 // Internal Dependencies
 #include "VoxScene/Common.h"
+#include "VoxScene/Object.h"
 
 // Include Dependencies
 #include "VoxLib/Core/Common.h"
@@ -41,7 +42,7 @@ namespace vox
 class RenderController;
 
 /** Camera Class */
-class VOXS_EXPORT Camera
+class VOXS_EXPORT Camera : public Object
 {
 public:
     /** Constructs a new transfer function object */
@@ -178,30 +179,18 @@ public:
     /** Film width modifier */
     inline void setFilmWidth(size_t width) { m_filmWidth = width; }
 
-    /** Returns true if the context change flag is set */
-    inline bool isDirty() const { return m_isDirty || m_isFilmDirty; }
-
     /** Returns true if the film dimensions change flag is set */
     inline bool isFilmDirty() const { return m_isFilmDirty; }
 
-    /** Locks the camera for editing */
-    void lock() { m_mutex.lock(); }
-
-    /** Releases the camera lock */
-    void unlock() { m_mutex.unlock(); }
-
-    /** Marks the camera film settings as dirty */
-    void setDirty() { m_isDirty = true; }
-
     /** Marks the camera as dirty */
     void setFilmDirty() { m_isFilmDirty = true; }
+    
+    /** :TODO: leftover from abstraction of Object */
+    void setClean() { Object::setClean(); m_isFilmDirty = false; }
 
 private:
     friend RenderController;
 
-    void setClean() { m_isDirty = false; m_isFilmDirty = false; }
-
-    bool m_isDirty;     ///< Context change flag
     bool m_isFilmDirty; ///< Film change flag
 
     // Camera orientation
@@ -219,9 +208,6 @@ private:
     // Film dimensions
     size_t m_filmWidth;  ///< Film width  (pixels)
     size_t m_filmHeight; ///< Film height (pixels)
-
-    // Synchronization mutex
-    boost::mutex m_mutex;
 };
 
 }

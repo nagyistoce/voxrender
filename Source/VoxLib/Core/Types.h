@@ -40,9 +40,11 @@ namespace vox
     typedef boost::uint8_t  UInt8;
     typedef boost::uint16_t UInt16;
     typedef boost::uint32_t UInt32;
+    typedef boost::uint64_t UInt64;
     typedef boost::int8_t   Int8;
     typedef boost::int16_t  Int16;
     typedef boost::int32_t  Int32;
+    typedef boost::int64_t  Int64;
 
     // Determine primitive type for desired encoding
     typedef char Char;

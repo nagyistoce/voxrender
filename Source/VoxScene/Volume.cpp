@@ -74,7 +74,6 @@ Impl::Impl(std::shared_ptr<UInt8> data, Vector4s const& extent,
     m_spacing(spacing), 
     m_type(type), 
     m_offset(offset), 
-    m_isDirty(false),
     m_timeSlice(0.f)
 { 
     updateRange();
@@ -137,15 +136,11 @@ float fetchNormalized(size_t x, size_t y, size_t z) const
 }
 
 public:
-    bool m_isDirty; ///< Context change flag
-
     std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
-    Vector2f m_range;       ///< Volume value range (normalized to type)
     
     float m_timeSlice; ///< The current time slice to display
-
-    boost::mutex m_mutex;
-
+    
+    Vector2f m_range;       ///< Volume value range (normalized to type)
     Vector3f m_offset;      ///< Volume offset (mm)
     Vector4f m_spacing;     ///< Spacing between voxels (mm)
     Vector4s m_extent;      ///< Size of volume in voxels
@@ -171,9 +166,6 @@ UInt8 *         Volume::mutableData()      { return m_pImpl->m_data.get(); }
 UInt8 const*    Volume::data() const       { return m_pImpl->m_data.get(); }
 size_t          Volume::voxelSize() const  { return typeToSize(m_pImpl->m_type); }
 Volume::Type    Volume::type() const       { return m_pImpl->m_type; }
-void            Volume::setDirty()         { m_pImpl->m_isDirty = true; }
-void            Volume::setClean()         { m_pImpl->m_isDirty = false; }
-bool            Volume::isDirty() const    { return m_pImpl->m_isDirty; }
 Vector4f const& Volume::spacing() const     { return m_pImpl->m_spacing; } 
 Vector4s const& Volume::extent() const      { return m_pImpl->m_extent; }  
 Vector3f const& Volume::offset() const      { return m_pImpl->m_offset; }
@@ -182,7 +174,5 @@ Vector2f const& Volume::valueRange() const  { return m_pImpl->m_range; }
 void            Volume::setSpacing(Vector4f const& spacing) { m_pImpl->m_spacing = spacing; }
 void            Volume::setOffset(Vector3f const& offset)   { m_pImpl->m_offset = offset; }
 void            Volume::setTimeSlice(float timeSlice)       { m_pImpl->m_timeSlice = timeSlice; }
-void            Volume::lock()   { m_pImpl->m_mutex.lock(); }
-void            Volume::unlock() { m_pImpl->m_mutex.unlock(); }
 
 } // namespace vox

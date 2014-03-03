@@ -41,10 +41,21 @@ namespace vox
 class VOX_SVID_EXPORT AviWriter : public VideoWriter
 {
 public:
-    AviWriter(std::shared_ptr<void> handle) : m_handle(handle) { }
+    AviWriter(std::shared_ptr<void> handle);
+
+    virtual void begin(ResourceOStream & ostr, OptionSet const& options);
+
+    virtual void end(ResourceOStream & ostr);
+
+    virtual void addFrame(Bitmap const& bitmap);
+
+private:
+    void addIndexEntry();
 
 private:
     std::shared_ptr<void> m_handle;
+
+    std::streamsize m_indexPos; ///< Position of the write head for the video index header
 };
 
 /** Reads an AVI format video file */
@@ -52,6 +63,12 @@ class VOX_SVID_EXPORT AviReader : public VideoReader
 {
 public:
     AviReader(std::shared_ptr<void> handle) : m_handle(handle) { }
+    
+    virtual void begin(ResourceOStream & ostr, OptionSet const& options) { }
+
+    virtual void end(ResourceOStream & ostr) { }
+
+    virtual void getFrame() { }
 
 private:
     std::shared_ptr<void> m_handle;

@@ -106,7 +106,7 @@ Set(SOURCES_SCENE
 )
 
 Set(SOURCES_KERNELS
-    Kernels/VolumeHistogramKernel.cu
+    Kernels/VolumeHistogramKernel.cpp
     Kernels/RandKernel.cu
     Kernels/RenderKernel.cu
     Kernels/TonemapKernel.cu
