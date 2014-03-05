@@ -1226,7 +1226,7 @@ void MainWindow::on_actionGaussian_Filter_triggered()
         for (int y = 0; y < 5; y++)
         for (int z = 0; z < 5; z++)
             kernel.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
-        return volt::Conv::execute(*volume, kernel);
+        return volt::Conv::execute(volume, kernel);
     });
 }
 
@@ -1238,7 +1238,7 @@ void MainWindow::on_actionLaplace_Filter_triggered()
     performFiltering([] (std::shared_ptr<Volume> volume) -> std::shared_ptr<Volume> { 
         Image3D<float> kernel;
         volt::Conv::makeLaplaceKernel(kernel);
-        return volt::Conv::execute(*volume, kernel);
+        return volt::Conv::execute(volume, kernel);
     });
 }
 

@@ -50,12 +50,18 @@ public:
      * @param kernel The volume convoltution kernel
      * @param type   The target type of the output volume data set
      */
-    static std::shared_ptr<Volume> execute(Volume & volume, Image3D<float> kernel, 
+    static std::shared_ptr<Volume> execute(
+        std::shared_ptr<Volume> volume, 
+        Image3D<float> kernel, 
         Volume::Type type = Volume::Type_End);
 
     /** Performs a convolution operation on the volume data set */
-    static std::shared_ptr<Volume> execute(Volume & volume, std::vector<float> const& x, std::vector<float> const& y, 
-        std::vector<float> const& z, Volume::Type type = Volume::Type_End);
+    static std::shared_ptr<Volume> execute(
+        std::shared_ptr<Volume> volume, 
+        std::vector<float> const& x, 
+        std::vector<float> const& y, 
+        std::vector<float> const& z, 
+        Volume::Type type = Volume::Type_End);
 
     /** 
      * Constructs and returns a gaussian kernel of the given size (seperable)
@@ -65,6 +71,14 @@ public:
      * @param size     The size of the output, or 0 if the size should be fit to the variance
      */
     static void makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size = 0);
+
+    /** Constructs and returns a windows sinc filter of the given size (seperable)
+     *
+     * @param out      [out] The gaussian kernel vector 
+     * @param freq     The scaling factor in the sinc function     
+     * @param size     The size of the output, or 0 if the size should be fit to 5 lobes
+     */
+    static void makeSincKernel(std::vector<float> & out, float freq, unsigned int size = 0);
 
     /** Constructs and returns a mean filter kernel of the given size (seperable) */
     static void makeMeanKernel(std::vector<float> & out, unsigned int size);

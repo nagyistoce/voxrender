@@ -114,10 +114,10 @@ namespace filescope {
     // Binds the buffers in a volume blocker to
     void bindBuffers(VolumeBlocker & blocker)
     {
-        auto & volume = blocker.volume();
+        auto volume = blocker.volume();
 
         // Bind the volume data buffers
-        auto type = volume.type();
+        auto type = volume->type();
         switch (type)
         {
         VOX_SETUP_TEX(UInt8);
@@ -139,7 +139,7 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 //  Executes the convolution kernel on the input volume data
 // ----------------------------------------------------------------------------
-std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Volume::Type type)
+std::shared_ptr<Volume> Conv::execute(std::shared_ptr<Volume> volume, Image3D<float> kernel, Volume::Type type)
 {   
     // Verify the kernel is of odd dimensions
     if (!(kernel.width() % 2 && kernel.height() % 2 && kernel.depth() % 2)) 
@@ -163,7 +163,7 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
     VOX_CUDA_CHECK(cudaEventRecord(start,0));
 
     // Initialize the volume block loader/scheduler
-    auto outType = (type == Volume::Type_End) ? volume.type() : type;
+    auto outType = (type == Volume::Type_End) ? volume->type() : type;
     VolumeBlocker blocker(volume, apron, outType);
 
 	// Setup the execution configuration
@@ -185,7 +185,7 @@ std::shared_ptr<Volume> Conv::execute(Volume & volume, Image3D<float> kernel, Vo
         auto blockIndex = blocker.loadNext();
 
         // Execute the convolution kernel call
-        switch (volume.type())
+        switch (volume->type())
         {
         case Volume::Type_Int8:   filescope::convKernel<Int8>   <<<blocks,threads,shared>>> (apron, blockSize, 
             Vector2f(std::numeric_limits<Int8>::min(), std::numeric_limits<Int8>::max()));   break;

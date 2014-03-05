@@ -30,6 +30,7 @@
 // Include Dependencies
 #include "mainwindow.h"
 #include "utilities.h"
+#include "animateitem.h"
 
 using namespace vox;
 
@@ -44,6 +45,18 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
 	ui->setupUi(this);
 
     ui->view->setScene(&m_scene);
+    
+    ui->view->setFrameShape(QGraphicsView::NoFrame);
+    ui->view->setFrameShadow(QGraphicsView::Sunken);
+	ui->view->setBackgroundBrush(QBrush(QColor(240, 240, 240)));
+	ui->view->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+	ui->view->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+	ui->view->setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
+    ui->view->setDragMode( QGraphicsView::ScrollHandDrag );
+    
+    m_animateItem = new AnimateItem(nullptr);
+    m_scene.addItem(m_animateItem);
+    resizeEvent(&QResizeEvent(size(), size()));
 
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
@@ -54,6 +67,21 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
 AnimateWidget::~AnimateWidget()
 {
     delete ui;
+}
+
+// ----------------------------------------------------------------------------
+//  Resizes the animation view when the widget is resized
+// ----------------------------------------------------------------------------
+void AnimateWidget::resizeEvent(QResizeEvent *event) 
+{	
+    // Resize the canvas rectangle and compute margins
+	auto canvasRectangle = ui->view->viewport()->rect();
+    
+	m_scene.setSceneRect(canvasRectangle);
+
+    canvasRectangle.adjust(0, 0, -1, -20);
+
+    m_animateItem->setRect(canvasRectangle);
 }
 
 // ----------------------------------------------------------------------------

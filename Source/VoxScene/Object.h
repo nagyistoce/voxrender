@@ -31,8 +31,10 @@
 #include "VoxScene/Common.h"
 
 // Include Dependencies
-#include "VoxLib/Core/Common.h"
+#include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Core/Geometry.h"
+
+namespace boost { class mutex; }
 
 // API namespace
 namespace vox
@@ -48,7 +50,7 @@ namespace vox
         Object(int id);
 
         /** Destructor */
-        ~Object() { }
+        ~Object();
 
         /** Returns the ID of the object */
         int id() { return m_id; }
@@ -57,10 +59,10 @@ namespace vox
         void setId(int id) { m_id = id; }
 
         /** Locks the light set for read/write operations */
-        virtual void lock() { m_mutex.lock(); }
+        virtual void lock();
         
         /** Unlocks the light set */
-        virtual void unlock() { m_mutex.unlock(); }
+        virtual void unlock();
 
         /** Returns true if the context change flag is set */
         bool isDirty() const { return m_isDirty; }
@@ -74,7 +76,7 @@ namespace vox
     protected:
         int m_id; ///< ID of the object
 
-        boost::mutex m_mutex;   ///< Mutex for locking
+        boost::mutex * m_mutex; ///< Mutex for locking
         bool         m_isDirty; ///< Dirty flag for tracking changes
     };
 

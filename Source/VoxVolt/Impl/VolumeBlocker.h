@@ -39,7 +39,7 @@ namespace volt {
 class VolumeBlocker
 {
 public:
-    VolumeBlocker(Volume & volume, Vector3u apron, Volume::Type outType);
+    VolumeBlocker(std::shared_ptr<Volume> volume, Vector3u apron, Volume::Type outType);
 
     ~VolumeBlocker() { reset(); }
 
@@ -65,10 +65,10 @@ public:
     
     cudaChannelFormatDesc const& formatIn() { return m_format; }
 
-    Volume & volume() { return m_volume; }
+    std::shared_ptr<Volume> volume() { return m_volume; }
 
 private:
-    Volume & m_volume; ///< The source volume
+    std::shared_ptr<Volume> m_volume; ///< The source volume
 
     bool m_begin;
 

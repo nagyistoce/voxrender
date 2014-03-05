@@ -2,7 +2,7 @@
 
 	Project: VoxRender
 
-	Description: Implements an interface for for animation management
+	Description: Implements an animation keyframe display/interface tool
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -23,51 +23,35 @@
 
 =========================================================================== */
 
-// Begin Definition
-#ifndef ANIMATE_WIDGET_H
-#define ANIMATE_WIDGET_H
+// Begin definition
+#ifndef ANIMATE_ITEM_H
+#define ANIMATE_ITEM_H
 
 // QT Includes
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsView>
+#include <QtWidgets/QGraphicsRectItem>
 
-namespace Ui { class AnimateWidget; }
-
-class AnimateItem;
-
-// Volume data histogram widget
-class AnimateWidget : public QWidget
+// Labeled grid graphics item
+class AnimateItem : public QGraphicsRectItem
 {
-	Q_OBJECT
-
 public:
-	explicit AnimateWidget(QWidget *parent = 0);
+	AnimateItem(QGraphicsItem * parent = nullptr);
 
-	~AnimateWidget();
+	virtual void paint(QPainter* painter, 
+		const QStyleOptionGraphicsItem* options, 
+		QWidget* widget);
 
 private:
-	Ui::AnimateWidget * ui;
-
-    void resizeEvent(QResizeEvent *event);
-
-    void update();
-
-    bool m_ignore;
-
-    float m_frameOffset; ///< Frame at left edge of window
-
-    QGraphicsScene m_scene;
-
-    AnimateItem * m_animateItem;
-
-private slots:
-    void sceneChanged();
-
-    void on_pushButton_render_clicked();
-    void on_pushButton_key_clicked();
-    void on_pushButton_delete_clicked();
+	QBrush  m_bkBrushEnabled;	// Enabled state background brush
+	QBrush	m_bkBrushDisabled;	// Disabled state background brush
+	QBrush  m_bkPenEnabled;		// Enabled state background pen
+	QBrush	m_bkPenDisabled;	// Disabled state background pen
+	QBrush	m_brushEnabled;		// Enabled state brush type
+	QBrush	m_brushDisabled;	// Disabled state brush type
+	QPen	m_penEnabled;		// Enabled state pen type
+	QPen	m_penDisabled;		// Disabled state pen type
+	QFont	m_font;				// Font used for grid labels
 };
 
 // End definition
-#endif // ANIMATE_WIDGET_H
-
+#endif // ANIMATE_ITEM_H

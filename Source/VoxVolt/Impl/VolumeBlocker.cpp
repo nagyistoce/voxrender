@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "VoxLib/Error/CudaError.h"
+#include "VoxScene/Volume.h"
 
 namespace vox {
 namespace volt {
@@ -59,14 +60,14 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 //  Initializes a volume block loader/scheduler
 // ----------------------------------------------------------------------------
-VolumeBlocker::VolumeBlocker(Volume & volume, Vector3u apron, Volume::Type outType) : 
+VolumeBlocker::VolumeBlocker(std::shared_ptr<Volume> volume, Vector3u apron, Volume::Type outType) : 
     m_volume(volume), m_handle(nullptr), m_handleOut(nullptr), m_typeOut(outType)
 {
     // Specify the format for volume data access
-    m_format    = cudaCreateChannelDesc(m_volume.voxelSize()*8, 0, 0, 0, filescope::getKind(m_volume.type()));
-    m_formatOut = cudaCreateChannelDesc(m_volume.voxelSize()*8, 0, 0, 0, filescope::getKind(outType));
+    m_format    = cudaCreateChannelDesc(m_volume->voxelSize()*8, 0, 0, 0, filescope::getKind(m_volume->type()));
+    m_formatOut = cudaCreateChannelDesc(m_volume->voxelSize()*8, 0, 0, 0, filescope::getKind((Volume::Type)outType));
     
-    auto extent = m_volume.extent();
+    auto extent = m_volume->extent();
     
     // :TODO: Query GPU memory size to determine blocking scheme
 
@@ -117,7 +118,7 @@ void VolumeBlocker::begin()
     m_begin = false;
 
     // Allocate a host buffer for the output volume data set
-    size_t bytes = m_volume.extent().fold(mul) * Volume::typeToSize(m_typeOut);
+    size_t bytes = m_volume->extent().fold(mul) * Volume::typeToSize((Volume::Type)m_typeOut);
     m_dataOut = makeSharedArray(bytes);
 
 	// Create a 3d array for volume data storage
@@ -132,8 +133,8 @@ std::shared_ptr<Volume> VolumeBlocker::finish()
 {
     reset();
 
-    return Volume::create(m_dataOut, m_volume.extent(), m_volume.spacing(), 
-                          m_volume.offset(), m_typeOut);
+    return Volume::create(m_dataOut, m_volume->extent(), m_volume->spacing(), 
+                          m_volume->offset(), (Volume::Type)m_typeOut);
 }
 
 // ----------------------------------------------------------------------------
@@ -164,7 +165,7 @@ Vector4u VolumeBlocker::loadNext()
     }
     else m_begin = true;
 
-    auto hostExtent = m_volume.extent();
+    auto hostExtent = m_volume->extent();
     cudaPos pos;
     pos.x = m_currBlock[0] * m_extentOut.width;
     pos.y = m_currBlock[1] * m_extentOut.height;
@@ -172,8 +173,8 @@ Vector4u VolumeBlocker::loadNext()
 
     // Copy volume read data to device
 	cudaMemcpy3DParms copyParams = {0};
-    copyParams.srcPtr.pitch	     = hostExtent[0]*m_volume.voxelSize();
-    copyParams.srcPtr.ptr	     = (void*)m_volume.data();
+    copyParams.srcPtr.pitch	     = hostExtent[0]*m_volume->voxelSize();
+    copyParams.srcPtr.ptr	     = (void*)m_volume->data();
     copyParams.srcPtr.xsize	     = hostExtent[0];
     copyParams.srcPtr.ysize	     = hostExtent[1];
     copyParams.srcPos            = pos;
@@ -190,7 +191,7 @@ Vector4u VolumeBlocker::loadNext()
 // ----------------------------------------------------------------------------
 void VolumeBlocker::readNext()
 {
-    auto hostExtent = m_volume.extent();
+    auto hostExtent = m_volume->extent();
     cudaPos pos;
     pos.x = m_currBlock[0] * m_extentOut.width;
     pos.y = m_currBlock[1] * m_extentOut.height;
@@ -199,7 +200,7 @@ void VolumeBlocker::readNext()
     // Copy volume write data to host
 	cudaMemcpy3DParms copyParams = {0};
     copyParams.srcArray          = m_handleOut;
-    copyParams.dstPtr.pitch	     = hostExtent[0]*Volume::typeToSize(m_typeOut);
+    copyParams.dstPtr.pitch	     = hostExtent[0]*Volume::typeToSize((Volume::Type)m_typeOut);
     copyParams.dstPtr.ptr	     = (void*)m_dataOut.get();
     copyParams.dstPtr.xsize      = hostExtent[0];
     copyParams.dstPtr.ysize      = hostExtent[1];
