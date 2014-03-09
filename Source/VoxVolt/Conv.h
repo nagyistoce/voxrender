@@ -34,9 +34,6 @@
 
 // API namespace
 namespace vox {
-
-    class Volume;
-    
 namespace volt {
 
 /** Implements transforms for convolution operations */
@@ -62,6 +59,15 @@ public:
         std::vector<float> const& y, 
         std::vector<float> const& z, 
         Volume::Type type = Volume::Type_End);
+    
+    /**
+     * Performs Lanczos resampling of the specified volume data set
+     */
+    static std::shared_ptr<Volume> lanczos(
+        std::shared_ptr<Volume> volume,
+        Vector4u newSize,
+        Volume::Type type = Volume::Type_End
+        );
 
     /** 
      * Constructs and returns a gaussian kernel of the given size (seperable)
@@ -72,13 +78,21 @@ public:
      */
     static void makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size = 0);
 
-    /** Constructs and returns a windows sinc filter of the given size (seperable)
+    /** Constructs and returns a generalized hamming window of the generalized form 
+     *  f(n) = a - b * cos(2 * pi * freq * n / [size-1])
      *
      * @param out      [out] The gaussian kernel vector 
-     * @param freq     The scaling factor in the sinc function     
-     * @param size     The size of the output, or 0 if the size should be fit to 5 lobes
+     * @param freq     The scaling factor in the sinc function   
+     * @param a        A parameter of the window function
+     * @param b        A parameter of the window function
+     * @param size     The size of the output kernel
      */
-    static void makeSincKernel(std::vector<float> & out, float freq, unsigned int size = 0);
+    static void makeHammingKernel(
+        std::vector<float> & out, 
+        float freq, 
+        float a = 0.54f, 
+        float b = 0.46f, 
+        unsigned int size = 0);
 
     /** Constructs and returns a mean filter kernel of the given size (seperable) */
     static void makeMeanKernel(std::vector<float> & out, unsigned int size);

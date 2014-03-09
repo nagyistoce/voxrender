@@ -30,15 +30,22 @@
 #include "VoxVolt/Impl/VolumeBlocker.h"
 #include "VoxLib/Error/CudaError.h"
 #include "VoxLib/Core/Logging.h"
+#include <chrono>
 
-// CUDA runtime API header
+// Sinc function
+#include "boost/math/special_functions/sinc.hpp"
+
+// CUDA API headers
 #include <cuda_runtime_api.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 #define KERNEL_BLOCK_W		16
 #define KERNEL_BLOCK_H		16
 #define KERNEL_BLOCK_SIZE   (KERNEL_BLOCK_W * KERNEL_BLOCK_H)
 
-#define MAX_KERNEL_SIZE 5
+#define MAX_KERNEL_SIZE 10
 
 namespace vox {
 namespace volt {
@@ -46,9 +53,13 @@ namespace volt {
 namespace {
 namespace filescope {
 
-    __constant__ float gd_kernel[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE];
+    __constant__ float gd_kernel[MAX_KERNEL_SIZE*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE]; ///< Kernel matrix
 
-    // Textures for the input volume data sampling
+    surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data output
+    
+    // ----------------------------------------------------------------------------
+    //  Textures for each of the supported volume data types
+    // ----------------------------------------------------------------------------
     #define VOX_TEXTURE(T) texture<##T,3,cudaReadModeNormalizedFloat>  gd_volumeTexIn_##T 
         VOX_TEXTURE(Int8);
         VOX_TEXTURE(UInt8);
@@ -56,16 +67,21 @@ namespace filescope {
         VOX_TEXTURE(UInt16);
     #undef VOX_TEXTURE
 
-    surface<void, 3> gd_volumeTexOut; ///< Surface for convolved volume data output
-
-    template<typename T> VOX_DEVICE float fetchSample(int x, int y, int z) { return 0.f; }
-    #define TEMPLATE(T) template<> VOX_DEVICE float fetchSample<##T>(int x, int y, int z) { return tex3D(gd_volumeTexIn_##T, x, y, z); }
+    // ----------------------------------------------------------------------------
+    //  Boiler plate for simplifying the texture sampling calls across data types
+    // ----------------------------------------------------------------------------
+    template<typename T> VOX_DEVICE float fetchSample(float x, float y, float z) { return 0.f; }
+    #define TEMPLATE(T) template<> VOX_DEVICE float fetchSample<##T>(float x, float y, float z) \
+        { return tex3D(gd_volumeTexIn_##T, x, y, z); }
     TEMPLATE(Int8)
     TEMPLATE(UInt8)
     TEMPLATE(UInt16)
     TEMPLATE(Int16)
+    #undef TEMPLATE
 
-    // Performs 3D convolution on a volume data set
+    // ----------------------------------------------------------------------------
+    //  Convolution kernel for a non-seperable convolution kernel
+    // ----------------------------------------------------------------------------
     template<typename T>
     __global__ void convKernel(Vector3u apron, cudaExtent blockSize, Vector2f range)
     {
@@ -94,12 +110,18 @@ namespace filescope {
             surf3Dwrite<T>((T)(range[0] + range[1]*sum), gd_volumeTexOut, x*sizeof(T), y, z);
         }
     }
-
+    
+    // ----------------------------------------------------------------------------
+    //  Convolution kernel for seperable filters
+    // ----------------------------------------------------------------------------
     template<typename T>
     __global__ void convSepKernel()
     {
     }
-
+    
+    // ----------------------------------------------------------------------------
+    //  Binds the buffers in a volume blocker to the convolution kernel handles
+    // ----------------------------------------------------------------------------
 #define VOX_SETUP_TEX(T)                                                     \
     case Volume::Type_##T: {                                                 \
 	    filescope::gd_volumeTexIn_##T.normalized     = false;                \
@@ -110,8 +132,6 @@ namespace filescope {
         VOX_CUDA_CHECK(cudaBindTextureToArray(filescope::gd_volumeTexIn_##T, \
             blocker.arrayIn(), blocker.formatIn()));                         \
         break; }
-
-    // Binds the buffers in a volume blocker to
     void bindBuffers(VolumeBlocker & blocker)
     {
         auto volume = blocker.volume();
@@ -131,6 +151,19 @@ namespace filescope {
         }
 
         VOX_CUDA_CHECK(cudaBindSurfaceToArray(gd_volumeTexOut, blocker.arrayOut()));
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Normalizes a vector so the distribution sums to 1
+    // ----------------------------------------------------------------------------
+    void normalize(std::vector<float> & vector)
+    {
+        float sum = 0;
+        BOOST_FOREACH (auto & elem, vector)
+            sum += elem;
+
+        BOOST_FOREACH (auto & elem, vector)
+            elem /= sum;
     }
 
 } // namespace filescope
@@ -218,6 +251,41 @@ std::shared_ptr<Volume> Conv::execute(std::shared_ptr<Volume> volume, Image3D<fl
 }
 
 // ----------------------------------------------------------------------------
+//  Resamples the volume data using lanczos filtering
+// ----------------------------------------------------------------------------
+std::shared_ptr<Volume> Conv::lanczos(std::shared_ptr<Volume> volume, Vector4u newSize, Volume::Type type)
+{
+    static const unsigned int a = 3;
+
+    // Compute the lanczos resampling window
+    auto extent = volume->extent();
+    Vector4f step;  // resample step distance
+    Vector3u fsize; // filter width
+    for (int i = 0; i < 3; i++)
+    {
+        step[i] = newSize[i] / extent[i];
+        fsize[i] = (a / step[i]);   
+    }
+    
+    // Create the start event for performance timing
+    cudaEvent_t start, stop;
+    VOX_CUDA_CHECK(cudaEventCreate(&start));
+    VOX_CUDA_CHECK(cudaEventRecord(start,0));
+
+    //Create the stop event for performance timing
+    VOX_CUDA_CHECK(cudaEventCreate(&stop));
+    VOX_CUDA_CHECK(cudaEventRecord(stop,0));
+    VOX_CUDA_CHECK(cudaEventSynchronize(stop));
+    
+    // Compute the time elapsed during GPU execution
+    float elapsedTime;
+    VOX_CUDA_CHECK(cudaEventElapsedTime(&elapsedTime, start, stop));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Lanczos completed in %1% ms", elapsedTime));
+
+    return volume;
+}
+
+// ----------------------------------------------------------------------------
 //  Constructs a laplace kernel
 // ----------------------------------------------------------------------------
 void Conv::makeLaplaceKernel(Image3D<float> & kernel)
@@ -226,17 +294,17 @@ void Conv::makeLaplaceKernel(Image3D<float> & kernel)
 
     auto data = kernel.buffer().get();
     float vals[] = { 
-                     0,   0.5, 0,
-                     0.5, 1,   0.5,
-                     0,   0.5, 0,
+                     0, 0, 0,
+                     0, 1, 0,
+                     0, 0, 0,
                      
-                     0.5, 1,   0.5,
-                     1,   -12,  1,
-                     0.5, 1,   0.5,
+                     0,  1, 0,
+                     1, -6, 1,
+                     0,  1, 0,
 
-                     0,   0.5, 0,
-                     0.5, 1,   0.5,
-                     0,   0.5, 0,
+                     0, 0, 0,
+                     0, 1, 0,
+                     0, 0, 0,
                    };
     memcpy(data, vals, kernel.size()*sizeof(float));
 }
@@ -247,8 +315,9 @@ void Conv::makeLaplaceKernel(Image3D<float> & kernel)
 void Conv::makeGaussianKernel(std::vector<float> & out, float variance, unsigned int size)
 {
     unsigned int width = size ? size : ceil(6.f*variance);
+    if (!(width % 2)) width++;
 
-    out.resize(size);
+    out.resize(width);
 
     float var2 = variance * variance;
     float K    = 1 / (sqrt(2 * M_PI * var2));
@@ -272,6 +341,8 @@ void Conv::makeGaussianKernel(std::vector<float> & out, float variance, unsigned
             out[o-i]   = val;
         }
     }
+
+    filescope::normalize(out);
 }
 
 // ----------------------------------------------------------------------------
@@ -280,6 +351,15 @@ void Conv::makeGaussianKernel(std::vector<float> & out, float variance, unsigned
 void Conv::makeMeanKernel(std::vector<float> & out, unsigned int size)
 {
     out.resize(size, 1.0f / (float)size);
+}
+
+// ----------------------------------------------------------------------------
+//  Constructs a hamming kernel of the given size
+// ----------------------------------------------------------------------------
+void Conv::makeHammingKernel(std::vector<float> & out, float freq, float a, float b, unsigned int size)
+{
+    auto width = size ? size : 0;
+    out.resize(width);
 }
 
 } // namespace volt

@@ -1,8 +1,8 @@
 #===========================================================================#
 #                                                                           #
-#   Project: Volume Transform Library                                       #
+#   Project: StdVolumeFilter                                                #
 #                                                                           #
-#   Description: Performs volume transform operations                       #
+#   Description: Exposes some standard filters provided by the volt library #
 #                                                                           #
 #   Copyright (C) 2014 Lucas Sherman                                        #
 #                                                                           #
@@ -26,22 +26,19 @@
 INCLUDE_DIRECTORIES(.)
 
 VOX_PROJECT(
-    TARGET "VoxVolt" SHARED
+    TARGET "StdVolumeFilter" SHARED
+    FOLDER "Plugins"
     HEADERS
         "Common.h"
-        "Conv.h"
-        "Filter.h"
-        "Linear.h"
-        "Impl/VolumeBlocker.h"
+        "Plugin.h"
         "Version.h"
-        "Core.h"
+        "Filters.h"
     SOURCES
-        "Conv.cu"
-        "Filter.cpp"
-        "Linear.cpp"
-        "Impl/VolumeBlocker.cpp"
+        "Plugin.cpp"
+        "Filters.cpp"
     DEPENDENCIES
         VoxLib
+        VoxVolt
         VoxScene
     LIBRARIES
         ${Boost_LIBRARIES}

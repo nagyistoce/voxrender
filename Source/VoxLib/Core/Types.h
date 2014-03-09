@@ -45,8 +45,10 @@ namespace vox
     typedef boost::int16_t  Int16;
     typedef boost::int32_t  Int32;
     typedef boost::int64_t  Int64;
+    typedef float           Float32;
+    typedef double          Float64;
 
-    // Determine primitive type for desired encoding
+    // Determine primitive type for UTF-8 encoding
     typedef char Char;
 
     // Standard library - encoding specific classes
@@ -63,9 +65,6 @@ namespace vox
     typedef std::basic_istream<Char>       IStream;
     typedef std::basic_ostream<Char>       OStream;
     typedef std::basic_ios<Char>           IOS;
-
-    // String format conversion functionality
-    // :TODO:
 }
 
 // End definition

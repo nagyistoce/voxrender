@@ -45,7 +45,7 @@ AboutDialogue::AboutDialogue( QWidget *parent ) :
 {
     ui->setupUi(this);
      
-	connect( &m_imageView, SIGNAL(clicked()), this, SLOT(close()) );
+	connect(&m_imageView, SIGNAL(clicked()), this, SLOT(close()));
 }
 
 // ---------------------------------------------------------
@@ -65,32 +65,31 @@ AboutImage::AboutImage( QWidget *parent ) :
               "Visit the website at http://code.google.com/p/voxrender/.    "    
               "VoxRender uses open source software: libpng, libjpeg, cURL, Boost C++ Libraries, QT5, ExposureRender, LuxRender"
               ),
-    m_version(vox::format("Version %1%", VOX_VERSION_STRING).c_str( ))
+    m_version(vox::format("Version %1%", VOX_VERSION_STRING).c_str())
 {
-	setBackgroundBrush( QImage(":/images/splash.png") );
-	setCacheMode( QGraphicsView::CacheBackground );
+	setBackgroundBrush(QImage(":/images/splash.png"));
+	setCacheMode(QGraphicsView::CacheBackground);
 	
-	m_authors.setDefaultTextColor( Qt::white );
-	m_authors.setPos( 540, 288 );
+	m_authors.setDefaultTextColor(Qt::white);
+	m_authors.setPos(540, 288);
     
-    m_version.setDefaultTextColor( Qt::white );
-    auto font = m_version.font( );
-    font.setPixelSize( 18 );
-    m_version.setFont( font );
+    m_version.setDefaultTextColor(Qt::white);
+    auto font = m_version.font();
+    font.setPixelSize(18);
+    m_version.setFont(font);
 
-    QFontMetrics metrics( font );
-    int width = metrics.width( m_version.toPlainText( ) );
-    m_version.setPos( 275-width/2, 250 );
+    QFontMetrics metrics(font);
+    int width = metrics.width(m_version.toPlainText());
+    m_version.setPos(275-width/2, 250);
 
-	m_scene.setSceneRect( 0, 0, 550, 330 );
-	m_scene.addItem( &m_authors );
-    m_scene.addItem( &m_version );
-	setScene( &m_scene );
+	m_scene.setSceneRect(0, 0, 550, 330);
+	m_scene.addItem(&m_authors);
+    m_scene.addItem(&m_version);
+	setScene(&m_scene);
 
     // Text scrolling update 
-	m_scrolltimer.start( 10 );
-	connect( &m_scrolltimer, SIGNAL(timeout()), 
-        SLOT(scrollTimeout()));
+	m_scrolltimer.start(10);
+	connect(&m_scrolltimer, SIGNAL(timeout()), SLOT(scrollTimeout()));
 }
 
 // ---------------------------------------------------------
@@ -98,13 +97,13 @@ AboutImage::AboutImage( QWidget *parent ) :
 // ---------------------------------------------------------
 void AboutImage::scrollTimeout()
 {
-	auto xpos = m_authors.x( );
-	auto endpos = xpos + m_authors.sceneBoundingRect( ).width( );
+	auto xpos = m_authors.x();
+	auto endpos = xpos + m_authors.sceneBoundingRect().width();
 
-	if( endpos < 0 ) xpos = 540.0f;
+	if (endpos < 0) xpos = 540.0f;
 	else xpos = xpos - 1.0f;
 	
-	m_authors.setPos( xpos, m_authors.y( ) );
+	m_authors.setPos(xpos, m_authors.y());
 }
 
 // ---------------------------------------------------------
@@ -112,5 +111,5 @@ void AboutImage::scrollTimeout()
 // ---------------------------------------------------------
 void AboutImage::mousePressEvent( QMouseEvent* event ) 
 {
-	emit clicked( );
+	emit clicked();
 }

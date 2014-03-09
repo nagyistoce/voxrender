@@ -63,6 +63,7 @@ IF(Qt5Widgets_FOUND)
         Interface/clipplanewidget.cpp
         Interface/edgeitem.cpp
         Interface/griditem.cpp
+        Interface/genericdialogue.cpp
         Interface/animateitem.cpp
         Interface/histogramitem.cpp
         Interface/histogramgenerator.cpp
@@ -99,6 +100,7 @@ IF(Qt5Widgets_FOUND)
         Interface/edgeitem.h
         Interface/animateitem.h
         Interface/griditem.h
+        Interface/genericdialogue.h
         Interface/histogramitem.h
         Interface/histogramgenerator.h
         Interface/histogramview.h
@@ -131,6 +133,7 @@ IF(Qt5Widgets_FOUND)
         Interface/clipdialogue.ui
         Interface/clipplanewidget.ui
         Interface/histogramwidget.ui
+        Interface/genericdialogue.ui
         Interface/infowidget.ui
         Interface/lightdialogue.ui
         Interface/mainwindow.ui

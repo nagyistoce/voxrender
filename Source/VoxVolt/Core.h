@@ -23,22 +23,7 @@
                                                                            
 =========================================================================== */
 
-// Include Header
-#include "Sample.h"
-
-// Include Dependencies
+// Include Headers
 #include "VoxVolt/Conv.h"
-
-namespace vox {
-namespace volt {
-
-// ----------------------------------------------------------------------------
-//  Performs a resize operation on the volume data set
-// ----------------------------------------------------------------------------
-std::shared_ptr<Volume> Sample::resize(Volume const& volume, Vector4u newSize, Interp interp)
-{
-    return Volume::create();
-}
-
-} // namespace volt
-} // namespace vox
+#include "VoxVolt/Linear.h"
+#include "VoxVolt/Filter.h"

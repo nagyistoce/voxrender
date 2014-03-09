@@ -32,6 +32,7 @@
 #include "ambientlightwidget.h"
 #include "arealightwidget.h"
 #include "camerawidget.h"
+#include "genericdialogue.h"
 #include "infowidget.h"
 #include "pointlightwidget.h"
 #include "lightdialogue.h"
@@ -72,7 +73,7 @@
 #include <QSettings>
 
 // Volume Transform Includes
-#include "VoxVolt/Conv.h"
+#include "VoxVolt/Core.h"
 
 #define VOX_GUI_LOG_CAT "GUI"
 
@@ -121,8 +122,7 @@ namespace filescope
 // ----------------------------------------------------------------------------
 //  Setup the logging backend and instantiate the environment
 // ----------------------------------------------------------------------------
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this); instance = this;
 
@@ -249,11 +249,72 @@ void MainWindow::configureLoggingEnvironment()
 // ----------------------------------------------------------------------------
 void MainWindow::configurePlugins()
 {
+    // Enumerate all available plugins and add them to the display panel
     m_pluginSpacer = new QSpacerItem( 20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding );
 	ui->pluginsAreaLayout->addItem(m_pluginSpacer);
-
-    // Enumerate all available plugins and add them to the display panel
     vox::PluginManager::instance().forEach(boost::bind(&MainWindow::registerPlugin, this, _1));
+
+    // Enumerate any registered filters and configure the access menus
+    volt::FilterManager::instance().registerCallback(std::bind(&MainWindow::onFiltersChanged, this));
+    std::list<std::shared_ptr<volt::Filter>> filters;
+    volt::FilterManager::instance().getFilters(filters);
+    BOOST_FOREACH (auto & filter, filters)
+    {
+        // Split the filter name to establish the menu hierarchy
+        std::vector<String> path;
+        boost::algorithm::split(path, filter->name(), boost::is_any_of("."));
+        if (path.size() < 2)
+        {
+            VOX_LOG_ERROR(Error_BadToken, VOX_GUI_LOG_CAT, 
+                format("Filter name does not conform to 'Menu.Name' format: %1%", filter->name()));
+        }
+
+        // Locate/create the base menu for the filter
+        QMenu * menu = nullptr;
+        BOOST_FOREACH (auto child, ui->menuBar->children())
+        if (auto childMenu = dynamic_cast<QMenu*>(child))
+        if (childMenu->title().toUtf8().data() == path[0])
+        {
+            menu = childMenu; break;
+        }
+        if (!menu)
+        {
+            menu = new QMenu(path[0].c_str(), ui->menuBar);
+            ui->menuBar->insertMenu(ui->menuBar->actions().back(), menu); // Before 'Help'
+        }
+
+        // Locate/create the submenu structure for the filter
+        for (int i = 1; i < path.size()-1; ++i)
+        {
+            // Attempt to locate the submenu in case it already exists
+            bool found = false;
+            BOOST_FOREACH (auto & child, menu->children())
+            if (auto childMenu = dynamic_cast<QMenu*>(child))
+            {
+                if (childMenu->title().toUtf8().data() == path[i])
+                {
+                    menu = childMenu;
+                    found = true;
+                    break;
+                }
+            }
+
+            // Create the submenu if it does not exist
+            if (!found)
+            {
+                auto newMenu = new QMenu(path[i].c_str(), menu);
+                menu->addMenu(newMenu);
+                menu = newMenu;
+            }
+        }
+
+        // Locate/create the bae action for the filter
+        auto action = new QAction(path.back().c_str(), menu);
+        menu->addAction(action);
+        connect(action, SIGNAL(triggered()), this, SLOT(onFilterExecuted()));
+
+        VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("Detected new filter: %1%", filter->name()));
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -623,9 +684,6 @@ void MainWindow::beginRender(size_t samples, bool animation)
                     progressChanged(value);
             });
 
-        // Update the render state
-        changeRenderState(animation ? RenderState_Animating : RenderState_Rendering);
-
         // Initiate rendering of the scene
         if (animation) m_renderController.render(m_renderer, m_activeScene.animator, samples);
         else
@@ -634,8 +692,16 @@ void MainWindow::beginRender(size_t samples, bool animation)
 
             m_renderController.render(m_renderer, m_activeScene, samples);
         }
+
+        // Update the render state
+        changeRenderState(animation ? RenderState_Animating : RenderState_Rendering);
     }
-    catch (Error & error) { VOX_LOG_EXCEPTION(Severity_Error, error); }
+    catch (Error & error) 
+    { 
+        changeRenderState(RenderState_Waiting);
+
+        VOX_LOG_EXCEPTION(Severity_Error, error); 
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1214,46 +1280,17 @@ void MainWindow::stopRender()
 }
 
 // ----------------------------------------------------------------------------
-//  Performs a gaussian convolution operation on the active volume data set
-// ----------------------------------------------------------------------------
-void MainWindow::on_actionGaussian_Filter_triggered()
-{
-    performFiltering([] (std::shared_ptr<Volume> volume) -> std::shared_ptr<Volume> { 
-        Image3D<float> kernel(5, 5, 5);
-        std::vector<float> gaussVec;
-        volt::Conv::makeGaussianKernel(gaussVec, 0.75f, 5);
-        for (int x = 0; x < 5; x++)
-        for (int y = 0; y < 5; y++)
-        for (int z = 0; z < 5; z++)
-            kernel.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
-        return volt::Conv::execute(volume, kernel);
-    });
-}
-
-// ----------------------------------------------------------------------------
-//  Performs a laplacian convolution operation on the active volume data set
-// ----------------------------------------------------------------------------
-void MainWindow::on_actionLaplace_Filter_triggered()
-{
-    performFiltering([] (std::shared_ptr<Volume> volume) -> std::shared_ptr<Volume> { 
-        Image3D<float> kernel;
-        volt::Conv::makeLaplaceKernel(kernel);
-        return volt::Conv::execute(volume, kernel);
-    });
-}
-
-// ----------------------------------------------------------------------------
 //  Performs a filtering function on the active volume data set
 // ----------------------------------------------------------------------------
-void MainWindow::performFiltering(VolumeFilter filter)
+void MainWindow::performFiltering(std::shared_ptr<volt::Filter> filter, OptionSet const& options)
 {
-    if (!m_activeScene.volume) return;
+    if (!m_activeScene.isValid()) return;
 
     try
     {
         m_renderController.stop();
         HistogramGenerator::instance()->stopGeneratingImages();
-        m_activeScene.volume = filter(m_activeScene.volume);
+        filter->execute(m_activeScene, options);
     }
     catch (Error & error)
     {
@@ -1267,6 +1304,62 @@ void MainWindow::performFiltering(VolumeFilter filter)
     }
 
     beginRender();
+}
+
+// ----------------------------------------------------------------------------
+//  Global slot for a registed filter action being triggered
+// ----------------------------------------------------------------------------
+void MainWindow::onFilterExecuted()
+{
+    // Acquire the sender so we can parse the filter name
+    auto action = dynamic_cast<QAction*>(sender());
+    if (!action) 
+    {
+        VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "filter triggered slot activated on non-action");
+        return;
+    }
+    
+    // Parse the menu hierarchy to determine the filter name
+    String name = action->text().toUtf8().data();
+    auto parent = action->parent();
+    while (parent != ui->menuBar)
+    {
+        auto p = dynamic_cast<QMenu*>(parent);
+        if (!p) 
+        {
+            VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "Error parsing filter menu hierarchy");
+            return;
+        }
+
+        name = String(p->title().toUtf8().data()) + "." + name;
+        parent = parent->parent();
+    }
+
+    // Acquire the filter handle
+    auto filter = volt::FilterManager::instance().find(name);
+    if (!filter) 
+    {
+        VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "The specified filter no longer exists");
+        return;
+    }
+
+    // Acquire the user parameters and perform the filtering
+    std::list<volt::FilterParam> params;
+    filter->getParams(params);
+    if (params.empty()) 
+    {
+        performFiltering(filter, OptionSet());
+    }
+    else
+    {
+        GenericDialogue dialogue(name.substr(name.find_last_of('.')+1), params);
+        if (dialogue.exec() == QDialog::Accepted)
+        {
+            OptionSet options;
+            dialogue.getOptions(options);
+            performFiltering(filter, options);
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1336,7 +1429,7 @@ void MainWindow::on_actionFull_Screen_triggered()
 void MainWindow::on_actionClear_Log_triggered() 
 {
 	ui->textEdit_log->setPlainText("");
-    blinkTrigger( false );
+    blinkTrigger(false);
 }
 
 // ----------------------------------------------------------------------------
@@ -1353,7 +1446,7 @@ void MainWindow::on_actionCopy_Log_triggered()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionShow_Side_Panel_triggered(bool checked)
 {
-	ui->tabWidget_render->setVisible( checked );
+	ui->tabWidget_render->setVisible(checked);
 }
 
 // ----------------------------------------------------------------------------
@@ -1419,10 +1512,7 @@ void MainWindow::on_pushButton_addClip_clicked()
     std::shared_ptr<vox::Primitive> prim;
     switch (clipDialogue.typeSelected())
     {
-    case ClipType_Plane:
-        prim = vox::Plane::create();
-        break;
-
+    case ClipType_Plane: prim = vox::Plane::create(); break;
     default:
         VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "Invalid geometry type selection");
         return;

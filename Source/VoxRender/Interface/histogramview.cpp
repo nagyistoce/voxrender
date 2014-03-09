@@ -158,9 +158,9 @@ void HistogramView::updateTransfer()
     }
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Updates the histogram data buffer
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 void HistogramView::updateHistogramData()
 {
     // :TODO: Enable loading animation in place of histogram

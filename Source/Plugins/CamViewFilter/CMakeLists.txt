@@ -1,8 +1,8 @@
 #===========================================================================#
 #                                                                           #
-#   Project: Volume Transform Library                                       #
+#   Project: CamViewFilter                                                  #
 #                                                                           #
-#   Description: Performs volume transform operations                       #
+#   Description: Performs smart alignment of the camera for volume viewing  #
 #                                                                           #
 #   Copyright (C) 2014 Lucas Sherman                                        #
 #                                                                           #
@@ -26,22 +26,19 @@
 INCLUDE_DIRECTORIES(.)
 
 VOX_PROJECT(
-    TARGET "VoxVolt" SHARED
+    TARGET "CamViewFilter" SHARED
+    FOLDER "Plugins"
     HEADERS
         "Common.h"
-        "Conv.h"
-        "Filter.h"
-        "Linear.h"
-        "Impl/VolumeBlocker.h"
+        "Plugin.h"
         "Version.h"
-        "Core.h"
+        "Filters.h"
     SOURCES
-        "Conv.cu"
-        "Filter.cpp"
-        "Linear.cpp"
-        "Impl/VolumeBlocker.cpp"
+        "Plugin.cpp"
+        "Filters.cpp"
     DEPENDENCIES
         VoxLib
+        VoxVolt
         VoxScene
     LIBRARIES
         ${Boost_LIBRARIES}

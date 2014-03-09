@@ -106,7 +106,7 @@ public:
             try { return boost::lexical_cast<T>(iter->second); }
             catch (boost::bad_lexical_cast &)
             {
-                std::string const err = "Value could not be cast to type T:TODO:";
+                std::string const err = "Value could not be cast to type T";
                 throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, err, Error_BadToken);
             }
         }

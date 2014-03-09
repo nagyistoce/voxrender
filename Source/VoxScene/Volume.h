@@ -56,6 +56,8 @@ public:
         Type_Int8,                    ///< Signed 8-bit integer
         Type_UInt16,                  ///< Unsigned 16-bit integer
         Type_Int16,                   ///< Signed 16-bit integer
+        Type_UInt32,                  ///< Unsigned 32-bit integer
+        Type_Int32,                   ///< Signed 32-bit integer
         Type_Float32,                 ///< 32-bit floating point numeric
         Type_Float64,                 ///< 64-bit floating point numeric
         Type_End                      ///< End iterator for Format enumeration

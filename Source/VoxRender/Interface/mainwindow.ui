@@ -800,19 +800,6 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menuFilters">
-    <property name="title">
-     <string>Filters</string>
-    </property>
-    <widget class="QMenu" name="menuConvolution">
-     <property name="title">
-      <string>Convolution</string>
-     </property>
-     <addaction name="actionGaussian_Filter"/>
-     <addaction name="actionLaplace_Filter"/>
-    </widget>
-    <addaction name="menuConvolution"/>
-   </widget>
    <widget class="QMenu" name="menuRender">
     <property name="title">
      <string>Render</string>
@@ -824,7 +811,6 @@
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuRender"/>
-   <addaction name="menuFilters"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -1029,6 +1015,31 @@
   <action name="actionLaplace_Filter">
    <property name="text">
     <string>Laplace</string>
+   </property>
+  </action>
+  <action name="actionLowPass_Filter">
+   <property name="text">
+    <string>Low Pass</string>
+   </property>
+  </action>
+  <action name="actionAverage_Filter">
+   <property name="text">
+    <string>Average</string>
+   </property>
+  </action>
+  <action name="actionLanczos_Filter">
+   <property name="text">
+    <string>Resize (Lanczos)</string>
+   </property>
+  </action>
+  <action name="actionRetype_Filter">
+   <property name="text">
+    <string>Convert Type</string>
+   </property>
+  </action>
+  <action name="actionShift_Filter">
+   <property name="text">
+    <string>Linear Shift/Scale</string>
    </property>
   </action>
  </widget>

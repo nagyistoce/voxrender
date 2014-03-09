@@ -72,6 +72,8 @@ enum RenderState
 	RenderState_Paused,			///< Paused Rendering
 };
 
+namespace vox { namespace volt { class Filter; } }
+
 // Generated class
 namespace Ui { class MainWindow; }
 
@@ -180,6 +182,9 @@ private:
     /** Adds a newly detected plugin to the available plugins */
     void registerPlugin(std::shared_ptr<vox::PluginInfo> plugin);
 
+    /** Updates the filter selection menus */
+    void onFiltersChanged() { }
+
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
     
@@ -194,7 +199,7 @@ private:
     void synchronizeView();
 
     /** Helper method for executing a volume filtering operation */
-    void performFiltering(VolumeFilter filter);
+    void performFiltering(std::shared_ptr<vox::volt::Filter> filter, vox::OptionSet const& options);
 
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
@@ -271,10 +276,6 @@ private slots:
     void on_pushButton_addLight_clicked();
     void on_pushButton_addClip_clicked();
 
-    // Filtering operations
-    void on_actionGaussian_Filter_triggered();
-    void on_actionLaplace_Filter_triggered();
-
 	// Toolbar action slots
     void on_actionFull_Screen_triggered();
     void on_actionOpen_triggered();
@@ -299,6 +300,9 @@ private slots:
     void onZoomChange(float zoom);
 
     void onProgressChanged(int progress);
+
+    // Filter action slot
+    void onFilterExecuted();
 
     // Scene element removal
     void removeClipGeometry(PaneWidget * pane);

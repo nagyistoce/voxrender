@@ -24,54 +24,51 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_VOLT_SAMPLE_H
-#define VOX_VOLT_SAMPLE_H
+#ifndef VOX_VOLT_LINEAR_H
+#define VOX_VOLT_LINEAR_H
 
 // Include Dependencies
 #include "VoxVolt/Common.h"
 #include "VoxLib/Core/Geometry/Image3D.h"
-#include "VoxLib/Scene/Volume.h"
+#include "VoxScene/Volume.h"
 
 // API namespace
 namespace vox {
-
-    class Volume;
-    
 namespace volt {
 
-/** Interpolation types */
-enum Interp
-{
-    Interp_Begin,
-    Interp_Linear = Interp_Begin,
-    Interp_Nearest,
-    Interp_End
-};
-
 /** Implements transforms for convolution operations */
-class VOX_VOLT_EXPORT Sample
+class VOX_VOLT_EXPORT Linear
 {
 public:
     /**
-     * Resamples the volume using the specified filter technique
+     * Performs a linear transformation operation on the volume data set (in place)
      *
-     * @param volume  The input volume data set
-     * @param newSize The extent of the output volume
+     * @param volume The input volume data set
+     * @param shift  The amount to shift each value by
+     * @param scale  A scale factor for each data value
      */
-    static std::shared_ptr<Volume> resize(Volume const& volume, Vector4u newSize, Interp interp);
+    static std::shared_ptr<Volume> execute(std::shared_ptr<Volume> volume, double shift, double scale);
 
-    /** Performs a linear transformation of the volume data in place */
-    static void scale(Volume & volume, float shift, float scale);
-
-    /** Performs a linear transformation of the volume data and retypes */
-    static std::shared_ptr<Volume> scale(Volume const& volume, float shift, float scale, Volume::Type typeOut);
+    /**
+     * Performs a linear transformation operation on the volume data set
+     *
+     * @param volume The input volume data set
+     * @param shift  The amount to shift each value by
+     * @param scale  A scale factor for each data value
+     * @param type   The target type of the output volume data set
+     */
+    static std::shared_ptr<Volume> execute(
+        std::shared_ptr<Volume> volume, 
+        double shift, 
+        double scale, 
+        Volume::Type type);
 
 private:
-    Sample();
+    Linear();
 };
 
 } // namespace volt
 } // namespace vox
 
 // End definition
-#endif // VOX_VOLT_SAMPLE_H
+#endif // VOX_VOLT_LINEAR_H
