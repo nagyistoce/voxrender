@@ -30,11 +30,10 @@
 // Include Dependencies
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Core/Geometry/Vector.h"
+#include "utilities.h"
 
 // QT Headers
 #include <QLabel>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
 
 using namespace vox;
 using namespace volt;
@@ -77,6 +76,9 @@ GenericDialogue::GenericDialogue(String const& title, std::list<FilterParam> par
         case FilterParam::Type_Float: {
             QSlider * slider  = new QSlider(Qt::Horizontal);
             QDoubleSpinBox * spinBox = new QDoubleSpinBox();
+            connect(slider, SIGNAL(valueChanged(int)), this, SLOT(valueChangeRedirect(int)));
+            connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(valueChangeRedirect(double)));
+            m_connMap.insert(std::make_pair(spinBox, slider));
             auto range = boost::lexical_cast<Vector<double,2>>(param.range);
             spinBox->setRange(range[0], range[1]);
             spinBox->setValue(boost::lexical_cast<double>(param.value));
@@ -99,6 +101,36 @@ GenericDialogue::GenericDialogue(String const& title, std::list<FilterParam> par
 GenericDialogue::~GenericDialogue()
 {
     delete ui;
+}
+
+// --------------------------------------------------------------------
+//  Redirect for QT spinBox to slider
+// --------------------------------------------------------------------
+void GenericDialogue::valueChangeRedirect(double value) 
+{
+    auto spinBox = dynamic_cast<QDoubleSpinBox*>(sender());
+    if (!spinBox) return;
+
+    auto iter = m_connMap.find(spinBox);
+    if (iter == m_connMap.end()) return;
+
+    Utilities::forceSlToSb(iter->second, spinBox, value);
+}
+
+// --------------------------------------------------------------------
+//  Redirect for QT slider to spinBox
+// --------------------------------------------------------------------
+void GenericDialogue::valueChangeRedirect(int value) 
+{ 
+    auto slider = dynamic_cast<QSlider*>(sender());
+    if (!slider) return;
+    
+    BOOST_FOREACH (auto & entry, m_connMap)
+    if (entry.second == slider)
+    {
+        Utilities::forceSbToSl(entry.first, slider, value);
+    }
+
 }
 
 // --------------------------------------------------------------------

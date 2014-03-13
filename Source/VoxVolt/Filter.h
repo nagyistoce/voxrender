@@ -67,13 +67,16 @@ public:
     virtual String name() = 0; 
 
     /** Generates a list of the parameters for this filter */
-    virtual void getParams(std::list<FilterParam> & params) = 0;
+    virtual void getParams(Scene const& scene, std::list<FilterParam> & params) = 0;
 
     /** Performs the function of this filter on the scene */
     virtual void execute(Scene & scene, OptionSet const& params) = 0;
 };
 
-/** Implements transforms for convolution operations */
+/** Filter manager change event callback */
+typedef std::function<void(std::shared_ptr<Filter> filter, bool enabled)> FilterCallback;
+
+/** Implements a management class for runtime filter registration */
 class VOX_VOLT_EXPORT FilterManager
 {
 public:
@@ -81,7 +84,7 @@ public:
     static FilterManager & instance();
 
     /** Registers a callback for filter change events */
-    void registerCallback(std::function<void()> callback);
+    void registerCallback(FilterCallback callback);
 
     /** Returns parameter information on a filter */
     std::shared_ptr<Filter> find(String const& name);

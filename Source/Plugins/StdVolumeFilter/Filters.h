@@ -37,6 +37,51 @@
 namespace vox
 {
    
+/** Crop operation provided by volt library */
+class CropFilter: public volt::Filter
+{
+public:
+    CropFilter(std::shared_ptr<void> handle) : m_handle(handle) { }
+
+    String name() { return "Filters.Sampling.Crop"; }
+    
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
+    {
+        Vector4s size = scene.volume->extent() - Vector4s(1);
+        params.push_back(volt::FilterParam("[X] Left",   volt::FilterParam::Type_Int, "0", "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[Y] Top",    volt::FilterParam::Type_Int, "0", "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[Z] Front",  volt::FilterParam::Type_Int, "0", "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[T] Begin",  volt::FilterParam::Type_Int, "0", "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[X] Right",  volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[0]), "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[Y] Bottom", volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[1]), "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[Z] Back",   volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[2]), "[-1024 1024]"));
+        params.push_back(volt::FilterParam("[T] End",    volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[3]), "[-1024 1024]"));
+    }
+
+    void execute(Scene & scene, OptionSet const& params)
+    {
+        Vector4 newOrigin(
+            params.lookup<Int64>("[X] Left"),
+            params.lookup<Int64>("[Y] Top"),
+            params.lookup<Int64>("[Z] Front"),
+            params.lookup<Int64>("[T] Begin")
+            );
+
+        Vector4s newExtent(
+            params.lookup<size_t>("[X] Right"),
+            params.lookup<size_t>("[Y] Bottom"),
+            params.lookup<size_t>("[Z] Back"),
+            params.lookup<size_t>("[T] End")
+            );
+        newExtent -= newOrigin - Vector4s(1);
+
+        scene.volume = vox::volt::Linear::padCrop(scene.volume, newOrigin, newExtent);
+    }
+
+private:
+    std::shared_ptr<void> m_handle;
+};
+
 /** Lanczos resize transformation provided by Volt library */
 class LanczosFilter : public volt::Filter
 {
@@ -45,8 +90,12 @@ public:
 
     String name() { return "Filters.Sampling.Lanczos Resize"; }
     
-    void getParams(std::list<volt::FilterParam> & params)
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
+        Vector4s size = scene.volume->extent();
+        params.push_back(volt::FilterParam("Width",  volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[0]), "[1 1024]"));
+        params.push_back(volt::FilterParam("Height", volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[1]), "[1 1024]"));
+        params.push_back(volt::FilterParam("Depth",  volt::FilterParam::Type_Int, boost::lexical_cast<String>(size[2]), "[1 1024]"));
     }
 
     void execute(Scene & scene, OptionSet const& params)
@@ -64,20 +113,30 @@ class LinearFilter : public volt::Filter
 public:
     LinearFilter(std::shared_ptr<void> handle) : m_handle(handle) { }
 
-    String name() { return "Filters.Sampling.Shift and Scale"; }
+    String name() { return "Filters.Sampling.Shift/Scale/Retype"; }
     
-    void getParams(std::list<volt::FilterParam> & params)
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
         params.push_back(volt::FilterParam("Shift", volt::FilterParam::Type_Float, "0", "[-10000.0 10000.0]"));
         params.push_back(volt::FilterParam("Scale", volt::FilterParam::Type_Float, "1.0", "[-10000.0 10000.0]"));
-        params.push_back(volt::FilterParam("Type", volt::FilterParam::Type_Radio, "UInt8", "[UInt32 Int32 UInt16 Int16 UInt8 Int8 Float32 Float64]"));
+
+        auto defaultType = Volume::typeToString(scene.volume->type());
+        String types = "[";
+        for (int i = Volume::Type_Begin; i < Volume::Type_End; ++i)
+        {
+            types += Volume::typeToString((Volume::Type)i);
+            if (i != Volume::Type_End - 1) types += " ";
+        }
+        types += "]";
+
+        params.push_back(volt::FilterParam("Type", volt::FilterParam::Type_Radio, defaultType, types));
     }
 
     void execute(Scene & scene, OptionSet const& params)
     {
         double shift = params.lookup<double>("Shift");
         double scale = params.lookup<double>("Scale");
-        volt::Linear::execute(scene.volume, shift, scale);
+        volt::Linear::shiftScale(scene.volume, shift, scale);
     }
 
 private:
@@ -92,15 +151,14 @@ public:
 
     String name() { return "Filters.Convolution.Mean"; }
     
-    void getParams(std::list<volt::FilterParam> & params)
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
-        params.push_back(volt::FilterParam("Kernel Size", volt::FilterParam::Type_Int, "0", "[3 10]"));
+        params.push_back(volt::FilterParam("Kernel Size", volt::FilterParam::Type_Int, "3", "[3 10]"));
     }
 
     void execute(Scene & scene, OptionSet const& params)
     {
-        auto variance = params.lookup<float>("Variance");
-        auto size     = params.lookup<unsigned int>("Kernel Size");
+        auto size = params.lookup<unsigned int>("Kernel Size");
         Image3D<float> kernel(size, size, size);
         std::vector<float> avgVec;
         volt::Conv::makeMeanKernel(avgVec, size);
@@ -123,7 +181,7 @@ public:
 
     String name() { return "Filters.Convolution.Gaussian"; }
     
-    void getParams(std::list<volt::FilterParam> & params)
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
         params.push_back(volt::FilterParam("Variance", volt::FilterParam::Type_Float, "0.75", "[0.0 5.0]"));
         params.push_back(volt::FilterParam("Kernel Size", volt::FilterParam::Type_Int, "0", "[0 10]"));
@@ -156,7 +214,7 @@ public:
 
     String name() { return "Filters.Convolution.Laplace"; }
     
-    void getParams(std::list<volt::FilterParam> & params)
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
     }
 

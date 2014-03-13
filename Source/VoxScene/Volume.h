@@ -88,6 +88,8 @@ public:
         case Type_Int8:    return "int8";
         case Type_UInt16:  return "uint16";
         case Type_Int16:   return "int16";
+        case Type_UInt32:  return "uint32";
+        case Type_Int32:   return "int32";
         case Type_Float32: return "float32";
         case Type_Float64: return "float64";
         default: 

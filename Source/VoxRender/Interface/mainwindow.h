@@ -27,7 +27,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-// API Header
+// Include Dependencies
 #include "VoxScene/RenderController.h"
 #include "VoxScene/Scene.h"
 #include "VoxScene/Light.h"
@@ -36,6 +36,7 @@
 #include "VoxScene/Primitive.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxVolt/Filter.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
@@ -54,11 +55,6 @@
 #include <QtWidgets/QProgressDialog>
 #include <QtWidgets/QSpacerItem>
 #include <QtCore/QTimer.h>
-
-// Shared pointer MetaType declaration for QT signals/slots
-Q_DECLARE_METATYPE(std::shared_ptr<vox::FrameBufferLock>);
-Q_DECLARE_METATYPE(std::string);
-Q_DECLARE_METATYPE(std::shared_ptr<vox::Node>);
 
 /** GUI Render States */
 enum RenderState
@@ -88,6 +84,12 @@ class AnimateWidget;
 
 // Convenience typedef for a volume filtering function
 typedef std::function<std::shared_ptr<vox::Volume>(std::shared_ptr<vox::Volume>)> VolumeFilter;
+
+// Shared pointer MetaType declaration for QT signals/slots
+Q_DECLARE_METATYPE(std::shared_ptr<vox::FrameBufferLock>);
+Q_DECLARE_METATYPE(std::string);
+Q_DECLARE_METATYPE(std::shared_ptr<vox::Node>);
+Q_DECLARE_METATYPE(std::shared_ptr<vox::volt::Filter>);
 
 // Main Application Window
 class MainWindow : public QMainWindow
@@ -166,6 +168,9 @@ signals:
     void logEntrySignal(char const* file, int line, int severity, 
         int code, char const* category, std::string message);
 
+    /** Change event callback for available filters */
+    void filtersChanged(std::shared_ptr<vox::volt::Filter> filter, bool available);
+
 private:
     Ui::MainWindow *ui;
     
@@ -181,9 +186,6 @@ private:
 
     /** Adds a newly detected plugin to the available plugins */
     void registerPlugin(std::shared_ptr<vox::PluginInfo> plugin);
-
-    /** Updates the filter selection menus */
-    void onFiltersChanged() { }
 
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
@@ -312,9 +314,12 @@ private slots:
 	void on_pushButton_devicesAdd_clicked();
 	void on_pushButton_devicesRemove_clicked();
 
-    // Prints formatted log entries to the log tab pane
-    void printLogEntry(char const* file, int line, int severity, 
-        int code, char const* category, std::string message);
+    /** VoxLib Error Handler which prints log entries to the main window log tab */
+    void printLogEntry(char const* file, int line, int severity, int code, 
+                       char const* category, std::string message);
+    
+    /** Change event handler for available scene filters */
+    void onFiltersChanged(std::shared_ptr<vox::volt::Filter> filter, bool available);
 
     // Log tab widget catch for detecting log checks
     void on_tabWidget_main_currentChanged(int tabId);

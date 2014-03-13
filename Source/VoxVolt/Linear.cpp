@@ -97,7 +97,7 @@ namespace volt {
 // ----------------------------------------------------------------------------
 //  Performs a simple linear transformation of the data (always on the CPU)
 // ----------------------------------------------------------------------------
-std::shared_ptr<Volume> Linear::execute(std::shared_ptr<Volume> volume, double shift, double scale)
+std::shared_ptr<Volume> Linear::shiftScale(std::shared_ptr<Volume> volume, double shift, double scale)
 {
     // Begin tracking the performance time
     auto tbeg = std::chrono::high_resolution_clock::now();
@@ -120,7 +120,7 @@ std::shared_ptr<Volume> Linear::execute(std::shared_ptr<Volume> volume, double s
     // Compute the time elapsed during execution
     auto tend = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
-    VOX_LOG_INFO(VOLT_LOG_CAT, format("Linear transformation completed in %1% ms", time.count()));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Shift+Scale transformation completed in %1% ms", time.count()));
 
     return volume;
 }
@@ -129,7 +129,7 @@ std::shared_ptr<Volume> Linear::execute(std::shared_ptr<Volume> volume, double s
 // ----------------------------------------------------------------------------
 //  Performs a simple linear transformation of the data (always on the CPU)
 // ----------------------------------------------------------------------------
-std::shared_ptr<Volume> Linear::execute(std::shared_ptr<Volume> volume, double shift, double scale, Volume::Type type)
+std::shared_ptr<Volume> Linear::shiftScale(std::shared_ptr<Volume> volume, double shift, double scale, Volume::Type type)
 {
     // Begin tracking the performance time
     auto tbeg = std::chrono::high_resolution_clock::now();
@@ -153,9 +153,60 @@ std::shared_ptr<Volume> Linear::execute(std::shared_ptr<Volume> volume, double s
     // Compute the time elapsed during execution
     auto tend = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
-    VOX_LOG_INFO(VOLT_LOG_CAT, format("Linear transformation completed in %1% ms", time.count()));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Shift+Scale transformation completed in %1% ms", time.count()));
 
     return Volume::create(dataO, volume->extent(), volume->spacing(), volume->offset(), type);
+}
+
+// ----------------------------------------------------------------------------
+//  Crops the volume to the specified extent
+// ----------------------------------------------------------------------------
+std::shared_ptr<Volume> Linear::padCrop(std::shared_ptr<Volume> volume, 
+    Vector4 const& newOrigin, Vector4s newExtent, void const* value)
+{
+    // Begin tracking the performance time
+    auto tbeg = std::chrono::high_resolution_clock::now();
+    
+    // Perform the crop/pad operation
+    auto extent   = volume->extent();
+    auto voxels   = newExtent.fold(&mul);
+    auto voxSize  = Volume::typeToSize(volume->type());
+    
+    std::shared_ptr<UInt8> data = makeSharedArray(voxels*voxSize);
+
+    auto readPtr  = volume->mutableData();
+    auto writePtr = data.get();
+    
+    Vector3s rStride;
+    rStride[0] = extent[0] * voxSize;
+    rStride[1] = extent[1] * rStride[0];
+    rStride[2] = extent[2] * rStride[1];
+
+    Vector3s wStride;
+    wStride[0] = newExtent[0] * voxSize;
+    wStride[1] = newExtent[1] * wStride[0];
+    wStride[2] = newExtent[2] * wStride[1];
+
+    auto copyLength  = extent[0] * voxSize;
+    auto readOffset  = 0;
+    auto writeOffset = 0; // :TODO:
+    for (auto t = 0; t < extent[3]; t++)
+    for (auto z = 0; z < extent[2]; z++)
+    for (auto y = 0; y < extent[1]; y++)
+    {
+        auto r = readPtr  + y * rStride[0] + z * rStride[1] + t * rStride[2];
+        auto w = writePtr + y * wStride[0] + z * wStride[1] + t * wStride[2];
+
+        memcpy(w + writeOffset, r + readOffset, copyLength);
+        // :TODO: Clear the rest of the row to the setval
+    }
+    
+    // Compute the time elapsed during execution
+    auto tend = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Pad/Crop operation completed in %1% ms", time.count()));
+
+    return Volume::create(data, newExtent, volume->spacing(), volume->offset(), volume->type());
 }
 
 } // namespace volt

@@ -47,7 +47,7 @@ public:
      * @param shift  The amount to shift each value by
      * @param scale  A scale factor for each data value
      */
-    static std::shared_ptr<Volume> execute(std::shared_ptr<Volume> volume, double shift, double scale);
+    static std::shared_ptr<Volume> shiftScale(std::shared_ptr<Volume> volume, double shift, double scale);
 
     /**
      * Performs a linear transformation operation on the volume data set
@@ -57,11 +57,25 @@ public:
      * @param scale  A scale factor for each data value
      * @param type   The target type of the output volume data set
      */
-    static std::shared_ptr<Volume> execute(
+    static std::shared_ptr<Volume> shiftScale(
         std::shared_ptr<Volume> volume, 
         double shift, 
         double scale, 
         Volume::Type type);
+
+    /**  
+     * Crops or pads the volume to the specified dimensions 
+     *
+     * @param volume    The input volume data set
+     * @param newOrigin The new origin of the volume
+     * @param newExtent The new extent of the volume
+     * @param value     A pointer to the data value for padding
+     */
+    static std::shared_ptr<Volume> padCrop(
+        std::shared_ptr<Volume> volume, 
+        Vector4 const& newOrigin, 
+        Vector4s       newExtent,
+        void const* value = nullptr);
 
 private:
     Linear();

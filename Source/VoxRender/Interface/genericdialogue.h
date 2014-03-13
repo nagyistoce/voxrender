@@ -29,6 +29,9 @@
 
 // Include Qt Dependencies
 #include <QDialog>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <QSlider>
 
 // Include Dependencies
 #include "VoxVolt/Filter.h"
@@ -43,16 +46,28 @@ class GenericDialogue : public QDialog
     Q_OBJECT
     
 public:
+    /** Constructs a dialog window displaying the specified filter options */
     GenericDialogue(vox::String const& title, std::list<vox::volt::FilterParam> params);
 
+    /** Returns an option set of the user defined filter parameters */
     void getOptions(vox::OptionSet & options);
 
+    /** Destructor */
     ~GenericDialogue();
 
 private:
     Ui::GenericDialogue *ui;
 
-    std::list<vox::volt::FilterParam> m_parameters;
+    std::list<vox::volt::FilterParam> m_parameters; ///< The filter parameters to display for the user
+
+    std::map<QDoubleSpinBox*,QSlider*> m_connMap; ///< Mappings between double/int, spinBox/sliders
+
+private slots:
+    /** Redirection slot for int->double slider spinBox connections */
+    void valueChangeRedirect(int value);
+    
+    /** Redirection slot for int->double slider spinBox connections */
+    void valueChangeRedirect(double value);
 };
 
 #endif // GENERIC_DIALOGUE_H

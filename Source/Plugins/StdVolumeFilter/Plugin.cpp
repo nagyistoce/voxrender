@@ -43,6 +43,7 @@ namespace filescope {
     static std::shared_ptr<volt::Filter> laplace;
     static std::shared_ptr<volt::Filter> lanczos;
     static std::shared_ptr<volt::Filter> linear;
+    static std::shared_ptr<volt::Filter> crop;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -117,12 +118,14 @@ void enable()
     filescope::laplace = std::shared_ptr<volt::Filter>(new LaplaceFilter(filescope::handle));
     filescope::lanczos = std::shared_ptr<volt::Filter>(new LanczosFilter(filescope::handle));
     filescope::linear  = std::shared_ptr<volt::Filter>(new LinearFilter(filescope::handle));
+    filescope::crop    = std::shared_ptr<volt::Filter>(new CropFilter(filescope::handle));
 
     volt::FilterManager::instance().add(filescope::gauss);
     volt::FilterManager::instance().add(filescope::mean);
     volt::FilterManager::instance().add(filescope::laplace);
     volt::FilterManager::instance().add(filescope::lanczos);
     volt::FilterManager::instance().add(filescope::linear);
+    volt::FilterManager::instance().add(filescope::crop);
 }
 
 // --------------------------------------------------------------------
@@ -137,7 +140,9 @@ void disable()
     volt::FilterManager::instance().remove(filescope::laplace);
     volt::FilterManager::instance().remove(filescope::lanczos);
     volt::FilterManager::instance().remove(filescope::linear);
-
+    volt::FilterManager::instance().remove(filescope::crop);
+    
+    filescope::crop.reset();
     filescope::gauss.reset();
     filescope::mean.reset();
     filescope::laplace.reset();

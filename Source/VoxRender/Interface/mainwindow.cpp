@@ -255,66 +255,16 @@ void MainWindow::configurePlugins()
     vox::PluginManager::instance().forEach(boost::bind(&MainWindow::registerPlugin, this, _1));
 
     // Enumerate any registered filters and configure the access menus
-    volt::FilterManager::instance().registerCallback(std::bind(&MainWindow::onFiltersChanged, this));
+    connect(this, SIGNAL(filtersChanged(std::shared_ptr<vox::volt::Filter>, bool)), 
+            this, SLOT(onFiltersChanged(std::shared_ptr<vox::volt::Filter>, bool)));
+    volt::FilterManager::instance().registerCallback(std::bind(&MainWindow::filtersChanged, 
+        this, std::placeholders::_1, std::placeholders::_2));
+
+    // Generate the initial filter list
     std::list<std::shared_ptr<volt::Filter>> filters;
     volt::FilterManager::instance().getFilters(filters);
-    BOOST_FOREACH (auto & filter, filters)
-    {
-        // Split the filter name to establish the menu hierarchy
-        std::vector<String> path;
-        boost::algorithm::split(path, filter->name(), boost::is_any_of("."));
-        if (path.size() < 2)
-        {
-            VOX_LOG_ERROR(Error_BadToken, VOX_GUI_LOG_CAT, 
-                format("Filter name does not conform to 'Menu.Name' format: %1%", filter->name()));
-        }
-
-        // Locate/create the base menu for the filter
-        QMenu * menu = nullptr;
-        BOOST_FOREACH (auto child, ui->menuBar->children())
-        if (auto childMenu = dynamic_cast<QMenu*>(child))
-        if (childMenu->title().toUtf8().data() == path[0])
-        {
-            menu = childMenu; break;
-        }
-        if (!menu)
-        {
-            menu = new QMenu(path[0].c_str(), ui->menuBar);
-            ui->menuBar->insertMenu(ui->menuBar->actions().back(), menu); // Before 'Help'
-        }
-
-        // Locate/create the submenu structure for the filter
-        for (int i = 1; i < path.size()-1; ++i)
-        {
-            // Attempt to locate the submenu in case it already exists
-            bool found = false;
-            BOOST_FOREACH (auto & child, menu->children())
-            if (auto childMenu = dynamic_cast<QMenu*>(child))
-            {
-                if (childMenu->title().toUtf8().data() == path[i])
-                {
-                    menu = childMenu;
-                    found = true;
-                    break;
-                }
-            }
-
-            // Create the submenu if it does not exist
-            if (!found)
-            {
-                auto newMenu = new QMenu(path[i].c_str(), menu);
-                menu->addMenu(newMenu);
-                menu = newMenu;
-            }
-        }
-
-        // Locate/create the bae action for the filter
-        auto action = new QAction(path.back().c_str(), menu);
-        menu->addAction(action);
-        connect(action, SIGNAL(triggered()), this, SLOT(onFilterExecuted()));
-
-        VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("Detected new filter: %1%", filter->name()));
-    }
+    BOOST_FOREACH (auto & filter, filters) 
+        onFiltersChanged(filter, true);
 }
 
 // ----------------------------------------------------------------------------
@@ -1307,59 +1257,162 @@ void MainWindow::performFiltering(std::shared_ptr<volt::Filter> filter, OptionSe
 }
 
 // ----------------------------------------------------------------------------
+//  Adds/Removes a filter from the menu bar
+// ----------------------------------------------------------------------------
+void MainWindow::onFiltersChanged(std::shared_ptr<vox::volt::Filter> filter, bool available)
+{
+    try 
+    {
+        // Split the filter name to establish the menu hierarchy
+        std::vector<String> path;
+        boost::algorithm::split(path, filter->name(), boost::is_any_of("."));
+        if (path.size() < 2)
+        {
+            VOX_LOG_ERROR(Error_BadToken, VOX_GUI_LOG_CAT, 
+                format("Filter name does not conform to 'Menu.Name' format: %1%", filter->name()));
+        }
+
+        // Locate/create the base menu for the filter
+        QMenu * menu = nullptr;
+        BOOST_FOREACH (auto child, ui->menuBar->children())
+        if (auto childMenu = dynamic_cast<QMenu*>(child))
+        if (childMenu->title().toUtf8().data() == path[0])
+        {
+            menu = childMenu; break;
+        }
+        if (!menu)
+        {
+            menu = new QMenu(path[0].c_str(), ui->menuBar);
+            ui->menuBar->insertMenu(ui->menuBar->actions().back(), menu); // Before 'Help'
+        }
+
+        // Locate/create the submenu structure for the filter
+        for (int i = 1; i < path.size()-1; ++i)
+        {
+            // Attempt to locate the submenu in case it already exists
+            bool found = false;
+            BOOST_FOREACH (auto & child, menu->children())
+            if (auto childMenu = dynamic_cast<QMenu*>(child))
+            {
+                if (childMenu->title().toUtf8().data() == path[i])
+                {
+                    menu = childMenu;
+                    found = true;
+                    break;
+                }
+            }
+
+            // Create the submenu if it does not exist
+            if (!found)
+            {
+                auto newMenu = new QMenu(path[i].c_str(), menu);
+                menu->addMenu(newMenu);
+                menu = newMenu;
+            }
+        }
+
+        // Add/Remove the filter action from the window
+        if (available)
+        {        
+            // Locate/create the base action for the filter
+            auto action = new QAction(path.back().c_str(), menu);
+            action->setData(qVariantFromValue((void*)filter.get()));
+            menu->addAction(action);
+            connect(action, SIGNAL(triggered()), this, SLOT(onFilterExecuted()));
+
+            VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("Adding new scene filter option: %1%", filter->name()));
+        }
+        else
+        {
+            // Delete the action
+            BOOST_FOREACH (auto & action, menu->actions())
+            {
+                if (action->data().value<void*>() == filter.get())
+                {
+                    menu->removeAction(action);
+                    delete action;
+                    break;
+                }
+            }
+
+            // Delete any empty menus
+            while (menu)
+            {
+                if (menu->actions().empty())
+                {
+                    auto p = dynamic_cast<QMenu*>(menu->parent());
+                    if (!p) ui->menuBar->removeAction(menu->menuAction());
+                    else    p->removeAction(menu->menuAction());
+                    delete menu;
+                    menu = p;
+                }
+                else break;
+            }
+
+            VOX_LOG_INFO(VOX_GUI_LOG_CAT, format("Removing scene filter option: %1%", filter->name()));
+        }
+    }
+    catch (Error & error) { VOX_LOG_EXCEPTION(Severity_Error, error); }
+}
+
+// ----------------------------------------------------------------------------
 //  Global slot for a registed filter action being triggered
 // ----------------------------------------------------------------------------
 void MainWindow::onFilterExecuted()
 {
-    // Acquire the sender so we can parse the filter name
-    auto action = dynamic_cast<QAction*>(sender());
-    if (!action) 
+    try
     {
-        VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "filter triggered slot activated on non-action");
-        return;
-    }
-    
-    // Parse the menu hierarchy to determine the filter name
-    String name = action->text().toUtf8().data();
-    auto parent = action->parent();
-    while (parent != ui->menuBar)
-    {
-        auto p = dynamic_cast<QMenu*>(parent);
-        if (!p) 
+        // Acquire the sender so we can parse the filter name
+        auto action = dynamic_cast<QAction*>(sender());
+        if (!action) 
         {
-            VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "Error parsing filter menu hierarchy");
+            VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "filter triggered slot activated on non-action");
+            return;
+        }
+    
+        // Parse the menu hierarchy to determine the filter name
+        String name = action->text().toUtf8().data();
+        auto parent = action->parent();
+        while (parent != ui->menuBar)
+        {
+            auto p = dynamic_cast<QMenu*>(parent);
+            if (!p) 
+            {
+                VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "Error parsing filter menu hierarchy");
+                return;
+            }
+
+            name = String(p->title().toUtf8().data()) + "." + name;
+            parent = parent->parent();
+        }
+
+        // Acquire the filter handle
+        auto filter = volt::FilterManager::instance().find(name);
+        if (!filter) 
+        {
+            VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "The specified filter no longer exists");
             return;
         }
 
-        name = String(p->title().toUtf8().data()) + "." + name;
-        parent = parent->parent();
-    }
-
-    // Acquire the filter handle
-    auto filter = volt::FilterManager::instance().find(name);
-    if (!filter) 
-    {
-        VOX_LOG_ERROR(Error_MissingData, VOX_GUI_LOG_CAT, "The specified filter no longer exists");
-        return;
-    }
-
-    // Acquire the user parameters and perform the filtering
-    std::list<volt::FilterParam> params;
-    filter->getParams(params);
-    if (params.empty()) 
-    {
-        performFiltering(filter, OptionSet());
-    }
-    else
-    {
-        GenericDialogue dialogue(name.substr(name.find_last_of('.')+1), params);
-        if (dialogue.exec() == QDialog::Accepted)
+        // Acquire the user parameters and perform the filtering
+        std::list<volt::FilterParam> params;
+        filter->getParams(m_activeScene, params);
+        if (params.empty()) 
         {
-            OptionSet options;
-            dialogue.getOptions(options);
-            performFiltering(filter, options);
+            performFiltering(filter, OptionSet());
+        }
+        else
+        {
+            GenericDialogue dialogue(name.substr(name.find_last_of('.')+1), params);
+            if (dialogue.exec() == QDialog::Accepted)
+            {
+                OptionSet options;
+                dialogue.getOptions(options);
+                performFiltering(filter, options);
+            }
         }
     }
+    catch (Error & error) { VOX_LOG_EXCEPTION(Severity_Error, error); }
 }
 
 // ----------------------------------------------------------------------------
@@ -1550,12 +1603,11 @@ void MainWindow::on_pushButton_loadPlugin_clicked()
 
 // ----------------------------------------------------------------------------
 //  Callback from renderer with tonemapped framebuffer for interactive display
-//  :TODO: implement scene locking, move this stuff outside of callback
 // ----------------------------------------------------------------------------
 void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {
     // Process scene interaction through the view
-    m_renderView->processSceneInteractions();
+    m_renderView->processSceneInteractions(); // :TODO: Remove this
 
     // Lock the framebuffer and issue the frameReady signal
     emit frameReady(std::make_shared<FrameBufferLock>(frame));

@@ -36,7 +36,7 @@ class FilterManager::Impl
 {
 public:
     std::map<String,std::shared_ptr<Filter>> m_filters;
-    std::function<void()> m_callback;
+    FilterCallback m_callback;
     boost::mutex m_mutex;
 };
 
@@ -57,7 +57,7 @@ FilterManager::FilterManager() : m_pImpl(new Impl) { }
 // ----------------------------------------------------------------------------
 //  Registers a filter change event callback
 // ----------------------------------------------------------------------------
-void FilterManager::registerCallback(std::function<void()> callback)
+void FilterManager::registerCallback(FilterCallback callback)
 {
     m_pImpl->m_callback = callback;
 }
@@ -73,7 +73,7 @@ void FilterManager::remove(std::shared_ptr<Filter> filter)
     if (iter != m_pImpl->m_filters.end() && iter->second == filter)
     {
         m_pImpl->m_filters.erase(iter);
-        if (m_pImpl->m_callback) m_pImpl->m_callback();
+        if (m_pImpl->m_callback) m_pImpl->m_callback(filter, false);
     }
 }
 
@@ -89,7 +89,7 @@ void FilterManager::add(std::shared_ptr<Filter> filter)
 
     m_pImpl->m_filters.insert(std::make_pair(filter->name(), filter));
 
-    if (m_pImpl->m_callback) m_pImpl->m_callback();
+    if (m_pImpl->m_callback) m_pImpl->m_callback(filter, true);
 }
 
 // ----------------------------------------------------------------------------
