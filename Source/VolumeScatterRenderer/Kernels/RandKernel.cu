@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "VoxLib/Error/CudaError.h"
+#include "VoxLib/Core/Devices.h"
 
 namespace {
 namespace filescope {
@@ -35,15 +36,12 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Generates a set of CRNG states
     // --------------------------------------------------------------------
-    __global__ void randKernel(size_t width, size_t height, curandState * state)
+    __global__ void randKernel(size_t size, curandState * state)
     { 	
 	    // Establish the image coordinates of this pixel
-	    int px = blockIdx.x * blockDim.x + threadIdx.x;
-	    int py = blockIdx.y * blockDim.y + threadIdx.y;
-        if (px >= width || py >= height) return;
-
-        int id = px + py * height;
-        curand_init(0, id, 0, &state[id]);
+	    int pos = blockIdx.x * blockDim.x + threadIdx.x;
+        if (pos >= size) return;
+        curand_init(0, pos, 0, &state[pos]);
     }
 
 } // namespace filescope
@@ -56,33 +54,42 @@ float RandKernel::m_elapsedTime;
 // --------------------------------------------------------------------
 //  Executes the rand initialization kernel for the active device
 // --------------------------------------------------------------------
-curandState * RandKernel::create(size_t width, size_t height)
+curandState * RandKernel::create(size_t size)
 {
-    curandState * state;
-    VOX_CUDA_CHECK(cudaMalloc((void**)&state, width*height*sizeof(curandState)));
+    curandState * states;
+    VOX_CUDA_CHECK(cudaMalloc((void**)&states, size*sizeof(curandState)));
 
-	// Setup the execution configuration
-	static const unsigned int BLOCK_SIZE = 16;
-    dim3 threads(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 blocks( 
-        (width  + threads.x - 1) / threads.x,
-        (height + threads.y - 1) / threads.y 
-        );
+    // :TODO: Break down large images into multi-pass to reduce overhead global memory per pixel
     
-	// Execute the kernel
-    cudaEvent_t start, stop;
-    VOX_CUDA_CHECK(cudaEventCreate(&start));
-    VOX_CUDA_CHECK(cudaEventRecord(start,0));
-    filescope::randKernel<<<blocks,threads>>>(width, height, state);
-    VOX_CUDA_CHECK(cudaDeviceSynchronize());
-    VOX_CUDA_CHECK(cudaEventCreate(&stop));
-    VOX_CUDA_CHECK(cudaEventRecord(stop,0));
-    VOX_CUDA_CHECK(cudaEventSynchronize(stop));
+	// Setup the execution configuration
+	static const unsigned int BLOCK_SIZE = 16*16;
+    dim3 threads(BLOCK_SIZE);
+    dim3 blocks((size + threads.x - 1) / threads.x);
 
-    // Acquire the time for this kernel execution
-    VOX_CUDA_CHECK(cudaEventElapsedTime(&m_elapsedTime, start, stop));
+    // Batch generate the rand states to avoid timeout
+    for (size_t i = 0; i < size; i += 768*768)
+    {
+        size_t subsize = 768*768;
+        if (i + subsize > size)
+        {
+            subsize = i + subsize - size;
+        }
 
-    return state;
+	    // Execute the kernel
+        cudaEvent_t start, stop;
+        VOX_CUDA_CHECK(cudaEventCreate(&start));
+        VOX_CUDA_CHECK(cudaEventRecord(start,0));
+        filescope::randKernel<<<blocks,threads>>>(subsize, states+i);
+        VOX_CUDA_CHECK(cudaDeviceSynchronize());
+        VOX_CUDA_CHECK(cudaEventCreate(&stop));
+        VOX_CUDA_CHECK(cudaEventRecord(stop,0));
+        VOX_CUDA_CHECK(cudaEventSynchronize(stop));
+
+        // Acquire the time for this kernel execution
+        VOX_CUDA_CHECK(cudaEventElapsedTime(&m_elapsedTime, start, stop));
+    }
+
+    return states;
 }
 
 // --------------------------------------------------------------------

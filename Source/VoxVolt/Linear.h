@@ -71,7 +71,7 @@ public:
      * @param newExtent The new extent of the volume
      * @param value     A pointer to the data value for padding
      */
-    static std::shared_ptr<Volume> padCrop(
+    static std::shared_ptr<Volume> crop(
         std::shared_ptr<Volume> volume, 
         Vector4 const& newOrigin, 
         Vector4s       newExtent,

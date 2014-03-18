@@ -56,8 +56,8 @@ namespace vox
         static std::shared_ptr<Node> create(float density = 1.0f, std::shared_ptr<Material> material = nullptr);
 
         // Node comparison operators for sorting operations
-        bool operator<(Node const& rhs) { return density < rhs.density; }
-        bool operator>(Node const& rhs) { return density > rhs.density; }
+        bool operator<(Node const& rhs)  { return density < rhs.density; }
+        bool operator>(Node const& rhs)  { return density > rhs.density; }
         bool operator==(Node const& rhs) 
         { 
             return density == rhs.density &&

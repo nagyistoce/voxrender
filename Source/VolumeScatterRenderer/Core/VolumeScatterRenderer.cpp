@@ -90,7 +90,6 @@ public:
         m_lightBuffer.init();
         m_transferBuffer.init();
         m_volumeBuffer.init();
-        m_randStates = nullptr;
     }
     
     // --------------------------------------------------------------------
@@ -134,11 +133,9 @@ public:
                 // Resize the device frame buffers
                 m_hdrBuffer.resize(filmWidth, filmHeight);
                 m_ldrBuffer.resize(filmWidth, filmHeight);
-                if (m_randStates) RandKernel::destroy(m_randStates);
-                m_randStates = RandKernel::create(filmWidth, filmHeight);
+                m_randBuffer.resize(filmWidth * filmHeight);
 
-                // :DEBUG:
-                RenderKernel::setFrameBuffers(m_hdrBuffer, m_randStates);
+                RenderKernel::setFrameBuffers(m_hdrBuffer, m_randBuffer.states());
             }
 
             // Allocate/Resize the host side LDR framebuffer
@@ -284,11 +281,6 @@ public:
 		m_transferBuffer.reset();
 		m_volumeBuffer.reset();
 		m_frameBuffer.reset();
-        if (m_randStates) 
-        {
-            RandKernel::destroy(m_randStates);
-            m_randStates = nullptr;
-        }
 	}
     
     // --------------------------------------------------------------------
@@ -329,7 +321,7 @@ private:
     CImgBuffer2D<ColorRgbaLdr> m_ldrBuffer;    ///< LDR post-processed image
 
     CSampleBuffer2D m_hdrBuffer;    ///< HDR raw sample data buffer
-    curandState *   m_randStates;   ///< States for CRNGs
+    RandBuffer      m_randBuffer;   ///< States for random generator   
 
     CBuffer1D<CLight> m_lightBuffer;    ///< Array of scene lights
     CVolumeBuffer     m_volumeBuffer;   ///< Volume data buffer

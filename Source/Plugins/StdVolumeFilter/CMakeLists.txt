@@ -33,9 +33,11 @@ VOX_PROJECT(
         "Plugin.h"
         "Version.h"
         "Filters.h"
+        "Views.h"
     SOURCES
         "Plugin.cpp"
         "Filters.cpp"
+        "Views.cpp"
     DEPENDENCIES
         VoxLib
         VoxVolt

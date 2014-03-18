@@ -34,6 +34,8 @@
 
 // QT Headers
 #include <QLabel>
+#include <QComboBox>
+#include <QCheckBox>
 
 using namespace vox;
 using namespace volt;
@@ -86,6 +88,25 @@ GenericDialogue::GenericDialogue(String const& title, std::list<FilterParam> par
             ui->layout->addWidget(spinBox, row, 2);
             break; }
         case FilterParam::Type_Radio: {
+            QComboBox * cbox = new QComboBox();
+            std::vector<String> tokens;
+            boost::algorithm::split(tokens, param.range, boost::is_any_of(","));
+            BOOST_FOREACH (auto & token, tokens) cbox->addItem(token.c_str());
+            for (int i = 0; i < tokens.size(); i++)
+            {
+                if (tokens[i] == param.value) cbox->setCurrentIndex(i);
+            }
+            ui->layout->addWidget(cbox, row, 1);
+            break; }
+        case FilterParam::Type_Label:
+            ui->layout->addWidget(new QLabel(param.value.c_str()), row, 1);
+            ui->layout->addWidget(new QLabel(param.range.c_str()), row, 2);
+            break;
+        case FilterParam::Type_Check: {
+            auto label = new QLabel(param.value.c_str());
+            label->setAlignment(Qt::AlignRight);
+            ui->layout->addWidget(label, row, 1);
+            ui->layout->addWidget(new QCheckBox(), row, 2);
             break; }
         default: 
             throw Error(__FILE__, __LINE__, "GUI", "Unknown parameter type", Error_BadToken);
@@ -130,7 +151,6 @@ void GenericDialogue::valueChangeRedirect(int value)
     {
         Utilities::forceSbToSl(entry.first, slider, value);
     }
-
 }
 
 // --------------------------------------------------------------------
@@ -154,7 +174,22 @@ void GenericDialogue::getOptions(vox::OptionSet & options)
             options.addOption(param.name, spin->value());
             break; }
         case FilterParam::Type_Radio: {
-            options.addOption(param.name, param.value);
+            auto cbox = dynamic_cast<QComboBox*>(ui->layout->itemAtPosition(row, 1)->widget());
+            if (!cbox) return;
+            std::vector<String> tokens;
+            boost::algorithm::split(tokens, param.range, boost::is_any_of(","));
+            BOOST_FOREACH (auto & token, tokens)
+            if (cbox->currentText().toUtf8().data() == token)
+            {
+                options.addOption(param.name, token); break;
+            }
+            break; }
+        case FilterParam::Type_Label:
+            break;
+        case FilterParam::Type_Check: {
+            auto cbox = dynamic_cast<QCheckBox*>(ui->layout->itemAtPosition(row, 2)->widget());
+            if (!cbox) return;
+            options.addOption(param.name, cbox->isChecked());
             break; }
         default: 
             throw Error(__FILE__, __LINE__, "GUI", "Unknown parameter type", Error_BadToken);

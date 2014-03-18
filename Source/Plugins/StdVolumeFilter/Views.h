@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: Uniform Resource IO 
+	Project: Standard Volume Filters
     
-	Description: Implements a file scheme resource module
+	Description: Exposes some standard filters provided by the volt library
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,21 +24,51 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef VOX_FILE_IO_H
-#define VOX_FILE_IO_H
+#ifndef SVF_VIEWS_H
+#define SVF_VIEWS_H
 
 // Include Dependencies
-#include "Plugins/CamViewFilter/Common.h"
+#include "Plugins/StdVolumeFilter/Common.h"
+#include "VoxLib/Core/CudaCommon.h"
 #include "VoxLib/Error/Error.h"
-#include "VoxLib/IO/Resource.h"
-#include "VoxLib/IO/ResourceModule.h"
+#include "VoxVolt/Core.h"
 
 // API namespace
 namespace vox
 {
 
+/** Laplacian filter provided by Volt library */
+class View : public volt::Filter
+{
+public:
+    enum Dir
+    {
+        Dir_Begin,
+        Dir_Front = Dir_Begin,
+        Dir_Left,
+        Dir_Top,
+        Dir_Back,
+        Dir_Right,
+        Dir_Bottom,
+        Dir_End,
+    };
 
-}
+    static const char* dirStrings[];
+
+public:
+    View(std::shared_ptr<void> handle, int dir) : m_handle(handle), m_dir(dir) { }
+
+    String name() { return String("Camera.") + dirStrings[m_dir]; }
+
+    void execute(Scene & scene, OptionSet const& params);
+
+private:
+    std::shared_ptr<void> m_handle;
+
+    int m_dir;
+};
+
+} // namespace vox
 
 // End definition
-#endif // VOX_FILE_IO_H
+#endif // SVF_VIEWS_H

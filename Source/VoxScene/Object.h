@@ -80,6 +80,18 @@ namespace vox
         bool         m_isDirty; ///< Dirty flag for tracking changes
     };
 
+    /** Scoped locking mechanism for scene components */
+    class SceneLock
+    {
+    public:
+        SceneLock(std::shared_ptr<Object> obj) : m_obj(obj) { m_obj->lock(); }
+
+        ~SceneLock() { m_obj->unlock(); }
+
+    private:
+        std::shared_ptr<Object> m_obj;
+    };
+
     /** Derived object which locks through a parent */
     class VOXS_EXPORT SubObject : public Object
     {

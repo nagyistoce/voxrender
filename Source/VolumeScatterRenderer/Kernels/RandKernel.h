@@ -41,7 +41,7 @@ class RandKernel
 {
 public:
     /** Executes the tonemapping kernel on the device */
-    static curandState * create(size_t width, size_t height);
+    static curandState * create(size_t size);
 
     /** Destroys a collection of CRNG states */
     static void destroy(curandState * states);
@@ -51,6 +51,52 @@ public:
 
 private:
     static float m_elapsedTime; ///< Kernel execution time
+};
+
+/** Defines a buffer containing random generator state information */
+class RandBuffer
+{
+public:
+    /** Constructor */
+    RandBuffer() : m_states(nullptr), m_size(0) { }
+
+    /** Destructor */
+    ~RandBuffer() { reset(); }
+
+    /** Resets the buffer */
+    void reset()
+    {
+        if (m_states)
+        {
+            RandKernel::destroy(m_states);
+            m_states = nullptr;
+            m_size = 0;
+        }
+    }
+
+    /** Resizes the buffer */
+    void resize(size_t size)
+    {
+        if (size <= m_size) return;
+
+        if (m_states)
+        {
+            RandKernel::destroy(m_states);
+        }
+
+        m_size = size;
+        m_states = RandKernel::create(size);
+    }
+
+    /** Returns the size of the buffer */
+    size_t size() { return m_size; }
+
+    /** Returns the array of generator states */
+    curandState * states() { return m_states; }
+
+private:
+    curandState * m_states;
+    size_t m_size;
 };
 
 } // namespace vox

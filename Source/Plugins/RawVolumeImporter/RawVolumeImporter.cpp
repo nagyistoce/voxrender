@@ -41,21 +41,6 @@ namespace
 {
     namespace filescope
     {
-        // --------------------------------------------------------------------
-        //  Attempts to deduce a volume type from an input string
-        // --------------------------------------------------------------------
-        Volume::Type stringToType(String const& typeStr)
-        {
-            for (size_t t = Volume::Type_Begin; t != Volume::Type_End; t++)
-            {
-                if (typeStr == Volume::typeToString((Volume::Type)t)) return (Volume::Type)t;
-            }
-
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                format("Unrecognized volume data type (%1%)", typeStr),
-                Error_BadToken);
-        }
-
         // Export module implementation
         class RawExporter
         {
@@ -173,7 +158,7 @@ namespace
 
                 // Determine the volume data type
                 boost::to_lower(typeStr);
-                Volume::Type type = stringToType(typeStr);
+                Volume::Type type = Volume::stringToType(typeStr);
                 auto bytesPerVoxel = Volume::typeToSize(type);
                 
                 // Detect the endian mode settings and determine if we must swap

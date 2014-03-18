@@ -419,7 +419,10 @@ void Transfer::setResolution(Vector3u const& resolution)
 // ----------------------------------------------------------------------------
 void Transfer1D::add(std::shared_ptr<Node> node)
 {
-    auto iter = std::lower_bound(m_nodes.begin(), m_nodes.end(), node, filescope::slt<Node>);
+    auto iter = m_nodes.begin();
+    while (iter != m_nodes.end() && (iter->get()->density <= node->density)) 
+        ++iter;
+
     m_nodes.insert(iter, node);
 }
 
@@ -477,10 +480,7 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
         filescope::mapOpacity(opacity, m_nodes);
         filescope::mapDiffuse(diffuse, m_nodes);
     }
-    else
-    {
-        opacity.clear();
-    }
+    else opacity.clear();
 
     map->setDirty();
 

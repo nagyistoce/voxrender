@@ -45,6 +45,8 @@ struct VOX_VOLT_EXPORT FilterParam
         Type_Float = Type_Begin,
         Type_Int,
         Type_Radio,
+        Type_Label,
+        Type_Check,
         Type_End
     };
 
@@ -67,7 +69,7 @@ public:
     virtual String name() = 0; 
 
     /** Generates a list of the parameters for this filter */
-    virtual void getParams(Scene const& scene, std::list<FilterParam> & params) = 0;
+    virtual void getParams(Scene const& scene, std::list<FilterParam> & params) { }
 
     /** Performs the function of this filter on the scene */
     virtual void execute(Scene & scene, OptionSet const& params) = 0;

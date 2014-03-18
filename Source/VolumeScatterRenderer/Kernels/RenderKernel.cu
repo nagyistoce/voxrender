@@ -77,7 +77,7 @@ namespace filescope {
     __constant__ CSampleBuffer2D   gd_sampleBuffer;     ///< HDR sample data buffer
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
-    __constant__ Vector3f          gd_ambient;          ///< Maximum ambient light
+    __constant__ Vector3f          gd_ambient;          ///< Ambient light
     __constant__ curandState *     gd_randStates;       ///< Random generator states
 
     __constant__ CClipGeometry::Clipper * gd_clipRoot;    ///< Clipping geometry root
@@ -111,30 +111,30 @@ namespace filescope {
         {
             case Volume::Type_Int16: 
                 density = static_cast<float>(tex3D(gd_volumeTex_Int16, 
-                                                x*gd_volumeBuffer.invSpacing()[0], 
-                                                y*gd_volumeBuffer.invSpacing()[1], 
-                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                                                (x + gd_volumeBuffer.size()[0] / 2.0f)*gd_volumeBuffer.invSpacing()[0], 
+                                                (y + gd_volumeBuffer.size()[1] / 2.0f)*gd_volumeBuffer.invSpacing()[1], 
+                                                (z + gd_volumeBuffer.size()[2] / 2.0f)*gd_volumeBuffer.invSpacing()[2])); 
                 break;
 
             case Volume::Type_UInt16: 
                 density = static_cast<float>(tex3D(gd_volumeTex_UInt16, 
-                                                x*gd_volumeBuffer.invSpacing()[0], 
-                                                y*gd_volumeBuffer.invSpacing()[1], 
-                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                                                (x + gd_volumeBuffer.size()[0] / 2.0f)*gd_volumeBuffer.invSpacing()[0], 
+                                                (y + gd_volumeBuffer.size()[1] / 2.0f)*gd_volumeBuffer.invSpacing()[1], 
+                                                (z + gd_volumeBuffer.size()[2] / 2.0f)*gd_volumeBuffer.invSpacing()[2])); 
                 break;
 
             case Volume::Type_Int8:
                 density = static_cast<float>(tex3D(gd_volumeTex_Int8, 
-                                                x*gd_volumeBuffer.invSpacing()[0], 
-                                                y*gd_volumeBuffer.invSpacing()[1], 
-                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                                                (x + gd_volumeBuffer.size()[0] / 2.0f)*gd_volumeBuffer.invSpacing()[0], 
+                                                (y + gd_volumeBuffer.size()[1] / 2.0f)*gd_volumeBuffer.invSpacing()[1], 
+                                                (z + gd_volumeBuffer.size()[2] / 2.0f)*gd_volumeBuffer.invSpacing()[2])); 
                 break;
 
             default: // :TODO: Some CUDA exception/error stuff rather than default to UInt8 
                 density = static_cast<float>(tex3D(gd_volumeTex_UInt8, 
-                                                x*gd_volumeBuffer.invSpacing()[0], 
-                                                y*gd_volumeBuffer.invSpacing()[1], 
-                                                z*gd_volumeBuffer.invSpacing()[2])); 
+                                                (x + gd_volumeBuffer.size()[0] / 2.0f)*gd_volumeBuffer.invSpacing()[0], 
+                                                (y + gd_volumeBuffer.size()[1] / 2.0f)*gd_volumeBuffer.invSpacing()[1], 
+                                                (z + gd_volumeBuffer.size()[2] / 2.0f)*gd_volumeBuffer.invSpacing()[2])); 
                 break;
         }
 
@@ -176,8 +176,9 @@ namespace filescope {
     VOX_DEVICE void intersectVolume(Ray3f & ray)
     {
         // Compute the intersection with the volume extent box
+        Vector3f half = gd_volumeBuffer.size() * 0.5f;
         Intersect::rayBoxIntersection(ray.pos, ray.dir, 
-            Vector3f(0.0f), gd_volumeBuffer.size(), ray.min, ray.max);
+            Vector3f(0) - half, half, ray.min, ray.max);
 
         // Compute the intersection with the scene clip geometry
         if (filescope::gd_clipRoot) filescope::gd_clipRoot->clip(ray);

@@ -153,7 +153,7 @@ std::shared_ptr<Volume> Linear::shiftScale(std::shared_ptr<Volume> volume, doubl
     // Compute the time elapsed during execution
     auto tend = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
-    VOX_LOG_INFO(VOLT_LOG_CAT, format("Shift+Scale transformation completed in %1% ms", time.count()));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Shift + Scale transformation completed in %1% ms", time.count()));
 
     return Volume::create(dataO, volume->extent(), volume->spacing(), volume->offset(), type);
 }
@@ -161,19 +161,21 @@ std::shared_ptr<Volume> Linear::shiftScale(std::shared_ptr<Volume> volume, doubl
 // ----------------------------------------------------------------------------
 //  Crops the volume to the specified extent
 // ----------------------------------------------------------------------------
-std::shared_ptr<Volume> Linear::padCrop(std::shared_ptr<Volume> volume, 
+std::shared_ptr<Volume> Linear::crop(std::shared_ptr<Volume> volume, 
     Vector4 const& newOrigin, Vector4s newExtent, void const* value)
 {
     // Begin tracking the performance time
     auto tbeg = std::chrono::high_resolution_clock::now();
     
-    // Perform the crop/pad operation
+    // Setup the write volume data buffer
     auto extent   = volume->extent();
     auto voxels   = newExtent.fold(&mul);
     auto voxSize  = Volume::typeToSize(volume->type());
     
     std::shared_ptr<UInt8> data = makeSharedArray(voxels*voxSize);
+    memset(data.get(), 0, voxels*voxSize);
 
+    // Determine the read/write volume parameters
     auto readPtr  = volume->mutableData();
     auto writePtr = data.get();
     
@@ -187,24 +189,44 @@ std::shared_ptr<Volume> Linear::padCrop(std::shared_ptr<Volume> volume,
     wStride[1] = newExtent[1] * wStride[0];
     wStride[2] = newExtent[2] * wStride[1];
 
-    auto copyLength  = extent[0] * voxSize;
-    auto readOffset  = 0;
-    auto writeOffset = 0; // :TODO:
-    for (auto t = 0; t < extent[3]; t++)
-    for (auto z = 0; z < extent[2]; z++)
-    for (auto y = 0; y < extent[1]; y++)
+    // Determine the ranges of the base volume dimensions which are copied 
+    Vector4 copyOffset(
+        high(newOrigin[0], 0),
+        high(newOrigin[1], 0),
+        high(newOrigin[2], 0),
+        high(newOrigin[3], 0));
+
+    Vector4 copyRange(
+        low<int>(newOrigin[0] + newExtent[0], extent[0]) - copyOffset[0],
+        low<int>(newOrigin[1] + newExtent[1], extent[1]) - copyOffset[1],
+        low<int>(newOrigin[2] + newExtent[2], extent[2]) - copyOffset[2],
+        low<int>(newOrigin[3] + newExtent[3], extent[3]) - copyOffset[3]);
+
+    // Copy all rows within the uncropped portion of the base volume
+    size_t copyLength  = copyRange[0] * voxSize;
+    size_t readOffset  = (newOrigin[0] > 0) ?   newOrigin[0]*voxSize : 0;
+    size_t writeOffset = (newOrigin[0] < 0) ? - newOrigin[0]*voxSize : 0;
+    for (auto t = 0; t < copyRange[3]; t++)
+    for (auto z = 0; z < copyRange[2]; z++)
+    for (auto y = 0; y < copyRange[1]; y++)
     {
         auto r = readPtr  + y * rStride[0] + z * rStride[1] + t * rStride[2];
         auto w = writePtr + y * wStride[0] + z * wStride[1] + t * wStride[2];
 
         memcpy(w + writeOffset, r + readOffset, copyLength);
+
         // :TODO: Clear the rest of the row to the setval
+        memset(w, 0, writeOffset);
+        memset(w + writeOffset, 0, wStride[0] - copyLength); 
     }
-    
+
+    // Set the padded value data for the uncopied rows
+
+
     // Compute the time elapsed during execution
     auto tend = std::chrono::high_resolution_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
-    VOX_LOG_INFO(VOLT_LOG_CAT, format("Pad/Crop operation completed in %1% ms", time.count()));
+    VOX_LOG_INFO(VOLT_LOG_CAT, format("Crop operation completed in %1% ms", time.count()));
 
     return Volume::create(data, newExtent, volume->spacing(), volume->offset(), volume->type());
 }

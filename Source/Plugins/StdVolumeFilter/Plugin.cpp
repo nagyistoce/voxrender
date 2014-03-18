@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "StdVolumeFilter/Common.h"
 #include "StdVolumeFilter/Filters.h"
+#include "StdVolumeFilter/Views.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxVolt/Filter.h"
@@ -44,6 +45,9 @@ namespace filescope {
     static std::shared_ptr<volt::Filter> lanczos;
     static std::shared_ptr<volt::Filter> linear;
     static std::shared_ptr<volt::Filter> crop;
+
+    static std::list<std::shared_ptr<volt::Filter>> views;
+
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -126,6 +130,13 @@ void enable()
     volt::FilterManager::instance().add(filescope::lanczos);
     volt::FilterManager::instance().add(filescope::linear);
     volt::FilterManager::instance().add(filescope::crop);
+
+    for (int i = View::Dir_Begin; i < View::Dir_End; ++i)
+    {
+        auto filter = std::shared_ptr<volt::Filter>(new View(filescope::handle, i));
+        filescope::views.push_back(filter);
+        volt::FilterManager::instance().add(filter);
+    }
 }
 
 // --------------------------------------------------------------------
@@ -141,7 +152,7 @@ void disable()
     volt::FilterManager::instance().remove(filescope::lanczos);
     volt::FilterManager::instance().remove(filescope::linear);
     volt::FilterManager::instance().remove(filescope::crop);
-    
+
     filescope::crop.reset();
     filescope::gauss.reset();
     filescope::mean.reset();
@@ -149,4 +160,11 @@ void disable()
     filescope::lanczos.reset();
     filescope::linear.reset();
     filescope::handle.reset();
+    
+    BOOST_FOREACH (auto & view, filescope::views)
+    {
+        volt::FilterManager::instance().remove(view);
+        view.reset();
+    }
+    filescope::views.clear();
 }

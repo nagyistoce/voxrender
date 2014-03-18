@@ -43,7 +43,7 @@ class CropFilter: public volt::Filter
 public:
     CropFilter(std::shared_ptr<void> handle) : m_handle(handle) { }
 
-    String name() { return "Filters.Sampling.Crop"; }
+    String name() { return "Filters.Sampling.Crop/Pad"; }
     
     void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
     {
@@ -75,7 +75,7 @@ public:
             );
         newExtent -= newOrigin - Vector4s(1);
 
-        scene.volume = vox::volt::Linear::padCrop(scene.volume, newOrigin, newExtent);
+        scene.volume = vox::volt::Linear::crop(scene.volume, newOrigin, newExtent);
     }
 
 private:
@@ -115,28 +115,19 @@ public:
 
     String name() { return "Filters.Sampling.Shift/Scale/Retype"; }
     
-    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
-    {
-        params.push_back(volt::FilterParam("Shift", volt::FilterParam::Type_Float, "0", "[-10000.0 10000.0]"));
-        params.push_back(volt::FilterParam("Scale", volt::FilterParam::Type_Float, "1.0", "[-10000.0 10000.0]"));
-
-        auto defaultType = Volume::typeToString(scene.volume->type());
-        String types = "[";
-        for (int i = Volume::Type_Begin; i < Volume::Type_End; ++i)
-        {
-            types += Volume::typeToString((Volume::Type)i);
-            if (i != Volume::Type_End - 1) types += " ";
-        }
-        types += "]";
-
-        params.push_back(volt::FilterParam("Type", volt::FilterParam::Type_Radio, defaultType, types));
-    }
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params);
 
     void execute(Scene & scene, OptionSet const& params)
     {
-        double shift = params.lookup<double>("Shift");
-        double scale = params.lookup<double>("Scale");
-        volt::Linear::shiftScale(scene.volume, shift, scale);
+        auto shift = params.lookup<double>("Shift");
+        auto scale = params.lookup<double>("Scale");
+        auto type  = params.lookup("Type");
+        auto inv   = params.lookup<bool>("Invert");
+        scale = inv ? 1.0 / scale : scale;
+        if (type == Volume::typeToString(scene.volume->type()))
+            volt::Linear::shiftScale(scene.volume, shift, scale);
+        else 
+            scene.volume = volt::Linear::shiftScale(scene.volume, shift, scale, Volume::stringToType(type));
     }
 
 private:

@@ -98,6 +98,19 @@ public:
                         Error_Range);
         }
     }
+    
+    /** Volume data format string conversion (runtime) */
+    static Volume::Type stringToType(String const& typeStr)
+    {
+        for (size_t t = Volume::Type_Begin; t != Volume::Type_End; t++)
+        {
+            if (typeStr == Volume::typeToString((Volume::Type)t)) return (Volume::Type)t;
+        }
+
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            format("Unrecognized volume data type (%1%)", typeStr),
+            Error_BadToken);
+    }
 
 	/** 
      * Loads the given data set into the volume

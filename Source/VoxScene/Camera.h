@@ -183,7 +183,7 @@ public:
     inline bool isFilmDirty() const { return m_isFilmDirty; }
 
     /** Marks the camera as dirty */
-    void setFilmDirty() { m_isFilmDirty = true; }
+    void setFilmDirty() { setDirty(); m_isFilmDirty = true; }
     
     /** :TODO: leftover from abstraction of Object */
     void setClean() { Object::setClean(); m_isFilmDirty = false; }

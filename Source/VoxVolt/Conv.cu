@@ -45,7 +45,7 @@
 #define KERNEL_BLOCK_H		16
 #define KERNEL_BLOCK_SIZE   (KERNEL_BLOCK_W * KERNEL_BLOCK_H)
 
-#define MAX_KERNEL_SIZE 10
+#define MAX_KERNEL_SIZE 16
 
 namespace vox {
 namespace volt {
