@@ -204,8 +204,12 @@ std::shared_ptr<Volume> Linear::crop(std::shared_ptr<Volume> volume,
 
     // Copy all rows within the uncropped portion of the base volume
     size_t copyLength  = copyRange[0] * voxSize;
-    size_t readOffset  = (newOrigin[0] > 0) ?   newOrigin[0]*voxSize : 0;
-    size_t writeOffset = (newOrigin[0] < 0) ? - newOrigin[0]*voxSize : 0;
+    size_t readOffset  = (newOrigin[0] > 0) ?   newOrigin[0]*voxSize    : 0 +
+                         (newOrigin[1] > 0) ?   newOrigin[1]*rStride[0] : 0 +
+                         (newOrigin[2] > 0) ?   newOrigin[2]*rStride[1] : 0;
+    size_t writeOffset = (newOrigin[0] < 0) ? - newOrigin[0]*voxSize    : 0 +
+                         (newOrigin[1] < 0) ? - newOrigin[1]*wStride[0] : 0 +
+                         (newOrigin[2] < 0) ? - newOrigin[2]*wStride[1] : 0;
     for (auto t = 0; t < copyRange[3]; t++)
     for (auto z = 0; z < copyRange[2]; z++)
     for (auto y = 0; y < copyRange[1]; y++)
@@ -215,13 +219,12 @@ std::shared_ptr<Volume> Linear::crop(std::shared_ptr<Volume> volume,
 
         memcpy(w + writeOffset, r + readOffset, copyLength);
 
-        // :TODO: Clear the rest of the row to the setval
-        memset(w, 0, writeOffset);
-        memset(w + writeOffset, 0, wStride[0] - copyLength); 
+        // Clear the rest of the row to the setval
+        // :TODO:
     }
 
     // Set the padded value data for the uncopied rows
-
+    // :TODO:
 
     // Compute the time elapsed during execution
     auto tend = std::chrono::high_resolution_clock::now();

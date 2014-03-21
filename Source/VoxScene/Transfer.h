@@ -127,6 +127,7 @@ namespace vox
         friend RenderController;
 
         Vector3u m_resolution; ///< Transfer function map resolution
+        Vector3f m_range[2];   ///< Subrange of volume to which transfer is applied (anything outside is 0 density)
     };
 
     /** 1 Dimensional Transfer Function */

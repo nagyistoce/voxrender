@@ -43,7 +43,7 @@ namespace vox {
         }
 
         unsigned int m_framerate;
-        std::list<std::pair<unsigned int,KeyFrame>> m_keys;
+        std::list<std::pair<int,KeyFrame>> m_keys;
         ResourceId m_uri;
         String m_base;
     };
@@ -74,7 +74,7 @@ Animator::~Animator()
 // --------------------------------------------------------------------
 //  Returns the internal map of keyframes 
 // --------------------------------------------------------------------
-std::list<std::pair<unsigned int,KeyFrame>> const& Animator::keyframes()
+std::list<std::pair<int,KeyFrame>> const& Animator::keyframes()
 {
     return m_pImpl->m_keys;
 }
@@ -130,7 +130,7 @@ void Animator::clear()
 // --------------------------------------------------------------------
 //  Inserts a keyframe into the scene at the specified time index
 // --------------------------------------------------------------------
-void Animator::addKeyframe(KeyFrame keyFrame, unsigned int frame)
+void Animator::addKeyframe(KeyFrame keyFrame, int frame)
 {
     if (!keyFrame.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
         "Keyframe is invalid", Error_MissingData);
@@ -152,7 +152,7 @@ void Animator::addKeyframe(KeyFrame keyFrame, unsigned int frame)
 // --------------------------------------------------------------------
 //  Removes a keyframe at the specified frame index
 // --------------------------------------------------------------------
-void Animator::removeKeyframe(unsigned int frame)
+void Animator::removeKeyframe(int frame)
 {
     for (auto iter = m_pImpl->m_keys.begin(); iter != m_pImpl->m_keys.end(); ++iter)
     if ((*iter).first == frame)

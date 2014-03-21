@@ -88,6 +88,7 @@ private:
     cudaArray * m_opacityArray;     ///< Handle to opacity data array on device
     cudaArray * m_specularArray;    ///< Handle to specular data array on device
     cudaArray * m_emissiveArray;    ///< Handle to emissive data array on device
+    Vector3f    m_range[2];         ///< Utilized range of the volume data set
 };
 
 }

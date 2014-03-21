@@ -92,6 +92,8 @@ private:
 
     void setSelectedMaterial(std::shared_ptr<vox::Material> material);
 
+    void updateResolution();
+
 signals:
 	void transferChanged();
 
@@ -123,6 +125,10 @@ private slots:
     void on_horizontalSlider_density_valueChanged(int value);
     void on_horizontalSlider_gloss_valueChanged(int value);
     void on_horizontalSlider_emissiveStr_valueChanged(int value);
+    
+    void on_spinBox_resX_valueChanged(int value);
+    void on_spinBox_resY_valueChanged(int value);
+    void on_spinBox_resZ_valueChanged(int value);
 
     // Color selection widgets
     void colorDiffuseChanged(QColor const& color);

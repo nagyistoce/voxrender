@@ -26,87 +26,241 @@
 // Include Header
 #include "animateitem.h"
 
+// Include Dependencies
+#include "mainwindow.h"
+#include "animatewidget.h"
+#include "VoxScene/Animator.h"
+
+// QT Dependencies
+#include <QtWidgets/QGraphicsSceneMouseEvent>
+
+namespace {
+namespace filescope {
+
+
+
+} // namespace filescope
+} // namespace anonymous
+
 // ------------------------------------------------------------
 // Constructor - initialize the grid graphic options
 // ------------------------------------------------------------
-AnimateItem::AnimateItem(QGraphicsItem * parent) :
-	QGraphicsRectItem( parent ),
-	m_brushEnabled( QBrush(QColor::fromHsl(0, 0, 80)) ),
-	m_brushDisabled( QBrush(QColor::fromHsl(0, 0, 210)) ),
-	m_penEnabled( QPen(QColor::fromHsl(0, 0, 80), 0.1) ),
-	m_penDisabled( QPen(QColor::fromHsl(0, 0, 190)) ),
-	m_font( "Arial", 6 )
+AnimateItem::AnimateItem(AnimateWidget * parent) :
+	QGraphicsRectItem(),
+	m_brushEnabled(QBrush(QColor::fromHsl(0, 0, 80))),
+	m_brushDisabled(QBrush(QColor::fromHsl(0, 0, 210))),
+	m_penEnabled(QPen(QColor::fromHsl(0, 0, 80), 0.1)),
+	m_penDisabled(QPen(QColor::fromHsl(0, 0, 190))),
+	m_font("Arial", 10),
+    m_offset(0),
+    m_range(10),
+    m_mousePos(-1),
+    m_framePos(0),
+    m_parent(parent)
 {
 	setAcceptHoverEvents(true);
+    setFlags(QGraphicsItem::ItemIsSelectable);
+
+    connect(&m_scrollTimer, SIGNAL(timeout()), this, SLOT(scrollWindow()));
 }
+
+// ------------------------------------------------------------
+//
+// ------------------------------------------------------------
+void AnimateItem::setFrame(int frame)
+{
+    m_framePos = frame;
+
+    if (m_offset > frame) m_offset = frame;
+    else if (m_offset + m_range < frame)  m_offset = frame - m_range;
+
+    update();
+}
+ 
+// ------------------------------------------------------------
+//  Scrolls the display window and then resets the timer
+// ------------------------------------------------------------
+void AnimateItem::scrollWindow()
+{
+    if (m_mousePos == 0) 
+        m_offset--;
+    else m_offset++;
+
+    m_scrollTimer.start(200);
+
+    update();
+}
+
+// ------------------------------------------------------------
+//
+// ------------------------------------------------------------
+void AnimateItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
+{
+	QGraphicsRectItem::mousePressEvent(pEvent);
+}
+
+// ------------------------------------------------------------
+//  Set the current frame to the hovered frame
+// ------------------------------------------------------------
+void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
+{
+	QGraphicsRectItem::mouseReleaseEvent(pEvent);
+
+    m_scrollTimer.stop();
+
+    if (m_mousePos != -1) m_parent->setFrame(m_mousePos + m_offset);
+
+    m_mousePos = -1;
+
+    update();
+}
+
+// ------------------------------------------------------------
+//  Update the position of the draggable frame cursor
+// ------------------------------------------------------------
+void AnimateItem::mouseMoveEvent(QGraphicsSceneMouseEvent* pEvent)
+{
+    // :TODO: Stuff to move to filescope/private members
+	const float WIDTH  = 60.0f;
+	const float Height = 18.0f;
+    QRectF gridRect(rect());
+    gridRect.setLeft(gridRect.left() + WIDTH);
+    gridRect.setRight(gridRect.right() - 10.0f);
+	const float DX = gridRect.width() / (float)m_range;
+
+    // Compute the position of the mouse cursor
+    auto pos = pEvent->pos();
+    pos.setX(pos.x() - WIDTH);
+    auto mousePos = (int)(pos.x() / DX + 0.5f);
+    mousePos = vox::clamp<int>(mousePos, 0, m_range);
     
+    // Determine if the cursor has moved
+    if (mousePos == m_mousePos) return;
+
+    m_mousePos = mousePos;
+
+    m_scrollTimer.stop(); // Stop scrolling
+
+    if (m_mousePos == 0) // Scroll left
+    {
+        m_mousePos = 0;
+
+        m_scrollTimer.start(500);
+    }
+    else if (m_mousePos == m_range) // Scroll right
+    {
+        m_mousePos = m_range;
+
+        m_scrollTimer.start(500);
+    }
+
+    update();
+}
+
 // ------------------------------------------------------------
 // Draws a 2D grid with the specified axial labels
 // ------------------------------------------------------------
-void AnimateItem::paint( QPainter* painter, 
-	const QStyleOptionGraphicsItem* option, 
-	QWidget* widget )
+void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
+    char const * Y_LABELS[] = {"Camera", "Volume", "Transfer", "Clipping", "Lights", "Settings"};
+    QColor       Y_COLORS[] = { Qt::red, Qt::lightGray, Qt::blue, Qt::green, Qt::darkGreen, Qt::darkCyan };
+
+	const float Width  = 60.0f;
+	const float Height = 18.0f;
+
+    unsigned int m_numY = 6;  ///< Number of channels of interp'able scene data
+
+    QRectF gridRect(rect());
+    gridRect.setLeft(gridRect.left() + Width);
+    gridRect.setRight(gridRect.right() - 10.0f);
+    
+    // Delta values for x and y axis markings
+	const float DY = gridRect.height() / (float)m_numY;
+	const float DX = gridRect.width()  / (float)m_range;
+
 	// Disable antialising for grid-line rendering
-	painter->setRenderHint( QPainter::Antialiasing, false );
+	painter->setRenderHint(QPainter::Antialiasing, false);
 
 	// Draw backdrop
-	painter->setBrush( QBrush(QColor::fromHsl(255, 255, 255)) );
-	painter->drawRect( rect( ) );
+	painter->setBrush(QBrush(QColor::fromHsl(255, 255, 255)));
+	painter->drawRect(gridRect);
 
 	// Initialize painter settings
-	if( isEnabled( ) )
+	if (isEnabled())
 	{
-		painter->setBrush( m_brushEnabled );
-		painter->setPen( m_penEnabled );
+		painter->setBrush(m_brushEnabled);
+		painter->setPen(m_penEnabled);
 	}
 	else
 	{
-		painter->setBrush( m_brushDisabled );
-		painter->setPen( m_penDisabled );
+		painter->setBrush(m_brushDisabled);
+		painter->setPen(m_penDisabled);
 	}
-	painter->setFont( m_font );
+	painter->setFont(m_font);
 
-	const float Width = 25.0f;
-	const float Height = 18.0f;
-
-    unsigned int m_numX = 10; 
-    unsigned int m_numY = 10; ///< Number of channels of interp'able scene data
+    // Determine the visible range of keyframes in the animator
+    auto frames = MainWindow::instance->scene().animator->keyframes();
+    auto biter = frames.begin();
+    while (biter != frames.end() && m_offset > biter->first) ++biter;
+    auto eiter = biter;
+    while (eiter != frames.end() && eiter->first <= m_offset + m_range) eiter++;
 
 	// Draw markings along Y-axis 
-	const float DY = rect( ).height( ) / (float)m_numY;
-	for( int i = 0; i < m_numY+1; i++ )
+	for (int i = 0; i < m_numY+1; i++)
 	{
-		// Draw grid line
-		if( i > 0 && i < m_numY )
-			painter->drawLine( QPointF(rect().left(), rect().top()+i*DY), 
-							   QPointF(rect().right(), rect().top()+i*DY) );
+        auto h = gridRect.top()+i*DY;
 
-		// Draw axis label
-		painter->drawLine( QPointF(rect().left()-2,rect().top()+i*DY), 
-						   QPointF(rect().left(),rect().top()+i*DY) );
-		painter->drawText( QRectF( rect().left()-Width-5, 
-								   rect().top()-0.5f*Height+i*DY, 
-							       Width, Height ), 
-			Qt::AlignVCenter | Qt::AlignRight, 
-			QString::number((10 - i) * 10.0f) + "%" );
+        // Draw the trace lines
+		if (i > 0 && i < m_numY) painter->drawLine(QPointF(gridRect.left(), h), QPointF(gridRect.right(), h));
+
+        // Draw the scene component text labels
+		painter->drawLine(QPointF(gridRect.left()-2, h), QPointF(gridRect.left(), h));
+        if (i != m_numY)
+		painter->drawText(QRectF(gridRect.left()-Width-5, gridRect.top()-0.5f*Height+(i+0.5f)*DY, Width, Height), 
+                          Qt::AlignVCenter | Qt::AlignRight, 
+                          Y_LABELS[i]);
+
+        // Draw the interpolation points/lines for the keyframes
+        if (i != m_numY)
+        for (auto iter = biter; iter != eiter; ++iter)
+        {
+            auto w = gridRect.left()+(iter->first - m_offset)*DX;
+            painter->drawEllipse(QPointF(w, h+0.5*DY), 5, 5);
+            auto brush = painter->brush();
+            painter->setBrush(QBrush(Y_COLORS[i]));
+            painter->drawEllipse(QPointF(w, h+0.5*DY), 4, 4);
+	        painter->setBrush(brush);
+        }
 	}
 
 	// Draw markings along X-axis 
-	const float DX = rect( ).width( ) / (float)m_numX;
-	for( int i = 0; i < m_numX+1; i++ )
+	for (int i = 0; i < m_range + 1; i++)
 	{
-		// Draw grid line
-		if( i > 0 && i < m_numX )
-			painter->drawLine( QPointF(rect().left()+i*DX, rect().bottom()), 
-							   QPointF(rect().left()+i*DX, rect().top()) );
+        auto w = gridRect.left()+i*DX;
+        
+        // Draw the trace lines
+        if (i > 0 && i < m_range) painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.top()));
 
-		// Draw label
-		painter->drawLine( QPointF(rect().left()+i*DX, rect().bottom()), 
-						   QPointF(rect().left()+i*DX, rect().bottom()+2) );
-		painter->drawText( QRectF(rect().left()-0.5f*Width+i*DX, 
-								  rect().bottom()+5, Width, Height ), 
-			Qt::AlignHCenter | Qt::AlignTop, 
-			QString::number(i * 10.0f) + "%");
+		// Draw frame number label
+		painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.bottom()+2));
+		painter->drawText(QRectF(gridRect.left()-0.5f*Width+i*DX, gridRect.bottom()+5, Width, Height), 
+                          Qt::AlignHCenter | Qt::AlignTop, 
+                          QString::number(m_offset + i));
 	}
+
+    // Draw the mouse frame hover line if the mouse is captured
+    if (m_mousePos != -1)
+    {
+        painter->setPen(QPen(QColor::fromHsl(127, 127, 127), 3));
+        auto xpos = gridRect.left() + DX * m_mousePos;
+        painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
+    }
+
+    // Draw the active frame line if in the view
+    if (m_framePos >= m_offset && m_framePos <= m_offset + m_range)
+    {
+        painter->setPen(QPen(QColor::fromHsl(0, 0, 0), 3));
+        auto xpos = gridRect.left() + DX * (m_framePos - m_offset);
+        painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
+    }
 }

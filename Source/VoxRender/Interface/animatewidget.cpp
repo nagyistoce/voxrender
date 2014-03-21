@@ -45,16 +45,16 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
 	ui->setupUi(this);
 
     ui->view->setScene(&m_scene);
-    
+
+    ui->view->setMouseTracking(true);
     ui->view->setFrameShape(QGraphicsView::NoFrame);
     ui->view->setFrameShadow(QGraphicsView::Sunken);
 	ui->view->setBackgroundBrush(QBrush(QColor(240, 240, 240)));
-	ui->view->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	ui->view->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	ui->view->setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
-    ui->view->setDragMode( QGraphicsView::ScrollHandDrag );
+	ui->view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->view->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     
-    m_animateItem = new AnimateItem(nullptr);
+    m_animateItem = new AnimateItem(this);
     m_scene.addItem(m_animateItem);
     resizeEvent(&QResizeEvent(size(), size()));
 
@@ -82,6 +82,8 @@ void AnimateWidget::resizeEvent(QResizeEvent *event)
     canvasRectangle.adjust(0, 0, -1, -20);
 
     m_animateItem->setRect(canvasRectangle);
+
+    QWidget::resizeEvent(event);
 }
 
 // ----------------------------------------------------------------------------
@@ -102,7 +104,23 @@ void AnimateWidget::update()
 }
 
 // ----------------------------------------------------------------------------
-//  Synchronizes the widget controls with the current scene 
+//  Sets the current frame number
+// ----------------------------------------------------------------------------
+void AnimateWidget::setFrame(int value)
+{
+    ui->spinBox_frame->setValue(value);
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the graphics display when the frame index is changed
+// ----------------------------------------------------------------------------
+void AnimateWidget::on_spinBox_frame_valueChanged(int value)
+{
+    m_animateItem->setFrame(value);
+}
+
+// ----------------------------------------------------------------------------
+//  Inserts a new keyframe into the animator
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_pushButton_key_clicked()
 {
@@ -110,13 +128,63 @@ void AnimateWidget::on_pushButton_key_clicked()
 
     auto frame = ui->spinBox_frame->value();
     scene.animator->addKeyframe(scene.generateKeyFrame(), frame);
+
+    m_animateItem->update();
 }
 
 // ----------------------------------------------------------------------------
-//  Synchronizes the widget controls with the current scene 
+//  Loads the current keyframe (or interpolated frame) into the scene
+// ----------------------------------------------------------------------------
+void AnimateWidget::on_pushButton_load_clicked()
+{
+    auto & scene  = MainWindow::instance->scene();
+    auto animator = scene.animator;
+
+    auto index  = ui->spinBox_frame->value();
+    auto frames = scene.animator->keyframes();
+    if (frames.empty()) return;
+
+    MainWindow::instance->stopRender();
+
+    if      (frames.front().first > index) scene = frames.front().second;
+    else if (frames.back().first  < index) scene = frames.back().second;
+    else
+    {
+        auto iter = frames.begin();
+        while (iter->first < index) iter++;
+
+        if (iter->first == index)
+        {
+            scene = iter->second;
+        }
+        else
+        {
+            auto  fend = iter->second;
+            float tend = iter->first;
+            --iter;
+            auto fbeg = iter->second;
+            float tbeg = iter->first;
+        
+            float factor = (index - tbeg) / (tend - tbeg);
+
+            scene.reset();
+            scene.animator->interp(fbeg, fend, scene, factor);
+
+        }
+    }
+
+    scene.animator = animator;
+
+    MainWindow::instance->beginRender();
+}
+
+// ----------------------------------------------------------------------------
+//  Deletes a keyframe from the animator 
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_pushButton_delete_clicked()
 {
+    m_animateItem->update();
+
     auto & scene = MainWindow::instance->scene();
 
     auto frame = ui->spinBox_frame->value();

@@ -185,7 +185,7 @@
       <item>
        <widget class="QSpinBox" name="spinBox_resX">
         <property name="maximum">
-         <number>256</number>
+         <number>4096</number>
         </property>
        </widget>
       </item>
@@ -203,7 +203,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox"/>
+       <widget class="QSpinBox" name="spinBox_resY">
+        <property name="maximum">
+         <number>4096</number>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_4">
@@ -214,18 +218,21 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>2nd:</string>
+         <string>Laplacian</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_2"/>
+       <widget class="QSpinBox" name="spinBox_resZ">
+        <property name="maximum">
+         <number>4096</number>
+        </property>
+       </widget>
       </item>
      </layout>
      <zorder>spinBox_resX</zorder>
-     <zorder>groupBox_currNode</zorder>
-     <zorder>spinBox</zorder>
-     <zorder>spinBox_2</zorder>
+     <zorder>spinBox_resY</zorder>
+     <zorder>spinBox_resZ</zorder>
      <zorder>label_2</zorder>
      <zorder>label_3</zorder>
      <zorder>label_4</zorder>

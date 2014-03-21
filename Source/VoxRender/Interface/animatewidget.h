@@ -45,6 +45,8 @@ public:
 
 	~AnimateWidget();
 
+    void setFrame(int value);
+
 private:
 	Ui::AnimateWidget * ui;
 
@@ -63,9 +65,12 @@ private:
 private slots:
     void sceneChanged();
 
+    void on_spinBox_frame_valueChanged(int value);
+
     void on_pushButton_render_clicked();
     void on_pushButton_key_clicked();
     void on_pushButton_delete_clicked();
+    void on_pushButton_load_clicked();
 };
 
 // End definition

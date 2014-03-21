@@ -42,7 +42,7 @@
 // Transfer function modification wrapper for auto-update
 #define DO_LOCK(X)          \
     m_transfer->lock();     \
-    X                       \
+    X;                      \
     if (true) {             \
     m_transfer->setDirty(); \
     }                       \
@@ -196,17 +196,26 @@ void TransferWidget::synchronizeView()
 {
     m_transfer = MainWindow::instance->scene().transfer;
 
+    auto res = m_transfer->resolution();
+    ui->spinBox_resX->setValue(res[0]);
+    ui->spinBox_resY->setValue(res[1]);
+    ui->spinBox_resZ->setValue(res[2]);
+
     if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
         switchDimensions(1);
         setSelectedNode(transfer1D->nodes().empty() ? 
             nullptr : transfer1D->nodes().front());
+        ui->spinBox_resY->setDisabled(true);
+        ui->spinBox_resZ->setDisabled(true);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
     {
         switchDimensions(2);
         setSelectedQuad(transfer2D->quads().empty() ? 
             nullptr : transfer2D->quads().front());
+        ui->spinBox_resY->setDisabled(false);
+        ui->spinBox_resZ->setDisabled(true);
     }
     else m_currentNode = nullptr;
 
@@ -683,4 +692,15 @@ void TransferWidget::colorSpecularChanged(QColor const& color)
 {
     auto cast = Vector<UInt8,3>(color.red(), color.green(), color.blue());
     DO_LOCK(m_currentMaterial->specular = cast;)
+}
+
+// --------------------------------------------------------------------
+//  Transfer function resolution
+// --------------------------------------------------------------------
+void TransferWidget::on_spinBox_resX_valueChanged(int value) { updateResolution(); }
+void TransferWidget::on_spinBox_resY_valueChanged(int value) { updateResolution(); }
+void TransferWidget::on_spinBox_resZ_valueChanged(int value) { updateResolution(); }
+void TransferWidget::updateResolution()
+{
+    DO_LOCK(m_transfer->setResolution(Vector3u(ui->spinBox_resX->value(), ui->spinBox_resY->value(), ui->spinBox_resZ->value())))
 }

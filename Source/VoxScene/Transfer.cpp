@@ -460,18 +460,24 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
 {
     m_nodes.sort(filescope::slt<Node>);
 
+    if (!m_nodes.empty())
+    {
+        m_range[0] = Vector3f(m_nodes.front()->density, 0.f, 0.f);
+        m_range[1] = Vector3f(m_nodes.back()->density, 1.f, 1.f);
+    }
+
     VOX_ASSERT(map);
 
     map->lock();
 
     auto & diffuse = map->diffuse();
-    diffuse.resize(128, 1, 1);
+    diffuse.resize(m_resolution[0], 1, 1);
     auto & opacity = map->opacity();
-    opacity.resize(128, 1, 1);
+    opacity.resize(m_resolution[0], 1, 1);
     auto & specular = map->specular();
-    specular.resize(128, 1, 1);
+    specular.resize(m_resolution[0], 1, 1);
     auto & emissive = map->emissive();
-    emissive.resize(64, 1, 1);
+    emissive.resize(1, 1, 1);
 
     if (m_nodes.size())
     {
@@ -510,6 +516,9 @@ void Transfer2D::remove(std::shared_ptr<Quad> quad)
 // ----------------------------------------------------------------------------
 void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
 {
+    m_range[0] = Vector3f(0.f, 0.f, 0.f);
+    m_range[1] = Vector3f(1.f, 1.f, 1.f);
+
     VOX_ASSERT(map);
 
     map->lock();

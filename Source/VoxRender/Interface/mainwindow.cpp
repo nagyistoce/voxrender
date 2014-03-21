@@ -934,8 +934,8 @@ void MainWindow::createDeviceTable()
 
 	// Update device count displays
     int deviceCount = 0;
-	ui->label_deviceCount_1->setText( QString("%1").arg(deviceCount) );
-	ui->label_deviceCount_2->setText( QString("%1").arg(deviceCount) );
+	ui->label_deviceCount_1->setText(QString("%1").arg(deviceCount));
+	ui->label_deviceCount_2->setText(QString("%1").arg(deviceCount));
 }
 
 // ----------------------------------------------------------------------------

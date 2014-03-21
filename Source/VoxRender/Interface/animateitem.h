@@ -31,15 +31,29 @@
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsRectItem>
 
+#include <QTimer>
+
+class AnimateWidget;
+
 // Labeled grid graphics item
-class AnimateItem : public QGraphicsRectItem
+class AnimateItem : public QObject, public QGraphicsRectItem
 {
+    Q_OBJECT
+
 public:
-	AnimateItem(QGraphicsItem * parent = nullptr);
+	AnimateItem(AnimateWidget * parent);
 
 	virtual void paint(QPainter* painter, 
 		const QStyleOptionGraphicsItem* options, 
 		QWidget* widget);
+
+    /** Sets the currently selected frame number */
+    void setFrame(int frame);
+
+protected:
+	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
+	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent);
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* pEvent);
 
 private:
 	QBrush  m_bkBrushEnabled;	// Enabled state background brush
@@ -51,6 +65,18 @@ private:
 	QPen	m_penEnabled;		// Enabled state pen type
 	QPen	m_penDisabled;		// Disabled state pen type
 	QFont	m_font;				// Font used for grid labels
+
+    AnimateWidget * m_parent;
+    
+    int m_mousePos; ///< Offset frame index of mouse within window
+    int m_framePos; ///< Offset index to the currently selected frame
+    int m_offset;   ///< Starting frame in the window
+    int m_range;    ///< Number of frames visible in the window
+
+    QTimer m_scrollTimer;
+
+private slots:
+    void scrollWindow();
 };
 
 // End definition

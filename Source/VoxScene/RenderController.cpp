@@ -414,7 +414,7 @@ private:
             m_scene.clone(m_sceneCopy);
 
             // Detect changes to the transfer map generator
-            if (m_scene.transfer && m_scene.transfer->isDirty())
+            if (force || (m_scene.transfer && m_scene.transfer->isDirty()))
             {
                 if (!m_scene.transferMap) m_scene.transferMap = TransferMap::create();
                 m_scene.transfer->generateMap(m_scene.transferMap);

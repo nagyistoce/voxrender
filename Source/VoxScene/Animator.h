@@ -55,7 +55,7 @@ namespace vox
         ~Animator();
 
         /** Returns a list of the keyframes */
-        std::list<std::pair<unsigned int,KeyFrame>> const& keyframes();
+        std::list<std::pair<int,KeyFrame>> const& keyframes();
 
         /** Clears the list of keyframe data */
         void clear();
@@ -79,10 +79,10 @@ namespace vox
         void interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
 
         /** Adds a keyframe to the animation */
-        void addKeyframe(KeyFrame keyFrame, unsigned int frame);
+        void addKeyframe(KeyFrame keyFrame, int frame);
 
         /** Deletes a keyframe from the animation */
-        void removeKeyframe(unsigned int frame);
+        void removeKeyframe(int frame);
 
         /** Sets the animation framerate (in frames per second) */
         void setFramerate(unsigned int framerate);
