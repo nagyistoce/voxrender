@@ -53,7 +53,8 @@ AnimateItem::AnimateItem(AnimateWidget * parent) :
 	m_penDisabled(QPen(QColor::fromHsl(0, 0, 190))),
 	m_font("Arial", 10),
     m_offset(0),
-    m_range(10),
+    m_range(120),
+    m_step(10),
     m_mousePos(-1),
     m_framePos(0),
     m_parent(parent)
@@ -82,9 +83,8 @@ void AnimateItem::setFrame(int frame)
 // ------------------------------------------------------------
 void AnimateItem::scrollWindow()
 {
-    if (m_mousePos == 0) 
-        m_offset--;
-    else m_offset++;
+    if (m_mousePos == 0) m_offset -= m_step;
+    else m_offset += m_step;
 
     m_scrollTimer.start(200);
 
@@ -97,6 +97,29 @@ void AnimateItem::scrollWindow()
 void AnimateItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 {
 	QGraphicsRectItem::mousePressEvent(pEvent);
+    
+    mouseMoveEvent(pEvent);
+
+    if (pEvent->button() == Qt::RightButton)
+    {
+        auto frame = m_mousePos + m_offset;
+
+        auto animator = MainWindow::instance->scene().animator;
+        auto keys = animator->keyframes();
+        auto iter = keys.begin();
+        while (iter != keys.end() && iter->first < frame)
+            ++iter;
+
+        if (iter == keys.end() || iter->first != frame)
+        {
+           m_mousePos = -1;
+        }
+        else
+        {
+            m_dragFrame  = frame;
+            m_isDragging = true;
+        }
+    }
 }
 
 // ------------------------------------------------------------
@@ -108,7 +131,25 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 
     m_scrollTimer.stop();
 
-    if (m_mousePos != -1) m_parent->setFrame(m_mousePos + m_offset);
+    if (pEvent->button() == Qt::RightButton) 
+    {
+        if (m_isDragging)
+        {
+            auto animator = MainWindow::instance->scene().animator;
+            auto keys = animator->keyframes();
+            auto iter = keys.begin();
+            while (iter != keys.end() && iter->first < m_dragFrame)
+                ++iter;
+
+            auto scene = iter->second;
+            animator->removeKeyframe(m_dragFrame);
+            animator->addKeyframe(scene, m_offset + m_mousePos);
+        }
+    }
+    else if (pEvent->button() == Qt::LeftButton)
+    {
+        m_parent->setFrame(m_mousePos + m_offset);
+    }
 
     m_mousePos = -1;
 
@@ -176,7 +217,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     
     // Delta values for x and y axis markings
 	const float DY = gridRect.height() / (float)m_numY;
-	const float DX = gridRect.width()  / (float)m_range;
+	const float DX = gridRect.width()  / (float)(m_range / m_step);
 
 	// Disable antialising for grid-line rendering
 	painter->setRenderHint(QPainter::Antialiasing, false);
@@ -224,7 +265,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
         if (i != m_numY)
         for (auto iter = biter; iter != eiter; ++iter)
         {
-            auto w = gridRect.left()+(iter->first - m_offset)*DX;
+            auto w = gridRect.left() + (iter->first - m_offset) * DX / m_step;
             painter->drawEllipse(QPointF(w, h+0.5*DY), 5, 5);
             auto brush = painter->brush();
             painter->setBrush(QBrush(Y_COLORS[i]));
@@ -234,7 +275,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 	}
 
 	// Draw markings along X-axis 
-	for (int i = 0; i < m_range + 1; i++)
+	for (int i = 0; i <= m_range / m_step; i++)
 	{
         auto w = gridRect.left()+i*DX;
         
@@ -245,14 +286,14 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 		painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.bottom()+2));
 		painter->drawText(QRectF(gridRect.left()-0.5f*Width+i*DX, gridRect.bottom()+5, Width, Height), 
                           Qt::AlignHCenter | Qt::AlignTop, 
-                          QString::number(m_offset + i));
+                          QString::number(m_offset + i*m_step));
 	}
 
     // Draw the mouse frame hover line if the mouse is captured
     if (m_mousePos != -1)
     {
         painter->setPen(QPen(QColor::fromHsl(127, 127, 127), 3));
-        auto xpos = gridRect.left() + DX * m_mousePos;
+        auto xpos = gridRect.left() + DX * m_mousePos / ((float)m_step);
         painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
     }
 
@@ -260,7 +301,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     if (m_framePos >= m_offset && m_framePos <= m_offset + m_range)
     {
         painter->setPen(QPen(QColor::fromHsl(0, 0, 0), 3));
-        auto xpos = gridRect.left() + DX * (m_framePos - m_offset);
+        auto xpos = gridRect.left() + DX * (m_framePos - m_offset) / ((float)m_step);
         painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
     }
 }

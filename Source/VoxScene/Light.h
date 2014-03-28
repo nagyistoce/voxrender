@@ -64,10 +64,16 @@ namespace vox
         void clone(LightSet & lightSet);
 
         /** Adds a new light to the scene */
-        void add(std::shared_ptr<Light> light);
+        void add(std::shared_ptr<Light> light, bool suppress = false);
 
         /** Removes an existing light from the scene */
-        void remove(std::shared_ptr<Light> light);
+        void remove(std::shared_ptr<Light> light, bool suppress = false);
+
+        /** Sets the callback event for adding a light */
+        void onAdd(std::function<void(std::shared_ptr<Light>, bool)> callback);
+
+        /** Sets the callback event for removing a light */
+        void onRemove(std::function<void(std::shared_ptr<Light>, bool)> callback);
 
         /** Locates a light element within the set */
         std::shared_ptr<Light> find(int id);
@@ -80,6 +86,9 @@ namespace vox
 
     private:
         friend RenderController;
+
+        std::function<void(std::shared_ptr<Light>, bool)> m_addLightCallback;
+        std::function<void(std::shared_ptr<Light>, bool)> m_remLightCallback;
 
         LightSet(); // Private constructor to ensure shared_from_this properly
 

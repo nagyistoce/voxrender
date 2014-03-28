@@ -70,8 +70,13 @@ private:
     
     int m_mousePos; ///< Offset frame index of mouse within window
     int m_framePos; ///< Offset index to the currently selected frame
+
     int m_offset;   ///< Starting frame in the window
     int m_range;    ///< Number of frames visible in the window
+    int m_step;     ///< Number of frame between trace lines
+
+    int  m_dragFrame;  ///< The original index of a frame being moved
+    bool m_isDragging; ///< Flag to determine if frame drag is occurring
 
     QTimer m_scrollTimer;
 

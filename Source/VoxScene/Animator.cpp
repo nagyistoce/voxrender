@@ -42,6 +42,9 @@ namespace vox {
             m_uri = "file:///" + boost::filesystem::current_path().string() + "/Temp/";
         }
 
+        std::function<void(int, KeyFrame &, bool)> addCallback;
+        std::function<void(int, KeyFrame &, bool)> remCallback;
+
         unsigned int m_framerate;
         std::list<std::pair<int,KeyFrame>> m_keys;
         ResourceId m_uri;
@@ -130,7 +133,7 @@ void Animator::clear()
 // --------------------------------------------------------------------
 //  Inserts a keyframe into the scene at the specified time index
 // --------------------------------------------------------------------
-void Animator::addKeyframe(KeyFrame keyFrame, int frame)
+void Animator::addKeyframe(KeyFrame keyFrame, int frame, bool suppress)
 {
     if (!keyFrame.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
         "Keyframe is invalid", Error_MissingData);
@@ -147,16 +150,19 @@ void Animator::addKeyframe(KeyFrame keyFrame, int frame)
     }
 
     m_pImpl->m_keys.insert(iter, std::make_pair(frame, keyFrame));
+
+    if (m_pImpl->addCallback) m_pImpl->addCallback(frame, keyFrame, suppress);
 }
         
 // --------------------------------------------------------------------
 //  Removes a keyframe at the specified frame index
 // --------------------------------------------------------------------
-void Animator::removeKeyframe(int frame)
+void Animator::removeKeyframe(int frame, bool suppress)
 {
     for (auto iter = m_pImpl->m_keys.begin(); iter != m_pImpl->m_keys.end(); ++iter)
     if ((*iter).first == frame)
     {
+        if (m_pImpl->remCallback) m_pImpl->remCallback(frame, iter->second, suppress);
         m_pImpl->m_keys.erase(iter);
         return;
     }
@@ -177,5 +183,11 @@ unsigned int Animator::framerate()
 { 
     return m_pImpl->m_framerate; 
 }
+
+// ----------------------------------------------------------------------------
+//  Callback event modifier functions
+// ----------------------------------------------------------------------------
+void Animator::onAdd(std::function<void(int, KeyFrame &, bool)> callback)    { m_pImpl->addCallback = callback; }
+void Animator::onRemove(std::function<void(int, KeyFrame &, bool)> callback) { m_pImpl->remCallback = callback; }
 
 } // namespace vox

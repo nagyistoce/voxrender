@@ -34,6 +34,7 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Error/Error.h"
 #include "VoxLib/Error/CudaError.h"
+#include "VoxLib/Core/Common.h"
 
 namespace vox {
     

@@ -30,6 +30,9 @@ private slots:
 signals:
 	void currentColorChanged(const QColor&);
 
+    void beginColorSelection();
+    void endColorSelection();
+
 private:
 	int		m_margin;
 	int		m_radius;

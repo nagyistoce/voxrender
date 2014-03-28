@@ -70,8 +70,11 @@ auto Q_MATERIALS = "Materials";  ///< Material list for nodes
 
 // Settings
 
-auto P_STEP_PRIMARY    = "PrimaryStepSize"; ///< Primary sample step size (mm)
-auto P_STEP_SHADOW     = "ShadowStepSize";  ///< Shadow sample step size (mm)
+auto P_STEP_PRIMARY = "PrimaryStepSize";    ///< Primary sample step size (mm)
+auto P_STEP_SHADOW  = "ShadowStepSize";     ///< Shadow sample step size (mm)
+auto P_GRAD_CUTOFF  = "GradientCutoff";     ///< Cutoff between surface/volume shading [0.0f - 1.0f]
+auto P_SCATTER      = "ScatterCoefficient"; ///< The scattering coefficient for volume shading [0.0f - 1.0f]
+auto P_EDGE_ENHANCE = "EdgeEnhance";        ///< Degree of edge enhancement [0.0f - 1.0f]
 
 // Animator
 

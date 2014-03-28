@@ -43,7 +43,12 @@
 #include "pluginwidget.h"
 #include "timingwidget.h"
 
+// :TODO: Move to seperate clip/light widgets
+#include "Actions/AddRemClipAct.h"
+#include "Actions/AddRemLightAct.h"
+
 // VoxLib Includes 
+#include "VoxLib/Action/ActionManager.h"
 #include "VoxLib/IO/ResourceHelper.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Core/System.h"
@@ -101,10 +106,10 @@ namespace filescope
     //  Performs ellision on the path component of the input filepath
     // --------------------------------------------------------------------
     QString pathElidedText(const QFontMetrics &fm, 
-                            const QString &text, 
-                            int width, 
-                            int flags 
-                            ) 
+                           const QString &text, 
+                           int width, 
+                           int flags 
+                           ) 
     {
 	    const QString filename = "/" + QFileInfo( text ).fileName( );
 	    const QString path = QFileInfo( text ).absolutePath( );
@@ -395,17 +400,31 @@ void MainWindow::printLogEntry(
 // ----------------------------------------------------------------------------
 void MainWindow::readSettings()
 {
-	QSettings settings( "VoxRender", "VoxRender GUI");
+	QSettings settings("VoxRender", "VoxRender GUI");
 
     // MainWindow settings group
 	settings.beginGroup("MainWindow");
         BOOST_FOREACH (auto & file, settings.value("recentFiles").toStringList())
         {
-            m_recentFiles.append( QFileInfo(file) );
+            m_recentFiles.append(QFileInfo(file));
         }
-	    m_lastOpenDir = settings.value("lastOpenDir","").toString( );
-	    updateRecentFileActions( );
-	settings.endGroup( );
+	    m_lastOpenDir = settings.value("lastOpenDir","").toString();
+	    updateRecentFileActions();
+	settings.endGroup();
+    
+    // Initializes the action history
+    auto functor = [] () {
+        auto undo = ActionManager::instance().canUndo();
+        auto redo = ActionManager::instance().canRedo();
+        MainWindow::instance->ui->actionUndo->setEnabled(undo);
+        MainWindow::instance->ui->actionRedo->setEnabled(redo);
+        };
+    functor();
+
+    auto & ar = ActionManager::instance();
+    ar.onStateChanged(functor);
+    ar.setMaxBranches(1);
+    ar.setMaxDepth(15);
 }
 
 // ----------------------------------------------------------------------------
@@ -419,12 +438,12 @@ void MainWindow::writeSettings()
 	{
 		QListIterator<QFileInfo> i(m_recentFiles);
 		QStringList recentFilesList;
-		while( i.hasNext( ) ) 
-            recentFilesList.append( i.next( ).absoluteFilePath( ) );
+		while (i.hasNext()) 
+            recentFilesList.append(i.next().absoluteFilePath());
 		settings.setValue("recentFiles", recentFilesList);
 	}
 	settings.setValue("lastOpenDir", m_lastOpenDir);
-	settings.endGroup( );
+	settings.endGroup();
 }
 
 // ----------------------------------------------------------------------------
@@ -435,8 +454,8 @@ void MainWindow::createRecentFileActions()
     // Create actions for recent files listing
 	for (int i = 0; i < MaxRecentFiles; i++) 
     {
-		m_recentFileActions[i] = new QAction( this );
-		m_recentFileActions[i]->setVisible( false );
+		m_recentFileActions[i] = new QAction(this);
+		m_recentFileActions[i]->setVisible(false);
 
         // Connect action slot to open recent file to open slot
 		connect(m_recentFileActions[i], SIGNAL(triggered()), 
@@ -463,20 +482,20 @@ void MainWindow::updateRecentFileActions()
 	}
 
     // Update file info listings for recent files
-	for( int j = 0; j < MaxRecentFiles; j++ ) 
+	for (int j = 0; j < MaxRecentFiles; j++) 
     {
-		if( j < m_recentFiles.count( ) ) 
+		if (j < m_recentFiles.count()) 
         {
-			QFontMetrics fm( m_recentFileActions[j]->font( ) );
-			QString filename = m_recentFiles[j].absoluteFilePath( );
+			QFontMetrics fm(m_recentFileActions[j]->font());
+			QString filename = m_recentFiles[j].absoluteFilePath();
 
-            QString ellidedText = filescope::pathElidedText( fm, filename, 250, 0 );
+            QString ellidedText = filescope::pathElidedText(fm, filename, 250, 0);
 
-			m_recentFileActions[j]->setText( ellidedText );
-			m_recentFileActions[j]->setData( filename );
-			m_recentFileActions[j]->setVisible( true );
+			m_recentFileActions[j]->setText(ellidedText);
+			m_recentFileActions[j]->setData(filename);
+			m_recentFileActions[j]->setVisible(true);
 		} 
-        else m_recentFileActions[j]->setVisible( false );
+        else m_recentFileActions[j]->setVisible(false);
 	}
 }
 
@@ -590,6 +609,24 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         if (!m_activeScene.transfer)     m_activeScene.transfer     = Transfer1D::create();
         if (!m_activeScene.camera)       m_activeScene.camera       = Camera::create();
         if (!m_activeScene.animator)     m_activeScene.animator     = Animator::create();
+
+        // :TODO: Move this to a light pane holder widget
+        m_activeScene.lightSet->onAdd([] (std::shared_ptr<Light> light, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
+            MainWindow::instance->addLight(light); });
+        m_activeScene.lightSet->onRemove([] (std::shared_ptr<Light> light, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
+            MainWindow::instance->removeLight(light);
+        });
+        
+        // :TODO: Move this to a clipping geometry pane holder widget
+        m_activeScene.clipGeometry->onAdd([] (std::shared_ptr<Primitive> prim, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
+            MainWindow::instance->addClippingGeometry(prim); });
+        m_activeScene.clipGeometry->onRemove([] (std::shared_ptr<Primitive> prim, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
+            MainWindow::instance->removeClipGeometry(prim);
+        });
 
         // Synchronize the scene view
         synchronizeView();
@@ -757,7 +794,7 @@ void MainWindow::synchronizeView()
     BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
     m_lightPanes.clear();
     BOOST_FOREACH (auto & light, m_activeScene.lightSet->lights()) 
-        addLight(light, "Point Light");
+        addLight(light);
 
     // Synchronize the clip geometry controls
     BOOST_FOREACH (auto & pane, m_clipPanes) delete pane;
@@ -941,7 +978,7 @@ void MainWindow::createDeviceTable()
 // ----------------------------------------------------------------------------
 //  Adds a control widget for an existing light object 
 // ----------------------------------------------------------------------------
-void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
+void MainWindow::addLight(std::shared_ptr<Light> light)
 {
     // Remove spacer prior to pane insertion
     ui->lightsAreaLayout->removeItem(m_spacer);
@@ -956,7 +993,7 @@ void MainWindow::addLight(std::shared_ptr<Light> light, QString const& name)
     pane->SetIndex(index);
     pane->showOnOffButton();
     pane->showVisibilityButtons();
-    pane->setTitle(name);
+    pane->setTitle("Point Light");
     pane->setIcon(":/icons/lightgroupsicon.png");
     pane->setWidget(currWidget);
     pane->expand( );
@@ -980,6 +1017,26 @@ void MainWindow::removeLight(PaneWidget * pane)
 
     ui->lightsAreaLayout->removeWidget(pane);
     delete pane;
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a light from the active scene
+// ----------------------------------------------------------------------------
+void MainWindow::removeLight(std::shared_ptr<Light> light)
+{
+    BOOST_FOREACH (auto pane, m_lightPanes)
+    {
+        auto ptr = dynamic_cast<PointLightWidget*>(pane->getWidget());
+        if (ptr && ptr->light().get() == light.get())
+        {
+            m_lightPanes.remove(pane);
+
+            ui->lightsAreaLayout->removeWidget(pane);
+            delete pane;
+
+            return;
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1030,6 +1087,28 @@ void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
 
     // Reinsert spacer following new pane
 	ui->clipAreaLayout->addItem(m_clipSpacer);
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a clipping primtive from the active scene
+// ----------------------------------------------------------------------------
+void MainWindow::removeClipGeometry(std::shared_ptr<Primitive> prim)
+{
+    BOOST_FOREACH (auto pane, m_clipPanes)
+    {
+        auto ptr = dynamic_cast<ClipPlaneWidget*>(pane->getWidget());
+        if (!ptr) continue;
+
+        if (ptr && ptr->plane() == prim)
+        {
+            m_clipPanes.remove(pane);
+
+            ui->clipAreaLayout->removeWidget(pane);
+            delete pane;
+
+            return;
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -1101,10 +1180,9 @@ void MainWindow::on_pushButton_addLight_clicked()
 
     if (result)
     {
-        m_activeScene.lightSet->lock();
         auto light = Light::create();
+        m_activeScene.lightSet->lock();
         m_activeScene.lightSet->add(light);
-        addLight(light, lightDialogue.nameSelected());
         m_activeScene.lightSet->setDirty();
         m_activeScene.lightSet->unlock();
     }
@@ -1448,9 +1526,9 @@ void MainWindow::on_actionNormal_Screen_triggered()
 	if (m_renderView->isFullScreen()) 
 	{
 		delete m_renderView;
-		m_renderView = new RenderView( ui->frame_render );
-		ui->frame_render_layout->addWidget( m_renderView, 0, 0, 1, 1 );
-		m_renderView->show( );
+		m_renderView = new RenderView(ui->frame_render);
+		ui->frame_render_layout->addWidget(m_renderView, 0, 0, 1, 1);
+		m_renderView->show();
 	}
 }
 
@@ -1477,6 +1555,16 @@ void MainWindow::on_actionFull_Screen_triggered()
 }
 
 // ----------------------------------------------------------------------------
+//  Undoes the last action in the action manager
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionUndo_triggered() { ActionManager::instance().undo(); }
+
+// ----------------------------------------------------------------------------
+//  Reperforms the last action in the action manager
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionRedo_triggered() { ActionManager::instance().redo(); }
+
+// ----------------------------------------------------------------------------
 // Clears the log information from textEdit_log
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionClear_Log_triggered() 
@@ -1490,16 +1578,42 @@ void MainWindow::on_actionClear_Log_triggered()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionCopy_Log_triggered() 
 {
-	QClipboard *clipboard = QApplication::clipboard();
+	QClipboard * clipboard = QApplication::clipboard();
 	clipboard->setText(ui->textEdit_log->toPlainText());
 }
 
 // ----------------------------------------------------------------------------
-// Toggles the side panel in the render tab window
+//  Toggles the side panel in the render tab window
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionShow_Side_Panel_triggered(bool checked)
 {
-	ui->tabWidget_render->setVisible(checked);
+    static bool block = false;
+    static auto functor = [&] () {
+        block = true;
+        MainWindow::instance->ui->actionShow_Side_Panel->trigger(); 
+        block = false;
+    };
+
+    if (!block) ActionManager::instance().push(functor, functor);
+
+	MainWindow::instance->ui->tabWidget_render->setVisible(checked);
+}
+
+// ----------------------------------------------------------------------------
+//  Toggles the statistics overlay in the rendered image
+// ----------------------------------------------------------------------------
+void MainWindow::on_actionOverlay_Statistics_triggered(bool checked)
+{
+    static bool block = false;
+    static auto functor = [&] () {
+        block = true;
+        MainWindow::instance->ui->actionOverlay_Statistics->trigger(); 
+        block = false;
+    };
+
+    if (!block) ActionManager::instance().push(functor, functor);
+
+    MainWindow::instance->m_renderView->setOverlayStatistics(checked);
 }
 
 // ----------------------------------------------------------------------------
@@ -1572,7 +1686,6 @@ void MainWindow::on_pushButton_addClip_clicked()
     }
     
     MainWindow::instance->scene().clipGeometry->add(prim);
-    addClippingGeometry(prim);
 }
 
 // ----------------------------------------------------------------------------

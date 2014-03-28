@@ -293,7 +293,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>660</width>
+                  <width>694</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -326,7 +326,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>660</width>
+                  <width>694</width>
                   <height>164</height>
                  </rect>
                 </property>
@@ -383,7 +383,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>660</width>
+                  <width>694</width>
                   <height>164</height>
                  </rect>
                 </property>
@@ -397,6 +397,13 @@
              </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>[CTRL + Left Click] on the view to create clipping planes</string>
+                 </property>
+                </widget>
+               </item>
                <item>
                 <spacer name="horizontalSpacer_5">
                  <property name="orientation">
@@ -443,7 +450,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>660</width>
+                  <width>694</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -476,7 +483,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>660</width>
+                  <width>694</width>
                   <height>195</height>
                  </rect>
                 </property>
@@ -754,6 +761,7 @@
     </item>
    </layout>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -802,18 +810,20 @@
    </widget>
    <widget class="QMenu" name="menuRender">
     <property name="title">
-     <string>Render</string>
+     <string>Edit</string>
     </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
     <addaction name="actionResume"/>
     <addaction name="actionPause"/>
     <addaction name="actionStop"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuRender"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="text">
     <string>Open...</string>
@@ -1040,6 +1050,22 @@
   <action name="actionShift_Filter">
    <property name="text">
     <string>Linear Shift/Scale</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
    </property>
   </action>
  </widget>

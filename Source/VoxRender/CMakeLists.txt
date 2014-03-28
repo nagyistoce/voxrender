@@ -44,10 +44,35 @@ IF(Qt5Widgets_FOUND)
     # ADD_DEFINITIONS(-DQT_NO_KEYWORDS) # The foreach macro breaks alot of 3rd party code
 
     #===============================================#
-    #                  Entry Point                  #
+    #                  ENTRY POINT                 #
     #===============================================#
     SET(VOXQTGUI_MAIN Interface/main.cpp)
     SOURCE_GROUP("Source Files" FILES ${VOXQTGUI_MAIN})
+
+    #===============================================#
+    #                 SOURCE FILES                  #
+    #===============================================#
+    SET(VOXQTGUI_ACTION_SRCS
+        Actions/CamEditAct.cpp
+        Actions/MaterialEditAct.cpp
+        Actions/AddRemLightAct.cpp
+        Actions/AddRemClipAct.cpp
+        Actions/AddRemKeyAct.cpp
+    )
+
+    #===============================================#
+    #                 HEADER FILES                  #
+    #===============================================#
+    SET(VOXQTGUI_ACTION_HDRS
+        Actions/CamEditAct.h
+        Actions/MaterialEditAct.h
+        Actions/AddRemLightAct.h
+        Actions/AddRemClipAct.h
+        Actions/AddRemKeyAct.h
+    )
+
+    SOURCE_GROUP("Header Files\\Actions"   FILES ${VOXQTGUI_ACTION_HDRS})
+    SOURCE_GROUP("Source Files\\Actions"   FILES ${VOXQTGUI_ACTION_SRCS})
 
     #===============================================#
     #                 Source Files                  #
@@ -174,9 +199,8 @@ IF(Qt5Widgets_FOUND)
     #===============================================#
     CUDA_ADD_EXECUTABLE( VoxRender ${VOXQTGUI_MAIN} ${VOXQTGUI_SRCS} 
         ${VOXQTGUI_MOC} ${VOXQTGUI_MOC_SRCS} ${VOXQTGUI_RC_SRCS} 
-        ${VOXQTGUI_UI_HDRS} "interface/utilities.h" "interface/utilities.cpp")
-
-    INCLUDE_DIRECTORIES(../VoxLib)
+        ${VOXQTGUI_UI_HDRS} "interface/utilities.h" "interface/utilities.cpp"
+        ${VOXQTGUI_ACTION_HDRS} ${VOXQTGUI_ACTION_SRCS})
 
     #===============================================#
     #            QT5 Dependency Modules             #

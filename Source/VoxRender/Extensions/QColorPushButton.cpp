@@ -46,14 +46,31 @@ void QColorPushButton::paintEvent(QPaintEvent* pPaintEvent)
 
 void QColorPushButton::mousePressEvent(QMouseEvent* pEvent)
 {
+    static int check = 0;
+    check++;
+
     QColorDialog ColorDialog;
+
+    auto originalColor = m_color;
+
+    emit beginColorSelection();
 
     connect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
 
     ColorDialog.setCurrentColor(m_color);
-    ColorDialog.exec();
+    int result = ColorDialog.exec();
+
+    if (result == QDialog::Rejected) 
+    {
+        m_color = originalColor;
+        emit currentColorChanged(m_color);
+    }
+
+    emit endColorSelection();
 
     disconnect(&ColorDialog, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(onCurrentColorChanged(const QColor&)));
+
+    check--;
 }
 
 int QColorPushButton::getMargin() const

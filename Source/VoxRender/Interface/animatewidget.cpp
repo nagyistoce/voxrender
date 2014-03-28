@@ -31,6 +31,8 @@
 #include "mainwindow.h"
 #include "utilities.h"
 #include "animateitem.h"
+#include "Actions/AddRemKeyAct.h"
+#include "VoxLib/Action/ActionManager.h"
 
 using namespace vox;
 
@@ -93,6 +95,14 @@ void AnimateWidget::sceneChanged()
 {
     m_ignore = true;
 
+    auto animator = MainWindow::instance->scene().animator;
+    if (!animator) { m_ignore = false; return; }
+
+    animator->onAdd(std::bind(&AnimateWidget::onAddKey, this, 
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    animator->onRemove(std::bind(&AnimateWidget::onRemoveKey, this, 
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
     m_ignore = false;
 }
 
@@ -101,6 +111,24 @@ void AnimateWidget::sceneChanged()
 // ----------------------------------------------------------------------------
 void AnimateWidget::update()
 {
+}
+
+// ----------------------------------------------------------------------------
+//  Applies widget control changes to the scene 
+// ----------------------------------------------------------------------------
+void AnimateWidget::onAddKey(int index, KeyFrame & key, bool suppress)
+{
+    if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, true));
+    m_animateItem->update();
+}
+
+// ----------------------------------------------------------------------------
+//  Applies widget control changes to the scene 
+// ----------------------------------------------------------------------------
+void AnimateWidget::onRemoveKey(int index, KeyFrame & key, bool suppress)
+{
+    if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, false));
+    m_animateItem->update();
 }
 
 // ----------------------------------------------------------------------------
@@ -125,11 +153,8 @@ void AnimateWidget::on_spinBox_frame_valueChanged(int value)
 void AnimateWidget::on_pushButton_key_clicked()
 {
     auto & scene = MainWindow::instance->scene();
-
     auto frame = ui->spinBox_frame->value();
     scene.animator->addKeyframe(scene.generateKeyFrame(), frame);
-
-    m_animateItem->update();
 }
 
 // ----------------------------------------------------------------------------
@@ -146,8 +171,8 @@ void AnimateWidget::on_pushButton_load_clicked()
 
     MainWindow::instance->stopRender();
 
-    if      (frames.front().first > index) scene = frames.front().second;
-    else if (frames.back().first  < index) scene = frames.back().second;
+    if      (frames.front().first > index) frames.front().second.clone(scene);
+    else if (frames.back().first  < index) frames.back().second.clone(scene);
     else
     {
         auto iter = frames.begin();
@@ -179,14 +204,53 @@ void AnimateWidget::on_pushButton_load_clicked()
 }
 
 // ----------------------------------------------------------------------------
+//  Keyframe seeking buttons
+// ----------------------------------------------------------------------------
+void AnimateWidget::on_pushButton_next_clicked() 
+{ 
+    auto currFrame = ui->spinBox_frame->value();
+
+    auto animator = MainWindow::instance->scene().animator;
+    auto frames = animator->keyframes();
+    auto iter = frames.begin();
+    while (iter != frames.end() && iter->first <= currFrame) ++iter;
+    if (iter != frames.end()) ui->spinBox_frame->setValue(iter->first);
+}
+void AnimateWidget::on_pushButton_prev_clicked()
+{ 
+    auto currFrame = ui->spinBox_frame->value();
+    
+    auto animator = MainWindow::instance->scene().animator;
+    auto frames = animator->keyframes();
+    if (frames.empty() || frames.front().first >= currFrame) return;
+    auto iter = frames.begin();
+    while (iter != frames.end() && iter->first < currFrame) ++iter;
+    --iter;
+    if (iter != frames.end()) ui->spinBox_frame->setValue(iter->first);
+}
+void AnimateWidget::on_pushButton_first_clicked()
+{ 
+    auto animator = MainWindow::instance->scene().animator;
+    auto frames = animator->keyframes();
+    if (frames.empty()) return;
+
+    ui->spinBox_frame->setValue(frames.front().first);
+}
+void AnimateWidget::on_pushButton_last_clicked()
+{ 
+    auto animator = MainWindow::instance->scene().animator;
+    auto frames = animator->keyframes();
+    if (frames.empty()) return;
+
+    ui->spinBox_frame->setValue(frames.back().first);
+}
+
+// ----------------------------------------------------------------------------
 //  Deletes a keyframe from the animator 
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_pushButton_delete_clicked()
 {
-    m_animateItem->update();
-
     auto & scene = MainWindow::instance->scene();
-
     auto frame = ui->spinBox_frame->value();
     scene.animator->removeKeyframe(frame);
 }

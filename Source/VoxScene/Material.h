@@ -44,6 +44,18 @@ namespace vox
             return std::shared_ptr<Material>(new Material()); 
         }
 
+        bool operator==(Material const& rhs)
+        {
+            return opticalThickness == rhs.opticalThickness &&
+                   glossiness       == rhs.glossiness &&
+                   emissiveStrength == rhs.emissiveStrength &&
+                   specular         == rhs.specular &&
+                   diffuse          == rhs.diffuse &&
+                   emissive         == rhs.emissive;
+        }
+
+        bool operator!=(Material const& rhs) { return !((*this)==(rhs)); }
+
         float opticalThickness; ///< Optical thickness of material (-INF, INF)
         float glossiness;       ///< Glossiness factor
         float emissiveStrength; ///< Emissive light intensity

@@ -31,6 +31,9 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QGraphicsScene>
 
+#include "VoxScene/Animator.h"
+#include "VoxScene/Scene.h"
+
 namespace Ui { class AnimateWidget; }
 
 class AnimateItem;
@@ -54,6 +57,9 @@ private:
 
     void update();
 
+    void onAddKey(int index, vox::KeyFrame & key, bool suppress);
+    void onRemoveKey(int index, vox::KeyFrame & key, bool suppress);
+
     bool m_ignore;
 
     float m_frameOffset; ///< Frame at left edge of window
@@ -71,6 +77,11 @@ private slots:
     void on_pushButton_key_clicked();
     void on_pushButton_delete_clicked();
     void on_pushButton_load_clicked();
+
+    void on_pushButton_next_clicked();
+    void on_pushButton_prev_clicked();
+    void on_pushButton_first_clicked();
+    void on_pushButton_last_clicked();
 };
 
 // End definition

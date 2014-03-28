@@ -55,7 +55,18 @@ namespace vox {
 class VOX_EXPORT ActionManager
 {
 public:
-    // :TODO: State Change Callbacks
+    /** Constructor */
+    ActionManager();
+    
+    /** Destructor */
+    ~ActionManager();
+
+    /** Returns a handle to the global action manager instance */
+    static ActionManager& instance()
+    { 
+        static ActionManager pmanager;
+        return pmanager;
+    }
 
     /** 
      * Adds a new action to the action history 
@@ -64,7 +75,7 @@ public:
      * limitations imposed on the tree, the oldest nodes will be removed. While the insertion of 
      * action elements is thread safe, the order of insertion is, as a result, unspecified.
      */
-    static void push(std::shared_ptr<Action> action);
+    void push(std::shared_ptr<Action> action, bool doNow = false);
     
     /** 
      * Function based overload for push 
@@ -74,49 +85,54 @@ public:
      * @param doNow If true, the redo function will be called immediately
      * 
      */
-    static void push(std::function<void()> undo, std::function<void()> redo, bool doNow);
+    void push(std::function<void()> undo, std::function<void()> redo, bool doNow = false);
     
     /** 
      * Reverse the effects of the last action performed, if any 
      *
      * @returns true if an action was undone, false otherwise
      */
-    static bool undo();
+    bool undo();
 
     /** 
      * Redoes the effects of the last action undone, if any 
-     * :TODO: Define the exception handling internally, ie let the user drop a failed action
-     *        and retain the stack or clear the stack entirely, etc... ?s
      *
      * @param branch The branch to redo
      *
      * @returns true if an action was undone, false otherwise
      */
-    static bool redo(unsigned int branch = 0);
+    bool redo(unsigned int branch = 0);
     
     /** Returns true if there is a valid current node in the history */
-    static bool canUndo();
+    bool canUndo();
 
-    /** Returns true if there is a valid branch at the current node */
-    static bool canRedo();
+    /** Returns the number of redo branches at the current node */
+    int canRedo();
 
-    /** Returns the content of the userInfo element at the current action */
-    static std::shared_ptr<void*> info();
+    /** Returns the name of the most recent action */
+    String const& name();
 
     /** Clears the action manager history */
-    static void clear();
+    void clear();
 
     /** Sets the maximum number of additional branches per node (Not counting the original branch) */
-    static void setMaxBranches(unsigned int branches);
+    void setMaxBranches(unsigned int branches);
 
     /** Sets the maximum depth of the action history stack */
-    static void setMaxDepth(unsigned int nodes);
+    void setMaxDepth(unsigned int nodes);
 
     /** Returns the current maximum branches per node (Not counting the original branch) */
-    static unsigned int maxBranches();
+    unsigned int maxBranches();
 
     /** Returns the current maximum stack depth */
-    static unsigned int maxDepth();
+    unsigned int maxDepth();
+
+    /** Sets a callback issued for undoable/redoable stack state changes */
+    void onStateChanged(std::function<void()> callback);
+
+private:
+    class Impl;
+    Impl * m_pImpl;
 };
 
 } // namespace vox

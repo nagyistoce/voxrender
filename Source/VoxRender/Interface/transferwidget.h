@@ -84,6 +84,9 @@ private:
     std::shared_ptr<vox::Quad>     m_currentQuad;
     std::shared_ptr<vox::Material> m_currentMaterial;
 
+    // Edit clones for managing undo/redo operations
+    std::shared_ptr<vox::Material> m_editMaterial;
+
 	// Dimension selection
 	void switchDimensions(int nDims);
 	bool canSwitchDimensions();
@@ -104,6 +107,9 @@ public slots:
     void setSelectedQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node = vox::Quad::Node_End);
 
 private slots:
+    void beginMaterialChange();
+    void endMaterialChange();
+
 	// Node selection group box
 	void on_pushButton_delete_clicked();
 	void on_pushButton_next_clicked();

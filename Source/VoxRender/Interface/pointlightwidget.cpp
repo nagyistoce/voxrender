@@ -83,10 +83,8 @@ PointLightWidget::~PointLightWidget()
     auto & scene = MainWindow::instance->scene();
     if (scene.lightSet) 
     {
-        scene.lightSet->lock();
         scene.lightSet->remove(m_light);
         scene.lightSet->setDirty();
-        scene.lightSet->unlock();
     }
 
     delete m_colorButton;
@@ -133,14 +131,14 @@ void PointLightWidget::changeEvent(QEvent * event)
         
         if (MainWindow::instance->renderState() != RenderState_Rendering) return;
 
-        // :TODO: Add isVisible member to scene classes
+        // :TODO: Add isVisible member to scene objects
         scene.lightSet->lock();
-            if (!isEnabled()) scene.lightSet->remove(m_light);
+            if (!isEnabled()) scene.lightSet->remove(m_light, true);
             else 
             {
                 auto children = scene.lightSet->lights();
                 if (std::find(children.begin(), children.end(), m_light) == children.end())
-                    scene.lightSet->add(m_light);
+                    scene.lightSet->add(m_light, true);
             }
         scene.lightSet->setDirty();
         scene.lightSet->unlock();

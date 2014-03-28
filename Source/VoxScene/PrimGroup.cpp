@@ -89,9 +89,20 @@ void PrimGroup::exprt(boost::property_tree::ptree & node)
 }
 
 // --------------------------------------------------------------------
+//  Returns a child primitive based on its id
+// --------------------------------------------------------------------
+std::shared_ptr<Primitive> PrimGroup::find(int id)
+{
+    BOOST_FOREACH (auto & prim, m_children)
+        if (prim->id() == id) return prim;
+
+    return nullptr;
+}
+
+// --------------------------------------------------------------------
 //  Adds a new child node to this primitive group
 // --------------------------------------------------------------------
-void PrimGroup::add(std::shared_ptr<Primitive> child)
+void PrimGroup::add(std::shared_ptr<Primitive> child, bool suppress)
 {
     m_children.push_front(child);
 
@@ -100,18 +111,25 @@ void PrimGroup::add(std::shared_ptr<Primitive> child)
     child->setDirty();
 
     setDirty();
+    
+    if (m_addCallback) m_addCallback(child, suppress);
 }
 
 // --------------------------------------------------------------------
 //  Removes a child node from this primitive group
 // --------------------------------------------------------------------
-void PrimGroup::remove(std::shared_ptr<Primitive> child)
+void PrimGroup::remove(std::shared_ptr<Primitive> child, bool suppress)
 {
-    m_children.remove(child);
+    auto entry = std::find(m_children.begin(), m_children.end(), child);
+    if (entry == m_children.end()) return;
+
+    m_children.erase(entry);
 
     child->setParent(nullptr);
 
     setDirty();
+    
+    if (m_removeCallback) m_removeCallback(child, suppress);
 }
 
 // --------------------------------------------------------------------
@@ -124,4 +142,16 @@ void PrimGroup::clear()
      setDirty(); 
 }
 
+// ----------------------------------------------------------------------------
+//  Callback event modifier functions
+// ----------------------------------------------------------------------------
+void PrimGroup::onAdd(std::function<void(std::shared_ptr<Primitive>, bool)> callback)    
+{ 
+    m_addCallback = callback; 
+}
+void PrimGroup::onRemove(std::function<void(std::shared_ptr<Primitive>, bool)> callback) 
+{ 
+    m_removeCallback = callback; 
+}
+    
 } // namespace vox

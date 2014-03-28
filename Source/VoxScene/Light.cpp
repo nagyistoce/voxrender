@@ -26,16 +26,10 @@
 // Include Header
 #include "Light.h"
 
+// Include Dependencies
+#include "VoxLib/Action/ActionManager.h"
+
 namespace vox {
-    
-// ----------------------------------------------------------------------------
-//  Initializes the light object
-// ----------------------------------------------------------------------------
-Light::Light() :
-    m_color(1.0f, 1.0f, 1.0f),
-    m_position(0.0f, 0.0f, 0.0f)
-{
-}
 
 // ----------------------------------------------------------------------------
 //  Shared ptr factor method for light set
@@ -82,10 +76,12 @@ std::shared_ptr<Light> LightSet::add()
 // ----------------------------------------------------------------------------
 //  Adds a new light to the scene 
 // ----------------------------------------------------------------------------
-void LightSet::add(std::shared_ptr<Light> light)
+void LightSet::add(std::shared_ptr<Light> light, bool suppress)
 {
     light->setParent(shared_from_this());
     m_lights.push_back(light);
+
+    if (m_addLightCallback) m_addLightCallback(light, suppress);
 }
 
 // ----------------------------------------------------------------------------
@@ -104,10 +100,15 @@ std::shared_ptr<Light> LightSet::find(int id)
 // ----------------------------------------------------------------------------
 //  Removes an existing light from the scene
 // ----------------------------------------------------------------------------
-void LightSet::remove(std::shared_ptr<Light> light)
+void LightSet::remove(std::shared_ptr<Light> light, bool suppress)
 { 
-    m_lights.remove(light);
+    auto entry = std::find(m_lights.begin(), m_lights.end(), light);
+    if (entry == m_lights.end()) return;
+
+    m_lights.erase(entry);
     light->setParent(nullptr);
+
+    if (m_remLightCallback) m_remLightCallback(light, suppress);
 }
 
 // ----------------------------------------------------------------------------
@@ -136,6 +137,21 @@ std::shared_ptr<LightSet> LightSet::interp(std::shared_ptr<LightSet> k2, float f
     set->m_ambientLight = m_ambientLight * (1.f-f) + k2->m_ambientLight * f;
 
     return set;
+}
+
+// ----------------------------------------------------------------------------
+//  Callback event modifier functions
+// ----------------------------------------------------------------------------
+void LightSet::onAdd(std::function<void(std::shared_ptr<Light>, bool)> callback)    { m_addLightCallback = callback; }
+void LightSet::onRemove(std::function<void(std::shared_ptr<Light>, bool)> callback) { m_remLightCallback = callback; }
+    
+// ----------------------------------------------------------------------------
+//  Initializes the light object
+// ----------------------------------------------------------------------------
+Light::Light() :
+    m_color(1.0f, 1.0f, 1.0f),
+    m_position(0.0f, 0.0f, 0.0f)
+{
 }
 
 // ----------------------------------------------------------------------------

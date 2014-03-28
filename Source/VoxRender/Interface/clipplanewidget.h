@@ -49,6 +49,8 @@ public:
 
 	~ClipPlaneWidget();
 
+    std::shared_ptr<vox::Plane> plane() { return m_plane; }
+
 private:
 	Ui::ClipPlaneWidget* ui;
 

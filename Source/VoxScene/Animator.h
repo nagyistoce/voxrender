@@ -79,16 +79,22 @@ namespace vox
         void interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
 
         /** Adds a keyframe to the animation */
-        void addKeyframe(KeyFrame keyFrame, int frame);
+        void addKeyframe(KeyFrame keyFrame, int frame, bool suppress = false);
 
         /** Deletes a keyframe from the animation */
-        void removeKeyframe(int frame);
+        void removeKeyframe(int frame, bool suppress = false);
 
         /** Sets the animation framerate (in frames per second) */
         void setFramerate(unsigned int framerate);
 
         /** Returns the animation framerate */
         unsigned int framerate();
+        
+        /** Sets the callback event for adding a light */
+        void onAdd(std::function<void(int, KeyFrame &, bool)> callback);
+
+        /** Sets the callback event for removing a light */
+        void onRemove(std::function<void(int, KeyFrame &, bool)> callback);
 
     private:
         /** Constructor */

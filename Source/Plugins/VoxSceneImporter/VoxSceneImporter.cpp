@@ -296,7 +296,10 @@ namespace
                 
                 node.add(P_STEP_PRIMARY, settings->primaryStepSize());
                 node.add(P_STEP_SHADOW,  settings->shadowStepSize());
-
+                node.add(P_GRAD_CUTOFF,  settings->gradientCutoff());
+                node.add(P_SCATTER,      settings->scatterCoefficient());
+                node.add(P_EDGE_ENHANCE, settings->edgeEnhancement());
+                
                 m_tree.add_child("Scene.Settings", node);
             }
 
@@ -592,6 +595,9 @@ namespace
                   // Read inline parameter specifications
                   parameters.setPrimaryStepSize(m_node->get(P_STEP_PRIMARY, parameters.primaryStepSize()));
                   parameters.setShadowStepSize(m_node->get(P_STEP_SHADOW, parameters.shadowStepSize()));
+                  parameters.setGradientCutoff(m_node->get(P_GRAD_CUTOFF, parameters.gradientCutoff()));
+                  parameters.setScatterCoefficient(m_node->get(P_SCATTER, parameters.scatterCoefficient()));
+                  parameters.setEdgeEnhancement(m_node->get(P_EDGE_ENHANCE, parameters.edgeEnhancement()));
 
                 pop();
 

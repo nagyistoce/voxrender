@@ -30,8 +30,10 @@
 // Include Dependencies
 #include "mainwindow.h"
 #include "utilities.h"
+#include "Actions/MaterialEditAct.h"
 
 // VoxLib Dependencies
+#include "VoxLib/Action/ActionManager.h"
 #include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Core/Logging.h"
 
@@ -89,10 +91,15 @@ TransferWidget::TransferWidget(QWidget *parent) :
     ui->layout_diffuseColor->addWidget(m_colorDiffuse);
     ui->layout_emissiveColor->addWidget(m_colorEmissive);
     ui->layout_specularColor->addWidget(m_colorSpecular);
-
-    connect(m_colorDiffuse, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorDiffuseChanged(const QColor&)));
+    connect(m_colorDiffuse,  SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorDiffuseChanged(const QColor&)));
     connect(m_colorEmissive, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorEmissiveChanged(const QColor&)));
     connect(m_colorSpecular, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorSpecularChanged(const QColor&)));
+    connect(m_colorDiffuse,  SIGNAL(beginColorSelection()), this, SLOT(beginMaterialChange()));
+    connect(m_colorEmissive, SIGNAL(beginColorSelection()), this, SLOT(beginMaterialChange()));
+    connect(m_colorSpecular, SIGNAL(beginColorSelection()), this, SLOT(beginMaterialChange()));
+    connect(m_colorDiffuse,  SIGNAL(endColorSelection()), this, SLOT(endMaterialChange()));
+    connect(m_colorEmissive, SIGNAL(endColorSelection()), this, SLOT(endMaterialChange()));
+    connect(m_colorSpecular, SIGNAL(endColorSelection()), this, SLOT(endMaterialChange()));
 
     // Ensure transfer node selection is detected 
     connect(MainWindow::instance, SIGNAL(transferNodeSelected(std::shared_ptr<vox::Node>)),
@@ -249,9 +256,9 @@ bool TransferWidget::canSwitchDimensions()
 	QPushButton* cancel = msgBox.addButton( tr("Cancel"), QMessageBox::RejectRole );
 	msgBox.setDefaultButton( cancel );
 
-	msgBox.exec( );
+	msgBox.exec();
 
-	if( msgBox.clickedButton( ) != accept ) return false;
+	if (msgBox.clickedButton( ) != accept) return false;
 
 	return true;
 }
@@ -318,14 +325,14 @@ void TransferWidget::switchDimensions(int nDims)
 			// Configure widget for 3-Dimensional work
             m_primaryView->setType(HistogramView::DataType_DensityGrad);
             m_secondaryView->setType(HistogramView::DataType_DensityLap);
-			ui->radioButton_3->setChecked( true ); 
-			ui->groupBox_transferSecondary->show( );
-			ui->horizontalSlider_gradient->show( );
-			ui->doubleSpinBox_gradient->show( );
-			ui->label_gradient->show( );
-			ui->horizontalSlider_gradient2->show( );
-			ui->doubleSpinBox_gradient2->show( );
-			ui->label_gradient2->show( );
+			ui->radioButton_3->setChecked(true); 
+			ui->groupBox_transferSecondary->show();
+			ui->horizontalSlider_gradient->show();
+			ui->doubleSpinBox_gradient->show();
+			ui->label_gradient->show();
+			ui->horizontalSlider_gradient2->show();
+			ui->doubleSpinBox_gradient2->show();
+			ui->label_gradient2->show();
 			m_dimensions = 3;
 			break; 
 
@@ -692,6 +699,26 @@ void TransferWidget::colorSpecularChanged(QColor const& color)
 {
     auto cast = Vector<UInt8,3>(color.red(), color.green(), color.blue());
     DO_LOCK(m_currentMaterial->specular = cast;)
+}
+
+// --------------------------------------------------------------------
+//  Registers an actionable event when a material change is cemented
+// --------------------------------------------------------------------
+void TransferWidget::beginMaterialChange()
+{
+    m_editMaterial = Material::create();
+    *m_editMaterial = *m_currentMaterial;
+}
+
+// --------------------------------------------------------------------
+//  Registers an actionable event when a material change is cemented
+// --------------------------------------------------------------------
+void TransferWidget::endMaterialChange()
+{
+    if (!m_currentMaterial || !m_editMaterial) return;
+    if (*m_currentMaterial != *m_editMaterial)
+        ActionManager::instance().push(std::make_shared<MaterialEditAct>(m_currentMaterial, m_editMaterial));
+    m_editMaterial.reset();
 }
 
 // --------------------------------------------------------------------

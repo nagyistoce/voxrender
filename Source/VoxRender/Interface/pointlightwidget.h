@@ -49,6 +49,8 @@ public:
 
 	~PointLightWidget();
 
+    std::shared_ptr<vox::Light> light() { return m_light; }
+
 protected:
     virtual void changeEvent(QEvent * event);
 

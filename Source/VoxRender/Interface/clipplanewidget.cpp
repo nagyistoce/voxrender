@@ -82,7 +82,12 @@ ClipPlaneWidget::~ClipPlaneWidget()
 {
     auto cg = MainWindow::instance->scene().clipGeometry;
     
-    if (cg) cg->remove(m_plane);
+    if (cg) 
+    {
+        SceneLock lock(cg);
+        cg->remove(m_plane);
+        cg->setDirty();
+    }
 
     delete ui;
 }
@@ -126,12 +131,12 @@ void ClipPlaneWidget::changeEvent(QEvent * event)
         auto scene = MainWindow::instance->scene();
         if (!scene.clipGeometry) return;
 
-        if (!isEnabled()) scene.clipGeometry->remove(m_plane);
+        if (!isEnabled()) scene.clipGeometry->remove(m_plane, true);
         else 
         {
             auto children = scene.clipGeometry->children();
             if (std::find(children.begin(), children.end(), m_plane) == children.end())
-                scene.clipGeometry->add(m_plane);
+                scene.clipGeometry->add(m_plane, true);
         }
     }
 }

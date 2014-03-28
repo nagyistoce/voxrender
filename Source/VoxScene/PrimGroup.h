@@ -59,11 +59,20 @@ namespace vox
         /** Exports the plane to a text format */
         virtual void exprt(boost::property_tree::ptree & node);
 
+        /** Returns a child primitive of this group, if found */
+        std::shared_ptr<Primitive> find(int id);
+
         /** Adds a new child element to the group */
-        void add(std::shared_ptr<Primitive> child);
+        void add(std::shared_ptr<Primitive> child, bool suppress = false);
 
         /** Removes an existing child from the group */
-        void remove(std::shared_ptr<Primitive> child);
+        void remove(std::shared_ptr<Primitive> child, bool suppress = false);
+        
+        /** Sets the callback event for adding a primitive */
+        void onAdd(std::function<void(std::shared_ptr<Primitive>, bool)> callback);
+
+        /** Sets the callback event for removing a primitive */
+        void onRemove(std::function<void(std::shared_ptr<Primitive>, bool)> callback);
 
         /** Clears all child elements from the group */
         void clear();
@@ -78,6 +87,9 @@ namespace vox
         PrimGroup() { }
 
         std::list<std::shared_ptr<Primitive>> m_children;
+
+        std::function<void(std::shared_ptr<Primitive>, bool)> m_addCallback;
+        std::function<void(std::shared_ptr<Primitive>, bool)> m_removeCallback;
     };
 }
 

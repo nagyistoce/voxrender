@@ -37,6 +37,8 @@
 #include "VoxScene/Scene.h"
 #include "VoxScene/PrimGroup.h"
 
+#include <QDateTime>
+
 using namespace vox;
 
 namespace {
@@ -253,7 +255,6 @@ void RenderView::mousePressEvent(QMouseEvent* event)
                     // Add the new clipping plane to the scene
                     auto plane = vox::Plane::create(normal, Vector3f::dot(normal, camera->position()));
                     scene.clipGeometry->add(plane);
-                    MainWindow::instance->addClippingGeometry(plane);
                 }
                 m_clipLine.setP1(QPoint());
                 m_clipLine.setP2(QPoint());
@@ -399,13 +400,18 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     auto fps = 1000000.0f / msc;
 
     // Draws the statistical information overlay
+    if (m_overlayStats)
     {
         QPainter painter;
         painter.begin(&qimage);
         painter.setPen(Qt::white);
         painter.setCompositionMode(QPainter::CompositionMode_Source);
  
-        painter.drawText(2, 10, format("%1%",fps).c_str());  // Draw a number on the image
+        // Render: FPS      DATE        SAMPLES
+        painter.drawText(2, 10, format("%1% fps",fps).c_str());
+        painter.drawText(m_image.width() / 2 - 40, 10, QDateTime::currentDateTime().toString("yyyy-MM-dd"));
+        painter.drawText(m_image.width() - 80, 10, format("%1% samples", 
+            MainWindow::instance->m_renderController.iterations()).c_str());
  
         painter.end();
     }

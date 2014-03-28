@@ -102,9 +102,6 @@ public:
     ~MainWindow();
     
     static MainWindow* instance;
-
-    /** Adds a control for managing a light in the render scene */
-    void addLight(std::shared_ptr<vox::Light> light, QString const& name);
     
     /** Adds a control for managing a clipping object in the render scene */
     void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
@@ -244,18 +241,24 @@ private:
 
 	enum { NumTransferPanes = 0 };
 	TransferWidget* transferwidget;
-
-    // :TODO: Really have to find a cleaner way to do this, Pane Manager Widget...?
-    //        Would be necessary if we moved to allowing plugins for the interface components
-
+    
+    // -------------------------------------------
+    // :TODO: CHUNK OF STUFF TO BE MOVED TO SEPERATE WIDGET
     // Light panel panes
+    void addLight(std::shared_ptr<vox::Light> light);
+    void removeLight(std::shared_ptr<vox::Light> light);
     PaneWidget *           m_ambientPane;
 	std::list<PaneWidget*> m_lightPanes;
     QSpacerItem *          m_spacer;
-
+    // -------------------------------------------
+    
+    // -------------------------------------------
+    // :TODO: CHUNK OF STUFF TO BE MOVED TO SEPERATE WIDGET
     // Clipping Geometry panel panes
+    void removeClipGeometry(std::shared_ptr<vox::Primitive> prim);
 	std::list<PaneWidget*> m_clipPanes;
     QSpacerItem *          m_clipSpacer;
+    // -------------------------------------------
 
     // Plugin panes
     QVector<PaneWidget*> m_pluginPanes;
@@ -279,10 +282,13 @@ private slots:
     void on_pushButton_addClip_clicked();
 
 	// Toolbar action slots
+    void on_actionOverlay_Statistics_triggered(bool checked);
     void on_actionFull_Screen_triggered();
     void on_actionOpen_triggered();
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
+    void on_actionUndo_triggered();
+    void on_actionRedo_triggered();
     void on_actionSave_and_Exit_triggered();
     void on_actionNormal_Screen_triggered();
     void on_actionClear_Log_triggered();

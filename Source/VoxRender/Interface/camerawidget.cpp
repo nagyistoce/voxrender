@@ -32,6 +32,22 @@
 #include "mainwindow.h"
 #include "utilities.h"
 #include "VoxScene/Camera.h"
+#include "Actions/CamEditAct.h"
+#include "VoxLib/Action/ActionManager.h"
+
+namespace {
+namespace filescope {
+
+    enum EditType
+    {
+        EditType_Film,
+        EditType_Aperture,
+        EditType_FieldOfView,
+        EditType_Exposure,
+    };
+
+}
+}
 
 // --------------------------------------------------------------------
 //  Constructor
@@ -83,7 +99,7 @@ void CameraWidget::updateCamera()
     if (m_ignore) return;
     auto camera = MainWindow::instance->scene().camera;
     if (!camera) return;
-    
+
     camera->lock();
 
         float fov = ui->doubleSpinBox_camFov->value() / 180.0f * M_PI;

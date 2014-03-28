@@ -43,7 +43,7 @@ class CVolumeBuffer
 {
 public:
     /** Initializes the buffer for use */
-    VOX_HOST void init() { m_handle = nullptr; }
+    VOX_HOST void init() { m_handle = nullptr; m_timeSlice = -1; }
 
     /** Deallocates the device memory buffer */
     VOX_HOST void reset();

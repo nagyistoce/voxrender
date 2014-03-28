@@ -35,7 +35,7 @@ namespace Ui {
 class CameraWidget;
 }
 
-// Camera Settings Widget
+/** Camera Settings Widget */
 class CameraWidget : public QWidget
 {
     Q_OBJECT
@@ -43,13 +43,15 @@ class CameraWidget : public QWidget
 public:
     explicit CameraWidget(QWidget *parent = 0);
 
-    ~CameraWidget( );
+    ~CameraWidget();
 
 private:
     Ui::CameraWidget *ui;
 
     void updateCamera();
     void updateFilm();
+
+    int m_lastEditType;
 
     bool m_ignore;
 

@@ -29,11 +29,17 @@
 
 // Include Dependencies
 #include "VoxLib/Core/CudaCommon.h"
+#include "VoxLib/Core/Types.h"
+
+namespace vox {
 
 /** Action class used by ActionManager */
 class VOX_EXPORT Action
 {
 public:
+    /** Constructor for name assignment */
+    Action(String const& name = "") : m_name(name) { }
+
     /** Virtualized destructor for inheritance */
     virtual ~Action() {}
 
@@ -43,15 +49,20 @@ public:
     /** Reapplies the effects of this action */
     virtual void redo() = 0;
 
+    /** Sets the name of the action for display */
+    void setName(String const& name) { m_name = name; }
+
     /** Returns the user info */
-    std::shared_ptr<void*> userInfo()
+    String const& name()
     {
-        return m_userInfo;
+        return m_name;
     }
 
-protected:
-    std::shared_ptr<void*> m_userInfo;
+private:
+    String m_name;
 };
+
+} // namespace vox
 
 // End definition
 #endif // VOX_ACTION_H
