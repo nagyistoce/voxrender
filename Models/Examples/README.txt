@@ -1,0 +1,1 @@
+The smoke dataset was generated using the simulation solver at https://code.google.com/p/smoke3d/.

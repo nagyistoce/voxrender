@@ -65,6 +65,15 @@ public:
 
     /** Returns the current camera direction vector */
     inline Vector3f const& eye() const { return m_eye; }
+    
+    /** Returns the current camera eye distance */
+    inline float eyeDistance() const { return m_eyeDistance; }
+
+    /** Returns whether stereoscopic rendering is enabled */
+    inline bool isStereoEnabled() { return m_isStereo; }
+
+    /** Enables/disables stereoscopic rendering */
+    inline void setStereoEnabled(bool enabled) { m_isStereo = enabled; }
 
     /** Returns the current up direction vector of the camera */
     inline Vector3f const& up() const { return m_up; }
@@ -139,6 +148,9 @@ public:
 
     /** Sets the camera eye orientation vector */
     inline void setEye(Vector3f const& eye) { m_eye = eye; }
+    
+    /** Sets the eye distance for stereo rendering */
+    inline void setEyeDistance(float distance) { m_eyeDistance = distance; }
 
     /** Sets the camera right orientation vector */
     inline void setRight(Vector3f const& right) { m_right = right; }
@@ -192,6 +204,7 @@ private:
     friend RenderController;
 
     bool m_isFilmDirty; ///< Film change flag
+    bool m_isStereo;    ///< Stereoscopic view flag
 
     // Camera orientation
     Vector3f m_pos;   ///< Camera position vector (mm)

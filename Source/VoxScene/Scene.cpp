@@ -233,13 +233,17 @@ KeyFrame Scene::generateKeyFrame()
 // --------------------------------------------------------------------
 void Scene::clone(Scene & scene) const
 {
-    scene.volume = volume; // Volume immutable during render
-
     // :TODO:
     scene.clipGeometry = clipGeometry;
     scene.animator = nullptr;
     scene.transfer = transfer;
     //
+
+    if (volume)
+    {
+        if (!scene.volume) scene.volume = Volume::create();
+        volume->clone(*scene.volume.get());
+    }
 
     if (lightSet)
     {

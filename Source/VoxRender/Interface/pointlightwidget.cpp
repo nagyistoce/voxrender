@@ -34,6 +34,7 @@
 // VoxLib Dependencies
 #include "VoxScene/Light.h"
 #include "VoxLib/Core/format.h"
+#include "VoxLib/Action/ActionManager.h"
 
 // QT Includes
 #include <QtWidgets/QMessageBox>
@@ -124,24 +125,17 @@ void PointLightWidget::update()
 // --------------------------------------------------------------------
 void PointLightWidget::changeEvent(QEvent * event)
 {
-    if (event->type() == QEvent::EnabledChange)
+    if (event->type() != QEvent::EnabledChange) return;
+    
+    if (isEnabled() && !m_light->isVisible()) 
     {
-        auto scene = MainWindow::instance->scene();
-        if (!scene.lightSet) return;
-        
-        if (MainWindow::instance->renderState() != RenderState_Rendering) return;
-
-        // :TODO: Add isVisible member to scene objects
-        scene.lightSet->lock();
-            if (!isEnabled()) scene.lightSet->remove(m_light, true);
-            else 
-            {
-                auto children = scene.lightSet->lights();
-                if (std::find(children.begin(), children.end(), m_light) == children.end())
-                    scene.lightSet->add(m_light, true);
-            }
-        scene.lightSet->setDirty();
-        scene.lightSet->unlock();
+        m_light->setVisible(true);
+        m_light->setDirty(); 
+    }
+    else if (!isEnabled() && m_light->isVisible()) 
+    {
+        m_light->setVisible(false);
+        m_light->setDirty(); 
     }
 }
 

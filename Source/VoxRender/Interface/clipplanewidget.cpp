@@ -35,17 +35,12 @@
 #include "VoxLib/Core/format.h"
 #include "VoxScene/Primitive.h"
 #include "VoxScene/PrimGroup.h"
+#include "VoxLib/Action/ActionManager.h"
 
 // QT Includes
 #include <QtWidgets/QMessageBox>
 
 using namespace vox;
-
-// File scope namespace
-namespace {
-namespace filescope {
-}
-}
 
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
@@ -126,18 +121,17 @@ void ClipPlaneWidget::update()
 // --------------------------------------------------------------------
 void ClipPlaneWidget::changeEvent(QEvent * event)
 {
-    if (event->type() == QEvent::EnabledChange)
-    {
-        auto scene = MainWindow::instance->scene();
-        if (!scene.clipGeometry) return;
+    if (event->type() != QEvent::EnabledChange) return;
 
-        if (!isEnabled()) scene.clipGeometry->remove(m_plane, true);
-        else 
-        {
-            auto children = scene.clipGeometry->children();
-            if (std::find(children.begin(), children.end(), m_plane) == children.end())
-                scene.clipGeometry->add(m_plane, true);
-        }
+    if (isEnabled() && !m_plane->isVisible()) 
+    {
+        m_plane->setVisible(true);
+        m_plane->setDirty(); 
+    }
+    else if (!isEnabled() && m_plane->isVisible()) 
+    {
+        m_plane->setVisible(false);
+        m_plane->setDirty(); 
     }
 }
 

@@ -86,6 +86,7 @@ IF(Qt5Widgets_FOUND)
         Interface/camerawidget.cpp
         Interface/clipdialogue.cpp
         Interface/clipplanewidget.cpp
+        Interface/clipwidget.cpp
         Interface/edgeitem.cpp
         Interface/griditem.cpp
         Interface/genericdialogue.cpp
@@ -96,6 +97,7 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramwidget.cpp
         Interface/infowidget.cpp
         Interface/lightdialogue.cpp
+        Interface/lightingwidget.cpp
         Interface/mainwindow.cpp
         Interface/nodeitem.cpp
         Interface/panewidget.cpp
@@ -122,6 +124,7 @@ IF(Qt5Widgets_FOUND)
         Interface/camerawidget.h
         Interface/clipdialogue.h
         Interface/clipplanewidget.h
+        Interface/clipwidget.h
         Interface/edgeitem.h
         Interface/animateitem.h
         Interface/griditem.h
@@ -132,6 +135,7 @@ IF(Qt5Widgets_FOUND)
         Interface/histogramwidget.h
         Interface/infowidget.h
         Interface/lightdialogue.h
+        Interface/lightingwidget.h
         Interface/mainwindow.h
         Interface/nodeitem.h
         Interface/panewidget.h

@@ -40,6 +40,8 @@ namespace vox {
         // --------------------------------------------------------------------
         template<typename T> Vector2f maxValueRange(size_t elements, UInt8 const* raw)
         {
+            if (elements == 0) return Vector2f();
+
             T const* data = reinterpret_cast<T const*>(raw);
             T low  = *data;
             T high = *data;
@@ -60,80 +62,113 @@ namespace vox {
     } // namespace filescope
     } // namespace anonymous
     
+// ----------------------------------------------------------------------------
+//  Volume implementation class
+// ----------------------------------------------------------------------------
 class Volume::Impl
 {
 public:
-
-// ----------------------------------------------------------------------------
-//  Wraps a volume data buffer to construct a new volume object
-// ----------------------------------------------------------------------------
-Impl::Impl(std::shared_ptr<UInt8> data, Vector4s const& extent, 
-           Vector4f const& spacing, Vector3f const& offset, Type type) : 
-    m_data(data), 
-    m_extent(extent), 
-    m_spacing(spacing), 
-    m_type(type), 
-    m_offset(offset), 
-    m_timeSlice(0.f)
-{ 
-    updateRange();
-}
-
-// ----------------------------------------------------------------------------
-//  Sets the volume data
-// ----------------------------------------------------------------------------
-void setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent, Type type)
-{
-    m_data   = data; 
-    m_extent = extent; 
-    m_type   = type;
-
-    updateRange();
-}
-
-// ----------------------------------------------------------------------------
-//  Updates the value range for the volume voxels
-// ----------------------------------------------------------------------------
-void updateRange()
-{
-    size_t       elems = m_extent.fold<size_t>(1, &mul);
-    UInt8 const* ptr   = m_data.get();
-
-    switch (m_type)
-    {
-        case Volume::Type_Int8:   m_range = filescope::maxValueRange<Int8>(elems, ptr); break;
-        case Volume::Type_UInt8:  m_range = filescope::maxValueRange<UInt8>(elems, ptr); break;
-        case Volume::Type_UInt16: m_range = filescope::maxValueRange<UInt16>(elems, ptr); break;
-        case Volume::Type_Int16:  m_range = filescope::maxValueRange<Int16>(elems, ptr); break;
-        default:
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
-                Error_NotImplemented);
+    // ----------------------------------------------------------------------------
+    //  Wraps a volume data buffer to construct a new volume object
+    // ----------------------------------------------------------------------------
+    Impl::Impl(std::shared_ptr<UInt8> data, Vector4s const& extent, 
+               Vector4f const& spacing, Vector3f const& offset, Type type) : 
+        m_data(data), 
+        m_extent(extent), 
+        m_spacing(spacing), 
+        m_type(type), 
+        m_offset(offset), 
+        m_timeSlice(0.f)
+    { 
+        updateRange();
     }
-}
 
-// ----------------------------------------------------------------------------
-//  Fetches the normalized value at a voxel
-// ----------------------------------------------------------------------------
-float fetchNormalized(size_t x, size_t y, size_t z) const
-{
-    size_t i = x + y * m_extent[0] + z * m_extent[0] * m_extent[1];
-        
-    float sample;
-    switch (m_type)
+    // ----------------------------------------------------------------------------
+    //  Sets the volume data
+    // ----------------------------------------------------------------------------
+    void setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent, Type type)
     {
-        case Volume::Type_Int8:   sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int8>::max()); break;
-        case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
-        case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
-        case Volume::Type_Int16:  sample = (static_cast<float>(reinterpret_cast<Int16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int16>::max());; break;
-        default:
-            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-                format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
-                Error_NotImplemented);
+        m_data   = data; 
+        m_extent = extent; 
+        m_type   = type;
+
+        updateRange();
     }
+
+    // ----------------------------------------------------------------------------
+    //  Updates the value range for the volume voxels
+    // ----------------------------------------------------------------------------
+    void updateRange()
+    {
+        size_t       elems = m_extent.fold<size_t>(1, &mul);
+        UInt8 const* ptr   = m_data.get();
+
+        switch (m_type)
+        {
+            case Volume::Type_Int8:   m_range = filescope::maxValueRange<Int8>(elems, ptr); break;
+            case Volume::Type_UInt8:  m_range = filescope::maxValueRange<UInt8>(elems, ptr); break;
+            case Volume::Type_UInt16: m_range = filescope::maxValueRange<UInt16>(elems, ptr); break;
+            case Volume::Type_Int16:  m_range = filescope::maxValueRange<Int16>(elems, ptr); break;
+            default:
+                throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
+                    Error_NotImplemented);
+        }
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Fetches the normalized value at a voxel
+    // ----------------------------------------------------------------------------
+    float fetchNormalized(size_t x, size_t y, size_t z) const
+    {
+        size_t i = x + y * m_extent[0] + z * m_extent[0] * m_extent[1];
         
-    return (sample - m_range[0]) / (m_range[1] - m_range[0]);
-}
+        float sample;
+        switch (m_type)
+        {
+            case Volume::Type_Int8:   sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int8>::max()); break;
+            case Volume::Type_UInt8:  sample = (static_cast<float>(m_data.get()[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt8>::max()); break;
+            case Volume::Type_UInt16: sample = (static_cast<float>(reinterpret_cast<UInt16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<UInt16>::max());; break;
+            case Volume::Type_Int16:  sample = (static_cast<float>(reinterpret_cast<Int16 const*>(m_data.get())[i]) + 0.5f) / static_cast<float>(std::numeric_limits<Int16>::max());; break;
+            default:
+                throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
+                    Error_NotImplemented);
+        }
+        
+        return (sample - m_range[0]) / (m_range[1] - m_range[0]);
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Clones the volume into another object (shallow copy for data)
+    // ----------------------------------------------------------------------------
+    void clone(Volume & volume)
+    {
+        volume.m_pImpl->m_data = m_data;
+        volume.m_pImpl->m_timeSlice = m_timeSlice;
+        volume.m_pImpl->m_range = m_range;
+        volume.m_pImpl->m_offset = m_offset;
+        volume.m_pImpl->m_spacing = m_spacing; 
+        volume.m_pImpl->m_extent = m_extent;
+        volume.m_pImpl->m_type = m_type;
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Interpolates between volume settings
+    // ----------------------------------------------------------------------------
+    std::shared_ptr<Volume> interp(std::shared_ptr<Volume> k2, float f)
+    {
+        auto volume = Volume::create();
+        volume->m_pImpl->m_data      = m_data;
+        volume->m_pImpl->m_timeSlice = m_timeSlice * (1.f - f) + k2->m_pImpl->m_timeSlice * f; 
+        volume->m_pImpl->m_range     = m_range;
+        volume->m_pImpl->m_offset    = m_offset * (1.f - f) + k2->m_pImpl->m_offset * f; 
+        volume->m_pImpl->m_spacing   = m_spacing * (1.f - f) + k2->m_pImpl->m_spacing * f; 
+        volume->m_pImpl->m_extent    = m_extent;
+        volume->m_pImpl->m_type      = m_type;
+
+        return volume;
+    }
 
 public:
     std::shared_ptr<UInt8> m_data; ///< Pointer to volume data
@@ -174,5 +209,7 @@ Vector2f const& Volume::valueRange() const  { return m_pImpl->m_range; }
 void            Volume::setSpacing(Vector4f const& spacing) { m_pImpl->m_spacing = spacing; }
 void            Volume::setOffset(Vector3f const& offset)   { m_pImpl->m_offset = offset; }
 void            Volume::setTimeSlice(float timeSlice)       { m_pImpl->m_timeSlice = timeSlice; }
+void            Volume::clone(Volume & volume) { m_pImpl->clone(volume); }
+std::shared_ptr<Volume> Volume::interp(std::shared_ptr<Volume> k2, float f) { return m_pImpl->interp(k2, f); }
 
 } // namespace vox

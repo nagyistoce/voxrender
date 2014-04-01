@@ -33,6 +33,7 @@
 
 // VoxLib Dependencies
 #include "VoxScene/Light.h"
+#include "VoxLib/Action/ActionManager.h"
 
 using namespace vox;
 
@@ -49,6 +50,12 @@ AmbientLightWidget::AmbientLightWidget(QWidget * parent) :
     ui->layout_colorButton->addWidget(m_colorButton);
 
     connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
+    connect(m_colorButton, SIGNAL(beginColorSelection()), this, SLOT(beginChange()));
+    connect(m_colorButton,  SIGNAL(endColorSelection()), this, SLOT(endChange()));
+
+    connect(ui->horizontalSlider_intensity, SIGNAL(sliderPressed()), this, SLOT(beginChange()));
+    connect(ui->horizontalSlider_intensity, SIGNAL(sliderReleased()), this, SLOT(endChange()));
+
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
 
@@ -61,20 +68,58 @@ AmbientLightWidget::~AmbientLightWidget()
 }
 
 // --------------------------------------------------------------------
+//  Registers an actionable event when a material change is cemented
+// --------------------------------------------------------------------
+void AmbientLightWidget::beginChange()
+{
+    m_tempColor     = m_colorButton->getColor();
+    m_tempIntensity = ui->doubleSpinBox_intensity->value();
+}
+
+// --------------------------------------------------------------------
+//  Registers an actionable event when a material change is cemented
+// --------------------------------------------------------------------
+void AmbientLightWidget::endChange()
+{
+    // Check if the lighting parameters were actually changed
+    auto redoColor     = m_colorButton->getColor();
+    auto redoIntensity = ui->doubleSpinBox_intensity->value();
+    if (m_tempColor.red()   == redoColor.red()   &&
+        m_tempColor.green() == redoColor.green() &&
+        m_tempColor.blue()  == redoColor.blue()  &&
+        m_tempIntensity     == redoIntensity)
+        return;
+
+    // Construct an action for the history
+    auto undoColor     = m_tempColor;
+    auto undoIntensity = m_tempIntensity;
+    auto functorUndo   = [=] () {
+        m_colorButton->setColor(undoColor);
+        this->ui->doubleSpinBox_intensity->setValue(undoIntensity);
+    };
+    
+    auto functorRedo   = [=] () {
+        m_colorButton->setColor(redoColor);
+        this->ui->doubleSpinBox_intensity->setValue(redoIntensity);
+    };
+
+    ActionManager::instance().push(functorUndo, functorRedo);
+}
+
+// --------------------------------------------------------------------
 //  Synchronizes the scene with the light widget's controls
 // --------------------------------------------------------------------
 void AmbientLightWidget::update()
 {
     auto lightSet = MainWindow::instance->scene().lightSet;
 
-    lightSet->lock();
+    SceneLock lock(lightSet);
 
-        QColor   color = m_colorButton->getColor();
-        Vector3f light = Vector3f(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f) * ui->doubleSpinBox_intensity->value();
-        lightSet->setAmbientLight(light);
-        lightSet->setDirty();
-
-    lightSet->unlock();
+    auto color = m_colorButton->getColor();
+    Vector3f light = Vector3f(color.red(), color.green(), color.blue()) * 
+        ui->doubleSpinBox_intensity->value() / 255.f;
+    lightSet->setAmbientLight(light);
+    lightSet->setDirty();
 }
 
 // --------------------------------------------------------------------
@@ -89,7 +134,7 @@ void AmbientLightWidget::sceneChanged()
     float magnitude = ambient.fold(high);
     ambient = magnitude ? ambient * 255.0f / magnitude : Vector3f(255.0f, 255.0f, 255.0f);
     ui->doubleSpinBox_intensity->setValue(magnitude);
-    m_colorButton->setColor( QColor((int)ambient[0], (int)ambient[1], (int)ambient[2]), true);
+    m_colorButton->setColor(QColor((int)ambient[0], (int)ambient[1], (int)ambient[2]), true);
 }
 
 // --------------------------------------------------------------------
@@ -121,7 +166,4 @@ void AmbientLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
 // --------------------------------------------------------------------
 //  Signals a color change in the color selection widget
 // --------------------------------------------------------------------
-void AmbientLightWidget::colorChanged(QColor const& color)
-{
-    update();
-}
+void AmbientLightWidget::colorChanged(QColor const& color) { update(); }

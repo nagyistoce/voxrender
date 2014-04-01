@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxScene
+	Project: VoxRender
 
-	Description: Defines a basic identifiable scene element
+	Description: Implements an action for undo/redo operations
 
-    Copyright (C) 2012-2014 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,31 +23,32 @@
 
 =========================================================================== */
 
-// Include Header
-#include "Object.h"
+// Begin Definition
+#ifndef LIGHT_EDIT_ACT_H
+#define LIGHT_EDIT_ACT_H
 
 // Include Dependencies
-#include "boost/atomic/atomic.hpp"
-#include "boost/thread.hpp"
+#include "VoxLib/Action/Action.h"
+#include "VoxLib/Core/Functors.h"
+#include "VoxScene/Light.h"
 
-namespace vox {
+/** Camera edit action */
+class LightEditAct : public vox::Action
+{
+public:
+    LightEditAct(std::shared_ptr<vox::Light> light, std::shared_ptr<vox::Light> reference) : 
+        Action("Light Edit"), m_light(light), m_reference(reference)
+    {
+    }
 
-namespace {
-namespace filescope {
+    virtual void undo();
 
-    boost::atomic<int> uidCounter(1);
+    virtual void redo() { undo(); }
 
-} // namespace filescope
-} // namespace anonymous
+private:
+    std::shared_ptr<vox::Light> m_light;
+    std::shared_ptr<vox::Light> m_reference;
+};
 
-Object::Object() : m_mutex(new boost::mutex()), m_isVisible(true) { m_id = filescope::uidCounter++; }
-
-Object::Object(int id) : m_mutex(new boost::mutex()) { m_id = id; }
-
-Object::~Object() { delete m_mutex; }
-
-void Object::lock() { m_mutex->lock(); }
-        
-void Object::unlock() { m_mutex->unlock(); }
-
-} // namespace vox
+// End Definition
+#endif // LIGHT_EDIT_ACT_H

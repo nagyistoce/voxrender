@@ -151,6 +151,16 @@ public:
     /** Destructor */
     ~Volume();
 
+    /** 
+     * Clones the volume data set
+     *
+     * Note that a cloned volume performs a shallow copy of the underlying data.
+     */
+    void clone(Volume & volume);
+    
+    /** Interpolates a keyframe towards the next consecutive keyframe by a factor f */
+    std::shared_ptr<Volume> interp(std::shared_ptr<Volume> k2, float f);
+
     /** Spacing modifier */     
     void setSpacing(Vector4f const& spacing);
 

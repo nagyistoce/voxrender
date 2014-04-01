@@ -190,7 +190,7 @@ public:
             auto lights = scene.lightSet->lights();
             std::vector<CLight> clights;
             BOOST_FOREACH(auto & light, lights) 
-                clights.push_back(CLight(*light));
+                if (light->isVisible()) clights.push_back(CLight(*light));
             
             m_lightBuffer.write(clights);
 

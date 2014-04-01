@@ -81,6 +81,8 @@ class PointLightWidget;
 class InfoWidget;
 class TimingWidget;
 class AnimateWidget;
+class LightingWidget;
+class ClipWidget;
 
 // Convenience typedef for a volume filtering function
 typedef std::function<std::shared_ptr<vox::Volume>(std::shared_ptr<vox::Volume>)> VolumeFilter;
@@ -138,8 +140,6 @@ public:
 	vox::RenderController m_renderController; ///< Application render controller
 
     std::shared_ptr<vox::VolumeScatterRenderer> m_renderer; ///< CUDA device renderer
-
-	InfoWidget* m_infowidget; ///< Advanced info widget
     
     /** Initiates rendering operations for the scene (or the animator, if specified) */
     void beginRender(size_t samples = std::numeric_limits<size_t>::max(), bool animation = false);
@@ -200,6 +200,7 @@ private:
     /** Helper method for executing a volume filtering operation */
     void performFiltering(std::shared_ptr<vox::volt::Filter> filter, vox::OptionSet const& options);
 
+private:
 	// Render status bar
 	QLabel       * activityLabel;   ///< "activity" label
 	QLabel       * statusLabel;     ///< "status" label
@@ -211,6 +212,8 @@ private:
 	QSpacerItem  * spacer;          ///< Spacer for status bar
 
 	RenderView * m_renderView; ///< View panel for current render
+    
+	vox::Scene m_activeScene; ///< Current scene
 
 	// File / Directory Info
 	enum { MaxRecentFiles = 5 };
@@ -240,35 +243,19 @@ private:
 	PaneWidget* advpanes[NumAdvPanes];  ///< Advanced tab widget panes
 
 	enum { NumTransferPanes = 0 };
-	TransferWidget* transferwidget;
+	TransferWidget * transferwidget;
     
-    // -------------------------------------------
-    // :TODO: CHUNK OF STUFF TO BE MOVED TO SEPERATE WIDGET
-    // Light panel panes
-    void addLight(std::shared_ptr<vox::Light> light);
-    void removeLight(std::shared_ptr<vox::Light> light);
-    PaneWidget *           m_ambientPane;
-	std::list<PaneWidget*> m_lightPanes;
-    QSpacerItem *          m_spacer;
-    // -------------------------------------------
-    
-    // -------------------------------------------
-    // :TODO: CHUNK OF STUFF TO BE MOVED TO SEPERATE WIDGET
-    // Clipping Geometry panel panes
-    void removeClipGeometry(std::shared_ptr<vox::Primitive> prim);
-	std::list<PaneWidget*> m_clipPanes;
-    QSpacerItem *          m_clipSpacer;
-    // -------------------------------------------
+	InfoWidget *     m_infowidget;
+    LightingWidget * m_lightingWidget;
+    ClipWidget *     m_clipWidget;
 
     // Plugin panes
     QVector<PaneWidget*> m_pluginPanes;
     QSpacerItem *        m_pluginSpacer;
-    
-	vox::Scene m_activeScene; ///< Current scene
 
     // --------------------------------------------------------------------
     //  Do not place anything below here, the log stream must be closed 
-    //  after all other object have been shutdown 
+    //  after all other object have been shutdown :TODO: Fix this
     // --------------------------------------------------------------------
 
     std::ofstream m_logFileStream;  ///< Output stream for logging to disk
@@ -311,10 +298,6 @@ private slots:
 
     // Filter action slot
     void onFilterExecuted();
-
-    // Scene element removal
-    void removeClipGeometry(PaneWidget * pane);
-    void removeLight(PaneWidget * pane);
 
 	// Device selection action slots
 	void on_pushButton_devicesAdd_clicked();

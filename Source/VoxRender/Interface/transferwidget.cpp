@@ -43,13 +43,10 @@
 
 // Transfer function modification wrapper for auto-update
 #define DO_LOCK(X)          \
-    m_transfer->lock();     \
+    SceneLock lock(m_transfer);     \
     X;                      \
-    if (true) {             \
     m_transfer->setDirty(); \
-    }                       \
-    m_transfer->unlock();
-// :TODO: Check auto update set 
+    lock.reset(); 
 
 using namespace vox;
 

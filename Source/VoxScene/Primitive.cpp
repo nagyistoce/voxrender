@@ -101,7 +101,6 @@ std::shared_ptr<Primitive> Primitive::imprt(String const& type, boost::property_
 // ----------------------------------------------------------------------------
 void Primitive::exprt(boost::property_tree::ptree & node)
 {
-    node.add("Visible", m_visible);
 }
 
 // ----------------------------------------------------------------------------

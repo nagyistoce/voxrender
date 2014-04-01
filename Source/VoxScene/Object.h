@@ -58,6 +58,17 @@ namespace vox
         /** Sets the ID of the object */
         void setId(int id) { m_id = id; }
 
+        /** Sets the visibility of the object during rendering */
+        void setVisible(bool visible = true, bool suppress = false) 
+        { 
+            m_isVisible = visible;
+
+            if (m_visCallback) m_visCallback(visible, suppress);
+        }
+
+        /** Returns the visibility state of the object */
+        bool isVisible() { return m_isVisible; }
+
         /** Locks the light set for read/write operations */
         virtual void lock();
         
@@ -73,11 +84,21 @@ namespace vox
         /** Clears the object's dirty flag */
         void setClean() { m_isDirty = false; }
 
+        /** Sets the visibility change event callback */
+        void onVisibilityChanged(std::function<void(bool, bool)> callback) 
+        { 
+            m_visCallback = callback; 
+        }
+
     protected:
         int m_id; ///< ID of the object
 
-        boost::mutex * m_mutex; ///< Mutex for locking
-        bool         m_isDirty; ///< Dirty flag for tracking changes
+        boost::mutex * m_mutex; ///< Mutex for locking :TODO: Global scene locking, getting to be too many mutexes this way
+
+        std::function<void(bool, bool)> m_visCallback; ///< Visibility callback
+
+        bool m_isDirty;     ///< Dirty flag for tracking changes
+        bool m_isVisible;   ///< Visibility state of the object
     };
 
     /** Scoped locking mechanism for scene components */
@@ -86,7 +107,9 @@ namespace vox
     public:
         SceneLock(std::shared_ptr<Object> obj) : m_obj(obj) { m_obj->lock(); }
 
-        ~SceneLock() { m_obj->unlock(); }
+        ~SceneLock() { reset(); }
+
+        void reset() { if (m_obj) { m_obj->unlock(); m_obj.reset(); } }
 
     private:
         std::shared_ptr<Object> m_obj;

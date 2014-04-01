@@ -52,6 +52,7 @@ CClipGeometry::Clipper * CClipGroup::clipper()
 
         std::vector<CClipGeometry::Clipper*> clippers;
         BOOST_FOREACH (auto & child, m_primGroup->children())
+        if (child->isVisible())
         {
             auto elem = CClipGeometry::create(child);
 

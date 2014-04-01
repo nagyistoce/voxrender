@@ -163,7 +163,7 @@ namespace
                 OptionSet options;
                 options.addOption("Compression", COMP_FORMAT);
 
-                // Write the raw format volume to disk
+                // Write the raw format volume to the same base URL
                 auto baseUrl  = m_sink.identifier();
                 auto filename = baseUrl.extractFileName();
                 filename      = filename.substr(0, filename.find_last_of('.')) + ".raw"; 
@@ -172,12 +172,15 @@ namespace
 
                 // Imbed the import directives
                 node.add("Import.Options.Size", volume->extent());
-                node.add("Import.Options.Spacing", volume->spacing());
                 node.add("Import.Options.Type", Volume::typeToString(volume->type()));
                 node.add("Import.Options.Offset", volume->offset());
                 node.add("Import.Options.Compression", COMP_FORMAT);
-                node.add("Import.Endianess", "little");
+                node.add("Import.Options.Endianess", "little");
                 node.add("Import.Resource", filename);
+
+                node.add(V_TIMESLICE, volume->timeSlice());
+                node.add(V_SPACING, volume->spacing());
+                node.add(V_OFFSET, volume->offset());
 
                 m_tree.add_child("Scene.Volume", node);
             }
@@ -570,6 +573,7 @@ namespace
                   // Read inline volume parameter specifications
                   volume.setSpacing(m_node->get(V_SPACING, volume.spacing()));
                   volume.setOffset(m_node->get(V_OFFSET, volume.offset()));
+                  volume.setTimeSlice(m_node->get(V_TIMESLICE, volume.timeSlice()));
 
                   // Do not allow any other parameter specifications here as they will 
                   // overwrite interdependent information (ie extent relates to data etc)

@@ -31,6 +31,7 @@
 #include "VoxScene/Transfer.h"
 #include "VoxScene/Camera.h"
 #include "VoxScene/Light.h"
+#include "VoxScene/Volume.h"
 
 namespace vox {
 
@@ -116,6 +117,7 @@ void Animator::interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f
 
     o.camera   = k1.camera->interp(k2.camera, f);
     o.lightSet = k1.lightSet->interp(k2.lightSet, f);
+    o.volume   = k1.volume->interp(k2.volume, f);
     //o.transfer = k1.transfer->interp(k2.transfer, f);
 
     o.transferMap = TransferMap::create();

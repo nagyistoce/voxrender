@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: VoxScene
+	Project: VoxRender
 
-	Description: Defines a basic identifiable scene element
+	Description: Implements an action for undo/redo operations
 
-    Copyright (C) 2012-2014 Lucas Sherman
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,30 +24,21 @@
 =========================================================================== */
 
 // Include Header
-#include "Object.h"
+#include "LightEditAct.h"
 
 // Include Dependencies
-#include "boost/atomic/atomic.hpp"
-#include "boost/thread.hpp"
+#include "VoxLib/Error/Error.h"
+#include "Interface/mainwindow.h"
 
-namespace vox {
+// ----------------------------------------------------------------------------
+//  Reverses the effects of a light edit action
+// ----------------------------------------------------------------------------
+void LightEditAct::undo()
+{
+    auto temp = vox::Light::create();
+    m_light->clone(*temp);
 
-namespace {
-namespace filescope {
-
-    boost::atomic<int> uidCounter(1);
-
-} // namespace filescope
-} // namespace anonymous
-
-Object::Object() : m_mutex(new boost::mutex()), m_isVisible(true) { m_id = filescope::uidCounter++; }
-
-Object::Object(int id) : m_mutex(new boost::mutex()) { m_id = id; }
-
-Object::~Object() { delete m_mutex; }
-
-void Object::lock() { m_mutex->lock(); }
-        
-void Object::unlock() { m_mutex->unlock(); }
-
-} // namespace vox
+    m_reference->clone(*m_light); // Handle undo/redo with single function by flip/flopping
+   
+    temp->clone(*m_light);
+}

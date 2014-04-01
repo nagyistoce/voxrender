@@ -72,8 +72,8 @@ class PaneWidget : public QWidget
 	Q_OBJECT
 
 public:
-
-	PaneWidget( QWidget *parent, const QString& label = "", const QString& icon = "", 
+    /** Constructor */
+	PaneWidget(QWidget *parent, const QString& label = "", const QString& icon = "", 
         bool onoffbutton = false, bool rembutton = false);
 
     /** Sets the title which appears in the bar of the pane */
@@ -85,9 +85,13 @@ public:
     /** Sets the icon in the upper left corner of the pane */
 	void setIcon(QString const& icon);
 
-	void setWidget( QWidget *widget );
-	QWidget *getWidget( );
+    /** Sets the widget inside the pane */
+	void setWidget(QWidget * widget);
 
+    /** Returns the widget in the pane */
+	QWidget * getWidget();
+
+    /** Toggles the display of the on/off button */
 	void showOnOffButton(bool showbutton = true);
 
     /** Toggles the display of visibility and delete buttons */
@@ -99,15 +103,11 @@ public:
     /** Collapses the pane if it is expanded*/
 	void collapse();
 
-	bool powerON;
-	
-	int m_Index;
-
-	inline int  GetIndex( ) { return m_Index; }
-	inline void SetIndex( int Index ) { m_Index = Index; }
+    /** Sets the enabled state of the child widget */
+    void setOn(bool on = true);
 
 private:
-	Ui::PaneWidget *ui;
+	Ui::PaneWidget * ui;
 
 	QWidget * mainwidget;
 	QPixmap expandedicon, collapsedicon;
@@ -117,6 +117,8 @@ private:
 	std::unique_ptr<ClickableLabel> remLabel;
 
 	bool expanded;
+
+	bool m_powerOn;
 
 signals:
 	void removed(PaneWidget *);

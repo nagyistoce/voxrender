@@ -29,12 +29,9 @@
 
 // Include Dependencies
 #include "aboutdialogue.h"
-#include "ambientlightwidget.h"
-#include "arealightwidget.h"
 #include "camerawidget.h"
 #include "genericdialogue.h"
 #include "infowidget.h"
-#include "pointlightwidget.h"
 #include "lightdialogue.h"
 #include "clipdialogue.h"
 #include "clipplanewidget.h"
@@ -42,10 +39,8 @@
 #include "animatewidget.h"
 #include "pluginwidget.h"
 #include "timingwidget.h"
-
-// :TODO: Move to seperate clip/light widgets
-#include "Actions/AddRemClipAct.h"
-#include "Actions/AddRemLightAct.h"
+#include "lightingwidget.h"
+#include "clipwidget.h"
 
 // VoxLib Includes 
 #include "VoxLib/Action/ActionManager.h"
@@ -200,10 +195,12 @@ MainWindow::~MainWindow()
 
     delete histogramwidget;
     delete transferwidget;
+    delete m_lightingWidget;
 	delete m_renderView;
+    delete m_clipWidget;
 
     vox::PluginManager::instance().unloadAll();
-
+    
     delete ui;
 }
 
@@ -610,26 +607,9 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         if (!m_activeScene.camera)       m_activeScene.camera       = Camera::create();
         if (!m_activeScene.animator)     m_activeScene.animator     = Animator::create();
 
-        // :TODO: Move this to a light pane holder widget
-        m_activeScene.lightSet->onAdd([] (std::shared_ptr<Light> light, bool suppress) {
-            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
-            MainWindow::instance->addLight(light); });
-        m_activeScene.lightSet->onRemove([] (std::shared_ptr<Light> light, bool suppress) {
-            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
-            MainWindow::instance->removeLight(light);
-        });
-        
-        // :TODO: Move this to a clipping geometry pane holder widget
-        m_activeScene.clipGeometry->onAdd([] (std::shared_ptr<Primitive> prim, bool suppress) {
-            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
-            MainWindow::instance->addClippingGeometry(prim); });
-        m_activeScene.clipGeometry->onRemove([] (std::shared_ptr<Primitive> prim, bool suppress) {
-            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
-            MainWindow::instance->removeClipGeometry(prim);
-        });
-
         // Synchronize the scene view
-        synchronizeView();
+        // :TODO: Signal
+        transferwidget->synchronizeView();
 
         setCurrentFile(filename); // Update window name
 
@@ -784,26 +764,6 @@ bool MainWindow::canStopRendering()
 }
 
 // ----------------------------------------------------------------------------
-//  Synchronizes the current scene 
-// ----------------------------------------------------------------------------
-void MainWindow::synchronizeView()
-{
-    transferwidget->synchronizeView();
-
-    // Synchronize the lighting controls
-    BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
-    m_lightPanes.clear();
-    BOOST_FOREACH (auto & light, m_activeScene.lightSet->lights()) 
-        addLight(light);
-
-    // Synchronize the clip geometry controls
-    BOOST_FOREACH (auto & pane, m_clipPanes) delete pane;
-    m_clipPanes.clear();
-    BOOST_FOREACH (auto & clip, m_activeScene.clipGeometry->children())
-        addClippingGeometry(clip);
-}
-
-// ----------------------------------------------------------------------------
 //  Creates the render tab panes
 // ----------------------------------------------------------------------------
 void MainWindow::createRenderTabPanes()
@@ -813,94 +773,72 @@ void MainWindow::createRenderTabPanes()
 	//
 
 	// Create imaging tab panes
-	panes[0] = new PaneWidget( ui->panesAreaContents, 
-		"Sampling Parameters", ":/icons/samplingicon.png" );
-	panes[1] = new PaneWidget( ui->panesAreaContents, 
-		"Camera Settings", ":/icons/cameraicon.png" );
-	panes[2] = new PaneWidget( ui->panesAreaContents, 
-		"Volume Display", ":/icons/clockicon.png" );
-	panes[3] = new PaneWidget( ui->panesAreaContents, 
-		"Volume Histogram", ":/icons/histogramicon.png" );
-    panes[4] = new PaneWidget( ui->panesAreaContents,
-        "Animation Controls", ":/icons/cameraicon.png" );
+	panes[0] = new PaneWidget(ui->panesAreaContents, 
+		"Sampling Parameters", ":/icons/samplingicon.png");
+	panes[1] = new PaneWidget(ui->panesAreaContents, 
+		"Camera Settings", ":/icons/cameraicon.png");
+	panes[2] = new PaneWidget(ui->panesAreaContents, 
+		"Volume Display", ":/icons/clockicon.png");
+	panes[3] = new PaneWidget(ui->panesAreaContents, 
+		"Volume Histogram", ":/icons/histogramicon.png");
+    panes[4] = new PaneWidget(ui->panesAreaContents,
+        "Animation Controls", ":/icons/cameraicon.png");
+
+    // Lighting widget
+    m_lightingWidget = new LightingWidget(
+        ui->lightsAreaContents, ui->lightsAreaLayout);
+
+    // Clip plane widget
+    m_clipWidget = new ClipWidget(
+        ui->clipAreaContents, ui->clipAreaLayout);
 
 	// Sampler settings widget
-	samplingwidget = new SamplingWidget( panes[0] );
-	panes[0]->setWidget( samplingwidget );
-	ui->panesAreaLayout->addWidget( panes[0] );
+	samplingwidget = new SamplingWidget(panes[0]);
+	panes[0]->setWidget(samplingwidget);
+	ui->panesAreaLayout->addWidget(panes[0]);
 
 	// Camera / film settings widget
-	camerawidget = new CameraWidget( panes[1] );
-	panes[1]->setWidget( camerawidget );
-	ui->panesAreaLayout->addWidget( panes[1] );
+	camerawidget = new CameraWidget(panes[1]);
+	panes[1]->setWidget(camerawidget);
+	ui->panesAreaLayout->addWidget(panes[1]);
 
 	// Time settings widget
-	timingwidget = new TimingWidget( panes[2] );
-	panes[2]->setWidget( timingwidget );
-	ui->panesAreaLayout->addWidget( panes[2] );
+	timingwidget = new TimingWidget(panes[2]);
+	panes[2]->setWidget(timingwidget);
+	ui->panesAreaLayout->addWidget(panes[2]);
 
 	// Volume data histogram widget
-	histogramwidget = new HistogramWidget( panes[3] );
-	panes[3]->setWidget( histogramwidget );
-	ui->panesAreaLayout->addWidget( panes[3] );
+	histogramwidget = new HistogramWidget(panes[3]);
+	panes[3]->setWidget(histogramwidget);
+	ui->panesAreaLayout->addWidget(panes[3]);
 
     // Animation sequencing widget
-    animationwidget = new AnimateWidget( panes[4] );
+    animationwidget = new AnimateWidget(panes[4]);
     panes[4]->setWidget(animationwidget);
-    ui->panesAreaLayout->addWidget( panes[4] );
+    ui->panesAreaLayout->addWidget(panes[4]);
 
 	// Set alignment of panes within main tab layout 
-	ui->panesAreaLayout->setAlignment( Qt::AlignTop );
-	ui->panesAreaLayout->addItem( new QSpacerItem( 20, 20, 
-		QSizePolicy::Minimum, QSizePolicy::Expanding) );
-
-	// 
-	// Lighting Tab
-	// 
-
-	// Set alignment of panes within lighting tab layout 
-	ui->lightsAreaLayout->setAlignment( Qt::AlignTop );
-    m_spacer = new QSpacerItem( 20, 20, 
-        QSizePolicy::Minimum, QSizePolicy::Expanding );
-
-    // Create new pane for the ambient light setting widget
-    m_ambientPane = new PaneWidget(ui->lightsAreaContents);
-    QWidget * currWidget = new AmbientLightWidget(m_ambientPane); 
-
-    m_ambientPane->setTitle("Environment");
-    m_ambientPane->setIcon(":/icons/lightgroupsicon.png");
-    m_ambientPane->setWidget(currWidget);
-    m_ambientPane->expand();
-
-    ui->lightsAreaLayout->addWidget(m_ambientPane);
-
-    // Reinsert spacer following new pane
-	ui->lightsAreaLayout->addItem( m_spacer );
-
-    //
-    // Clipping Geometry
-    //
-
-    m_clipSpacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding);
-	ui->clipAreaLayout->addItem(m_clipSpacer);
+	ui->panesAreaLayout->setAlignment(Qt::AlignTop);
+	ui->panesAreaLayout->addItem(new QSpacerItem(20, 20, 
+		QSizePolicy::Minimum, QSizePolicy::Expanding));
 
 	// 
 	// Advanced Tab
 	//
 
 	// Create advanced tab panes
-	advpanes[0] = new PaneWidget( ui->advancedAreaContents, 
-		"Scene Information", ":/icons/logtabicon.png" );
+	advpanes[0] = new PaneWidget(ui->advancedAreaContents, 
+		"Scene Information", ":/icons/logtabicon.png");
 
 	// Scene information widget
-	m_infowidget = new InfoWidget( advpanes[0] );
-	advpanes[0]->setWidget( m_infowidget );
-	ui->advancedAreaLayout->addWidget( advpanes[0] );
+	m_infowidget = new InfoWidget(advpanes[0]);
+	advpanes[0]->setWidget(m_infowidget);
+	ui->advancedAreaLayout->addWidget(advpanes[0]);
 
 	// Set alignment of panes within advanced tab layout 
-	ui->advancedAreaLayout->setAlignment( Qt::AlignTop );
-	ui->advancedAreaLayout->addItem( new QSpacerItem( 20, 20, 
-		QSizePolicy::Minimum, QSizePolicy::Expanding) );
+	ui->advancedAreaLayout->setAlignment(Qt::AlignTop);
+	ui->advancedAreaLayout->addItem(new QSpacerItem(20, 20, 
+		QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 // ----------------------------------------------------------------------------
@@ -914,22 +852,22 @@ void MainWindow::createDeviceTable()
 	// Create headers for CUDA device properties
 	static const int NUM_COLS = 10; QStringList headers;
 	ui->table_devices->setColumnCount( NUM_COLS );
-	headers.append( tr("Active?") );
-	headers.append( tr("Device ID") );
-	headers.append( tr("Name") );
-	headers.append( tr("Clock Speed (MHz)") );
-	headers.append( tr("Global Memory (MB)") );
-	headers.append( tr("Constant Memory (KB)") );
-	headers.append( tr("Shared Memory (KB/SM)") );
-	headers.append( tr("L2 Cache Size (KB)") );
-	headers.append( tr("Register (/SM)") );
-	headers.append( tr("Time Limit?") );
-	ui->table_devices->setHorizontalHeaderLabels( headers );
+	headers.append(tr("Active?"));
+	headers.append(tr("Device ID"));
+	headers.append(tr("Name"));
+	headers.append(tr("Clock Speed (MHz)"));
+	headers.append(tr("Global Memory (MB)"));
+	headers.append(tr("Constant Memory (KB)"));
+	headers.append(tr("Shared Memory (KB/SM)"));
+	headers.append(tr("L2 Cache Size (KB)"));
+	headers.append(tr("Register (/SM)"));
+	headers.append(tr("Time Limit?"));
+	ui->table_devices->setHorizontalHeaderLabels(headers);
 
 	// Add device listings to the device table
-	int ndevices = vox::DeviceManager::getDeviceCount( );
-	ui->table_devices->setRowCount( ndevices );
-	for( int dev = 0; dev < ndevices; dev++ )
+	int ndevices = vox::DeviceManager::getDeviceCount();
+	ui->table_devices->setRowCount(ndevices);
+	for (int dev = 0; dev < ndevices; dev++)
 	{
 		QTableWidgetItem* tableWidget[NUM_COLS];
 
@@ -952,20 +890,20 @@ void MainWindow::createDeviceTable()
 #undef STRING
 
 		// Format enabled indicator cell widget
-		tableWidget[0]->font( ).setWeight( QFont::Black );
-		tableWidget[0]->setBackgroundColor( Qt::darkRed );
-		tableWidget[0]->setTextColor( Qt::white );
+		tableWidget[0]->font().setWeight(QFont::Black);
+		tableWidget[0]->setBackgroundColor(Qt::darkRed);
+		tableWidget[0]->setTextColor(Qt::white);
 
-		for( int i = 0; i < NUM_COLS; i++ ) 
+		for (int i = 0; i < NUM_COLS; i++) 
 		{
 			// Set center text alignment for cells
-			tableWidget[i]->setTextAlignment( Qt::AlignVCenter|Qt::AlignHCenter );
+			tableWidget[i]->setTextAlignment(Qt::AlignVCenter|Qt::AlignHCenter);
 
 			// Make the cells read-only 
-			tableWidget[i]->setFlags( tableWidget[i]->flags( )^Qt::ItemIsEditable );
+			tableWidget[i]->setFlags(tableWidget[i]->flags()^Qt::ItemIsEditable);
 
 			// Add the cell widgets to the table
-			ui->table_devices->setItem( dev, i, tableWidget[i] );
+			ui->table_devices->setItem(dev, i, tableWidget[i]);
 		}
 	}
 
@@ -973,152 +911,6 @@ void MainWindow::createDeviceTable()
     int deviceCount = 0;
 	ui->label_deviceCount_1->setText(QString("%1").arg(deviceCount));
 	ui->label_deviceCount_2->setText(QString("%1").arg(deviceCount));
-}
-
-// ----------------------------------------------------------------------------
-//  Adds a control widget for an existing light object 
-// ----------------------------------------------------------------------------
-void MainWindow::addLight(std::shared_ptr<Light> light)
-{
-    // Remove spacer prior to pane insertion
-    ui->lightsAreaLayout->removeItem(m_spacer);
-
-    // Create new pane for the light setting widget
-    PaneWidget *pane = new PaneWidget(ui->lightsAreaContents);
-   
-    QWidget * currWidget = new PointLightWidget(pane, light); 
-
-    int index = m_lightPanes.size( );
-
-    pane->SetIndex(index);
-    pane->showOnOffButton();
-    pane->showVisibilityButtons();
-    pane->setTitle("Point Light");
-    pane->setIcon(":/icons/lightgroupsicon.png");
-    pane->setWidget(currWidget);
-    pane->expand( );
-
-    connect(pane, SIGNAL(removed(PaneWidget *)), this, SLOT(removeLight(PaneWidget *)));
-
-    ui->lightsAreaLayout->addWidget(pane);
-
-    m_lightPanes.push_back(pane);
-
-    // Reinsert spacer following new pane
-	ui->lightsAreaLayout->addItem( m_spacer );
-}
-
-// ----------------------------------------------------------------------------
-//  Removes a light from the active scene
-// ----------------------------------------------------------------------------
-void MainWindow::removeLight(PaneWidget * pane)
-{
-    m_lightPanes.remove(pane);
-
-    ui->lightsAreaLayout->removeWidget(pane);
-    delete pane;
-}
-
-// ----------------------------------------------------------------------------
-//  Removes a light from the active scene
-// ----------------------------------------------------------------------------
-void MainWindow::removeLight(std::shared_ptr<Light> light)
-{
-    BOOST_FOREACH (auto pane, m_lightPanes)
-    {
-        auto ptr = dynamic_cast<PointLightWidget*>(pane->getWidget());
-        if (ptr && ptr->light().get() == light.get())
-        {
-            m_lightPanes.remove(pane);
-
-            ui->lightsAreaLayout->removeWidget(pane);
-            delete pane;
-
-            return;
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
-//  Adds a control widget for an existing clipping geometry object 
-// ----------------------------------------------------------------------------
-void MainWindow::addClippingGeometry(std::shared_ptr<vox::Primitive> prim)
-{
-    // Remove spacer prior to pane insertion
-    ui->clipAreaLayout->removeItem(m_clipSpacer);
-
-    // Create new pane for the light setting widget
-    PaneWidget *pane = new PaneWidget(ui->clipAreaContents);
-   
-    // Create the control widget to populate the pane
-    QWidget * currWidget = nullptr;
-    if (prim->typeId() == Plane::classTypeId())
-    {
-        auto plane = std::dynamic_pointer_cast<vox::Plane>(prim);
-        if (!plane) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, 
-            "Error interpreting primitive :TODO:");
-        currWidget = new ClipPlaneWidget(pane, plane); 
-    }
-    else
-    {
-        // :TODO: unexpandeable hideable attribute pane
-
-        VOX_LOG_WARNING(Error_NotImplemented, VOX_GUI_LOG_CAT, 
-            format("Geometry type '%1%' unrecognized. '%2%' will not be editable.", prim->typeId(), prim->idString()));
-
-        return;
-    }
-
-    int index = m_clipPanes.size();
-
-    pane->SetIndex(index);
-    pane->showOnOffButton();
-    pane->showVisibilityButtons();
-    pane->setTitle(QString::fromLatin1(prim->idString().c_str()));
-    pane->setIcon(":/icons/lightgroupsicon.png");
-    pane->setWidget(currWidget);
-    pane->expand();
-    
-    connect(pane, SIGNAL(removed(PaneWidget *)), this, SLOT(removeClipGeometry(PaneWidget *)));
-
-    ui->clipAreaLayout->addWidget(pane);
-
-    m_clipPanes.push_back(pane);
-
-    // Reinsert spacer following new pane
-	ui->clipAreaLayout->addItem(m_clipSpacer);
-}
-
-// ----------------------------------------------------------------------------
-//  Removes a clipping primtive from the active scene
-// ----------------------------------------------------------------------------
-void MainWindow::removeClipGeometry(std::shared_ptr<Primitive> prim)
-{
-    BOOST_FOREACH (auto pane, m_clipPanes)
-    {
-        auto ptr = dynamic_cast<ClipPlaneWidget*>(pane->getWidget());
-        if (!ptr) continue;
-
-        if (ptr && ptr->plane() == prim)
-        {
-            m_clipPanes.remove(pane);
-
-            ui->clipAreaLayout->removeWidget(pane);
-            delete pane;
-
-            return;
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
-//  Removes a light from the active scene
-// ----------------------------------------------------------------------------
-void MainWindow::removeClipGeometry(PaneWidget * pane)
-{
-    m_clipPanes.remove(pane);
-    ui->clipAreaLayout->removeWidget(pane);
-    delete pane;
 }
 
 // ----------------------------------------------------------------------------

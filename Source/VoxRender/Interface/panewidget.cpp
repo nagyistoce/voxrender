@@ -46,10 +46,8 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
     ui(new Ui::PaneWidget)
 {
 	expanded = false;
-	onofflabel = NULL;
-	remLabel = NULL;
-
-	m_Index = -1;
+	onofflabel = nullptr;
+	remLabel = nullptr;
 
 	ui->setupUi(this);
 	
@@ -72,7 +70,7 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
  
 	connect(expandlabel.get(), SIGNAL(clicked()), this, SLOT(expandClicked()));
 
-	powerON = false;
+	m_powerOn = false;
 	
 	if (onoffbutton) showOnOffButton();
 
@@ -80,7 +78,7 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
 }
 
 // --------------------------------------------------------------------
-// Sets the pane window title
+//  Sets the pane window title
 // --------------------------------------------------------------------
 void PaneWidget::setTitle(const QString& title)
 {
@@ -88,11 +86,19 @@ void PaneWidget::setTitle(const QString& title)
 }
 
 // --------------------------------------------------------------------
-// Sets the pane window icon
+//  Sets the pane window icon
 // --------------------------------------------------------------------
 void PaneWidget::setIcon(const QString& icon)
 {
 	ui->labelPaneIcon->setPixmap(QPixmap(icon));
+}
+
+// --------------------------------------------------------------------
+//  
+// --------------------------------------------------------------------
+void PaneWidget::setOn(bool on)
+{
+    if (m_powerOn != on) onofflabel->clicked();
 }
 
 // --------------------------------------------------------------------
@@ -105,14 +111,14 @@ void PaneWidget::showOnOffButton(bool showbutton)
 		onofflabel.reset(new ClickableLabel("*", this));
 		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
 		onofflabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
-		onofflabel->setToolTip( "Click to toggle this light on and off." );
+		onofflabel->setToolTip("Click to enable/disable this scene element.");
 
 		ui->gridLayout->removeWidget(expandlabel.get());
 		ui->gridLayout->addWidget(onofflabel.get(), 0, 3, 1, 1);
 		ui->gridLayout->addWidget(expandlabel.get(), 0, 4, 1, 1);
 
 		connect(onofflabel.get(), SIGNAL(clicked()), this, SLOT(onoffClicked()));
-		powerON = true;
+		m_powerOn = true;
 	}
 
 	if (showbutton) onofflabel->show();
@@ -126,17 +132,17 @@ void PaneWidget::onoffClicked()
 {
 	if (mainwidget->isEnabled()) 
     {
+		m_powerOn = false;
 		mainwidget->setEnabled(false);
 		onofflabel->setPixmap(QPixmap(":/icons/powerofficon.png"));
 		emit turnedOff();
-		powerON = false;
 	}
 	else 
     {
+		m_powerOn = true;
 		mainwidget->setEnabled(true);
 		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
 		emit turnedOn();
-		powerON = true;
 	}
 }
 
@@ -150,7 +156,7 @@ void PaneWidget::expandClicked()
 }
 
 // --------------------------------------------------------------------
-//  Toggles the display of the delete + show-hide icons 
+//  Toggles the display of the delete icon
 // --------------------------------------------------------------------
 void PaneWidget::showVisibilityButtons(bool showbutton)
 {

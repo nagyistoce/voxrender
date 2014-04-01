@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Scene>
+	<Version>
+		<Major>0</Major>
+		<Minor>0</Minor>
+	</Version>
+	<Camera>
+		<ApertureSize>0</ApertureSize>
+		<FieldOfView>30</FieldOfView>
+		<FocalDistance>0</FocalDistance>
+		<FilmWidth>512</FilmWidth>
+		<FilmHeight>512</FilmHeight>
+		<Position>[17.5338 -10.3291 53.3657]</Position>
+		<Up>[0.0189801 0.993508 0.112167]</Up>
+		<Right>[0.951122 0.0166444 -0.308367]</Right>
+	</Camera>
+	<Volume>
+		<Import>
+			<Options>
+				<Size>[32 32 32 64]</Size>
+				<Type>uint16</Type>
+				<Offset>[0 0 0]</Offset>
+				<Compression>gzip</Compression>
+				<Endianess>little</Endianess>
+			</Options>
+			<Resource>smoke.raw</Resource>
+		</Import>
+		<Time>33</Time>
+		<Spacing>[1 1 1 1]</Spacing>
+		<Offset>[0 0 0]</Offset>
+	</Volume>
+	<Lights>
+		<Ambient>[0.6 0.6 0.6]</Ambient>
+		<Light>
+			<Color>[1 1 1]</Color>
+			<Position>[-0 0 0]</Position>
+		</Light>
+	</Lights>
+	<Transfer>
+		<Type>1</Type>
+		<Resolution>256</Resolution>
+		<Nodes>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.05292929</Thickness>
+				<Diffuse>[255 255 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>0.05077261</Density>
+			</Node>
+			<Node>
+				<Glossiness>0.8</Glossiness>
+				<Thickness>0.05555553</Thickness>
+				<Diffuse>[255 255 255]</Diffuse>
+				<Specular>[0 0 0]</Specular>
+				<Emissive>[0 0 0]</Emissive>
+				<Density>1</Density>
+			</Node>
+		</Nodes>
+	</Transfer>
+	<ClipGeometry/>
+	<Settings>
+		<PrimaryStepSize>2</PrimaryStepSize>
+		<ShadowStepSize>3</ShadowStepSize>
+		<GradientCutoff>1</GradientCutoff>
+		<ScatterCoefficient>-0.01</ScatterCoefficient>
+		<EdgeEnhance>0</EdgeEnhance>
+	</Settings>
+</Scene>

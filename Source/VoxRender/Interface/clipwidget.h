@@ -1,10 +1,10 @@
 /* ===========================================================================
 
 	Project: VoxRender
-    
-	Description: Implements a control interface for ambient lighting
 
-    Copyright (C) 2012-2014 Lucas Sherman
+	Description: Implements a control widget for editing the light set
+
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -24,50 +24,48 @@
 =========================================================================== */
 
 // Begin Definition
-#ifndef AMBIENT_LIGHT_WIDGET_H
-#define AMBIENT_LIGHT_WIDGET_H
+#ifndef CLIP_WIDGET_H
+#define CLIP_WIDGET_H
 
 // QT Dependencies
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QLayoutItem>
 
-#include "Extensions/QColorPushButton.h"
-
-// Generated class
-namespace Ui { class AmbientLightWidget; }
-
-// Scene Light class
-namespace vox { class Light; }
+// Include Dependencies
+#include "VoxScene/Primitive.h"
+#include "panewidget.h"
 
 // Point light interface
-class AmbientLightWidget : public QWidget
+class ClipWidget : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit AmbientLightWidget(QWidget * parent);
+    /** Constructor */
+	explicit ClipWidget(QWidget * parent, QLayout * layout);
 
-	~AmbientLightWidget();
+    /** Destructor */
+	~ClipWidget();
 
 private:
-    void update();
+    /** Adds a primitive to the scene */
+    void add(std::shared_ptr<vox::Primitive> prim);
 
-	Ui::AmbientLightWidget * ui;
-    QColorPushButton *       m_colorButton;
+    /** Removes a primitive from the scene */
+    void remove(std::shared_ptr<vox::Primitive> prim);
 
-    QColor  m_tempColor;
-    double  m_tempIntensity;
+	std::list<PaneWidget*> m_panes;     ///< Other light widgets
+    QSpacerItem *          m_spacer;    ///< Spacing element for pane list
+    QLayout *              m_layout;    ///< Layout for light panes
+    QWidget *              m_parent;    ///< Parent widget 
 
 private slots:
-	void on_horizontalSlider_intensity_valueChanged(int value);
-	void on_doubleSpinBox_intensity_valueChanged(double value);
-    
-    void beginChange();
-    void endChange();
-
-    void colorChanged(QColor const& color);
-
+    /** Slot for scene change events */
     void sceneChanged();
+
+    /** Pane removal slot called on light deletion */
+    void remove(PaneWidget * pane);
 };
 
-#endif // AMBIENT_LIGHT_WIDGET_H
+#endif // CLIP_WIDGET_H
 

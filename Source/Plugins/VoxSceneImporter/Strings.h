@@ -30,8 +30,9 @@ auto V_MINOR = "Minor"; ///< Minor version number
 
 // Volume
 
-auto V_SPACING = "Spacing"; ///< Spacing between volume samples (mm x mm x mm x s)
-auto V_OFFSET  = "Offset";  ///< Volume offset from origin (mm x mm x mm)
+auto V_SPACING   = "Spacing"; ///< Spacing between volume samples (mm x mm x mm x s)
+auto V_OFFSET    = "Offset";  ///< Volume offset from origin (mm x mm x mm)
+auto V_TIMESLICE = "Time";    ///< Volume time index
 
 // Camera
 

@@ -77,22 +77,8 @@ namespace vox
         /** Returns the UID string for this primitive */
         String const& idString() { return m_id; }
 
-        /** Returns true if the primitive is visible */
-        bool isVisible() { return m_visible; }
-
-        /** Sets the visibility status of the primitive */
-        void setVisible(bool visible = true)
-        {
-            if (m_visible == visible) return;
-
-            m_visible = visible; 
-            setDirty();
-        }
-
     protected:
         Primitive() {}
-
-        bool m_visible;
 
         String m_id;
     };
