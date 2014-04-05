@@ -49,7 +49,7 @@ public:
 
     virtual void begin(ResourceOStream & ostr, OptionSet const& options) { }
 
-    virtual void addFrame(Bitmap const& frame) { }
+    virtual void addFrame(ResourceOStream & ostr, Bitmap const& frame) { }
     
     virtual void end(ResourceOStream & ostr) { }
 };

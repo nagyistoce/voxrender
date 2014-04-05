@@ -119,10 +119,10 @@ void VidIStream::pull()
 // --------------------------------------------------------------------
 void VidOStream::push(Bitmap const& frame)
 {
-    if (!m_device) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+    if (!m_ostr) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
         "Video stream must be open to push", Error_BadStream);
 
-    m_device->addFrame(frame);
+    m_device->addFrame(*m_ostr, frame);
 }
 
 // --------------------------------------------------------------------

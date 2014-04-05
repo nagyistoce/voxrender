@@ -3,11 +3,11 @@
 #   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
 #                                                                           #
 #   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#		ray casting techniques.                                     #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#       Copyright (C) 2014 Lucas Sherman                                    #
 #                                                                           #
-#   Lucas Sherman, email: LucasASherman@gmail.com                           #
+#	Lucas Sherman, email: LucasASherman@gmail.com                       #
 #                                                                           #
 #   This program is free software: you can redistribute it and/or modify    #
 #   it under the terms of the GNU General Public License as published by    #
@@ -24,15 +24,13 @@
 #                                                                           #
 #===========================================================================#
 
-#===============================================#
-#         INCLUDE DESIRED UNIT TESTS            #
-#===============================================#
-
-ADD_SUBDIRECTORY(Geometry)
-ADD_SUBDIRECTORY(IO)
-ADD_SUBDIRECTORY(Plugins)
-ADD_SUBDIRECTORY(RawVolumeExIm)
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(StandardImg)
-ADD_SUBDIRECTORY(Server)
-
+VOX_PROJECT(
+    TARGET "ServerUnitTest" EXE
+    FOLDER "Unit Tests"
+    SOURCES
+        Main.cpp
+    DEPENDENCIES
+        VoxServer
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

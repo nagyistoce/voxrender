@@ -1,11 +1,10 @@
 #===========================================================================#
 #                                                                           #
-#   Project: VoxRender - GPU Based Real-Time Volume Rendering               #
+#   Project: VoxServer                                                      #
 #                                                                           #
-#   Description: Performs real-time rendering of volume data using volume   #
-#       ray casting techniques.                                             #
+#   Description: Exports a C interface for rendering scene files            #
 #                                                                           #
-#       Copyright (C) 2013 Lucas Sherman                                    #
+#   Copyright (C) 2014 Lucas Sherman                                        #
 #                                                                           #
 #   Lucas Sherman, email: LucasASherman@gmail.com                           #
 #                                                                           #
@@ -24,15 +23,18 @@
 #                                                                           #
 #===========================================================================#
 
-#===============================================#
-#         INCLUDE DESIRED UNIT TESTS            #
-#===============================================#
+INCLUDE_DIRECTORIES(.)
 
-ADD_SUBDIRECTORY(Geometry)
-ADD_SUBDIRECTORY(IO)
-ADD_SUBDIRECTORY(Plugins)
-ADD_SUBDIRECTORY(RawVolumeExIm)
-ADD_SUBDIRECTORY(StandardIO)
-ADD_SUBDIRECTORY(StandardImg)
-ADD_SUBDIRECTORY(Server)
-
+VOX_PROJECT(
+    TARGET "VoxServer" SHARED
+    HEADERS
+        "Interface.h"
+    SOURCES
+        "Interface.cpp"
+    DEPENDENCIES
+        VoxLib
+        VoxScene
+        VolumeScatterRenderer
+    LIBRARIES
+        ${Boost_LIBRARIES}
+    )

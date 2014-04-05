@@ -1,0 +1,477 @@
+﻿/*----------------------------------------------------------
+The base color for this template is #5c87b2. If you'd like
+to use a different color start by replacing all instances of
+#5c87b2 with your new color.
+----------------------------------------------------------*/
+
+body {
+    background-color:rgb(234, 234, 234);
+    font-size: .85em;
+    font-family: "Trebuchet MS", Verdana, Helvetica, Sans-Serif;
+    margin: 0;
+    padding: 0;
+    color: #696969;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+a:link {
+    color: #034af3;
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #505abc;
+}
+
+a:hover {
+    color: #1d60ff;
+    text-decoration: none;
+}
+
+a:active {
+    color: #12eb87;
+}
+
+/* HEADINGS   
+----------------------------------------------------------*/
+h1, h2, h3, h4, h5, h6 {
+    font-size: 1.5em;
+    color: #000;
+}
+
+h1, h2 {
+    font-size: 2em;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+h3 {
+    font-size: 1.2em;
+}
+
+h4 {
+    font-size: 1.1em;
+}
+
+h5, h6 {
+    font-size: 1em;
+}
+
+/* PRIMARY LAYOUT ELEMENTS   
+----------------------------------------------------------*/
+#page {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+    #header {
+        position: absolute;
+        width: 100%;
+        height: 25px;
+        margin-bottom: 0;
+        color: #000;
+        padding: 0;
+    }
+
+    #imageBar
+    {
+        position:absolute;
+        right:0;
+        top:0;
+        bottom:0;
+        width:300px;
+    }
+
+    .pane
+    {
+        background-color:lightgray;
+        position:absolute;
+        overflow-y:scroll;
+        overflow-x:hidden;
+        border: 1px solid #888;
+        top:48px;
+        bottom:48px;
+        width:100%;
+    }
+
+    #main {
+        position: absolute;
+        top: 25px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        background-color: #fff;
+    }
+
+    #footer {
+        padding: 10px 0;
+        text-align: center;
+        line-height: normal;
+        margin: 0;
+        font-size: .9em;
+    }
+
+    #messageBox
+    {
+        position: absolute;
+        top: 25px;
+        height: 50px;
+        left: 25px;
+        right: 50px;
+        z-index: 101;
+        background-color: #f6f6f6;
+        border: 1px solid black;
+        border-radius: 5px;
+    }
+    
+/* Application Side Bar
+----------------------------------------------------------*/
+.tab {
+    position:absolute;
+    border-top-left-radius:8px;
+    border-bottom-left-radius:8px;
+    background-color: grey;
+    border:1px solid black;
+    width:32px;
+    height:64px;
+    right:299px;
+    z-index:100;
+}
+
+    .tab:hover {
+        background-color: lightgray;
+    }
+
+#tabTool {
+    top:112px;
+}
+
+#tabImage {
+    top:48px;
+}
+
+/* Site Title 
+----------------------------------------------------------*/
+#header .site-title {
+    float: left;
+    font: bold 16px sans-serif;
+    padding: 5px 5px;
+    margin: 0;
+    color: #888;
+    border: none;
+    font-size: 16px;
+    
+    /*CSS3 properties*/
+    /*text-shadow: 1px 1px 2px #111;*/
+}
+
+/* Login Display  
+----------------------------------------------------------*/
+#login {
+    float: right;
+    font-size: 1.1em;
+    display: block;
+    text-align: right;
+    color: #000;
+}
+
+    #login li {
+        margin: 0;
+        display: inline;
+        list-style: none;
+        padding-left: 5px;
+    }
+    
+    #login a:link, #login a:visited {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    #login a:hover
+    {
+        color: #fff;
+        text-decoration: underline;
+    }
+        
+/* forms   
+----------------------------------------------------------*/
+fieldset {
+    margin: 1em 0;
+    padding: 1em;
+    border: 1px solid #CCC;
+}
+
+    fieldset legend {
+        font-size: 1.1em;
+        font-weight: bold;
+        padding: 2px 4px 8px 4px;
+    }
+    
+    fieldset ol {
+        padding: 0;
+        list-style: none;
+    }
+    
+        fieldset ol li {
+            padding-bottom: 5px;
+        }
+    
+    fieldset label {
+        display: block;
+    }
+    
+    fieldset label.checkbox {
+        display: inline;
+    }
+    
+    fieldset input[type="text"], input[type="password"] {
+        border: 1px solid #ccc;
+        padding: 2px;
+        font-size: 1.2em;
+        color: #444;
+        width: 300px;
+    }
+
+    fieldset input[type="submit"] {
+        font-size: 1.2em;
+        padding: 5px;
+    }
+    
+ /* Information and errors  
+----------------------------------------------------------*/  
+.message {
+    clear: both;
+    border: 1px solid;
+    margin: 10px 0px;
+    padding: 15px 15px;
+    
+    /*CSS3 properties*/
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    -webkit-box-shadow: 2px 2px 5px #888;
+    -moz-box-shadow: 2px 2px 5px #888;
+    box-shadow: 2px 2px 5px #888;
+}
+
+.info {
+    background: #bde5f8;
+    color: #00529b;
+}
+
+.error {
+    background: #ffe4e4;
+    color: #be3e16;
+}
+
+.success {
+    background: #dff2bf;
+    color: #4f8a10;
+}
+
+input[type="text"].error-field, input[type="password"].error-field { 
+    border: solid 1px #be3e16; 
+    background-color: #ffe4e4;
+}
+
+.validation-error {
+    display: inline;
+    color: #be3e16;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+    .validation-error:before {
+        content: "»";
+    }
+
+/* Quick tools bar
+----------------------------------------------------------*/
+
+.quick-tool {
+    height: 48px;
+    width: 48px !important;
+}
+
+.ui-button .ui-icon.icon-show-segment {
+    background-image: url(../Images/icon-show-segment.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-show-base {
+    background-image: url(../Images/icon-show-base.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-show-annotate {
+    background-image: url(../Images/icon-show-annotate.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-quick-fit {
+    background-image: url(../Images/icon-fit.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-quick-zoom-in {
+    background-image: url(../Images/icon-zoom-in.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-quick-zoom-out {
+    background-image: url(../Images/icon-zoom-out.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-quick-print {
+    background-image: url(../Images/icon-print.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+.ui-button .ui-icon.icon-quick-save {
+    background-image: url(../Images/icon-save.png);
+    width:32px;
+    height:32px; 
+    left:14px;
+    top:14px;
+}
+
+/* Image toolbar
+----------------------------------------------------------*/
+#files {
+    position:relative;
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    height: 32px;
+    margin-bottom: 16px;
+}
+
+#uploadButton {
+    position: absolute;
+    border:1px solid rgb(40, 200, 90);
+    color: white;
+    font: bold 16px sans-serif;
+    width:100%;
+    left:0;
+    height: 48px;
+
+    background: #2ab74f; /* Old browsers */
+    background: -moz-linear-gradient(top,  #2ab74f 0%, #30d862 6%, #30d862 95%, #2ab74f 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#2ab74f), color-stop(6%,#30d862), color-stop(95%,#30d862), color-stop(100%,#2ab74f)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #2ab74f 0%,#30d862 6%,#30d862 95%,#2ab74f 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #2ab74f 0%,#30d862 6%,#30d862 95%,#2ab74f 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #2ab74f 0%,#30d862 6%,#30d862 95%,#2ab74f 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #2ab74f 0%,#30d862 6%,#30d862 95%,#2ab74f 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2ab74f', endColorstr='#2ab74f',GradientType=0 ); /* IE6-9 */
+}
+
+    #uploadButton:hover {
+        background: #15b53d; /* Old browsers */
+        background: -moz-linear-gradient(top,  #15b53d 0%, #28d659 6%, #28d659 95%, #15b53d 100%); /* FF3.6+ */
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#15b53d), color-stop(6%,#28d659), color-stop(95%,#28d659), color-stop(100%,#15b53d)); /* Chrome,Safari4+ */
+        background: -webkit-linear-gradient(top,  #15b53d 0%,#28d659 6%,#28d659 95%,#15b53d 100%); /* Chrome10+,Safari5.1+ */
+        background: -o-linear-gradient(top,  #15b53d 0%,#28d659 6%,#28d659 95%,#15b53d 100%); /* Opera 11.10+ */
+        background: -ms-linear-gradient(top,  #15b53d 0%,#28d659 6%,#28d659 95%,#15b53d 100%); /* IE10+ */
+        background: linear-gradient(to bottom,  #15b53d 0%,#28d659 6%,#28d659 95%,#15b53d 100%); /* W3C */
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#15b53d', endColorstr='#15b53d',GradientType=0 ); /* IE6-9 */
+    }
+
+    #uploadButton:active {
+        border:3px dashed #222;
+    }
+
+.image-thumb {
+    position:relative; 
+    padding:2px; 
+    margin-top:5px; 
+    width:80%; left:10%; 
+    border:4px solid yellow;
+}
+
+    .image-thumb:hover {
+        border:4px solid #00529b;
+    }
+
+    .image-thumb:active {
+        border:4px solid #CCC;
+    }
+
+.image-rem
+{
+    font:bold 24px arial;
+    position:relative;
+    color: black;
+}
+
+    .image-rem:hover {
+        color: red;
+    }
+
+    .image-rem:active {
+        color: red;
+    }
+
+/* Action History
+----------------------------------------------------------*/
+.history-button {
+    border:1px solid #be3e16;
+    color: white;
+    font: bold 16px sans-serif;
+    height:48px;
+    width:30%;
+
+    background: #ad2929; /* Old browsers */
+    background: -moz-linear-gradient(top,  #ad2929 0%, #ea3e38 4%, #ea3e38 4%, #ea3e38 96%, #ad2929 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ad2929), color-stop(4%,#ea3e38), color-stop(4%,#ea3e38), color-stop(96%,#ea3e38), color-stop(100%,#ad2929)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #ad2929 0%,#ea3e38 4%,#ea3e38 4%,#ea3e38 96%,#ad2929 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #ad2929 0%,#ea3e38 4%,#ea3e38 4%,#ea3e38 96%,#ad2929 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #ad2929 0%,#ea3e38 4%,#ea3e38 4%,#ea3e38 96%,#ad2929 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #ad2929 0%,#ea3e38 4%,#ea3e38 4%,#ea3e38 96%,#ad2929 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ad2929', endColorstr='#ad2929',GradientType=0 ); /* IE6-9 */
+}
+
+    .history-button:hover {
+        background: #991910; /* Old browsers */
+        background: -moz-linear-gradient(top,  #991910 0%, #e81e17 5%, #e81e17 95%, #991910 100%); /* FF3.6+ */
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#991910), color-stop(5%,#e81e17), color-stop(95%,#e81e17), color-stop(100%,#991910)); /* Chrome,Safari4+ */
+        background: -webkit-linear-gradient(top,  #991910 0%,#e81e17 5%,#e81e17 95%,#991910 100%); /* Chrome10+,Safari5.1+ */
+        background: -o-linear-gradient(top,  #991910 0%,#e81e17 5%,#e81e17 95%,#991910 100%); /* Opera 11.10+ */
+        background: -ms-linear-gradient(top,  #991910 0%,#e81e17 5%,#e81e17 95%,#991910 100%); /* IE10+ */
+        background: linear-gradient(to bottom,  #991910 0%,#e81e17 5%,#e81e17 95%,#991910 100%); /* W3C */
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#991910', endColorstr='#991910',GradientType=0 ); /* IE6-9 */
+    }
+
+    .history-button:active {
+        border:3px dashed #222;
+    }

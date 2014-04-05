@@ -47,13 +47,18 @@ public:
 
     virtual void end(ResourceOStream & ostr);
 
-    virtual void addFrame(Bitmap const& bitmap);
+    virtual void addFrame(ResourceOStream & ostr, Bitmap const& bitmap);
 
 private:
     void addIndexEntry();
 
+    void writeHeader(ResourceOStream & ostr, unsigned int w, unsigned int h);
+
 private:
     std::shared_ptr<void> m_handle;
+
+    bool     m_headerWritten;
+    Vector2u m_imageSize;
 
     std::streamsize m_indexPos; ///< Position of the write head for the video index header
 };

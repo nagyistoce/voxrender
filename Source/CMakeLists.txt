@@ -63,6 +63,11 @@ SET(VOLT_LIB optimized ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE}/VoxVolt.lib
              debug     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG}/VoxVolt.lib)
 	
 #===============================================#
+#              VOXSERVER LIBRARY                #
+#===============================================#
+ADD_SUBDIRECTORY(VoxServer)
+
+#===============================================#
 #              VOXRENDER APPLICATION            #
 #===============================================#
 ADD_SUBDIRECTORY(VoxRender)

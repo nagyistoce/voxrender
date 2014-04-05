@@ -218,6 +218,38 @@ AviWriter::AviWriter(std::shared_ptr<void> handle) : m_handle(handle)
 // ----------------------------------------------------------------------------
 void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
 {
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap)
+{
+    if (!m_headerWritten) writeHeader(ostr, bitmap.width(), bitmap.height());
+
+    if (bitmap.width() != m_imageSize[0] || bitmap.height() != m_imageSize[1])
+    {
+        throw Error(__FILE__, __LINE__, VOX_SVID_LOG_CATEGORY,
+            "Attempt to write inconsistent image formats to video stream", 
+            Error_BadFormat);
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+void AviWriter::end(ResourceOStream & ostr)
+{
+    // Finalize the chunk/list sizes and indexing
+
+    // Close the output stream
+    ostr.close();
+}
+
+void AviWriter::writeHeader(ResourceOStream & ostr, unsigned int w, unsigned int h)
+{
+    m_headerWritten = true;
+    m_imageSize[0]  = w;
+    m_imageSize[1]  = h;
+
     // Write the RIFF AVI header list
     filescope::List riff;
     riff.list   = filescope::RIFF;
@@ -267,22 +299,6 @@ void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
     movi.fourCC = filescope::MOVI;
     movi.list   = filescope::LIST;
     movi.size   = 0;
-}
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-void AviWriter::addFrame(Bitmap const& bitmap)
-{
-}
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-void AviWriter::end(ResourceOStream & ostr)
-{
-    // Finalize the chunk/list sizes and indexing
-
-    // Close the output stream
-    ostr.close();
 }
 
 } // namespace vox
