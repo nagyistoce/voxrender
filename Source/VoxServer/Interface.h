@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-    Project: VoxServer
-    
-	Description: Rendering library for VoxRenderWeb
+	Project: VoxServer
+
+	Description: Implements a WebSocket based server for interactive rendering
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -27,20 +27,24 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+// Include Header
+#include "VoxServer/Common.h"
+#include "VoxLib/Core/Types.h"
+
 // Plugin interface 
 extern "C"
 {
     /** Returns the library version number */
-    __declspec(dllexport) char const* voxServerVersion();
+    VOX_SERVER_EXPORTS char const* voxServerVersion();
 
     /** Must be called before any functions in the library (besides version) */
-    __declspec(dllexport) int voxServerStart(char const* directory);
+    VOX_SERVER_EXPORTS int voxServerStart(char const* directory, bool logToFile = true);
 
     /** Opens a websocket for streaming the specified scenefile */
-    __declspec(dllexport) int voxServerStream(char const* filename);
+    VOX_SERVER_EXPORTS int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut);
 
     /** Called to terminate the library and any active render streams */
-    __declspec(dllexport) void voxServerEnd();
+    VOX_SERVER_EXPORTS void voxServerEnd();
 }
 
 // End definition

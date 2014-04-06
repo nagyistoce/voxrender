@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-    Project: VoxServer
-    
-	Description: Rendering library for VoxRenderWeb
+	Project: VoxServer
+
+	Description: Implements a WebSocket based server for interactive rendering
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -27,13 +27,14 @@
 #include "Interface.h"
 
 // Include Dependencies
+#include "VoxServer/WebSocket.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/System.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/IO/ResourceHelper.h"
 
-// Include WebSocket Server Dependencies
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
 
 // Include Scene Components
 #include "VoxScene/RenderController.h"
@@ -47,26 +48,6 @@
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
 
-// Server log category
-#define LOG_CAT "VoxServer"
-
-// Stringify macro
-#define VSERV_XSTR(v) #v
-#define VSERV_STR(v) VSERV_XSTR(v)
-
-// Plugin version info
-#define VSERV_VERSION_MAJOR 1
-#define VSERV_VERSION_MINOR 0
-#define VSERV_VERSION_PATCH 0
-
-// API support version info
-#define VSERV_API_VERSION_MIN_STR "0.0.0"
-#define VSERV_API_VERSION_MAX_STR "999.999.999"
-
-// Plugin version string
-#define VSERV_VERSION_STRING VSERV_STR(VSERV_VERSION_MAJOR) \
-	"." VSERV_STR(VSERV_VERSION_MINOR) "." VSERV_STR(VSERV_VERSION_PATCH)
-
 using namespace vox;
 using boost::asio::ip::tcp;
 
@@ -74,6 +55,7 @@ namespace {
 namespace filescope {
 
     std::shared_ptr<VolumeScatterRenderer> renderer;
+    std::shared_ptr<WebSocket> webSocket;
 
     std::ofstream logFileStream;
 
@@ -107,6 +89,67 @@ namespace filescope {
     // ------------------------------------------------------------------------
     void onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+
+        VOX_LOG_INFO(VOX_SERV_LOG_CAT, "RENDER FRAME CALLBACK");
+
+        auto message = format("Render Time %1%", renderer->renderTime());
+        static bool sent = false;
+        if (!sent) 
+        {
+            filescope::webSocket->write(message);
+            
+            String framedMessage;
+            framedMessage.push_back(0x81);
+            framedMessage.push_back(0x05);
+            framedMessage.push_back(0x48);
+            framedMessage.push_back(0x65);
+            framedMessage.push_back(0x6c);
+            framedMessage.push_back(0x6c);
+            framedMessage.push_back(0x6f);
+
+            webSocket->socket().write_some(boost::asio::buffer(
+                &framedMessage[0], framedMessage.size()));
+        }
+        sent = true;
+    }
+    
+    // ------------------------------------------------------------------------
+    //  Begins streaming the specified file
+    // ------------------------------------------------------------------------
+    void beginStream(String const& filename)
+    {
+        VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("Loading scene file: %1%", filename));
+
+        // Load the specified scene file
+        auto & scene = filescope::scene;
+        scene = Scene::imprt(filename);
+        if (!scene.volume) throw Error(__FILE__, __LINE__, VOX_SERV_LOG_CAT, "Scene is missing volume data", Error_MissingData);
+        if (!scene.parameters)   scene.parameters   = RenderParams::create();
+        if (!scene.clipGeometry) scene.clipGeometry = PrimGroup::create();
+        if (!scene.lightSet)     scene.lightSet     = LightSet::create();
+        if (!scene.transferMap)  scene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
+        if (!scene.transfer)     scene.transfer     = Transfer1D::create();
+        if (!scene.camera)       scene.camera       = Camera::create();
+        if (!scene.animator)     scene.animator     = Animator::create();
+
+        // Begin rendering the scene
+        filescope::renderController.render(filescope::renderer, filescope::scene, 100000);
+    }
+
+    // ------------------------------------------------------------------------
+    //  Connected event callback from WebSocket
+    // ------------------------------------------------------------------------
+    void onConnect()
+    {
+        try
+        {
+            beginStream("file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/smoke.xml");
+        }
+        catch (Error & error)
+        {
+            VOX_LOG_EXCEPTION(Severity_Error, error);
+        }
     }
 
 } // namespace filescope
@@ -115,16 +158,16 @@ namespace filescope {
 // --------------------------------------------------------------------
 //  Initializes the render controllers
 // --------------------------------------------------------------------
-int voxServerStart(char const* directory) 
+int voxServerStart(char const* directory, bool logToFile) 
 {
     try 
     {
         // Configure the log file output 
         boost::filesystem::current_path(directory);
-        filescope::configureLogging();
+        if (logToFile) filescope::configureLogging();
 
         // Display and log the library version info and startup time
-        VOX_LOG_INFO(LOG_CAT, format("VoxServer Version: %1%", VSERV_VERSION_STRING));
+        VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("VoxServer Version: %1%", VOX_SERV_VERSION_STRING));
 
         // Load the configuration file (Scene plugins, etc)
         ResourceHelper::loadConfigFile("VoxServer.config");
@@ -143,7 +186,7 @@ int voxServerStart(char const* directory)
     }
     catch (std::exception & e)
     {
-        VOX_LOG_ERROR(Error_Unknown, LOG_CAT, e.what());
+        VOX_LOG_ERROR(Error_Unknown, VOX_SERV_LOG_CAT, e.what());
 
         return Error_Unknown;
     }
@@ -154,7 +197,11 @@ int voxServerStart(char const* directory)
 // --------------------------------------------------------------------
 void voxServerEnd()
 { 
-    VOX_LOG_INFO(LOG_CAT, "Terminating render service");
+    VOX_LOG_INFO(VOX_SERV_LOG_CAT, "Terminating render service");
+    
+    filescope::renderController.stop();
+    PluginManager::instance().unloadAll();
+    filescope::logFileStream.close();
 
     filescope::renderer.reset();
 }
@@ -162,44 +209,39 @@ void voxServerEnd()
 // --------------------------------------------------------------------
 //  Begins rendering the specified scene file
 // --------------------------------------------------------------------
-int voxServerStream(char const* filename)
+int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut)
 {
+    // Select a port and key for the stream
+    UInt16 port = 8000;
+    UInt64 key  = 0;
+    
+    // Prepare the WebSocket to accept an incoming connection
     try
     {
-        VOX_LOG_INFO(LOG_CAT, format("Loading scene file: %1%", filename));
+        boost::asio::io_service io_service;
+        
+        filescope::webSocket = std::make_shared<WebSocket>(io_service, port);
+        filescope::webSocket->onConnected(&filescope::onConnect);
+        //filescope::webSocket->onClosed();
+        //filescope::webSocket->onMessage();
 
-        // Load the specified scene file
-        auto & scene = filescope::scene;
-        scene = Scene();
-        scene.imprt(filename);
-        if (!scene.volume) throw Error(__FILE__, __LINE__, LOG_CAT, "Scene is missing volume data", Error_MissingData);
-        if (!scene.parameters)   scene.parameters   = RenderParams::create();
-        if (!scene.clipGeometry) scene.clipGeometry = PrimGroup::create();
-        if (!scene.lightSet)     scene.lightSet     = LightSet::create();
-        if (!scene.transferMap)  scene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
-        if (!scene.transfer)     scene.transfer     = Transfer1D::create();
-        if (!scene.camera)       scene.camera       = Camera::create();
-        if (!scene.animator)     scene.animator     = Animator::create();
+        filescope::webSocket->start();
 
-        // Begin rendering the scene
-        filescope::renderController.render(
-            filescope::renderer, filescope::scene, 100000);
-
-        return Error_None;
+        io_service.run();
     }
-    catch (Error & e)
-    {
-        VOX_LOG_EXCEPTION(Severity_Error, e);
-
-        return e.code;
-    }
-    catch (std::exception &)
+    catch (std::exception& e)
     {
         return Error_Unknown;
     }
+
+    // Return the connection info to the user
+    *portOut = port;
+    *keyOut  = key;
+
+    return Error_None;
 }
 
 // --------------------------------------------------------------------
 //  Returns the dot delimited version string for this build
 // --------------------------------------------------------------------
-char const* voxServerVersion() { return VSERV_VERSION_STRING; }
+char const* voxServerVersion() { return VOX_SERV_VERSION_STRING; }

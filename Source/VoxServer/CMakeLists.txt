@@ -29,8 +29,12 @@ VOX_PROJECT(
     TARGET "VoxServer" SHARED
     HEADERS
         "Interface.h"
+        "Common.h"
+        "Version.h"
+        "WebSocket.h"
     SOURCES
         "Interface.cpp"
+        "WebSocket.cpp"
     DEPENDENCIES
         VoxLib
         VoxScene

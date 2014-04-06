@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender
+	Project: VoxServer
 
-	Description: Performs unit testing for the VoxServer library
+	Description: Implements a WebSocket based server for interactive rendering
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -23,31 +23,22 @@
 
 =========================================================================== */
 
-#define BOOST_TEST_MODULE "VoxServer Unit Test Module"
+// Begin definition
+#ifndef VOX_SERVER_COMMON_H
+#define VOX_SERVER_COMMON_H
 
-// Include Boost UnitTest Framework
-#include <boost/test/unit_test.hpp>
+// VoxRender log category
+static char const* VOX_SERV_LOG_CAT = "VSERV";
 
-// Convenience Header for Server DLL
-#include "VoxServer/Interface.h"
+// Export macro
+#ifdef VoxServer_EXPORTS
+#   define VOX_SERVER_EXPORTS __declspec(dllexport)
+#else
+#   define VOX_SERVER_EXPORTS __declspec(dllimport)
+#endif
 
-using namespace vox;
+// Version info
+#include "Version.h"
 
-// --------------------------------------------------------------------
-//  Performs tests of the ResourceId parsing and management functions
-// --------------------------------------------------------------------
-BOOST_AUTO_TEST_SUITE( Server )
-
-    // Tests the matrix functionality
-    BOOST_AUTO_TEST_CASE( WebSocketConnect )
-    {
-        voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);
-
-        UInt16 port;
-        UInt64 key;
-        voxServerBeginStream(&port, &key);
-
-        voxServerEnd();
-    }
-
-BOOST_AUTO_TEST_SUITE_END()
+// End definition
+#endif // VOX_SERVER_COMMON_H

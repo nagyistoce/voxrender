@@ -57,6 +57,7 @@ Page.prototype =
         $("#redoButton").click(function () { WebPage.history.redo(); });
         $("#resetButton").click(function () { WebPage.reset(); });
         $(document).keyup(function (event) {
+            if (event.which == 88) WebPage._socket.send("ABCD 123 You've Got Mail");
             if (!event.ctrlKey) return;
             if (event.which == 89) WebPage.history.redo();
             if (event.which == 90) WebPage.history.undo();
@@ -102,10 +103,16 @@ Page.prototype =
         this.applyLayout();
 
         // Open the socket for the 
-        this._socket = new WebSocket("wss://localhost:8000/", "http");
+        this._socket = new WebSocket("ws://localhost:8000/");
         this._socket.onerror = function (errorEvent) {
             Message("Unable to establish connection to render server", MessageType.Error);
-            };
+        };
+        this._socket.onopen = function (errorEvent) {
+            Message("Connection to render server established", MessageType.Error);
+        };
+        this._socket.onmessage = function (errorEvent) {
+            Message("Message Recieved", MessageType.Error);
+        };
     },
 
     applyLayout: function () {

@@ -28,5 +28,5 @@ function Message(text, type, time) {
 
     setTimeout(function () {
         messageBox.fadeOut("fast", "swing");
-    }, (time == undefined) ? 500 : time);
+    }, (time == undefined) ? 2000 : time);
 };

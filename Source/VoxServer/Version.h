@@ -1,8 +1,8 @@
 /* ===========================================================================
 
-	Project: VoxRender
+	Project: VoxServer
 
-	Description: Performs unit testing for the VoxServer library
+	Description: Implements a WebSocket based server for interactive rendering
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -23,31 +23,26 @@
 
 =========================================================================== */
 
-#define BOOST_TEST_MODULE "VoxServer Unit Test Module"
+// Begin definition
+#ifndef VOX_SERV_VERSION_H
+#define VOX_SERV_VERSION_H
 
-// Include Boost UnitTest Framework
-#include <boost/test/unit_test.hpp>
+// Stringify macro
+#define VOX_SERV_XSTR(v) #v
+#define VOX_SERV_STR(v) VOX_SERV_XSTR(v)
 
-// Convenience Header for Server DLL
-#include "VoxServer/Interface.h"
+// Plugin version info
+#define VOX_SERV_VERSION_MAJOR 1
+#define VOX_SERV_VERSION_MINOR 0
+#define VOX_SERV_VERSION_PATCH 0
 
-using namespace vox;
+// API support version info
+#define VOX_SERV_API_VERSION_MIN_STR "0.0.0"
+#define VOX_SERV_API_VERSION_MAX_STR "999.999.999"
 
-// --------------------------------------------------------------------
-//  Performs tests of the ResourceId parsing and management functions
-// --------------------------------------------------------------------
-BOOST_AUTO_TEST_SUITE( Server )
+// Plugin version string
+#define VOX_SERV_VERSION_STRING VOX_SERV_STR(VOX_SERV_VERSION_MAJOR) \
+	"." VOX_SERV_STR(VOX_SERV_VERSION_MINOR) "." VOX_SERV_STR(VOX_SERV_VERSION_PATCH)
 
-    // Tests the matrix functionality
-    BOOST_AUTO_TEST_CASE( WebSocketConnect )
-    {
-        voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);
-
-        UInt16 port;
-        UInt64 key;
-        voxServerBeginStream(&port, &key);
-
-        voxServerEnd();
-    }
-
-BOOST_AUTO_TEST_SUITE_END()
+// End definition
+#endif // VOX_SERV_VERSION_H
