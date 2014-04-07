@@ -31,9 +31,11 @@ VOX_PROJECT(
         "Interface.h"
         "Common.h"
         "Version.h"
+        "Base64.h"
         "WebSocket.h"
     SOURCES
         "Interface.cpp"
+        "Base64.cpp"
         "WebSocket.cpp"
     DEPENDENCIES
         VoxLib

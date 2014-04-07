@@ -102,16 +102,17 @@ Page.prototype =
         // Apply the initial image view layout 
         this.applyLayout();
 
-        // Open the socket for the 
+        // Open the WebSocket connection to the render server
         this._socket = new WebSocket("ws://localhost:8000/");
         this._socket.onerror = function (errorEvent) {
             Message("Unable to establish connection to render server", MessageType.Error);
         };
         this._socket.onopen = function (errorEvent) {
-            Message("Connection to render server established", MessageType.Error);
+            Message("Connection to render server established", MessageType.Info);
         };
-        this._socket.onmessage = function (errorEvent) {
-            Message("Message Recieved", MessageType.Error);
+        this._socket.onmessage = function (messageEvent) {
+            var scene = WebPage.canvas.getScene();
+            if (scene) scene.update(messageEvent.data);
         };
     },
 

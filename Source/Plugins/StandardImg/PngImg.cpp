@@ -50,12 +50,9 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image) :
+            ImgExporter(std::ostream & sink, OptionSet const& options, Bitmap const& image) :
                 m_sink(sink), m_options(options), m_image(image)
             {
-                // Compose the resource identifier for log warning entries
-                std::string filename = sink.identifier().extractFileName();
-                m_displayName = filename.empty() ? "UNKNOWN" : format("\"%1%\"", filename);
             }
 
             // --------------------------------------------------------------------
@@ -109,7 +106,7 @@ namespace
             static void writeData(png_structp pngPtr, png_bytep data, png_size_t length) 
             {
                 auto strPtr = png_get_io_ptr(pngPtr);
-                ((ResourceOStream*)strPtr)->write((char*)data, length);
+                ((std::ostream*)strPtr)->write((char*)data, length);
             }
 
             // --------------------------------------------------------------------
@@ -118,17 +115,17 @@ namespace
             static void flushData(png_structp pngPtr) 
             {
                 auto strPtr = png_get_io_ptr(pngPtr);
-                ((ResourceOStream*)strPtr)->flush();
+                ((std::ostream*)strPtr)->flush();
             }
 
         private:
             static int const versionMajor = 0; ///< Scene version major [potentially breaking]
             static int const versionMinor = 0; ///< Scene version minor [usually non-breaking]
 
-            ResourceOStream & m_sink;        ///< Resource stream
-            OptionSet const&  m_options;     ///< Import options
-            Bitmap const&   m_image;       ///< image data
-            std::string       m_displayName; ///< Warning identifier
+            std::ostream &   m_sink;        ///< Resource stream
+            OptionSet const& m_options;     ///< Import options
+            Bitmap const&    m_image;       ///< image data
+            std::string      m_displayName; ///< Warning identifier
         };
 
         // Import module implementation
@@ -138,12 +135,9 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
             // --------------------------------------------------------------------
-            ImgImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> & handle) : 
+            ImgImporter(std::istream & source, OptionSet const& options, std::shared_ptr<void> & handle) : 
               m_options(options), m_source(source), m_handle(handle)
             {
-                // Compose the resource identifier for log warning entries
-                std::string filename = source.identifier().extractFileName();
-                m_displayName = filename.empty() ? "UNKNOWN" : format("\"%1%\"", filename);
             }
             
             // --------------------------------------------------------------------
@@ -202,7 +196,7 @@ namespace
             static void readData(png_structp pngPtr, png_bytep data, png_size_t length) 
             {
                 auto strPtr = png_get_io_ptr(pngPtr);
-                ((ResourceIStream*)strPtr)->read((char*)data, length);
+                ((std::istream*)strPtr)->read((char*)data, length);
             }
 
         private:
@@ -211,9 +205,9 @@ namespace
             
             std::shared_ptr<void> & m_handle;   ///< Plugin handle to track this DLL's usage
 
-            ResourceIStream & m_source;       ///< Resource stream
-            OptionSet const&  m_options;      ///< Import options
-            std::string       m_displayName;  ///< Warning identifier
+            std::istream &   m_source;       ///< Resource stream
+            OptionSet const& m_options;      ///< Import options
+            std::string      m_displayName;  ///< Warning identifier
         };
     }
 }
@@ -221,7 +215,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image)
+void PngImg::exporter(std::ostream & sink, OptionSet const& options, Bitmap const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image);
@@ -233,7 +227,7 @@ void PngImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap c
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-Bitmap PngImg::importer(ResourceIStream & source, OptionSet const& options)
+Bitmap PngImg::importer(std::istream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

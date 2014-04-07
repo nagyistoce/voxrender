@@ -28,10 +28,12 @@
 
 // Include Dependencies
 #include "VoxServer/WebSocket.h"
+#include "VoxServer/Base64.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/System.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/IO/ResourceHelper.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -55,6 +57,8 @@ namespace {
 namespace filescope {
 
     std::shared_ptr<VolumeScatterRenderer> renderer;
+
+    boost::asio::io_service ioService;
     std::shared_ptr<WebSocket> webSocket;
 
     std::ofstream logFileStream;
@@ -89,29 +93,22 @@ namespace filescope {
     // ------------------------------------------------------------------------
     void onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
-
         VOX_LOG_INFO(VOX_SERV_LOG_CAT, "RENDER FRAME CALLBACK");
 
         auto message = format("Render Time %1%", renderer->renderTime());
-        static bool sent = false;
-        if (!sent) 
-        {
-            filescope::webSocket->write(message);
-            
-            String framedMessage;
-            framedMessage.push_back(0x81);
-            framedMessage.push_back(0x05);
-            framedMessage.push_back(0x48);
-            framedMessage.push_back(0x65);
-            framedMessage.push_back(0x6c);
-            framedMessage.push_back(0x6c);
-            framedMessage.push_back(0x6f);
 
-            webSocket->socket().write_some(boost::asio::buffer(
-                &framedMessage[0], framedMessage.size()));
-        }
-        sent = true;
+        frame->data();
+
+        std::ostringstream imageStream;
+        auto buffer = std::shared_ptr<void>((void*)frame->data(), [] (void *) {});
+        Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, frame->stride(), buffer);
+        image.exprt(imageStream, ".png");
+
+        auto imageData = "data:image/png;base64," + Base64::encode(imageStream.str());
+
+        filescope::webSocket->write(imageData);
+
+        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
     }
     
     // ------------------------------------------------------------------------
@@ -200,6 +197,7 @@ void voxServerEnd()
     VOX_LOG_INFO(VOX_SERV_LOG_CAT, "Terminating render service");
     
     filescope::renderController.stop();
+    filescope::webSocket.reset();
     PluginManager::instance().unloadAll();
     filescope::logFileStream.close();
 
@@ -218,16 +216,14 @@ int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut)
     // Prepare the WebSocket to accept an incoming connection
     try
     {
-        boost::asio::io_service io_service;
-        
-        filescope::webSocket = std::make_shared<WebSocket>(io_service, port);
+        filescope::webSocket = std::make_shared<WebSocket>(filescope::ioService, port);
         filescope::webSocket->onConnected(&filescope::onConnect);
         //filescope::webSocket->onClosed();
         //filescope::webSocket->onMessage();
 
         filescope::webSocket->start();
 
-        io_service.run();
+        filescope::ioService.run();
     }
     catch (std::exception& e)
     {

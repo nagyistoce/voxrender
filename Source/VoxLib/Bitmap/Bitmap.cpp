@@ -140,15 +140,21 @@ void Bitmap::removeExportModule(std::shared_ptr<ImageExporter> exporter, String 
 // ----------------------------------------------------------------------------
 //  Imports a image using a matching registered importer
 // ----------------------------------------------------------------------------
-Bitmap Bitmap::imprt(ResourceIStream & data, OptionSet const& options, String const& extension)
+Bitmap Bitmap::imprt(ResourceIStream & data, OptionSet const& options)
+{
+    return imprt(data, data.identifier().extractFileExtension(), options);
+}
+
+// ----------------------------------------------------------------------------
+//  Imports a image using a matching registered importer
+// ----------------------------------------------------------------------------
+Bitmap Bitmap::imprt(std::istream & data, String const& extension, OptionSet const& options)
 {
     // Acquire a read-lock on the modules for thread safety support
     boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
-    String type = extension.empty() ? data.identifier().extractFileExtension() : extension;
-
 	// Execute the register import module
-    auto importer = filescope::importers.find(type);
+    auto importer = filescope::importers.find(extension);
     if (importer != filescope::importers.end())
     {
         return importer->second->importer(data, options);
@@ -161,15 +167,21 @@ Bitmap Bitmap::imprt(ResourceIStream & data, OptionSet const& options, String co
 // ----------------------------------------------------------------------------
 //  Exports a image using a matching registered exporter
 // ----------------------------------------------------------------------------
-void Bitmap::exprt(ResourceOStream & data, OptionSet const& options, String const& extension) const
+void Bitmap::exprt(ResourceOStream & data, OptionSet const& options) const
+{
+    exprt(data, data.identifier().extractFileExtension(), options);
+}
+
+// ----------------------------------------------------------------------------
+//  Exports a image using a matching registered exporter
+// ----------------------------------------------------------------------------
+void Bitmap::exprt(std::ostream & data, String const& extension, OptionSet const& options) const
 {
     // Acquire a read-lock on the modules for thread safety support
     boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
 
-    String type = extension.empty() ? data.identifier().extractFileExtension() : extension;
-
 	// Execute the register import module
-    auto exporter = filescope::exporters.find(type);
+    auto exporter = filescope::exporters.find(extension);
     if (exporter != filescope::exporters.end())
     {
         exporter->second->exporter(data, options, *this);

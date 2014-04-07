@@ -95,7 +95,6 @@ function Canvas(canvasElem) {
 
     // Create the offscreen canvas for image editing
     this._offCanvas = document.createElement("canvas");
-    this._annCanvas = document.createElement("canvas");
 
     this._mousebutton = [false, false, false];
     this._mousePos    = { x: 0, y: 0 };
@@ -135,14 +134,6 @@ Canvas.prototype =
         this.draw();
     },
 
-    drawCached: function () {
-        /// <summary>Updates the cached image data on the offscreen canvas</summary>
-
-        // Acquire a handle to the canvas context
-        var ctx = this._offCanvas.getContext("2d");
-        ctx.drawImage(this._scene.baseImage, 0, 0);
-    },
-
     draw: function () {
         /// <summary>Redraws the image on the visible canvas element</summary>
 
@@ -151,7 +142,7 @@ Canvas.prototype =
         // If there is no image set, clear the drawing canvas
         if (!this._scene) {
             var ctx = this._canvasElem.getContext("2d");
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = "#808080";
             ctx.rect(0, 0, this._canvasElem.width, this._canvasElem.height);
             ctx.fill();
             return;
@@ -174,24 +165,23 @@ Canvas.prototype =
 
         // Draw the scene image
         ctx.save();
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = "#808080";
         ctx.rect(0, 0, this._canvasElem.width, this._canvasElem.height);
         ctx.fill();
         ctx.scale(s, s);
-        ctx.drawImage(this._offCanvas, x, y);
-        ctx.drawImage(this._annCanvas, x, y);
+        ctx.drawImage(this._scene.baseImage, x, y);
         ctx.restore();
     },
 
-    setScene: function (image, blockHistory) {
+    setScene: function (scene, blockHistory) {
         /// <summary>Sets the scene to be displayed in the canvas</summary>
         /// <param name="image" type="VoxScene"></param>
 
-        WebPage.toolBar.populate(image);
+        WebPage.toolBar.populate(scene);
 
         $(this._scene).unbind('.Canvas');
 
-        this._scene = image;
+        this._scene = scene;
 
         // Detect a null image set so we can clear the view
         if (this._scene == null) { this.draw(); return; }
@@ -199,21 +189,17 @@ Canvas.prototype =
         var canvas = this;
 
         // Canvas interaction which does not modify the base image data (viewing)
-        $(this._scene).bind('onSegLoad.Canvas', function () { canvas.draw(); });
         $(this._scene).bind('positionChanged.Canvas', function () { canvas.draw(); });
-        $(this._scene).bind('zoomChanged.Canvas', function () { canvas.draw(); });
-        $(this._scene).bind('displayChanged.Canvas', function () { canvas.draw(); });
+        $(this._scene).bind('zoomChanged.Canvas', function ()     { canvas.draw(); });
+        $(this._scene).bind('displayChanged.Canvas', function ()  { canvas.draw(); });
 
         // Canvas interaction which modifies the base image data (editing)
-        $(this._scene).bind('dataChanged.Canvas', function () { canvas.drawCached(); canvas.draw(); });
+        $(this._scene).bind('dataChanged.Canvas', function () { canvas.draw(); });
 
         // Load the initial image dimensions into the canvas when first available
         var initialDraw = function () {
             canvas._offCanvas.width  = canvas._scene.baseImage.width;  // Modified image
             canvas._offCanvas.height = canvas._scene.baseImage.height;
-            canvas._annCanvas.width  = canvas._scene.baseImage.width;  // Annotation overlay
-            canvas._annCanvas.height = canvas._scene.baseImage.height;
-            canvas.drawCached();
             canvas.draw();
         };
         if (this._scene.baseImage == null) {
@@ -233,7 +219,7 @@ Canvas.prototype =
         a.on("click", $.proxy(function () {
             a.attr("href", this._getDataUrl())
              .attr("download", "Fundus_Image.png");
-            this.drawCached();
+            this.draw();
         }, this));
 
         // DOM 2 Events for initiating the anchor link
@@ -257,7 +243,7 @@ Canvas.prototype =
         popup.print();
         popup.close();
 
-        this.drawCached();
+        this.draw();
     },
 
     getScene: function () {
@@ -274,8 +260,6 @@ Canvas.prototype =
         ctx.fillStyle = "#000000";
         ctx.rect(0, 0, this._offCanvas.width, this._offCanvas.height);
         ctx.fill();
-
-        ctx.drawImage(this._annCanvas, 0, 0);
 
         var url = this._offCanvas.toDataURL();
 
@@ -313,14 +297,6 @@ Canvas.prototype =
                 this._scene.move(-moveX, -moveY);
                 break;
             case CanvasTool.brush:
-                var c = $(this._canvasElem);
-                var s = this._scene._zoomLevel;
-                var o = this._scene._offset;
-                var i = this._scene.baseImage;
-                var x = (e.clientX - (c.width()  / 2 - s * (i.width  / 2 - o.x)) - 1 ) / s;
-                var y = (e.clientY - (c.height() / 2 - s * (i.height / 2 - o.y)) - 26) / s;
-                this._drawLine(this._annCanvas, x, y, x + mx/s, y + my/s);
-                this.draw();
                 break;
             case CanvasTool.zoom:
                 var factor = Math.pow(2, my / 300);
@@ -350,7 +326,6 @@ Canvas.prototype =
         /// <param name="e" type="JQuery.Event">event</param>
         var canvas = e.data;
         var fundus = canvas._scene;
-        
     },
 
     // Private:
@@ -360,7 +335,6 @@ Canvas.prototype =
     _scene: null,               /// <field name='_scene' type='VoxScene'>The image currently in this canvas</field>
     _canvasElem: null,          /// <field name='_canvasElem' type=''>The HTML canvas elemented associated with this object</field>
     _offCanvas: null,           /// <field name='_offCanvas' type=''>An offscreen canvas for image editing</field>
-    _annCanvas: null,           /// <field name='_annCanvas' type=''>An offscreen canvas for image annotations</field>
     _blockRedraws: false,       /// <field name='_blockRedraws' type='Boolean'>Blocks the draw function from being executed</field>
     _tool: CanvasTool.cursor,   /// <field name='_blockRedraws' type='Boolean'></field>
 }
@@ -372,43 +346,6 @@ function PaintToolAction() {
     this._img = this._getBuf();
     this.undo = this._swapBufs;
     this.redo = this._swapBufs;
-}
-
-PaintToolAction.prototype =
-{
-    text: "painting on the image",
-
-    // Private:
-
-    undo: null,
-    redo: null,
-
-    _getBuf: function () {
-        // Acquire a handle to the canvas context
-        var cvs = WebPage.canvas._annCanvas;
-        var ctx = WebPage.canvas._annCanvas.getContext("2d");
-
-        // Return the contents of the canvas buffer
-        return ctx.getImageData(0, 0, cvs.width, cvs.height);
-    },
-
-    _swapBufs: function () {
-        // <summary>Swaps the image buffer with the canvas image</summary>
-
-        // Acquire a handle to the canvas context
-        var cvs = WebPage.canvas._annCanvas;
-        var ctx = WebPage.canvas._annCanvas.getContext("2d");
-
-        // Swap the canvas image buffers
-        var temp = ctx.getImageData(0, 0, cvs.width, cvs.height);
-        ctx.putImageData(this._img, 0, 0);
-        this._img = temp;
-
-        // Redraw the canvas
-        WebPage.canvas.draw();
-    },
-
-    _img: null, /// <field name='_index' type='VoxScene'>The fundus image before/after this action</field>
 }
 
 // ----------------------------------------------------------------------------

@@ -29,14 +29,10 @@
 // Include Dependencies
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/Format.h"
+#include "VoxServer/Base64.h"
 
+// Boost SHA1 Hash (its ::detail so keep an eye on it)
 #include <boost/uuid/sha1.hpp>
-
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/insert_linebreaks.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/ostream_iterator.hpp>
 
 namespace vox {
 
@@ -45,45 +41,6 @@ using boost::asio::ip::tcp;
 // Filescope functions
 namespace {
 namespace filescope {
-
-    namespace bai = boost::archive::iterators;
-
-    // Padding characters for Base64 encoding
-    const std::string base64_padding[] = {"", "==","="};
-
-    // Performs Base64 encoding
-    std::string base64_encode(std::string const& s) 
-    {
-        std::stringstream os;
-
-        typedef bai::base64_from_binary<bai::transform_width<const char *, 6, 8> > base64_enc;
-
-        std::copy(base64_enc(s.c_str()), base64_enc(s.c_str() + s.size()), bai::ostream_iterator<char>(os));
-
-        os << base64_padding[s.size() % 3];
-
-        return os.str();
-    }
-
-    // Performs Base64 decoding
-    std::string base64_decode(std::string const& s) 
-    {
-        std::stringstream os;
-
-        typedef bai::transform_width<bai::binary_from_base64<const char *>, 8, 6> base64_dec;
-
-        auto size = s.size();
-        if (size == 0) return "";
-
-        for (int i = 1; i <= 2; i++) 
-        {
-            if (s.c_str()[size - 1] == '=') size--;
-        }
-
-        std::copy(base64_dec(s.c_str()), base64_dec(s.c_str() + size), bai::ostream_iterator<char>(os));
-
-        return os.str();
-    }
 
     // Computes a SHA1 hash of the input
     std::string sha1_hash(std::string const& s)
@@ -192,7 +149,7 @@ void WebSocket::handleConnect(boost::system::error_code const& error, size_t byt
             
         // Generate a response based on the request key
         auto key = filescope::sha1_hash(inKey + MAGIC_STR);
-        auto response = RESP_STR + filescope::base64_encode(key) + END_LINE + END_LINE;
+        auto response = RESP_STR + Base64::encode(key) + END_LINE + END_LINE;
         if (response.size() > max_length) return;
         memcpy(m_dataBuf, response.c_str(), response.size());
         

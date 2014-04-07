@@ -11,7 +11,6 @@ function VoxScene(id, file) {
     this.file = file;
     this.id   = id;
 
-    this._annotations = [];
     this._offset      = { x: 0, y: 0 };
 
     // Load the base image, then submit the segmentation request
@@ -41,6 +40,12 @@ function VoxScene(id, file) {
 
 VoxScene.prototype =
 {
+    update: function (newImageData) {
+        /// <summary>Processes the most recent frame from the server</summary>
+
+        this.baseImage.src = newImageData;
+    },
+
     setPosition: function (x, y) {
         /// <summary>Changes the position of the image</summary>
         this._offset.x = x;
@@ -109,25 +114,12 @@ VoxScene.prototype =
         }
         else img.attr('src', this.baseImage.src);
 
-        // :DEBUG: 
-        $(this).bind("onSegLoad.ImageBar", function (event, data) {
-            // HAS IMAGE
-            $(this).unbind("onSegLoad.ImageBar");
-        });
-
-        // :TODO:
-        $(this).bind("onSegError.ImageBar", function () {
-            // Message("");
-            $(this).unbind("onSegError.ImageBar");
-        });
-
         return elem;
     },
 
     id:        0,    /// <field name='id'        type='Number'>Unique identifier</field>
     file:      null, /// <field name='file'      type='File'>The source file for the image</field>
     baseImage: null, /// <field name='baseImage' type='URI'>The original image dataURI, or null if unloaded</field>
-    segImage:  null, /// <field name='segImage'  type='URI'>The segmented image dataURI, or null if unloaded</field>
 
     // *** Display Parameters ***
     _offset: { x: 0, y: 0 },

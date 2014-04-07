@@ -88,9 +88,12 @@ namespace vox
          * @throws
          *  ::Error No import module is defined which accepts the matchname
 		 */
-	    static Bitmap imprt(ResourceIStream & data, 
-                              OptionSet const&  options   = OptionSet(),
-                              String const&     extension = String()); 
+	    static Bitmap imprt(ResourceIStream & data, OptionSet const& options = OptionSet()); 
+
+        
+        /** Overload of imprt which requires specification of format */
+	    static Bitmap imprt(std::istream & data, String const& extension, 
+                            OptionSet const& options = OptionSet());
 
 		/**
 		 * @brief Overload for exprt
@@ -119,9 +122,11 @@ namespace vox
          * @throws
          *  ::Error No export module is defined which accepts the matchname
 		 */
-		void exprt(ResourceOStream & data, 
-                   OptionSet const&  options   = OptionSet(), 
-                   String const&     extension = String()) const; 
+		void exprt(ResourceOStream & data, OptionSet const&  options = OptionSet()) const; 
+
+        /** Overload of exprt which requires specification of format */
+	    void exprt(std::ostream & data, String const& extension, 
+                   OptionSet const& options = OptionSet()) const;
 
 		/**`
 		 * Registers a new image importer with the specified extension. If an importer is already 
@@ -257,7 +262,7 @@ namespace vox
      * @sa
      *  ::ImageExporter
 	 */              
-    class ImageImporter { public: virtual Bitmap importer(ResourceIStream & data, OptionSet const& options) = 0;
+    class ImageImporter { public: virtual Bitmap importer(std::istream & data, OptionSet const& options) = 0;
                           virtual ~ImageImporter() { } };
 
     /**
@@ -273,7 +278,7 @@ namespace vox
      * @sa
      *  ::ImageImporter
      */
-    class ImageExporter { public: virtual void exporter(ResourceOStream & data, OptionSet const& options, 
+    class ImageExporter { public: virtual void exporter(std::ostream & data, OptionSet const& options, 
                                                         Bitmap const& image) = 0; 
                           virtual ~ImageExporter() { } };
 }

@@ -96,12 +96,9 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the scene data into a boost::property_tree
             // --------------------------------------------------------------------
-            ImgExporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image) :
+            ImgExporter(std::ostream & sink, OptionSet const& options, Bitmap const& image) :
                 m_sink(sink), m_options(options), m_image(image)
             {
-                // Compose the resource identifier for log warning entries
-                std::string filename = sink.identifier().extractFileName();
-                m_displayName = filename.empty() ? "UNKNOWN" : format("\"%1%\"", filename);
             }
 
             // --------------------------------------------------------------------
@@ -155,7 +152,7 @@ namespace
 
             UInt8 m_buffer[BUF_SIZE]; // Storage buffer :TODO: write directly to streambuf?
 
-            ResourceOStream & m_sink;        ///< Resource stream
+            std::ostream & m_sink;        ///< Resource stream
             OptionSet const&  m_options;     ///< Import options
             Bitmap const&   m_image;       ///< image data
             std::string       m_displayName; ///< Warning identifier
@@ -168,12 +165,9 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
             // --------------------------------------------------------------------
-            ImgImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> & handle) : 
+            ImgImporter(std::istream & source, OptionSet const& options, std::shared_ptr<void> & handle) : 
               m_options(options), m_source(source), m_handle(handle)
             {
-                // Compose the resource identifier for log warning entries
-                std::string filename = source.identifier().extractFileName();
-                m_displayName = filename.empty() ? "UNKNOWN" : format("\"%1%\"", filename);
             }
             
             // --------------------------------------------------------------------
@@ -256,7 +250,7 @@ namespace
 
             std::shared_ptr<void> & m_handle;   ///< Plugin handle to track this DLL's usage
 
-            ResourceIStream & m_source;       ///< Resource stream
+            std::istream & m_source;       ///< Resource stream
             OptionSet const&  m_options;      ///< Import options
             std::string       m_displayName;  ///< Warning identifier
         };
@@ -266,7 +260,7 @@ namespace
 // --------------------------------------------------------------------
 //  Writes a raw volume file to the stream
 // --------------------------------------------------------------------
-void BmpImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap const& image)
+void BmpImg::exporter(std::ostream & sink, OptionSet const& options, Bitmap const& image)
 {
     // Parse scenefile object into boost::property_tree
     filescope::ImgExporter exportModule(sink, options, image);
@@ -278,7 +272,7 @@ void BmpImg::exporter(ResourceOStream & sink, OptionSet const& options, Bitmap c
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-Bitmap BmpImg::importer(ResourceIStream & source, OptionSet const& options)
+Bitmap BmpImg::importer(std::istream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::ImgImporter importModule(source, options, m_handle);

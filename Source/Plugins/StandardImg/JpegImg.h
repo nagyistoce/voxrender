@@ -49,10 +49,10 @@ public:
     JpegImg(std::shared_ptr<void> handle) : m_handle(handle) { }
 
 	/** Vox Image File Exporter */
-	virtual void exporter(ResourceOStream & source, OptionSet const& options, Bitmap const& image);
+	virtual void exporter(std::ostream & source, OptionSet const& options, Bitmap const& image);
 
 	/** Vox Image File Importer */
-	virtual Bitmap importer(ResourceIStream & source, OptionSet const& options);
+	virtual Bitmap importer(std::istream & source, OptionSet const& options);
     
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
