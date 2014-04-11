@@ -41,13 +41,16 @@ BOOST_AUTO_TEST_SUITE( Server )
     // Tests the matrix functionality
     BOOST_AUTO_TEST_CASE( WebSocketConnect )
     {
-        voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);
+        while (true)
+        {
+            voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);
 
-        UInt16 port;
-        UInt64 key;
-        voxServerBeginStream(&port, &key);
+            UInt16 port;
+            UInt64 key;
+            voxServerBeginStream(&port, &key, "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/");
 
-        voxServerEnd();
+            voxServerEnd();
+        }
     }
 
 BOOST_AUTO_TEST_SUITE_END()

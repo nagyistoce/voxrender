@@ -27,28 +27,15 @@
 #include "Interface.h"
 
 // Include Dependencies
-#include "VoxServer/WebSocket.h"
-#include "VoxServer/Base64.h"
+#include "VoxServer/Session.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxLib/Core/System.h"
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/IO/ResourceHelper.h"
-#include "VoxLib/Bitmap/Bitmap.h"
 
+#include <boost/filesystem.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-
-// Include Scene Components
-#include "VoxScene/RenderController.h"
-#include "VoxScene/Volume.h"
-#include "VoxScene/Camera.h"
-#include "VoxScene/Light.h"
-#include "VoxScene/RenderParams.h"
-#include "VoxScene/PrimGroup.h"
-#include "VoxScene/Transfer.h"
-
-// Standard Renderers for the Application
-#include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
 
 using namespace vox;
 using boost::asio::ip::tcp;
@@ -56,15 +43,9 @@ using boost::asio::ip::tcp;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<VolumeScatterRenderer> renderer;
-
-    boost::asio::io_service ioService;
-    std::shared_ptr<WebSocket> webSocket;
+    std::shared_ptr<Session> session;
 
     std::ofstream logFileStream;
-
-    RenderController renderController;
-    Scene            scene;
 
     // ------------------------------------------------------------------------
     //  Configures the log file stream for the server
@@ -87,67 +68,6 @@ namespace filescope {
         // Redirect std::clog stream to session log sink
         if (logFileStream) std::clog.set_rdbuf(logFileStream.rdbuf());
     }
-    
-    // ------------------------------------------------------------------------
-    //  Callback function on frame ready
-    // ------------------------------------------------------------------------
-    void onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
-    {
-        VOX_LOG_INFO(VOX_SERV_LOG_CAT, "RENDER FRAME CALLBACK");
-
-        auto message = format("Render Time %1%", renderer->renderTime());
-
-        frame->data();
-
-        std::ostringstream imageStream;
-        auto buffer = std::shared_ptr<void>((void*)frame->data(), [] (void *) {});
-        Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, frame->stride(), buffer);
-        image.exprt(imageStream, ".png");
-
-        auto imageData = "data:image/png;base64," + Base64::encode(imageStream.str());
-
-        filescope::webSocket->write(imageData);
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
-    }
-    
-    // ------------------------------------------------------------------------
-    //  Begins streaming the specified file
-    // ------------------------------------------------------------------------
-    void beginStream(String const& filename)
-    {
-        VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("Loading scene file: %1%", filename));
-
-        // Load the specified scene file
-        auto & scene = filescope::scene;
-        scene = Scene::imprt(filename);
-        if (!scene.volume) throw Error(__FILE__, __LINE__, VOX_SERV_LOG_CAT, "Scene is missing volume data", Error_MissingData);
-        if (!scene.parameters)   scene.parameters   = RenderParams::create();
-        if (!scene.clipGeometry) scene.clipGeometry = PrimGroup::create();
-        if (!scene.lightSet)     scene.lightSet     = LightSet::create();
-        if (!scene.transferMap)  scene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
-        if (!scene.transfer)     scene.transfer     = Transfer1D::create();
-        if (!scene.camera)       scene.camera       = Camera::create();
-        if (!scene.animator)     scene.animator     = Animator::create();
-
-        // Begin rendering the scene
-        filescope::renderController.render(filescope::renderer, filescope::scene, 100000);
-    }
-
-    // ------------------------------------------------------------------------
-    //  Connected event callback from WebSocket
-    // ------------------------------------------------------------------------
-    void onConnect()
-    {
-        try
-        {
-            beginStream("file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/smoke.xml");
-        }
-        catch (Error & error)
-        {
-            VOX_LOG_EXCEPTION(Severity_Error, error);
-        }
-    }
 
 } // namespace filescope
 } // namespace anonymous
@@ -168,10 +88,6 @@ int voxServerStart(char const* directory, bool logToFile)
 
         // Load the configuration file (Scene plugins, etc)
         ResourceHelper::loadConfigFile("VoxServer.config");
-
-        // Configure the volume renderer and generate the usage info
-        filescope::renderer = vox::VolumeScatterRenderer::create();
-        filescope::renderer->setRenderEventCallback(&filescope::onFrameReady);
 
         return Error_None;
     }
@@ -196,18 +112,14 @@ void voxServerEnd()
 { 
     VOX_LOG_INFO(VOX_SERV_LOG_CAT, "Terminating render service");
     
-    filescope::renderController.stop();
-    filescope::webSocket.reset();
     PluginManager::instance().unloadAll();
     filescope::logFileStream.close();
-
-    filescope::renderer.reset();
 }
 
 // --------------------------------------------------------------------
 //  Begins rendering the specified scene file
 // --------------------------------------------------------------------
-int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut)
+int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut, char const* rootDir)
 {
     // Select a port and key for the stream
     UInt16 port = 8000;
@@ -216,14 +128,8 @@ int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut)
     // Prepare the WebSocket to accept an incoming connection
     try
     {
-        filescope::webSocket = std::make_shared<WebSocket>(filescope::ioService, port);
-        filescope::webSocket->onConnected(&filescope::onConnect);
-        //filescope::webSocket->onClosed();
-        //filescope::webSocket->onMessage();
-
-        filescope::webSocket->start();
-
-        filescope::ioService.run();
+        filescope::session = std::make_shared<Session>(port, key, rootDir);
+        filescope::session->start();
     }
     catch (std::exception& e)
     {

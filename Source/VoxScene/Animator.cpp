@@ -137,9 +137,6 @@ void Animator::clear()
 // --------------------------------------------------------------------
 void Animator::addKeyframe(KeyFrame keyFrame, int frame, bool suppress)
 {
-    if (!keyFrame.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
-        "Keyframe is invalid", Error_MissingData);
-
     auto iter = m_pImpl->m_keys.begin();
     while (iter != m_pImpl->m_keys.end() && (*iter).first < frame)
         ++iter;

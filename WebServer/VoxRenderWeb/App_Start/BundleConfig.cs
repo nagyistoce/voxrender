@@ -58,6 +58,7 @@ namespace FundusWeb
                 "~/Scripts/ContextMenu.js",
                 "~/Scripts/VoxScene.js",
                 "~/Scripts/ImageBar.js",
+                "~/Scripts/Server.js",
                 "~/Scripts/ToolBar.js",
                 "~/Scripts/Message.js",
                 "~/Scripts/Page.js"));

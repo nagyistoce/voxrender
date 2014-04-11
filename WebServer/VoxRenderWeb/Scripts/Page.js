@@ -103,14 +103,14 @@ Page.prototype =
         this.applyLayout();
 
         // Open the WebSocket connection to the render server
-        this._socket = new WebSocket("ws://localhost:8000/");
-        this._socket.onerror = function (errorEvent) {
+        this.socket = new WebSocket("ws://localhost:8000/");
+        this.socket.onerror = function (errorEvent) {
             Message("Unable to establish connection to render server", MessageType.Error);
         };
-        this._socket.onopen = function (errorEvent) {
+        this.socket.onopen = function (errorEvent) {
             Message("Connection to render server established", MessageType.Info);
         };
-        this._socket.onmessage = function (messageEvent) {
+        this.socket.onmessage = function (messageEvent) {
             var scene = WebPage.canvas.getScene();
             if (scene) scene.update(messageEvent.data);
         };
@@ -176,6 +176,7 @@ Page.prototype =
     imageBar: null, /// <field name='imageBar' type='ImageBar'>Manages load fundus images</field>
     canvas: null,   /// <field name='canvas' type='Canvas'>Canvas used for image display/interaction</field>
     toolBar: null,  /// <field name='toolBar' type='ToolBar'>Toolbar for fundus image editing</field>
+    socket: null,   /// <field name='_socket' type='WebSocket'>WebSocket for render stream</field>
 
     // Private:
 
@@ -242,7 +243,6 @@ Page.prototype =
 // Private:
     _currPane: 'image', /// <field name='_currPane' type='String'>Active tool pane</field>
     _uidGen: 0,         /// <field name='_uidGen' type='Number'>Key for generating UIDs</field>
-    _socket: null,      /// <field name='_socket' type='WebSocket'>WebSocket for render stream</field>
 };
 
 // ----------------------------------------------------------------------------

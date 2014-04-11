@@ -277,9 +277,16 @@ void Scene::clone(Scene & scene) const
 // --------------------------------------------------------------------
 //  Returns true if the scene is a valid render scene
 // --------------------------------------------------------------------
-bool Scene::isValid() const
-{
-    return camera && volume && lightSet && transfer && clipGeometry && parameters && (transfer || transferMap);
+void Scene::pad()
+{    
+    if (!volume) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Scene is missing volume data", Error_MissingData);
+    if (!parameters)   parameters   = RenderParams::create();
+    if (!clipGeometry) clipGeometry = PrimGroup::create();
+    if (!lightSet)     lightSet     = LightSet::create();
+    if (!transferMap)  transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
+    if (!transfer)     transfer     = Transfer1D::create();
+    if (!camera)       camera       = Camera::create();
+    if (!animator)     animator     = Animator::create();
 }
 
 } // namespace vox

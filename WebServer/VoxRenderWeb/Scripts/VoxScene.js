@@ -11,18 +11,16 @@ function VoxScene(id, file) {
     this.file = file;
     this.id   = id;
 
-    this._offset      = { x: 0, y: 0 };
+    this._offset = { x: 0, y: 0 };
 
     // Load the base image, then submit the segmentation request
     var reader = new FileReader();
     reader.onloadend = $.proxy(function () {
 
         // Decode the image and extract statistics
-        var img = new Image();
-        img.src = reader.result;
-        img.onload = $.proxy(function () {
-            this.baseImage = img;
-            $(this).trigger("onBaseLoad", { img: img });
+        this.baseImage = new Image();
+        this.baseImage.onload = $.proxy(function () {
+            $(this).trigger("onBaseLoad", { img: this.baseImage });
         }, this);
 
         // Upload the scene to the render server
@@ -32,7 +30,7 @@ function VoxScene(id, file) {
 
             }, this), "json")
             .fail(function (jqXHR, textStatus, err) {
-                $(this).trigger("onSegError", err);
+                $(this).trigger("onUploadError", err);
             });
     }, this);
     reader.readAsDataURL(file);
@@ -43,7 +41,7 @@ VoxScene.prototype =
     update: function (newImageData) {
         /// <summary>Processes the most recent frame from the server</summary>
 
-        this.baseImage.src = newImageData;
+        if (this.baseImage) this.baseImage.src = newImageData;
     },
 
     setPosition: function (x, y) {
@@ -71,6 +69,14 @@ VoxScene.prototype =
         /// <summary>Changes the zoomlevel of the image</summary>
         this._zoomLevel = scale;
         $(this).trigger('zoomChanged', { image: this });
+    },
+
+    updateThumbnail: function () {
+        /// <summary>Updates the thumbnail image in the sidebar</summary>
+
+        var uiElem = $("#scene-" + this.id);
+        var thumb = uiElem.find("img");
+        thumb.attr('src', this.baseImage.src);
     },
 
     createUiElement: function () {

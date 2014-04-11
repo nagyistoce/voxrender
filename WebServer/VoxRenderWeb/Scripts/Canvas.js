@@ -1,5 +1,6 @@
 ﻿/// <reference path="~/Scripts/Support/_references.js" />
 /// <reference path="~/Scripts/VoxScene.js" />
+/// <reference path="~/Scripts/Server.js" />
 
 // ----------------------------------------------------------------------------
 //  Canvas tool type enumeration
@@ -93,9 +94,6 @@ function Canvas(canvasElem) {
     // Hotkeys for image annotation and tools
     $(document).keypress(this, this._keyEventHandler);
 
-    // Create the offscreen canvas for image editing
-    this._offCanvas = document.createElement("canvas");
-
     this._mousebutton = [false, false, false];
     this._mousePos    = { x: 0, y: 0 };
 }
@@ -181,10 +179,19 @@ Canvas.prototype =
 
         $(this._scene).unbind('.Canvas');
 
+        if (this._scene) this._scene.updateThumbnail();
+
         this._scene = scene;
 
         // Detect a null image set so we can clear the view
-        if (this._scene == null) { this.draw(); return; }
+        if (this._scene == null) {
+            this.draw();
+            VoxRender.Server.msgEndStream();
+            return;
+        }
+
+        // Send the render start message to the server
+        VoxRender.Server.msgBegStream(this._scene.id);
 
         var canvas = this;
 
@@ -197,17 +204,11 @@ Canvas.prototype =
         $(this._scene).bind('dataChanged.Canvas', function () { canvas.draw(); });
 
         // Load the initial image dimensions into the canvas when first available
-        var initialDraw = function () {
-            canvas._offCanvas.width  = canvas._scene.baseImage.width;  // Modified image
-            canvas._offCanvas.height = canvas._scene.baseImage.height;
-            canvas.draw();
-        };
         if (this._scene.baseImage == null) {
-            $(this._scene).bind('onBaseLoad.Canvas', initialDraw);
-            canvas.draw(); // :TODO: Draw loading screen/animation/etc...
-        } else {
-            initialDraw();
+            $(this._scene).bind('onBaseLoad.Canvas', $.proxy(this.draw, this));
         }
+
+        canvas.draw();
     },
 
     download: function () {
@@ -217,8 +218,8 @@ Canvas.prototype =
         var canvas = this._canvasElem;
         var a = $("<a id='link' href='#'>Download</a>");
         a.on("click", $.proxy(function () {
-            a.attr("href", this._getDataUrl())
-             .attr("download", "Fundus_Image.png");
+            a.attr("href", this._scene.baseImage.src)
+             .attr("download", "Render.png");
             this.draw();
         }, this));
 
@@ -238,7 +239,7 @@ Canvas.prototype =
         /// <summary>Prints the canvas image</summary>
 
         popup = window.open();
-        popup.document.write('<img src="' + this._getDataUrl() + '";></img>');
+        popup.document.write('<img src="' + this._scene.baseImage.src + '";></img>');
         popup.document.close();
         popup.print();
         popup.close();
@@ -251,20 +252,6 @@ Canvas.prototype =
     },
 
 // Private:
-
-    _getDataUrl: function () {
-        /// <summary>Returns a data URL of the current canvas image</summary>
-
-        var ctx = this._offCanvas.getContext("2d");
-
-        ctx.fillStyle = "#000000";
-        ctx.rect(0, 0, this._offCanvas.width, this._offCanvas.height);
-        ctx.fill();
-
-        var url = this._offCanvas.toDataURL();
-
-        return url;
-    },
 
     _onMouseMove: function (e, ui) {
         /// <param name="e" type="JQuery.Event">event</param>
@@ -310,18 +297,6 @@ Canvas.prototype =
         }
     },
 
-    _drawLine: function (canvas, x1, y1, x2, y2) {
-        /// <param name="e" type="JQuery.Event">event</param>
-        ctx = canvas.getContext("2d");
-        ctx.strokeStyle = '#FFF';
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.lineWidth = 5;
-        ctx.stroke();
-        ctx.closePath();
-    },
-
     _keyEventHandler: function (e) {
         /// <param name="e" type="JQuery.Event">event</param>
         var canvas = e.data;
@@ -334,7 +309,6 @@ Canvas.prototype =
     _touchPos: { x: 0, y: 0 },  /// <field name='_mousePos'>The touch position for the most recent event</field>
     _scene: null,               /// <field name='_scene' type='VoxScene'>The image currently in this canvas</field>
     _canvasElem: null,          /// <field name='_canvasElem' type=''>The HTML canvas elemented associated with this object</field>
-    _offCanvas: null,           /// <field name='_offCanvas' type=''>An offscreen canvas for image editing</field>
     _blockRedraws: false,       /// <field name='_blockRedraws' type='Boolean'>Blocks the draw function from being executed</field>
     _tool: CanvasTool.cursor,   /// <field name='_blockRedraws' type='Boolean'></field>
 }

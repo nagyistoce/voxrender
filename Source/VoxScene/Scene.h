@@ -247,8 +247,8 @@ namespace vox
         /** Returns true if any of the scene components are dirty */
         bool isDirty() const;
 
-        /** Logs warning for missing scene components */
-        bool isValid() const;
+        /** Pads the scene to ensure that it is viable for rendering */
+        void pad();
 
         std::shared_ptr<RenderParams> parameters;   ///< Rendering parameters
         std::shared_ptr<LightSet>     lightSet;     ///< Lighting Data

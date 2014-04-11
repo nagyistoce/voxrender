@@ -60,8 +60,6 @@ public:
     // ----------------------------------------------------------------------------
     void render(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError)
     {
-        if (!scene.isValid()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
-            "Cannot render scene: not valid", Error_MissingData);
         initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPoint, this));
     }
     
@@ -104,6 +102,7 @@ public:
         m_isPaused         = false;
         m_currIterations   = 0;
         m_scene            = scene;
+        m_scene.pad();
 
         // Store the start time for render duration
         m_startTime = std::chrono::system_clock::now();

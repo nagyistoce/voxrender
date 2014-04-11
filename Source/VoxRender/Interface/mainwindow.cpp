@@ -598,14 +598,7 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     {
         // Attempt to parse the scene file content
         m_activeScene = vox::Scene::imprt(identifier);
-        if (!m_activeScene.volume) throw Error(__FILE__, __LINE__, VOX_GUI_LOG_CAT, "Scene is missing volume data", Error_MissingData);
-        if (!m_activeScene.parameters)   m_activeScene.parameters   = RenderParams::create();
-        if (!m_activeScene.clipGeometry) m_activeScene.clipGeometry = PrimGroup::create();
-        if (!m_activeScene.lightSet)     m_activeScene.lightSet     = LightSet::create();
-        if (!m_activeScene.transferMap)  m_activeScene.transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
-        if (!m_activeScene.transfer)     m_activeScene.transfer     = Transfer1D::create();
-        if (!m_activeScene.camera)       m_activeScene.camera       = Camera::create();
-        if (!m_activeScene.animator)     m_activeScene.animator     = Animator::create();
+        m_activeScene.pad();
 
         // Synchronize the scene view
         // :TODO: Signal
@@ -1104,7 +1097,7 @@ void MainWindow::stopRender()
 // ----------------------------------------------------------------------------
 void MainWindow::performFiltering(std::shared_ptr<volt::Filter> filter, OptionSet const& options)
 {
-    if (!m_activeScene.isValid()) return;
+    if (!m_activeScene.volume) return;
 
     try
     {

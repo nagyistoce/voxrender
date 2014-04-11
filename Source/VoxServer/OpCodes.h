@@ -24,29 +24,25 @@
 =========================================================================== */
 
 // Begin definition
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef VOX_SERVER_OP_CODES_H
+#define VOX_SERVER_OP_CODES_H
 
-// Include Header
-#include "VoxServer/Common.h"
-#include "VoxLib/Core/Types.h"
+namespace vox {
 
-// Plugin interface 
-extern "C"
+enum OpCode 
 {
-    /** Returns the library version number */
-    VOX_SERVER_EXPORTS char const* voxServerVersion();
+    OpCode_Error     = 0x00,    ///< Error message [S->C]
+    OpCode_BegStream = 0x01,    ///< Begin render stream [C->S]
+    OpCode_EndStream = 0x02,    ///< Terminate render stream [C->S]
+    OpCode_Status    = 0x03,    ///< Render status packet [S->C]
+    OpCode_StatusReq = 0x04,    ///< Request for render status packet to be sent [C->S]
+    OpCode_DirList   = 0x05,    ///< Contains a listing of scene file names from the rootDir [S->C]
+    OpCode_Update    = 0x06,    ///< Make change to current render scene [C->S]
+    OpCode_SceneReq  = 0x07,    ///< Send XML scene file back to client [S->C]
+    OpCode_Scene     = 0x08,    ///< Scene data file [S<->C]
+};
 
-    /** Must be called before any functions in the library (besides version) */
-    VOX_SERVER_EXPORTS int voxServerStart(char const* directory, bool logToFile = true);
-
-    /** Opens a websocket for streaming the specified scenefile */
-    VOX_SERVER_EXPORTS int voxServerBeginStream(
-        uint16_t * portOut, uint64_t * keyOut, char const* rootDir = "");
-
-    /** Called to terminate the library and any active render streams */
-    VOX_SERVER_EXPORTS void voxServerEnd();
-}
+} // namespace vox
 
 // End definition
-#endif // INTERFACE_H
+#endif // VOX_SERVER_OP_CODES_H
