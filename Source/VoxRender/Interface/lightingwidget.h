@@ -55,7 +55,7 @@ private:
     void remove(std::shared_ptr<vox::Light> light);
 
     PaneWidget *           m_ambientPane;   ///< Ambient light widget
-	std::list<PaneWidget*> m_lightPanes;    ///< Other light widgets
+	std::list<PaneWidget*> m_panes;    ///< Other light widgets
     QSpacerItem *          m_spacer;        ///< Spacing element for pane list
     QLayout *              m_layout;        ///< Layout for light panes
     QWidget *              m_parent;        ///< Parent widget 

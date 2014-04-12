@@ -233,12 +233,17 @@ KeyFrame Scene::generateKeyFrame()
 // --------------------------------------------------------------------
 void Scene::clone(Scene & scene) const
 {
-    // :TODO:
-    scene.clipGeometry = clipGeometry;
     scene.animator = nullptr;
-    scene.transfer = transfer;
-    //
 
+    // :TODO: 
+    scene.transfer = transfer;
+    
+    // Recreate
+    scene.clipGeometry = clipGeometry ? 
+        std::dynamic_pointer_cast<PrimGroup>(clipGeometry->clone()) : 
+        nullptr;
+
+    // Efficient cloning 
     if (volume)
     {
         if (!scene.volume) scene.volume = Volume::create();

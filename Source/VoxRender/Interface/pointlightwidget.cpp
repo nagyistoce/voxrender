@@ -81,13 +81,6 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 // --------------------------------------------------------------------
 PointLightWidget::~PointLightWidget()
 {
-    auto & scene = MainWindow::instance->scene();
-    if (scene.lightSet) 
-    {
-        scene.lightSet->remove(m_light);
-        scene.lightSet->setDirty();
-    }
-
     delete m_colorButton;
     delete ui;
 }

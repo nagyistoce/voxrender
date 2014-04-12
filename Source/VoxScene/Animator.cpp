@@ -32,6 +32,7 @@
 #include "VoxScene/Camera.h"
 #include "VoxScene/Light.h"
 #include "VoxScene/Volume.h"
+#include "VoxScene/PrimGroup.h"
 
 namespace vox {
 
@@ -113,14 +114,17 @@ String const& Animator::baseName()
 // --------------------------------------------------------------------
 void Animator::interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
 {
-    k1.clone(o);
+    o.clipGeometry = std::dynamic_pointer_cast<PrimGroup>(
+        k1.clipGeometry->interp(k2.clipGeometry, f));
 
-    o.camera   = k1.camera->interp(k2.camera, f);
-    o.lightSet = k1.lightSet->interp(k2.lightSet, f);
-    o.volume   = k1.volume->interp(k2.volume, f);
-    //o.transfer = k1.transfer->interp(k2.transfer, f);
-
-    o.transferMap = TransferMap::create();
+    o.camera       = k1.camera->interp(k2.camera, f);
+    o.lightSet     = k1.lightSet->interp(k2.lightSet, f);
+    o.volume       = k1.volume->interp(k2.volume, f);
+    o.transfer     = k1.transfer;
+    o.animator     = nullptr;
+    o.parameters   = k1.parameters;
+    o.transferMap  = TransferMap::create();
+    // :TODO:
     k1.transfer->generateMap(o.transferMap);
 }
 

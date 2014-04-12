@@ -58,6 +58,12 @@ namespace vox
         /** Returns the type identifier for this primitive */
         virtual Char const* typeId() = 0;
 
+        /** Clones a primitive used for rendering */
+        virtual std::shared_ptr<Primitive> clone() = 0;
+
+        /** Interpolates between states of a primitive */
+        virtual std::shared_ptr<Primitive> interp(std::shared_ptr<Primitive> k2, float factor) = 0;
+
         /**
          * Exports a primitive to a text format
          *
@@ -99,6 +105,12 @@ namespace vox
         /** Returns the UID string classifying this type (classname) */
         virtual Char const* typeId();
  
+        /** Clones a copy of the clipping plane */
+        virtual std::shared_ptr<Primitive> clone();
+        
+        /** Interpolates between states of a primitive */
+        std::shared_ptr<Primitive> interp(std::shared_ptr<Primitive> k2, float factor);
+
         /** Exports the plane to a text format */
         static std::shared_ptr<Primitive> imprt(boost::property_tree::ptree & node);
 

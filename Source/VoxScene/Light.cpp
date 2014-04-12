@@ -51,6 +51,8 @@ LightSet::LightSet() : m_ambientLight(0.1f, 0.1f, 0.1f)
 // ----------------------------------------------------------------------------
 void LightSet::clone(LightSet & lightSet)
 {
+    lightSet.m_lights.clear();
+
     lightSet.setId(id());
 
     BOOST_FOREACH (auto & light, m_lights)

@@ -53,6 +53,37 @@ Char const* PrimGroup::typeId()
 }
 
 // ----------------------------------------------------------------------------
+//  Creates a cloned instance of this primitive group
+// ----------------------------------------------------------------------------
+std::shared_ptr<Primitive> PrimGroup::clone()
+{
+    auto group = create();
+    BOOST_FOREACH (auto & child, m_children) 
+        group->add(child->clone());
+
+    return group;
+}
+
+// ----------------------------------------------------------------------------
+//  Interpolates between positions for a plane object
+// ----------------------------------------------------------------------------
+std::shared_ptr<Primitive> PrimGroup::interp(std::shared_ptr<Primitive> k2, float factor)
+{
+    auto next = std::dynamic_pointer_cast<PrimGroup>(k2); 
+    if (!next) return clone();
+
+    auto group = create();
+    group->setId(id());
+    BOOST_FOREACH (auto & prim, m_children)
+    {
+        auto other = next->find(prim->id());
+        group->add(prim->interp(other, factor));
+    }
+
+    return group;
+}
+
+// ----------------------------------------------------------------------------
 //  Returns the UID for this primitive type
 // ----------------------------------------------------------------------------          
 Char const* PrimGroup::classTypeId() 

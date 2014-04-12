@@ -76,18 +76,20 @@ void Session::start()
 // ----------------------------------------------------------------------------
 void Session::onConnect()
 {
+    auto path = m_rootDir.asString();
+
     using namespace boost::filesystem;
-    if (!exists(m_rootDir)) return;
+    if (!exists(path)) return;
 
     String results;
 
     directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(m_rootDir); itr != end_itr; ++itr)
+    for (directory_iterator itr(path); itr != end_itr; ++itr)
     if (!is_directory(itr->status())) // Ignore subdirectories
     {
         auto name = itr->path().filename();
-        if (!results.empty()) results.push_back('\0');
-        results += name.generic_string();
+        if (!results.empty()) results.push_back('\r\n');
+        results = results + name.generic_string();
     }
 
     m_socket.write((Char)OpCode_DirList + results);
@@ -104,18 +106,12 @@ void Session::onMessage(String const& message)
             "Message is missing OpCode", Error_BadFormat);
         auto opCode = (UInt8)message[0];
 
-        char const * filenames[] = {
-            "file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/smoke.xml",
-            "file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/corners_64x64x64_8bit.xml",
-            "file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/gradient_256x1x1_zlib_8bit.xml"
-        };
-
         switch (opCode)
         {
         case OpCode_BegStream:
             VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_BegStream");
             unloadScene();
-            loadScene(filenames[rand()%3]);
+            loadScene(message);
             break;
         case OpCode_EndStream:
             VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_EndStream");
@@ -135,12 +131,19 @@ void Session::onMessage(String const& message)
 // ----------------------------------------------------------------------------
 //  Loads the specified scene file and begins streaming on the WebSocket
 // ----------------------------------------------------------------------------
-void Session::loadScene(String const& filename)
+void Session::loadScene(String const& message)
 {
+    if (message.size() < 2) throw Error(__FILE__, __LINE__, VOX_SERV_LOG_CAT,
+        "Invalid BegStream message header", Error_BadFormat);
+    
+    auto * filename = message.c_str() + 1;
+
     VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("Loading scene file: %1%", filename));
 
+    ResourceId uri = m_rootDir.applyRelativeReference(ResourceId(filename));
+
     // Load the specified scene file
-    m_scene = Scene::imprt(filename);
+    m_scene = Scene::imprt(uri);
     m_scene.pad();
 
     // Begin rendering the scene
@@ -168,13 +171,14 @@ void Session::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     // :TODO: Permanent JPEG TX buffer
     std::ostringstream imageStream;
     auto buffer = std::shared_ptr<void>((void*)frame->data(), [] (void *) {});
-    Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, frame->stride(), buffer);
+    Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, 1, frame->stride(), buffer);
     image.exprt(imageStream, ".jpg");
     
     //auto tend = std::chrono::high_resolution_clock::now();
     //auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
 
-    auto imageData = "data:image/jpg;base64," + Base64::encode(imageStream.str());
+    auto opCode = (Char)OpCode_Frame;
+    auto imageData = String(&opCode, 1) + "data:image/jpg;base64," + Base64::encode(imageStream.str());
 
     //VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("TX: %1% ms", time.count()));
     //VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("Size: %1% KB", imageStream.str().length() / 1024));

@@ -7,10 +7,10 @@
 //  loading a scene and controlling image streaming and control feedback.
 // ----------------------------------------------------------------------------
 function VoxScene(id, file) {
+    /// <summary>Initializes a new scene object</summary>
 
-    this.file = file;
-    this.id   = id;
-
+    this._name   = file.name;
+    this.id      = id;
     this._offset = { x: 0, y: 0 };
 
     // Load the base image, then submit the segmentation request
@@ -27,7 +27,7 @@ function VoxScene(id, file) {
         $.post('api/scene/post',
             { id: file.name, data: reader.result },
             $.proxy(function (data, textStatus, jqXHR) {
-
+                // :TODO: Get from server -- this._name = file.name;
             }, this), "json")
             .fail(function (jqXHR, textStatus, err) {
                 $(this).trigger("onUploadError", err);
@@ -38,6 +38,12 @@ function VoxScene(id, file) {
 
 VoxScene.prototype =
 {
+    file: function () {
+        /// <summary>Returns the name of the scene file on the server</summary>
+
+        return this._name;
+    },
+
     update: function (newImageData) {
         /// <summary>Processes the most recent frame from the server</summary>
 
@@ -89,7 +95,7 @@ VoxScene.prototype =
         var elem = $("<div id='scene-" + image.id + "' style='width:100%; margin-bottom:5px;'>" +
                         "<img draggable='false' class='image-thumb'></img>" +
                         "<div style='height:32px; width:80%; left:10%; position:relative;'>" +
-                           "<div style='float:left'>" + this.file.name + "</div>" +
+                           "<div style='float:left'>" + this.file() + "</div>" +
                            "<div style='float:right'; class='image-rem'>X</div>" +
                         "</div>" +
                      "</div>"
@@ -124,10 +130,10 @@ VoxScene.prototype =
     },
 
     id:        0,    /// <field name='id'        type='Number'>Unique identifier</field>
-    file:      null, /// <field name='file'      type='File'>The source file for the image</field>
     baseImage: null, /// <field name='baseImage' type='URI'>The original image dataURI, or null if unloaded</field>
 
     // *** Display Parameters ***
     _offset: { x: 0, y: 0 },
-    _zoomLevel: 1.0,      /// <field name='_zoomLevel' type='Number'>Zoom scale for the image</field>
+    _zoomLevel: 1.0,            /// <field name='_zoomLevel' type='Number'>Zoom scale for the image</field>
+    _name: null,                /// <field name='_name'      type='String'>The scene file name on the server</field>
 }

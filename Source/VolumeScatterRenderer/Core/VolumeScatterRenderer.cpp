@@ -206,7 +206,7 @@ public:
         m_frameBuffer->wait(); // Await user lock release
 
         Bitmap bitmap(Bitmap::Format_RGBX, m_frameBuffer->width(), m_frameBuffer->height(), 
-            8, m_frameBuffer->stride(), m_frameBuffer->buffer()); 
+            8, 1, m_frameBuffer->stride(), m_frameBuffer->buffer()); 
         bitmap.exprt(out);
     }
 

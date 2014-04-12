@@ -57,7 +57,6 @@ Page.prototype =
         $("#redoButton").click(function () { WebPage.history.redo(); });
         $("#resetButton").click(function () { WebPage.reset(); });
         $(document).keyup(function (event) {
-            if (event.which == 88) WebPage._socket.send("ABCD 123 You've Got Mail");
             if (!event.ctrlKey) return;
             if (event.which == 89) WebPage.history.redo();
             if (event.which == 90) WebPage.history.undo();
@@ -111,8 +110,16 @@ Page.prototype =
             Message("Connection to render server established", MessageType.Info);
         };
         this.socket.onmessage = function (messageEvent) {
-            var scene = WebPage.canvas.getScene();
-            if (scene) scene.update(messageEvent.data);
+            var msg = messageEvent.data.toString();
+            var char = msg.charAt(0);
+            switch (msg.charAt(0)) {
+                case "\x09": // Frame msg
+                    var scene = WebPage.canvas.getScene();
+                    scene.update(msg.substr(1));
+                    break;
+                case "\x05": // Directory listing
+                    break;
+            }
         };
     },
 

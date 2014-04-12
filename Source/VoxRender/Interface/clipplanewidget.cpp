@@ -75,15 +75,6 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
 // --------------------------------------------------------------------
 ClipPlaneWidget::~ClipPlaneWidget()
 {
-    auto cg = MainWindow::instance->scene().clipGeometry;
-    
-    if (cg) 
-    {
-        SceneLock lock(cg);
-        cg->remove(m_plane);
-        cg->setDirty();
-    }
-
     delete ui;
 }
 

@@ -121,18 +121,26 @@ void ClipWidget::add(std::shared_ptr<Primitive> prim)
 }
 
 // ----------------------------------------------------------------------------
-//  Removes a light from the active scene
+//  Removes a clipping primitive from the active scene
 // ----------------------------------------------------------------------------
 void ClipWidget::remove(PaneWidget * pane)
 {
     m_panes.remove(pane);
+    
+    auto clipwidget = dynamic_cast<ClipPlaneWidget*>(pane->getWidget());
+    if (clipwidget) 
+    {
+        auto scene = MainWindow::instance->scene();
+        scene.clipGeometry->remove(clipwidget->plane());
+        scene.clipGeometry->setDirty();
+    }
 
     m_layout->removeWidget(pane);
     delete pane;
 }
 
 // ----------------------------------------------------------------------------
-//  Removes a light from the active scene
+//  Removes a clipping primitive's pane from the display
 // ----------------------------------------------------------------------------
 void ClipWidget::remove(std::shared_ptr<Primitive> prim)
 {
@@ -161,8 +169,12 @@ void ClipWidget::sceneChanged()
     auto scene = MainWindow::instance->scene();
     
     // Synchronize the lighting controls
-    BOOST_FOREACH (auto & pane, m_panes) delete pane;
-    m_panes.clear();
+    while (!m_panes.empty())
+    {
+        auto pane = m_panes.back();
+        m_panes.pop_back();
+        delete pane;
+    }
     BOOST_FOREACH (auto & prim, scene.clipGeometry->children()) 
         add(prim);
     

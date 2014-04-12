@@ -191,7 +191,7 @@ Canvas.prototype =
         }
 
         // Send the render start message to the server
-        VoxRender.Server.msgBegStream(this._scene.id);
+        VoxRender.Server.msgBegStream(this._scene.file());
 
         var canvas = this;
 

@@ -196,11 +196,13 @@ void Bitmap::exprt(std::ostream & data, String const& extension, OptionSet const
 // ----------------------------------------------------------------------------
 //  Initializes an image for a known image format
 // ----------------------------------------------------------------------------
-Bitmap::Bitmap(Format type, size_t width, size_t height, size_t bitDepth, size_t stride, std::shared_ptr<void> data) :
+Bitmap::Bitmap(Format type, size_t width, size_t height, size_t bitDepth, 
+               size_t nLayers, size_t stride, std::shared_ptr<void> data) :
     m_format(type),
     m_width(width),
     m_height(height),
-    m_buffer(data)
+    m_buffer(data),
+    m_layers(nLayers)
 {
     m_depth = bitDepth ? bitDepth : 8;
 
@@ -234,13 +236,14 @@ Bitmap::Bitmap(Format type, size_t width, size_t height, size_t bitDepth, size_t
 //  Initializes an image for an unknown image format
 // ----------------------------------------------------------------------------
 Bitmap::Bitmap(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
-                   size_t stride, std::shared_ptr<void> data) :
+               size_t nLayers, size_t stride, std::shared_ptr<void> data) :
     m_format(Format_Unknown),
     m_width(width),
     m_height(height),
     m_channels(nChannels),
     m_depth(bitDepth),
-    m_buffer(data)
+    m_buffer(data),
+    m_layers(nLayers)
 {
     if (!data) pad(0, false);
     else

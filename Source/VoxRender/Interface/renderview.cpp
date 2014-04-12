@@ -124,7 +124,7 @@ void RenderView::saveImageToFile(String const& identifier) const
     {
         auto buffer = std::shared_ptr<void>((void*)m_image.data(), [] (void *) {});
         Bitmap(Bitmap::Format_RGBX, m_image.width(), m_image.height(), 
-            8, m_image.stride(), buffer).exprt(identifier);
+            8, 1, m_image.stride(), buffer).exprt(identifier);
     }
     catch (Error & error)
     {

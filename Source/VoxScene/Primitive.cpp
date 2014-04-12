@@ -117,6 +117,22 @@ std::shared_ptr<Primitive> Plane::imprt(boost::property_tree::ptree & node)
 }
 
 // ----------------------------------------------------------------------------
+//  Interpolates between positions for a plane object
+// ----------------------------------------------------------------------------
+std::shared_ptr<Primitive> Plane::interp(std::shared_ptr<Primitive> k2, float factor)
+{
+    auto plane = std::dynamic_pointer_cast<Plane>(clone());
+    auto other = std::dynamic_pointer_cast<Plane>(k2);
+
+    // :TODO:
+    plane->m_normal = m_normal * (1.f - factor) + other->m_normal * factor;
+    plane->m_normal.normalize();
+    plane->m_distance = m_distance * (1.f - factor) + other->m_distance * factor;
+
+    return plane;
+}
+
+// ----------------------------------------------------------------------------
 //  Converts the primitive into a text storage format
 // ----------------------------------------------------------------------------
 void Plane::exprt(boost::property_tree::ptree & node)
@@ -125,6 +141,16 @@ void Plane::exprt(boost::property_tree::ptree & node)
 
     node.add("Distance", m_distance);
     node.add("Normal", m_normal);
+}
+
+// ----------------------------------------------------------------------------
+//  Creates a clone instance of the plane object
+// ----------------------------------------------------------------------------
+std::shared_ptr<Primitive> Plane::clone()
+{
+    auto plane = create(m_normal, m_distance);
+    plane->setId(id());
+    return plane;
 }
 
 // ----------------------------------------------------------------------------

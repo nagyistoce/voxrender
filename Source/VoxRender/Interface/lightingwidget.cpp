@@ -102,7 +102,7 @@ void LightingWidget::add(std::shared_ptr<Light> light)
 
     m_layout->addWidget(pane);
 
-    m_lightPanes.push_back(pane);
+    m_panes.push_back(pane);
 
     // Reinsert spacer following new pane
 	m_layout->addItem(m_spacer);
@@ -116,27 +116,35 @@ void LightingWidget::add(std::shared_ptr<Light> light)
 }
 
 // ----------------------------------------------------------------------------
-//  Removes a light from the active scene
+//  Removes a light from the active scene and deletes the associated pane
 // ----------------------------------------------------------------------------
 void LightingWidget::remove(PaneWidget * pane)
 {
-    m_lightPanes.remove(pane);
+    m_panes.remove(pane);
+    
+    auto lightwidget = dynamic_cast<PointLightWidget*>(pane->getWidget());
+    if (lightwidget) 
+    {
+        auto scene = MainWindow::instance->scene();
+        scene.lightSet->remove(lightwidget->light());
+        scene.lightSet->setDirty();
+    }
 
     m_layout->removeWidget(pane);
     delete pane;
 }
 
 // ----------------------------------------------------------------------------
-//  Removes a light from the active scene
+//  Removes a light's pane from the UI
 // ----------------------------------------------------------------------------
 void LightingWidget::remove(std::shared_ptr<Light> light)
 {
-    BOOST_FOREACH (auto pane, m_lightPanes)
+    BOOST_FOREACH (auto pane, m_panes)
     {
         auto ptr = dynamic_cast<PointLightWidget*>(pane->getWidget());
         if (ptr && ptr->light().get() == light.get())
         {
-            m_lightPanes.remove(pane);
+            m_panes.remove(pane);
 
             m_layout->removeWidget(pane);
             delete pane;
@@ -154,8 +162,12 @@ void LightingWidget::sceneChanged()
     auto scene = MainWindow::instance->scene();
     
     // Synchronize the lighting controls
-    BOOST_FOREACH (auto & pane, m_lightPanes) delete pane;
-    m_lightPanes.clear();
+    while (!m_panes.empty())
+    {
+        auto pane = m_panes.back();
+        m_panes.pop_back();
+        delete pane;
+    }
     BOOST_FOREACH (auto & light, scene.lightSet->lights()) 
         add(light);
 

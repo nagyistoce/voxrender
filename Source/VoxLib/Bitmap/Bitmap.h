@@ -162,11 +162,11 @@ namespace vox
     public:
 		/** Initializes an image object for a known image format */
 		Bitmap(Format type, size_t width = 0, size_t height = 0, size_t bitDepth = 0, 
-            size_t stride = 0, std::shared_ptr<void> data = nullptr);
+            size_t nLayers = 1, size_t stride = 0, std::shared_ptr<void> data = nullptr);
 
         /** Initializes an image object for an unknown image format */
         Bitmap(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
-            size_t stride = 0, std::shared_ptr<void> data = nullptr);
+            size_t nLayers = 1, size_t stride = 0, std::shared_ptr<void> data = nullptr);
 
         /** 
          * Adjusts the padding of the image 
@@ -204,8 +204,11 @@ namespace vox
         /** Returns the image bit depth */
         size_t depth() const { return m_depth; }
 
-        /** Returns the number of channels on the image */
+        /** Returns the number of channels in the image */
         size_t channels() const { return m_channels; }
+
+        /** Returns the number of layers in the image */
+        size_t layers() const { return m_layers; }
 
         /** Returns the size in bytes of an image pixel */
         size_t elementSize() const { return m_depth*m_channels/8; }
@@ -223,6 +226,7 @@ namespace vox
         size_t size() const { return m_stride*m_height; }
 
 	private:
+        size_t m_layers;   ///< Number of image layers
         size_t m_height;   ///< Image height
 		size_t m_width;    ///< Image width
 		size_t m_stride;   ///< Image stride

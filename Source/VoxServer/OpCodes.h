@@ -40,6 +40,7 @@ enum OpCode
     OpCode_Update    = 0x06,    ///< Make change to current render scene [C->S]
     OpCode_SceneReq  = 0x07,    ///< Send XML scene file back to client [S->C]
     OpCode_Scene     = 0x08,    ///< Scene data file [S<->C]
+    OpCode_Frame     = 0x09     ///< Render frame [S->C]
 };
 
 } // namespace vox

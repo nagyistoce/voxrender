@@ -64,7 +64,7 @@ private:
     void onFrameReady(std::shared_ptr<FrameBuffer> frame);
 
     /** Imports and begins rendering the specified scene file */
-    void loadScene(String const& filename);
+    void loadScene(String const& message);
 
     /** Unloads the current scenefile and stops the render */
     void unloadScene();
@@ -77,9 +77,9 @@ private:
     std::shared_ptr<VolumeScatterRenderer> m_renderer;
     RenderController m_renderController;
 
-    String m_rootDir;       ///< Root directory to which the client has permissions
-    UInt64 m_key;           ///< Access key for the client's websocket connection
-    bool   m_authenticated; ///< Tracks if the user has authenticated themselves
+    ResourceId m_rootDir;       ///< Root directory to which the client has permissions
+    UInt64     m_key;           ///< Access key for the client's websocket connection
+    bool       m_authenticated; ///< Tracks if the user has authenticated themselves
 };
 
 } // namespace vox

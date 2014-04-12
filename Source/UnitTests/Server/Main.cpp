@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_SUITE( Server )
 
             UInt16 port;
             UInt64 key;
-            voxServerBeginStream(&port, &key, "C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/");
+            voxServerBeginStream(&port, &key, "file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/");
 
             voxServerEnd();
         }

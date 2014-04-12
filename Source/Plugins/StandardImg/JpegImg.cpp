@@ -286,7 +286,7 @@ namespace
                     break;
                 }
 
-                return Bitmap(type, cinfo.output_width, cinfo.output_height, 8, stride, buffer);
+                return Bitmap(type, cinfo.output_width, cinfo.output_height, 8, 1, stride, buffer);
             }
             
         private:

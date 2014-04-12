@@ -224,7 +224,7 @@ namespace
 
                 // Ensure the proper bit depth will be selected. ie format unknown require user specification
                 auto bitDepth = (type == Bitmap::Format_Unknown) ? dibHeader.bitsPerPixel : 0;
-                return Bitmap(type, dibHeader.imageWidth, dibHeader.imageHeight, 0, stride, data);
+                return Bitmap(type, dibHeader.imageWidth, dibHeader.imageHeight, 0, 1, stride, data);
             }
             
         private:

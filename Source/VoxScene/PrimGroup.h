@@ -62,6 +62,12 @@ namespace vox
         /** Returns a child primitive of this group, if found */
         std::shared_ptr<Primitive> find(int id);
 
+        /** Creates a clone of the primitive grouping */
+        virtual std::shared_ptr<Primitive> clone();
+        
+        /** Creates a clone of the primitive grouping */
+        virtual std::shared_ptr<Primitive> interp(std::shared_ptr<Primitive> k2, float factor);
+
         /** Adds a new child element to the group */
         void add(std::shared_ptr<Primitive> child, bool suppress = false);
 
