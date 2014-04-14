@@ -54,10 +54,10 @@ namespace FundusWeb.Controllers
             }
             catch (IOException e)
             {
-                return new Scene { id = "123", data = null };
+                return new Scene { id = scene.id, data = null };
             }
             
-            return new Scene { id = "789", data = null };
+            return new Scene { id = scene.id, data = null };
         }
 
         public bool Delete(string id)

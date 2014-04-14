@@ -76,7 +76,7 @@ Page.prototype =
             var files = e.dataTransfer.files;
             for (var i = 0; i < files.length; i++) {
                 var id = WebPage.generateUID();
-                WebPage.imageBar.add(new VoxScene(id, files[i]));
+                WebPage.imageBar.add(new VoxScene(id, files[i].name, files[i]));
             }
         }, false);
 
@@ -86,7 +86,7 @@ Page.prototype =
             var files = document.getElementById("files").files;
             if (files.length != 0) {
                 var id = WebPage.generateUID();
-                WebPage.imageBar.add(new VoxScene(id, files[0]));
+                WebPage.imageBar.add(new VoxScene(id, files[0].name, files[0]));
             }
         });
 
@@ -118,6 +118,11 @@ Page.prototype =
                     scene.update(msg.substr(1));
                     break;
                 case "\x05": // Directory listing
+                    entries = msg.substr(1).split('|');
+                    entries.forEach($.proxy(function (name) {
+                        var id = WebPage.generateUID();
+                        WebPage.imageBar.add(new VoxScene(id, name), null, false);
+                    }));
                     break;
             }
         };
@@ -141,7 +146,7 @@ Page.prototype =
     },
 
     getState: function () {
-        /// <summary>Acquires a  plain JSON representation of the application state</summary>
+        /// <summary>Acquires a plain JSON representation of the application state</summary>
 
         var state = {};
 

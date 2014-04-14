@@ -4,6 +4,10 @@ var VoxRender = VoxRender || {};
 
 VoxRender.Server = {
 
+    msgUpdateScene: function (scene) {
+
+    },
+
     msgBegStream: function (sceneId) {
         WebPage.socket.send("\x01"+sceneId);
     },

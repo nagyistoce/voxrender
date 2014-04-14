@@ -76,7 +76,7 @@ void Session::start()
 // ----------------------------------------------------------------------------
 void Session::onConnect()
 {
-    auto path = m_rootDir.asString();
+    auto path = m_rootDir.path.substr(1);
 
     using namespace boost::filesystem;
     if (!exists(path)) return;
@@ -88,11 +88,14 @@ void Session::onConnect()
     if (!is_directory(itr->status())) // Ignore subdirectories
     {
         auto name = itr->path().filename();
-        if (!results.empty()) results.push_back('\r\n');
+        if (name.extension() != ".xml") continue;
+        if (!results.empty()) results.push_back('|');
         results = results + name.generic_string();
     }
 
-    m_socket.write((Char)OpCode_DirList + results);
+    char opCode = (char)OpCode_DirList;
+    results = String(&opCode, 1) + results;
+    m_socket.write(results);
 }
 
 // ----------------------------------------------------------------------------

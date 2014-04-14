@@ -133,6 +133,7 @@ int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut, char const* root
     }
     catch (std::exception& e)
     {
+        VOX_LOG_ERROR(Error_Unknown, VOX_SERV_LOG_CAT, e.what());
         return Error_Unknown;
     }
 

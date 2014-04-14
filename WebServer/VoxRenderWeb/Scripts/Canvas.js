@@ -146,11 +146,9 @@ Canvas.prototype =
             return;
         }
 
-        // If there is an unloaded image, display load graphic
-        if (!this._scene.baseImage) return;
-
         // Acquire a handle to the canvas context
         var ctx = this._canvasElem.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
 
         // Compute the image position offset
         var s = this._scene._zoomLevel;
@@ -196,17 +194,12 @@ Canvas.prototype =
         var canvas = this;
 
         // Canvas interaction which does not modify the base image data (viewing)
-        $(this._scene).bind('positionChanged.Canvas', function () { canvas.draw(); });
-        $(this._scene).bind('zoomChanged.Canvas', function ()     { canvas.draw(); });
-        $(this._scene).bind('displayChanged.Canvas', function ()  { canvas.draw(); });
-
-        // Canvas interaction which modifies the base image data (editing)
-        $(this._scene).bind('dataChanged.Canvas', function () { canvas.draw(); });
-
-        // Load the initial image dimensions into the canvas when first available
-        if (this._scene.baseImage == null) {
-            $(this._scene).bind('onBaseLoad.Canvas', $.proxy(this.draw, this));
-        }
+        var onChange = $.proxy(this.draw, this);
+        $(this._scene).bind('positionChanged.Canvas', onChange);
+        $(this._scene).bind('zoomChanged.Canvas', onChange);
+        $(this._scene).bind('displayChanged.Canvas', onChange);
+        $(this._scene).bind('dataChanged.Canvas', onChange);
+        $(this._scene).bind('onBaseLoad.Canvas', onChange);
 
         canvas.draw();
     },
@@ -308,7 +301,7 @@ Canvas.prototype =
     _mousePos: { x: 0, y: 0 },  /// <field name='_mousePos'>The mouse position for the most recent event</field>
     _touchPos: { x: 0, y: 0 },  /// <field name='_mousePos'>The touch position for the most recent event</field>
     _scene: null,               /// <field name='_scene' type='VoxScene'>The image currently in this canvas</field>
-    _canvasElem: null,          /// <field name='_canvasElem' type=''>The HTML canvas elemented associated with this object</field>
+    _canvasElem: null,          /// <field name='_canvasElem' type='Canvas'>The HTML canvas elemented associated with this object</field>
     _blockRedraws: false,       /// <field name='_blockRedraws' type='Boolean'>Blocks the draw function from being executed</field>
     _tool: CanvasTool.cursor,   /// <field name='_blockRedraws' type='Boolean'></field>
 }

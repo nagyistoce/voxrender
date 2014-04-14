@@ -6,34 +6,38 @@
 //  Container managing a render. Performs communication with the server for
 //  loading a scene and controlling image streaming and control feedback.
 // ----------------------------------------------------------------------------
-function VoxScene(id, file) {
+function VoxScene(id, name, file) {
     /// <summary>Initializes a new scene object</summary>
 
-    this._name   = file.name;
     this.id      = id;
     this._offset = { x: 0, y: 0 };
+    this._name   = name;
 
-    // Load the base image, then submit the segmentation request
-    var reader = new FileReader();
-    reader.onloadend = $.proxy(function () {
-
-        // Decode the image and extract statistics
-        this.baseImage = new Image();
-        this.baseImage.onload = $.proxy(function () {
-            $(this).trigger("onBaseLoad", { img: this.baseImage });
-        }, this);
-
-        // Upload the scene to the render server
-        $.post('api/scene/post',
-            { id: file.name, data: reader.result },
-            $.proxy(function (data, textStatus, jqXHR) {
-                // :TODO: Get from server -- this._name = file.name;
-            }, this), "json")
-            .fail(function (jqXHR, textStatus, err) {
-                $(this).trigger("onUploadError", err);
-            });
+    // Configure the render frame cache
+    // :TODO: Initialize the image to a loading icon
+    this.baseImage = new Image();
+    this.baseImage.onload = $.proxy(function () {
+        $(this).trigger("onBaseLoad", { img: this.baseImage });
     }, this);
-    reader.readAsDataURL(file);
+
+    // Upload the file to the server if provided
+    if (file) {
+        var reader = new FileReader();
+        reader.onloadend = $.proxy(function () {
+
+            // Upload the scene to the render server
+            $.post('api/scene/post',
+                { id: file.name, data: reader.result },
+                $.proxy(function (data, textStatus, jqXHR) {
+                    // :TODO: Get from server -- prevent duplicate names;
+                }, this), "json")
+                .fail(function (jqXHR, textStatus, err) {
+                    $(this).trigger("onUploadError", err);
+                });
+
+        }, this);
+        reader.readAsDataURL(file);
+    }
 }
 
 VoxScene.prototype =

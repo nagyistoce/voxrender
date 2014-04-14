@@ -11,36 +11,38 @@
     </head>
     <body style="overflow:hidden;" oncontextmenu="return false;">
         <div id="page">
+            <!-- Application menu bar -->
             <div id="header">
                 <p class="site-title" style="float:left">VoxRender WEB</p>
                 <div id="messageBar" style="background-color:rgb(234, 234, 234); position:absolute; right:0; width:32em; height:100%"></div>
             </div>
-            <div id="main">
-                <!-- Panel for fundus images and tools -->
-                <div id="imageBar" style="z-index:100; border-right:1px solid black; border-top:1px solid black; border-bottom:1px solid black;">
-                    <input type="file" id="files" accept="image/gif, image/jpeg, image/png, image/bmp" name="files[]" />
-                    <button id="uploadButton" title="Upload a new volume dataset">Load Volume</button>
+            
+            <!-- Panel for tools, scene previews, etc -->
+            <div id="imageBar">
+                <input type="file" id="files" accept="application/xml" name="files[]" />
+                <button id="uploadButton" title="Upload a new volume dataset">Load Volume</button>
 
-                    <div id="imagePane" class="pane"></div>
+                <!-- Pane used for displaying user's scenes -->
+                <div id="imagePane" class="pane"></div>
                     
-                    <!-- Tool panel for advanced annotation / editing -->
-                    <div id="toolsPane" class="pane">
-                    </div>
+                <div id="toolsPane" class="pane"></div>
 
-                    <!-- Panel for action history buttons -->
-                    <div style="position:absolute; width:100%; bottom:0;">
-                        <button class='history-button' id="undoButton">Undo</button>
-                        <button class='history-button' style="margin-left:4%" id="redoButton">Redo</button>
-                        <button class='history-button' style="float:right;" title="Resets the application to its original state" id="resetButton">Reset</button>
-                    </div>
-
-                    <!-- Tab buttons -->
-                    <!--div id="tabImage" class="tab"></div>-->
-                    <!--div id="tabTool" class="tab"></div>-->
+                <!-- Panel for action history buttons -->
+                <div style="position:absolute; width:100%; bottom:0;">
+                    <button class='history-button' id="undoButton">Undo</button>
+                    <button class='history-button' style="margin-left:4%" id="redoButton">Redo</button>
+                    <button class='history-button' style="float:right;" title="Resets the application to its original state" id="resetButton">Reset</button>
                 </div>
 
+                <!-- Tab buttons -->
+                <!--div id="tabImage" class="tab"></div>-->
+                <!--div id="tabTool" class="tab"></div>-->
+            </div>
+
+            <!-- Panel for image display/interaction and quicktool menus -->
+            <div id="main">
                 <!-- Image viewing pane -->
-                <div id="imageView" style="position:absolute; overflow:visible; left:0; right:300px; height:100%; border:1px solid black;">
+                <div id="imageView" style="position:absolute; overflow:visible; width:100%; height:100%; border-top:1px solid black; border-bottom:1px solid black;">
                     <!-- Canvas element for image rendering -->
                     <canvas id="canvas" style="position:absolute; left:0; top:0;"></canvas> 
                 
@@ -52,6 +54,9 @@
                         <button class="quickSave quick-tool"    title="Download"/>
                         <button class="quickPrint quick-tool"   title="Print"/>
                     </div>
+
+                    <!-- Message box element for flashing error text -->
+                    <div id="messageBox" class="messageBox"></div>
                 </div>
                 
                 <!-- Right click context menu -->
@@ -62,7 +67,6 @@
                     <li><a id="ctxZoom"   href="#">Zoom</a></li>
                 </ul>
             </div>
-            <div id="messageBox" class="messageBox"></div>
         </div>
     </body>
     @Scripts.Render("~/bundles/jquery")
