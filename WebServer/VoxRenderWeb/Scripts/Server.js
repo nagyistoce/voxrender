@@ -8,8 +8,8 @@ VoxRender.Server = {
 
     },
 
-    msgBegStream: function (sceneId) {
-        WebPage.socket.send("\x01"+sceneId);
+    msgBegStream: function (file, id) {
+        WebPage.socket.send("\x01" + file + "\x00" + id);
     },
     
     msgEndStream: function () {

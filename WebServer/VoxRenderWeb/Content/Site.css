@@ -305,30 +305,6 @@ input[type="text"].error-field, input[type="password"].error-field {
     width: 48px !important;
 }
 
-.ui-button .ui-icon.icon-show-segment {
-    background-image: url(../Images/icon-show-segment.png);
-    width:32px;
-    height:32px; 
-    left:14px;
-    top:14px;
-}
-
-.ui-button .ui-icon.icon-show-base {
-    background-image: url(../Images/icon-show-base.png);
-    width:32px;
-    height:32px; 
-    left:14px;
-    top:14px;
-}
-
-.ui-button .ui-icon.icon-show-annotate {
-    background-image: url(../Images/icon-show-annotate.png);
-    width:32px;
-    height:32px; 
-    left:14px;
-    top:14px;
-}
-
 .ui-button .ui-icon.icon-quick-fit {
     background-image: url(../Images/icon-fit.png);
     width:32px;

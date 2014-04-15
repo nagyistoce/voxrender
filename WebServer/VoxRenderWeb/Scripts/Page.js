@@ -101,31 +101,14 @@ Page.prototype =
         // Apply the initial image view layout 
         this.applyLayout();
 
-        // Open the WebSocket connection to the render server
-        this.socket = new WebSocket("ws://localhost:8000/");
-        this.socket.onerror = function (errorEvent) {
-            Message("Unable to establish connection to render server", MessageType.Error);
-        };
-        this.socket.onopen = function (errorEvent) {
-            Message("Connection to render server established", MessageType.Info);
-        };
-        this.socket.onmessage = function (messageEvent) {
-            var msg = messageEvent.data.toString();
-            var char = msg.charAt(0);
-            switch (msg.charAt(0)) {
-                case "\x09": // Frame msg
-                    var scene = WebPage.canvas.getScene();
-                    scene.update(msg.substr(1));
-                    break;
-                case "\x05": // Directory listing
-                    entries = msg.substr(1).split('|');
-                    entries.forEach($.proxy(function (name) {
-                        var id = WebPage.generateUID();
-                        WebPage.imageBar.add(new VoxScene(id, name), null, false);
-                    }));
-                    break;
-            }
-        };
+        // Open a WebSocket connection to a render server
+        $.get('api/render/open', { },
+            $.proxy(function (data, textStatus, jqXHR) {
+                this._openSocket(data.host);
+            }, this), "json")
+            .fail(function (jqXHR, textStatus, err) {
+                //
+            });
     },
 
     applyLayout: function () {
@@ -191,6 +174,38 @@ Page.prototype =
     socket: null,   /// <field name='_socket' type='WebSocket'>WebSocket for render stream</field>
 
     // Private:
+
+    _openSocket: function (server, key) {
+        /// <summary>Establishes a WebSocket connection to a render server</summary>
+
+        this.socket = new WebSocket("ws://" + server + "/");
+        this.socket.onerror = function (errorEvent) {
+            Message("Unable to establish connection to render server", MessageType.Error);
+        };
+        this.socket.onopen = function (errorEvent) {
+            Message("Connection to render server established", MessageType.Info);
+        };
+        this.socket.onmessage = function (messageEvent) {
+            var msg = messageEvent.data.toString();
+            var char = msg.charAt(0);
+            switch (msg.charAt(0)) {
+                case "\x09": // Frame msg
+                    var scene = WebPage.canvas.getScene();
+                    var idPos = msg.indexOf('\x01');
+                    var id = msg.substr(1, idPos - 1);
+                    var data = msg.substr(idPos + 1);
+                    if (scene && scene.id == parseInt(id)) scene.update(data);
+                    break;
+                case "\x05": // Directory listing
+                    entries = msg.substr(1).split('|');
+                    entries.forEach($.proxy(function (name) {
+                        var id = WebPage.generateUID();
+                        WebPage.imageBar.add(new VoxScene(id, name), null, false);
+                    }));
+                    break;
+            }
+        };
+    },
 
     _setActivePane: function (pane) {
         /// <summary>Sets the active window on the side pane, or hides if null</summary>

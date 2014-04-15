@@ -80,6 +80,7 @@ private:
     ResourceId m_rootDir;       ///< Root directory to which the client has permissions
     UInt64     m_key;           ///< Access key for the client's websocket connection
     bool       m_authenticated; ///< Tracks if the user has authenticated themselves
+    String     m_id;            ///< The id of the current active render stream
 };
 
 } // namespace vox

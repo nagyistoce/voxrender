@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace FundusWeb.Models
 {
     // Image Rendering Service
-    public class VoxServer
+    public class ServerLib
     {
         [DllImport("VoxServer.dll", EntryPoint = "voxServerStart", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int voxServerStart(String directory);

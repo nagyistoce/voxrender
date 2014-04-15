@@ -149,6 +149,12 @@ void Session::loadScene(String const& message)
     m_scene = Scene::imprt(uri);
     m_scene.pad();
 
+    // Extract the scene id tag for post back frames
+    size_t filenameLen = strlen(filename);
+    auto * idStr = filename + filenameLen + 1;
+    m_id = String(idStr, strlen(idStr)) + "\x01"; // This is stupid but some javascript implementations are apparently flagrantly disregarding 
+                                                  // standards so we use 0x01 as our null terminator character for seperating strings.
+
     // Begin rendering the scene
     m_renderController.render(m_renderer, m_scene, 100000);
 }
@@ -167,6 +173,9 @@ void Session::unloadScene()
 // ------------------------------------------------------------------------
 void Session::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {
+    //:TODO: - Write output directly to socket stream
+    //       - Use zlib/gzip compressed raw data to circumvent caching issues
+
     frame->data();
     
     //auto tbeg = std::chrono::high_resolution_clock::now();
@@ -181,7 +190,7 @@ void Session::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     //auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
 
     auto opCode = (Char)OpCode_Frame;
-    auto imageData = String(&opCode, 1) + "data:image/jpg;base64," + Base64::encode(imageStream.str());
+    auto imageData = String(&opCode, 1) + m_id + "data:image/jpg;base64," + Base64::encode(imageStream.str());
 
     //VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("TX: %1% ms", time.count()));
     //VOX_LOG_INFO(VOX_SERV_LOG_CAT, format("Size: %1% KB", imageStream.str().length() / 1024));

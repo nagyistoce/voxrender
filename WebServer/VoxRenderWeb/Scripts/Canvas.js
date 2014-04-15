@@ -140,15 +140,20 @@ Canvas.prototype =
         // If there is no image set, clear the drawing canvas
         if (!this._scene) {
             var ctx = this._canvasElem.getContext("2d");
-            ctx.fillStyle = "#808080";
+            ctx.save();
+            ctx.fillStyle = "#7F7F7F";
             ctx.rect(0, 0, this._canvasElem.width, this._canvasElem.height);
             ctx.fill();
+            var bgimg = document.getElementById("bgimg");
+            ctx.drawImage(bgimg,
+                (this._canvasElem.width - bgimg.width)   / 2,
+                (this._canvasElem.height - bgimg.height) / 2);
+            ctx.restore();
             return;
         }
 
         // Acquire a handle to the canvas context
         var ctx = this._canvasElem.getContext("2d");
-        ctx.imageSmoothingEnabled = false;
 
         // Compute the image position offset
         var s = this._scene._zoomLevel;
@@ -161,7 +166,8 @@ Canvas.prototype =
 
         // Draw the scene image
         ctx.save();
-        ctx.fillStyle = "#808080";
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = "#7F7F7F";
         ctx.rect(0, 0, this._canvasElem.width, this._canvasElem.height);
         ctx.fill();
         ctx.scale(s, s);
@@ -189,7 +195,7 @@ Canvas.prototype =
         }
 
         // Send the render start message to the server
-        VoxRender.Server.msgBegStream(this._scene.file());
+        VoxRender.Server.msgBegStream(this._scene.file(), this._scene.id);
 
         var canvas = this;
 
@@ -304,15 +310,6 @@ Canvas.prototype =
     _canvasElem: null,          /// <field name='_canvasElem' type='Canvas'>The HTML canvas elemented associated with this object</field>
     _blockRedraws: false,       /// <field name='_blockRedraws' type='Boolean'>Blocks the draw function from being executed</field>
     _tool: CanvasTool.cursor,   /// <field name='_blockRedraws' type='Boolean'></field>
-}
-
-// ----------------------------------------------------------------------------
-//  Action for changing a paint annotation on an image
-// ----------------------------------------------------------------------------
-function PaintToolAction() {
-    this._img = this._getBuf();
-    this.undo = this._swapBufs;
-    this.redo = this._swapBufs;
 }
 
 // ----------------------------------------------------------------------------

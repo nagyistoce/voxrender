@@ -14,6 +14,7 @@ namespace FundusWeb.Controllers
 {
     public class SceneController : ApiController
     {
+        [HttpGet]
         public Scene[] Get(string id)
         {
             // Query the users stored scene files
@@ -23,14 +24,7 @@ namespace FundusWeb.Controllers
             return new Scene[]{ new Scene() };
         }
 
-        public void Render(string id)
-        {
-            // Generate the expected filepath to the resource on disk
-            var filePath = HttpContext.Current.Server.MapPath("~/Users/" + id);
-
-           // Begin rendering the scene file
-        }
-
+        [HttpPost]
         public Scene Post(Scene scene)
         {
             // Ensure that the specified scene does not already exist
@@ -60,6 +54,7 @@ namespace FundusWeb.Controllers
             return new Scene { id = scene.id, data = null };
         }
 
+        [HttpDelete]
         public bool Delete(string id)
         {
             var filePath = HttpContext.Current.Server.MapPath("~/Users/" + id);

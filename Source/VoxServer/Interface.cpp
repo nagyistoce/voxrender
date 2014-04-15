@@ -122,7 +122,7 @@ void voxServerEnd()
 int voxServerBeginStream(uint16_t * portOut, uint64_t * keyOut, char const* rootDir)
 {
     // Select a port and key for the stream
-    UInt16 port = 8000;
+    UInt16 port = *portOut ? *portOut : 8000;
     UInt64 key  = 0;
     
     // Prepare the WebSocket to accept an incoming connection

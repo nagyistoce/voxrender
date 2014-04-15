@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_SUITE( Server )
         {
             voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);
 
-            UInt16 port;
-            UInt64 key;
+            UInt16 port = 0;
+            UInt64 key  = 0;
             voxServerBeginStream(&port, &key, "file:///C:/Users/Lucas/Documents/Projects/voxrender/trunk/Models/Examples/");
 
             voxServerEnd();

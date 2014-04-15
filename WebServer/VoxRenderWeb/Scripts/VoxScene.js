@@ -50,6 +50,8 @@ VoxScene.prototype =
 
     update: function (newImageData) {
         /// <summary>Processes the most recent frame from the server</summary>
+        // :TODO: This is why I don't do web development. This apparently causes cache leaks on
+        //        every single major browser because they decide to cache every image.
 
         if (this.baseImage) this.baseImage.src = newImageData;
     },
