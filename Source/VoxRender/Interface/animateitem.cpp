@@ -51,6 +51,7 @@ AnimateItem::AnimateItem(AnimateWidget * parent) :
 	m_brushDisabled(QBrush(QColor::fromHsl(0, 0, 210))),
 	m_penEnabled(QPen(QColor::fromHsl(0, 0, 80), 0.1)),
 	m_penDisabled(QPen(QColor::fromHsl(0, 0, 190))),
+    m_isMouseDown(false),
 	m_font("Arial", 10),
     m_offset(0),
     m_range(120),
@@ -97,8 +98,8 @@ void AnimateItem::scrollWindow()
 void AnimateItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 {
 	QGraphicsRectItem::mousePressEvent(pEvent);
-    
-    mouseMoveEvent(pEvent);
+
+    m_isMouseDown = true;
 
     if (pEvent->button() == Qt::RightButton)
     {
@@ -129,6 +130,8 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 {
 	QGraphicsRectItem::mouseReleaseEvent(pEvent);
 
+    m_isMouseDown = false;
+
     m_scrollTimer.stop();
 
     if (pEvent->button() == Qt::RightButton) 
@@ -152,6 +155,7 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
     }
 
     m_mousePos = -1;
+    m_isDragging = false;
 
     update();
 }
@@ -159,7 +163,7 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 // ------------------------------------------------------------
 //  Update the position of the draggable frame cursor
 // ------------------------------------------------------------
-void AnimateItem::mouseMoveEvent(QGraphicsSceneMouseEvent* pEvent)
+void AnimateItem::onMouseMove(QMouseEvent* pEvent)
 {
     // :TODO: Stuff to move to filescope/private members
 	const float WIDTH  = 60.0f;
@@ -292,7 +296,10 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     // Draw the mouse frame hover line if the mouse is captured
     if (m_mousePos != -1)
     {
-        painter->setPen(QPen(QColor::fromHsl(127, 127, 127), 3));
+        auto pen = m_isMouseDown ?
+            QPen(QColor::fromHsl(127, 127, 127), 3) :
+            QPen(QColor::fromHsl(127, 127, 15, 0), 3);
+        painter->setPen(pen);
         auto xpos = gridRect.left() + DX * m_mousePos / ((float)m_step);
         painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
     }

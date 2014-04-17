@@ -47,13 +47,14 @@ public:
 		const QStyleOptionGraphicsItem* options, 
 		QWidget* widget);
 
+    void onMouseMove(QMouseEvent * event);
+
     /** Sets the currently selected frame number */
     void setFrame(int frame);
 
 protected:
 	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent);
-    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* pEvent);
 
 private:
 	QBrush  m_bkBrushEnabled;	// Enabled state background brush
@@ -75,8 +76,9 @@ private:
     int m_range;    ///< Number of frames visible in the window
     int m_step;     ///< Number of frame between trace lines
 
-    int  m_dragFrame;  ///< The original index of a frame being moved
-    bool m_isDragging; ///< Flag to determine if frame drag is occurring
+    int  m_dragFrame;   ///< The original index of a frame being moved
+    bool m_isDragging;  ///< Flag to determine if frame drag is occurring
+    bool m_isMouseDown; ///< Mouse click tracking
 
     QTimer m_scrollTimer;
 

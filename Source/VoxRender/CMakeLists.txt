@@ -82,6 +82,7 @@ IF(Qt5Widgets_FOUND)
         Interface/aboutdialogue.cpp
         Interface/ambientlightwidget.cpp
         Interface/animatewidget.cpp
+        Interface/animateview.cpp
         Interface/arealightwidget.cpp
         Interface/camerawidget.cpp
         Interface/clipdialogue.cpp
@@ -120,6 +121,7 @@ IF(Qt5Widgets_FOUND)
         Interface/aboutdialogue.h
         Interface/ambientlightwidget.h
         Interface/animatewidget.h
+        Interface/animateview.h
         Interface/arealightwidget.h
         Interface/camerawidget.h
         Interface/clipdialogue.h

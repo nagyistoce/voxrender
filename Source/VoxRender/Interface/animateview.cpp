@@ -1,8 +1,9 @@
 /* ===========================================================================
 
 	Project: VoxRender
-
-	Description: Volume rendering application
+    
+	Description: Performs interactive rendering of volume data using 
+		photon mapping and volume ray casting techniques.
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -34,8 +35,8 @@ using namespace vox;
 // ----------------------------------------------------------------------------
 //  Constructor - Initialize display scene and view parameters
 // ----------------------------------------------------------------------------
-AnimateView::AnimateView(QWidget * parent) : 
-    QGraphicsView(parent)
+AnimateView::AnimateView(AnimateWidget * parent) : 
+    m_animateItem(new AnimateItem(parent))
 {
 	// Make scene backdrop flush with window color
  	setFrameShadow(Sunken); setFrameShape(NoFrame);
@@ -43,27 +44,54 @@ AnimateView::AnimateView(QWidget * parent) :
 
 	// Set interaction policies
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-
-    // Configure the slots'n'signals for histogram image generation and update
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(onSceneChanged()));
+	setDragMode(QGraphicsView::ScrollHandDrag);
 
 	// Setup histogram scene
 	m_scene.setBackgroundBrush(QColor(255, 255, 255));
+	m_scene.addItem(m_animateItem); 
 	setScene(&m_scene);
+    setMouseTracking(true);
 }
     
-// ---------------------------------------------------------
-//  Destructor 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Destructor - Frees the image buffer
+// ----------------------------------------------------------------------------
 AnimateView::~AnimateView()
 {
 }
 
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  
-// ---------------------------------------------------------
-void AnimateView::onSceneChanged()
+// ----------------------------------------------------------------------------
+void AnimateView::mouseMoveEvent(QMouseEvent* event)
 {
+    m_animateItem->onMouseMove(event);
+}
+
+// ----------------------------------------------------------------------------
+//  Zoom in/out on mouse wheel event
+// ----------------------------------------------------------------------------
+void AnimateView::wheelEvent(QWheelEvent* event) 
+{
+}
+
+// ----------------------------------------------------------------------------
+//  Histogram view resize event
+// ----------------------------------------------------------------------------
+void AnimateView::resizeEvent(QResizeEvent *event) 
+{	
+    // Resize the canvas rectangle and compute margins
+	m_canvasRectangle = rect();
+
+	m_scene.setSceneRect(m_canvasRectangle);
+
+	m_canvasRectangle.adjust(0, 0, -1, -20);
+
+	m_animateItem->setRect(m_canvasRectangle);
+
+    //m_histogramItem.setOffset(m_canvasRectangle.left(), m_canvasRectangle.top());
+
+	QGraphicsView::resizeEvent(event);
 }

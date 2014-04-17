@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>512</width>
-    <height>336</height>
+    <height>270</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -144,19 +144,45 @@
     </layout>
    </item>
    <item>
-    <widget class="QGraphicsView" name="view">
+    <widget class="QFrame" name="frame">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
+       <horstretch>255</horstretch>
+       <verstretch>255</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>0</width>
+       <width>255</width>
        <height>255</height>
       </size>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>999999</width>
+       <height>255</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <layout class="QGridLayout" name="frameLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+     </layout>
     </widget>
    </item>
    <item>
@@ -202,7 +228,7 @@
        <property name="value">
         <number>1000</number>
        </property>
-       <property name="displayIntegerBase">
+       <property name="displayIntegerBase" stdset="0">
         <number>10</number>
        </property>
       </widget>

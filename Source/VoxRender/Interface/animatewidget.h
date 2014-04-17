@@ -36,7 +36,7 @@
 
 namespace Ui { class AnimateWidget; }
 
-class AnimateItem;
+class AnimateView;
 
 // Volume data histogram widget
 class AnimateWidget : public QWidget
@@ -53,8 +53,6 @@ public:
 private:
 	Ui::AnimateWidget * ui;
 
-    void resizeEvent(QResizeEvent *event);
-
     void update();
 
     void onAddKey(int index, vox::KeyFrame & key, bool suppress);
@@ -66,7 +64,7 @@ private:
 
     QGraphicsScene m_scene;
 
-    AnimateItem * m_animateItem;
+    AnimateView * m_animateView;
 
 private slots:
     void sceneChanged();

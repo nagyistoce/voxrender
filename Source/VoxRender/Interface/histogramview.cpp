@@ -4,7 +4,7 @@
 
 	Description: Implements a display interface for volume histograms
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -50,10 +50,10 @@ HistogramView::HistogramView(QWidget *parent, bool createTransferView) :
 	setBackgroundBrush(QBrush(QColor(240, 240, 240)));
 
 	// Set interaction policies
-	setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
-	setDragMode( QGraphicsView::ScrollHandDrag );
+	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+	setDragMode(QGraphicsView::ScrollHandDrag);
 
     // Configure the slots'n'signals for histogram image generation and update
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(updateHistogramData()));
@@ -61,34 +61,35 @@ HistogramView::HistogramView(QWidget *parent, bool createTransferView) :
     connect(generator, SIGNAL(histogramComplete(int)), this, SLOT(onHistogramReady(int)));
 
 	// Setup histogram scene
-	m_scene.setBackgroundBrush( QColor(255, 255, 255) );
-	m_scene.addItem( &m_histogramItem ); 
-	m_scene.addItem( &m_gridItem );
-	setScene( &m_scene );
+	m_scene.setBackgroundBrush(QColor(255, 255, 255));
+	m_scene.addItem(&m_histogramItem); 
+	m_scene.addItem(&m_gridItem);
+	setScene(&m_scene);
+    setMouseTracking(true);
 
     // Ensure correct ordering
-	m_gridItem.setZValue( 0 );
-	m_histogramItem.setZValue( 1 );
+	m_gridItem.setZValue(0);
+	m_histogramItem.setZValue(1);
     
     // Transfer function item is optional...
     if (createTransferView)
     {
         m_transferItem = new TransferItem();
-        m_scene.addItem( m_transferItem );
-        m_transferItem->setZValue( 2 );
+        m_scene.addItem(m_transferItem);
+        m_transferItem->setZValue(2);
     }
 }
     
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Destructor - Frees the image buffer
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
 HistogramView::~HistogramView()
 {
 }
 
-// ---------------------------------------------------------
-// Zoom in/out on mouse wheel event
-// ---------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Zoom in/out on mouse wheel event
+// ----------------------------------------------------------------------------
 void HistogramView::wheelEvent(QWheelEvent* event) 
 {
 	const float zoomsteps[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };

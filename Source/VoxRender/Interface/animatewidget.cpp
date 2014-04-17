@@ -30,7 +30,7 @@
 // Include Dependencies
 #include "mainwindow.h"
 #include "utilities.h"
-#include "animateitem.h"
+#include "animateview.h"
 #include "Actions/AddRemKeyAct.h"
 #include "VoxLib/Action/ActionManager.h"
 
@@ -46,19 +46,8 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
 {
 	ui->setupUi(this);
 
-    ui->view->setScene(&m_scene);
-
-    ui->view->setMouseTracking(true);
-    ui->view->setFrameShape(QGraphicsView::NoFrame);
-    ui->view->setFrameShadow(QGraphicsView::Sunken);
-	ui->view->setBackgroundBrush(QBrush(QColor(240, 240, 240)));
-	ui->view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	ui->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	ui->view->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-    
-    m_animateItem = new AnimateItem(this);
-    m_scene.addItem(m_animateItem);
-    resizeEvent(&QResizeEvent(size(), size()));
+	m_animateView = new AnimateView(this);
+	ui->frameLayout->addWidget(m_animateView, 0, 0, 1, 1 );
 
     connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
@@ -69,23 +58,6 @@ AnimateWidget::AnimateWidget(QWidget * parent) :
 AnimateWidget::~AnimateWidget()
 {
     delete ui;
-}
-
-// ----------------------------------------------------------------------------
-//  Resizes the animation view when the widget is resized
-// ----------------------------------------------------------------------------
-void AnimateWidget::resizeEvent(QResizeEvent *event) 
-{	
-    // Resize the canvas rectangle and compute margins
-	auto canvasRectangle = ui->view->viewport()->rect();
-    
-	m_scene.setSceneRect(canvasRectangle);
-
-    canvasRectangle.adjust(0, 0, -1, -20);
-
-    m_animateItem->setRect(canvasRectangle);
-
-    QWidget::resizeEvent(event);
 }
 
 // ----------------------------------------------------------------------------
@@ -119,7 +91,7 @@ void AnimateWidget::update()
 void AnimateWidget::onAddKey(int index, KeyFrame & key, bool suppress)
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, true));
-    m_animateItem->update();
+    m_animateView->update();
 }
 
 // ----------------------------------------------------------------------------
@@ -128,7 +100,7 @@ void AnimateWidget::onAddKey(int index, KeyFrame & key, bool suppress)
 void AnimateWidget::onRemoveKey(int index, KeyFrame & key, bool suppress)
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, false));
-    m_animateItem->update();
+    m_animateView->update();
 }
 
 // ----------------------------------------------------------------------------
@@ -144,7 +116,7 @@ void AnimateWidget::setFrame(int value)
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_spinBox_frame_valueChanged(int value)
 {
-    m_animateItem->setFrame(value);
+    m_animateView->setFrame(value);
 }
 
 // ----------------------------------------------------------------------------

@@ -1,8 +1,9 @@
 /* ===========================================================================
 
 	Project: VoxRender
-
-	Description: Volume rendering application
+    
+	Description: Performs interactive rendering of volume data using 
+		photon mapping and volume ray casting techniques.
 
     Copyright (C) 2014 Lucas Sherman
 
@@ -28,7 +29,7 @@
 #define ANIMATE_VIEW_H
 
 // Include Dependencies
-#include "griditem.h"
+#include "animateitem.h"
 
 // QT Dependencies
 #include <QtCore/QEvent>
@@ -43,7 +44,9 @@
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsView>
 
-/** Implements a QT graphics view for displaying animation sequence data */
+class AnimateWidget;
+
+/** Implements a QT graphics view for volume histogram data and transfer functions */
 class AnimateView : public QGraphicsView
 {
 	Q_OBJECT
@@ -51,14 +54,23 @@ class AnimateView : public QGraphicsView
 public:
     ~AnimateView();
 
-	AnimateView(QWidget * parent = 0);
+    /** Constructs a new HistogramView with an option transfer function editor */
+	AnimateView(AnimateWidget * parent);
 
-private slots:
-    void onSceneChanged();
+    void setFrame(int value) { m_animateItem->setFrame(value); }
+    void update() { m_animateItem->update(); }
 
 private:
-	QGraphicsScene m_scene; ///< Scene handle
+    void mouseMoveEvent(QMouseEvent* event);
+	void wheelEvent(QWheelEvent *event);
+	void resizeEvent(QResizeEvent *event);
+    
+	AnimateItem *  m_animateItem;  ///< Animate image
+	QGraphicsScene m_scene;        ///< Scene object
+
+    QRectF   m_canvasRectangle; ///< Full canvas for drawing operations
+	QMargins m_margins;         ///< Margins for actual histogram display
 };
 
 // End definition
-#endif // HISTOGRAM_VIEW_H
+#endif // ANIMATE_VIEW_H
