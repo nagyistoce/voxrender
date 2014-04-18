@@ -50,6 +50,8 @@ public:
 
     void setFrame(int value);
 
+    void setFrameHover(int value);
+
 private:
 	Ui::AnimateWidget * ui;
 

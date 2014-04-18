@@ -60,11 +60,17 @@ public:
     void setFrame(int value) { m_animateItem->setFrame(value); }
     void update() { m_animateItem->update(); }
 
+private: // Mouse event redirects to the animate item
+    virtual void mouseMoveEvent(QMouseEvent* pEvent) { m_animateItem->onMouseMove(pEvent); }
+    virtual void mousePressEvent(QMouseEvent* pEvent) { m_animateItem->onMousePress(pEvent); }
+    virtual void mouseReleaseEvent(QMouseEvent* pEvent) { m_animateItem->onMouseRelease(pEvent); }
+    virtual void wheelEvent(QWheelEvent * pEvent) { m_animateItem->onMouseWheel(pEvent); }
+    virtual void enterEvent(QEvent * pEvent) { m_animateItem->onMouseEnter(pEvent); }
+    virtual void leaveEvent(QEvent * pEvent) { m_animateItem->onMouseLeave(pEvent); }
+
 private:
-    void mouseMoveEvent(QMouseEvent* event);
-	void wheelEvent(QWheelEvent *event);
-	void resizeEvent(QResizeEvent *event);
-    
+	virtual void resizeEvent(QResizeEvent *event);
+
 	AnimateItem *  m_animateItem;  ///< Animate image
 	QGraphicsScene m_scene;        ///< Scene object
 

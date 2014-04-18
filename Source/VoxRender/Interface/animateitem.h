@@ -31,6 +31,9 @@
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGraphicsRectItem>
 
+#include "VoxScene/Animator.h"
+#include "VoxScene/Scene.h"
+
 #include <QTimer>
 
 class AnimateWidget;
@@ -42,19 +45,22 @@ class AnimateItem : public QObject, public QGraphicsRectItem
 
 public:
 	AnimateItem(AnimateWidget * parent);
-
+    
+    /** Mouse event handlers */
+    void onMouseMove(QMouseEvent * pEvent);
+    void onMousePress(QMouseEvent * pEvent);
+    void onMouseRelease(QMouseEvent * pEvent);
+    void onMouseWheel(QWheelEvent * pEvent);
+    void onMouseEnter(QEvent * pEvent);
+    void onMouseLeave(QEvent * pEvent);
+    
+    /** Draws the animation widget's keyframe display */
 	virtual void paint(QPainter* painter, 
 		const QStyleOptionGraphicsItem* options, 
 		QWidget* widget);
 
-    void onMouseMove(QMouseEvent * event);
-
     /** Sets the currently selected frame number */
     void setFrame(int frame);
-
-protected:
-	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
-	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent);
 
 private:
 	QBrush  m_bkBrushEnabled;	// Enabled state background brush
@@ -75,12 +81,14 @@ private:
     int m_offset;   ///< Starting frame in the window
     int m_range;    ///< Number of frames visible in the window
     int m_step;     ///< Number of frame between trace lines
+    
+    vox::KeyFrame m_dragFrame; ///< Cache of frame being repositioned
+    int  m_dragIndex;          ///< The original index of a frame being moved
+    bool m_isDragging;         ///< Flag to determine if frame drag is occurring
 
-    int  m_dragFrame;   ///< The original index of a frame being moved
-    bool m_isDragging;  ///< Flag to determine if frame drag is occurring
     bool m_isMouseDown; ///< Mouse click tracking
 
-    QTimer m_scrollTimer;
+    QTimer m_scrollTimer; ///< Timer for window scrolling
 
 private slots:
     void scrollWindow();

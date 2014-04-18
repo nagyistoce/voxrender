@@ -112,6 +112,17 @@ void AnimateWidget::setFrame(int value)
 }
 
 // ----------------------------------------------------------------------------
+//  Sets the frame number in the hover frame display
+// ----------------------------------------------------------------------------
+void AnimateWidget::setFrameHover(int value)
+{
+    if (value != -1) 
+        ui->label_frame->setText(boost::lexical_cast<String>(value).c_str());
+    else ui->label_frame->clear();
+
+}
+
+// ----------------------------------------------------------------------------
 //  Updates the graphics display when the frame index is changed
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_spinBox_frame_valueChanged(int value)

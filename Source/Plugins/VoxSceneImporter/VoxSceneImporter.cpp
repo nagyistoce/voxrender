@@ -113,12 +113,13 @@ namespace
                 m_tree.add("Scene.Version.Minor", versionMinor);
 
                 // Write the scene information
-                if (m_options.lookup("ExportCamera", true))   writeCamera();
-                if (m_options.lookup("ExportVolume", true))   writeVolume();
-                if (m_options.lookup("ExportLights", true))   writeLighting();
-                if (m_options.lookup("ExportTransfer", true)) writeTransfer();
-                if (m_options.lookup("ExportClipGeo", true))  writeClipGeometry();
-                if (m_options.lookup("ExportParams", true))   writeParams();
+                if (m_options.lookup("ExportCamera", true))    writeCamera(m_scene.camera, m_tree);
+                if (m_options.lookup("ExportVolume", true))    writeVolume(m_scene.volume, m_tree);
+                if (m_options.lookup("ExportLights", true))    writeLighting(m_scene.lightSet, m_tree);
+                if (m_options.lookup("ExportTransfer", true))  writeTransfer(m_scene.transfer, m_scene.transferMap, m_tree);
+                if (m_options.lookup("ExportClipGeo", true))   writeClipGeometry(m_scene.clipGeometry, m_tree);
+                if (m_options.lookup("ExportParams", true))    writeParams(m_scene.parameters, m_tree);
+                if (m_options.lookup("ExportAnimation", true)) writeAnimator();
 
                 // Write the compiled XML data to the output stream
                 boost::property_tree::xml_writer_settings<char> settings('\t', 1);
@@ -129,13 +130,11 @@ namespace
             // --------------------------------------------------------------------
             //  Write the camera settings to the property tree
             // --------------------------------------------------------------------
-            void writeCamera()
+            static void writeCamera(std::shared_ptr<Camera> camera, boost::property_tree::ptree & tree)
             {
-                if (!m_scene.camera) return;
+                if (!camera) return;
 
                 boost::property_tree::ptree node;
-                auto camera = m_scene.camera;
-                
                 node.add(C_APERTURE, camera->apertureSize());
                 node.add(C_FOV, camera->fieldOfView() * 180.0f / (float)M_PI);
                 node.add(C_FOCAL_DIST, camera->focalDistance());
@@ -145,19 +144,16 @@ namespace
                 node.add(C_UP, camera->up());
                 node.add(C_RIGHT, camera->right());
 
-                m_tree.add_child("Scene.Camera", node);
+                tree.add_child("Scene.Camera", node);
             }
             
             // --------------------------------------------------------------------
             //  Write the volume settings to the property tree (uses .raw format)
             // --------------------------------------------------------------------
-            void writeVolume() 
+            void writeVolume(std::shared_ptr<Volume> volume, boost::property_tree::ptree & tree) 
             {
-                if (!m_scene.volume) return;
-
                 boost::property_tree::ptree node;
                 auto const COMP_FORMAT = "gzip";
-                auto volume = m_scene.volume;
                 
                 // Compose the volume format options
                 OptionSet options;
@@ -182,64 +178,63 @@ namespace
                 node.add(V_SPACING, volume->spacing());
                 node.add(V_OFFSET, volume->offset());
 
-                m_tree.add_child("Scene.Volume", node);
+                tree.add_child("Scene.Volume", node);
             }
 
             // --------------------------------------------------------------------
             //  Write the lighting settings to the property tree
             // --------------------------------------------------------------------
-            void writeLighting()
+            static void writeLighting(std::shared_ptr<LightSet> lightSet, boost::property_tree::ptree & tree)
             {
-                if (!m_scene.lightSet) return;
+                if (!lightSet) return;
 
                 boost::property_tree::ptree node;
-                auto lights = m_scene.lightSet;
-                
-                // Check for ambient level specification
-                node.add("Ambient", lights->ambientLight());
-                BOOST_FOREACH (auto & light, lights->lights())
+                node.add("Ambient", lightSet->ambientLight());
+                BOOST_FOREACH (auto & light, lightSet->lights())
                 {
                     boost::property_tree::ptree cNode;
-
                     cNode.add("Color", light->color());
                     cNode.add("Position", light->position());
 
                     node.add_child("Light", cNode);
                 }
 
-                m_tree.add_child("Scene.Lights", node);
+                tree.add_child("Scene.Lights", node);
             }
 
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree
             // --------------------------------------------------------------------
-            void writeTransfer()
+            static void writeTransfer(std::shared_ptr<Transfer> transfer, 
+                                      std::shared_ptr<TransferMap> transferMap, 
+                                      boost::property_tree::ptree & tree)
             {
-                if (!m_scene.transfer && !m_scene.transferMap) return;
+                if (!transfer && !transferMap) return;
 
                 boost::property_tree::ptree node;
-                auto transfer = m_scene.transfer;
                 
                 if (!transfer) // Transfer map only (or no transfer)
                 {
-                    // :TODO: Export raw image data
+                    // :TODO: Export raw map data
+                    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                        "TransferMap export not implemented", Error_NotImplemented);
                 }
-                else if (transfer->type() == Transfer1D::typeID()) writeTransfer1D(node);
-                else if (transfer->type() == Transfer2D::typeID()) writeTransfer2D(node);
+                else if (transfer->type() == Transfer1D::typeID()) writeTransfer1D(transfer, node);
+                else if (transfer->type() == Transfer2D::typeID()) writeTransfer2D(transfer, node);
                 else
                 {
                     throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Unrecognized transfer function type", Error_BadFormat);
                 }
 
-                m_tree.add_child("Scene.Transfer", node);
+                tree.add_child("Scene.Transfer", node);
             }
             
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree (1D)
             // --------------------------------------------------------------------
-            void writeTransfer1D(boost::property_tree::ptree & node)
+            static void writeTransfer1D(std::shared_ptr<Transfer> transfer, boost::property_tree::ptree & node)
             {
-                auto transfer1D = dynamic_cast<Transfer1D*>(m_scene.transfer.get());
+                auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get());
 
                 node.add(T_TYPE, 1);
                 node.add(T_RESOLUTION, transfer1D->resolution()[0]);
@@ -255,9 +250,9 @@ namespace
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree (2D)
             // --------------------------------------------------------------------
-            void writeTransfer2D(boost::property_tree::ptree & node)
+            static void writeTransfer2D(std::shared_ptr<Transfer> transfer, boost::property_tree::ptree & node)
             {
-                auto transfer2D = dynamic_cast<Transfer2D*>(m_scene.transfer.get());
+                auto transfer2D = dynamic_cast<Transfer2D*>(transfer.get());
 
                 node.add(T_TYPE, 2);
                 auto res = transfer2D->resolution();
@@ -283,31 +278,54 @@ namespace
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree (3D)
             // --------------------------------------------------------------------
-            void writeTransfer3D(boost::property_tree::ptree & node)
+            static void writeTransfer3D(std::shared_ptr<Transfer> transfer, boost::property_tree::ptree & node)
             {
             }
 
             // --------------------------------------------------------------------
             //  Write the render parameter settings to the property tree
             // --------------------------------------------------------------------
-            void writeParams()
+            static void writeParams(std::shared_ptr<RenderParams> settings, boost::property_tree::ptree & tree)
             {
-                if (!m_scene.parameters) return;
+                if (!settings) return;
 
                 boost::property_tree::ptree node;
-                auto settings = m_scene.parameters;
-                
                 node.add(P_STEP_PRIMARY, settings->primaryStepSize());
                 node.add(P_STEP_SHADOW,  settings->shadowStepSize());
                 node.add(P_GRAD_CUTOFF,  settings->gradientCutoff());
                 node.add(P_SCATTER,      settings->scatterCoefficient());
                 node.add(P_EDGE_ENHANCE, settings->edgeEnhancement());
                 
-                m_tree.add_child("Scene.Settings", node);
+                tree.add_child("Scene.Settings", node);
+            }
+            
+            // --------------------------------------------------------------------
+            //  Write the clipping geometry settings to the property tree
+            // --------------------------------------------------------------------
+            static void writeClipGeometry(std::shared_ptr<PrimGroup> graph, boost::property_tree::ptree & tree)
+            {
+                if (!graph) return;
+
+                boost::property_tree::ptree node;
+                graph->exprt(node);
+
+                tree.add_child("Scene.ClipGeometry", node);
             }
 
             // --------------------------------------------------------------------
-            //  
+            //  Writes an abridged scene file corresponding to a keyframe
+            // --------------------------------------------------------------------
+            static void writeKeyFrame(Scene const& scene, boost::property_tree::ptree & tree)
+            {
+                writeCamera(scene.camera, tree);
+                writeLighting(scene.lightSet, tree);
+                writeTransfer(scene.transfer, scene.transferMap, tree);
+                writeClipGeometry(scene.clipGeometry, tree);
+                writeParams(scene.parameters, tree);
+            }
+
+            // --------------------------------------------------------------------
+            //  Write the animator settings and keyframes to the property tree
             // --------------------------------------------------------------------
             void writeAnimator()
             {
@@ -317,21 +335,15 @@ namespace
 
                 node.add(P_ANI_FRAME, m_scene.animator->framerate());
 
+                BOOST_FOREACH (auto & key, m_scene.animator->keyframes())
+                {
+                    boost::property_tree::ptree snode;
+                    snode.add("Frame", key.first);
+                    writeKeyFrame(key.second, snode);
+                    node.add_child("Key", snode);
+                }
+
                 m_tree.add_child("Scene.Animator", node);
-            }
-
-            // --------------------------------------------------------------------
-            //  Write the clipping geometry settings to the property tree
-            // --------------------------------------------------------------------
-            void writeClipGeometry()
-            {
-                if (!m_scene.clipGeometry) return;
-
-                boost::property_tree::ptree node;
-                auto graph = m_scene.clipGeometry;
-                graph->exprt(node);
-
-                m_tree.add_child("Scene.ClipGeometry", node);
             }
 
         private:
@@ -642,6 +654,7 @@ namespace
             }
             
             // --------------------------------------------------------------------
+            //  Creates a raw transfer map from 'TransferMap' node of a scene file
             // --------------------------------------------------------------------
             void loadTransferMap(Scene & scene)
             {
@@ -821,11 +834,17 @@ namespace
                     auto framerate = m_node->get(P_ANI_FRAME, animator.framerate());
                     if (framerate > 120) 
                     {
-                        framerate = 120;
-                        VOX_LOG_WARNING(Error_Range, VSI_LOG_CATEGORY, 
-                            "Framerate clipped to maximum of 120Hz");
+                        VOX_LOG_WARNING(Error_Range, VSI_LOG_CATEGORY, "Animation framerate exceeds 120Hz");
                     }
                     animator.setFramerate(framerate);
+
+                    // Load the keyframes
+                    BOOST_FOREACH(auto & keyFrameNode, *m_node)
+                    {
+                        VOX_LOG_INFO(VOX_LOG_CATEGORY, keyFrameNode.first);
+                    }
+           
+                    pop();
 
                     return animatorPtr;
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>512</width>
-    <height>270</height>
+    <height>336</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -64,6 +64,13 @@
        <property name="icon">
         <iconset resource="icons.qrc">
          <normaloff>:/icons/clipboardicon.png</normaloff>:/icons/clipboardicon.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_frame">
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </item>
@@ -228,7 +235,7 @@
        <property name="value">
         <number>1000</number>
        </property>
-       <property name="displayIntegerBase" stdset="0">
+       <property name="displayIntegerBase">
         <number>10</number>
        </property>
       </widget>

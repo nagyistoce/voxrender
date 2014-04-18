@@ -102,7 +102,6 @@ public:
         m_isPaused         = false;
         m_currIterations   = 0;
         m_scene            = scene;
-        m_scene.pad();
 
         // Store the start time for render duration
         m_startTime = std::chrono::system_clock::now();
@@ -319,6 +318,8 @@ private:
     // ----------------------------------------------------------------------------
     void entryPoint()
     {
+        m_scene.pad();
+
         std::exception_ptr error = nullptr;
 
         try

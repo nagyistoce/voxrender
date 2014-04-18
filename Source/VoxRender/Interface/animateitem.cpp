@@ -37,8 +37,6 @@
 namespace {
 namespace filescope {
 
-
-
 } // namespace filescope
 } // namespace anonymous
 
@@ -93,14 +91,20 @@ void AnimateItem::scrollWindow()
 }
 
 // ------------------------------------------------------------
+//  Scrolls the window on mouse wheel events
+// ------------------------------------------------------------
+void AnimateItem::onMouseWheel(QWheelEvent * pEvent)
+{
+    m_offset += pEvent->delta() / 12;
+
+    update();
+}
+
+// ------------------------------------------------------------
 //
 // ------------------------------------------------------------
-void AnimateItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
+void AnimateItem::onMousePress(QMouseEvent* pEvent)
 {
-	QGraphicsRectItem::mousePressEvent(pEvent);
-
-    m_isMouseDown = true;
-
     if (pEvent->button() == Qt::RightButton)
     {
         auto frame = m_mousePos + m_offset;
@@ -117,19 +121,23 @@ void AnimateItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
         }
         else
         {
-            m_dragFrame  = frame;
+            m_dragIndex = frame;
+            m_dragFrame = iter->second;
+            animator->removeKeyframe(iter->first, true);
             m_isDragging = true;
+            m_isMouseDown = true;
         }
     }
+    else m_isMouseDown = true;
+
+    update();
 }
 
 // ------------------------------------------------------------
 //  Set the current frame to the hovered frame
 // ------------------------------------------------------------
-void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
+void AnimateItem::onMouseRelease(QMouseEvent* pEvent)
 {
-	QGraphicsRectItem::mouseReleaseEvent(pEvent);
-
     m_isMouseDown = false;
 
     m_scrollTimer.stop();
@@ -139,14 +147,8 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
         if (m_isDragging)
         {
             auto animator = MainWindow::instance->scene().animator;
-            auto keys = animator->keyframes();
-            auto iter = keys.begin();
-            while (iter != keys.end() && iter->first < m_dragFrame)
-                ++iter;
-
-            auto scene = iter->second;
-            animator->removeKeyframe(m_dragFrame);
-            animator->addKeyframe(scene, m_offset + m_mousePos);
+            animator->addKeyframe(m_dragFrame, m_offset + m_mousePos);
+            m_dragFrame.reset();
         }
     }
     else if (pEvent->button() == Qt::LeftButton)
@@ -154,7 +156,6 @@ void AnimateItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
         m_parent->setFrame(m_mousePos + m_offset);
     }
 
-    m_mousePos = -1;
     m_isDragging = false;
 
     update();
@@ -183,21 +184,32 @@ void AnimateItem::onMouseMove(QMouseEvent* pEvent)
     if (mousePos == m_mousePos) return;
 
     m_mousePos = mousePos;
+    m_parent->setFrameHover(m_mousePos + m_offset);
 
-    m_scrollTimer.stop(); // Stop scrolling
-
-    if (m_mousePos == 0) // Scroll left
+    // Scrolling
+    if (m_isMouseDown)
     {
-        m_mousePos = 0;
-
-        m_scrollTimer.start(500);
+        m_scrollTimer.stop();
+        if (m_mousePos == 0 || m_mousePos == m_range) 
+            m_scrollTimer.start(500);
     }
-    else if (m_mousePos == m_range) // Scroll right
-    {
-        m_mousePos = m_range;
 
-        m_scrollTimer.start(500);
-    }
+    update();
+}
+
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+void AnimateItem::onMouseEnter(QEvent * pEvent) { }
+
+// ------------------------------------------------------------
+//  Resets the mouse hover index
+// ------------------------------------------------------------
+void AnimateItem::onMouseLeave(QEvent * pEvent)
+{
+    m_mousePos = -1;
+    m_parent->setFrameHover(-1);
+
+    m_scrollTimer.stop();
 
     update();
 }
@@ -298,10 +310,15 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     {
         auto pen = m_isMouseDown ?
             QPen(QColor::fromHsl(127, 127, 127), 3) :
-            QPen(QColor::fromHsl(127, 127, 15, 0), 3);
+            QPen(QColor::fromHsl(127, 127, 127, 96), 3);
         painter->setPen(pen);
         auto xpos = gridRect.left() + DX * m_mousePos / ((float)m_step);
         painter->drawLine(QPointF(xpos, gridRect.bottom()), QPointF(xpos, gridRect.top()));
+    }
+
+    // Draw the frame drag ghost effect when repositioning a frame
+    if (m_isDragging)
+    {
     }
 
     // Draw the active frame line if in the view
