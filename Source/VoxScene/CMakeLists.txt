@@ -35,6 +35,7 @@ VOX_PROJECT(
         Animator.h
         Camera.h
         Light.h
+        IprImage.h
         Material.h
         Primitive.h
         PrimGroup.h
@@ -52,6 +53,7 @@ VOX_PROJECT(
         Animator.cpp
         Camera.cpp
         Light.cpp
+        IprImage.cpp
         Material.cpp
         Primitive.cpp
         PrimGroup.cpp

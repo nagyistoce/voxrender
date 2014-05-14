@@ -23,8 +23,6 @@
 
 =========================================================================== */
 
-// http://www.alexander-noe.com/video/documentation/avi.pdf
-
 // Include Header
 #include "AviVid.h"
 
@@ -41,176 +39,20 @@ namespace vox
 namespace {
 namespace filescope {
 
-    FourCC RIFF = 'FFIR';
-    FourCC LIST = 'TSIL';
-    
-    FourCC AVI  = ' IVA';
-    FourCC AVIX = 'XIVA';
-    FourCC HDRL = 'lrdh';
-    FourCC STRL = 'lrts';
-    FourCC STRH = 'hrts';
-    FourCC STRF = 'frts';
-    FourCC STRN = 'nrts';
-    FourCC VIDS = 'sdiv';
-    FourCC AUDS = 'sdua';
-    FourCC TXTS = 'stxt';
-    FourCC INDX = 'xdni';
-    FourCC AVIH = 'hiva';
-    FourCC MOVI = 'ivom';
-
-    // AVI chunk atom
-    struct Chunk
-    {
-        UInt32 fourCC;
-        UInt32 size;    ///< Size of chunk data
-        // UInt8 * Data //
-    };
-
-    // AVI list atom
-    struct List
-    {
-        UInt32 list;
-        UInt32 size;
-        FourCC fourCC;
-        // UInt8 * Data //
-    };
-
-    // AVI file header
-    struct AviHeaderChunk
-    {
-        UInt32 fourCC;
-        UInt32 size;
-        UInt32 microSecPerFrame;    ///< Frame display rate (generally unreliable)
-        UInt32 maxBytesPerSec;      ///< Highest data rate demanded for playback
-        UInt32 paddingGranularity;  ///< The file is padded to a multiple of this size
-
-        UInt32 flags;               ///< Generic flags
-        UInt32 totalFrames;         ///< Frames in ONLY the RIFF-AVI list (generally unreliable)
-        UInt32 initialFrames;       ///< Delay before audio stream in the file 
-        UInt32 streams;             ///< Number of data streams in the file
-        UInt32 suggestedBufferSize; ///< Suggested buffer size during read
-
-        UInt32 width;   ///< Width of the video stream
-        UInt32 height;  ///< Height of the video stream
-
-        UInt32 reserved[4];
-
-        AviHeaderChunk() 
-        { 
-            memset(this, 0, sizeof(AviHeaderChunk)); 
-            fourCC = AVIH;
-            size   = sizeof(AviHeaderChunk) - 2 * sizeof(UInt32);
-        }
-    };
-
-    // Super index chunk for header list
-    struct SuperIndexChunk
-    {
-        FourCC fourCC;
-        UInt32 size;
-        Int16  longsPerEntry;
-        Int8   indexSubType;
-        Int8   indexType;
-        UInt32 entriesInUse;
-        UInt32 chunkId;
-        UInt32 reserved[3];
-    };
-
-    // Entry for super index chunk
-    struct SuperIndexEntry
-    {
-        Int64 offset;
-        UInt32 size;
-        UInt32 duration;
-    };
-
-    // AVI indexing chunk
-    struct StandardIndexChunk
-    {
-        UInt32 fourCC;
-        UInt32 size;
-        Int16  longsPerEntry;
-        Int8   indexSubType;
-        Int8   indexType;
-        UInt32 entriesInUse;
-        UInt32 chunkId;
-        Int64  baseOffset;
-        UInt32 reserved[3];
-
-        StandardIndexChunk() 
-        { 
-            memset(this, 0, sizeof(StandardIndexChunk)); 
-            fourCC = INDX;
-        }
-    };
-
-    // AVI index entry
-    struct IndexEntry
-    {
-        UInt32 offset;
-        UInt32 size;
-    };
-
-    // Stream header list element
-    struct StreamHeaderChunk
-    {
-        UInt32 fourCC;
-        UInt32 size;
-        FourCC fccType;             ///< Stream type: vids, auds or text
-        FourCC fccHandler;          ///< FourCC of the codec to be used
-        UInt32 flags;       
-        UInt16 priority;
-        UInt16 language;
-        UInt32 initialFrames;       ///< Number of the first block of the stream that is present in the file
-        UInt32 scale;
-        UInt32 rate;                ///< Rate / scale = samples / second (should be mutually prime for bad players)
-        UInt32 start;               ///< Start time of the stream ('silent' frames before the stream starts)
-        UInt32 length;              ///< Size of stream
-        UInt32 suggestedBufferSize; ///< Buffer size necessary to store 1 block (should be non-zero for bad players)
-        UInt32 quality;             ///< (Unimportant) stream quality
-        UInt32 sampleSize;          ///< Minimum number of bytes in one stream atom
-        Int32  frame[4];
-
-        StreamHeaderChunk() 
-        { 
-            memset(this, sizeof(StreamHeaderChunk), 0); 
-            fourCC = STRH;
-            size   = sizeof(StreamHeaderChunk) - 2 * sizeof(UInt32);
-        }
-    };
-           
-    // Bitmap info header for video list
-    struct BitmapInfoHeaderChunk
-    {
-        UInt32 fourCC;
-        UInt32 size;
-        UInt32 headerSize;
-        UInt32 imageWidth;
-        UInt32 imageHeight;
-        UInt16 nColorPlanes;
-        UInt16 bitsPerPixel;
-        UInt32 compressionMethod;
-        UInt32 imageSize;
-        Int32  horizontalResolution;
-        Int32  verticalResolution;
-        UInt32 nColors;
-        UInt32 nImportantColors;
-
-        BitmapInfoHeaderChunk() 
-        { 
-            memset(this, 0, sizeof(BitmapInfoHeaderChunk)); 
-            fourCC = STRF;
-            size   = sizeof(BitmapInfoHeaderChunk) - 2 * sizeof(UInt32);
-        }
-    };
-
 } // namespace filescope
 } // namespace anonymous
+
+/* 5 seconds stream duration */
+#define STREAM_DURATION   5.0
+#define STREAM_FRAME_RATE 25 /* 25 images/s */
+#define STREAM_NB_FRAMES  ((int)(STREAM_DURATION * STREAM_FRAME_RATE))
+#define STREAM_PIX_FMT PIX_FMT_YUV420P /* default pix_fmt */
 
 // ----------------------------------------------------------------------------
 //  Constructor
 // ----------------------------------------------------------------------------
-AviWriter::AviWriter(std::shared_ptr<void> handle) : m_handle(handle) 
+AviWriter::AviWriter(std::shared_ptr<void> handle) : 
+    m_handle(handle), m_frameCount(0)
 { 
 }
 
@@ -218,87 +60,286 @@ AviWriter::AviWriter(std::shared_ptr<void> handle) : m_handle(handle)
 // ----------------------------------------------------------------------------
 void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
 {
+    auto filename = ostr.identifier().path.c_str();
+
+    // Initialize the output media context
+    auto format = av_guess_format(nullptr, filename, nullptr);
+    if (!format)
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to av_new_stream failed", Error_Unknown);
+    }
+    m_oc = avformat_alloc_context();
+    if (!m_oc) 
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to avformat_alloc_context failed", Error_NoMemory);
+    }
+    m_oc->oformat = format;
+
+    // Add the audio and video streams as necessary
+    if (format->video_codec != CODEC_ID_NONE) addVideoStream();
+    if (format->audio_codec != CODEC_ID_NONE) addAudioStream();
+    if (format->subtitle_codec != CODEC_ID_NONE) addSubStream();
+    // :TODO: Subtitles/multiple audios stuff/etc
+
+    // Set parameters
+
+    // :DDEBUG: dump of format information
+    //av_dump_format(m_oc, 0, filename, 1);
+
+    // Open the codecs    
+    if (format->video_codec != CODEC_ID_NONE) openVideo();
+    if (format->audio_codec != CODEC_ID_NONE) ;
+    if (format->subtitle_codec != CODEC_ID_NONE) ;
+
+    // Open the output file, if needed
+    if (!(format->flags & AVFMT_NOFILE)) 
+    {
+        if (avio_open(&m_oc->pb, filename, AVIO_FLAG_WRITE) < 0) 
+        {
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                "Call to avio_open failed", Error_Unknown);
+        }
+    }
+
+    // Write the stream header, if any
+    avformat_write_header(m_oc, nullptr);
 }
 
 // ----------------------------------------------------------------------------
+//  Adds an audio stream to the AV file
+// ----------------------------------------------------------------------------
+void AviWriter::allocPicture()
+{
+    auto c = m_videoSt->codec;
+
+    if (!(m_picture = av_frame_alloc()))
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to avcodec_alloc_frame failed", Error_Unknown);
+    }
+
+    if (avpicture_alloc((AVPicture*)m_picture, c->pix_fmt, c->width, c->height))
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to avpicture_alloc failed", Error_Unknown);
+    }
+}
+
+// ----------------------------------------------------------------------------
+//  Adds an audio stream to the AV file
+// ----------------------------------------------------------------------------
+void AviWriter::addAudioStream()
+{
+}
+
+// ----------------------------------------------------------------------------
+//  Adds a subtitle stream to the AV file
+// ----------------------------------------------------------------------------
+void AviWriter::addSubStream()
+{
+}
+
+// ----------------------------------------------------------------------------
+//  Adds a video stream to the AV file
+// ----------------------------------------------------------------------------
+void AviWriter::addVideoStream()
+{
+     AVCodecContext * c;
+ 
+     // Create the video output stream
+     if (!(m_videoSt = avformat_new_stream(m_oc, 0))) 
+     {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to av_new_stream failed", Error_Unknown);
+     }
+ 
+     // Specify the video codec parameters
+     c = m_videoSt->codec;
+     c->codec_id = m_oc->oformat->video_codec; ///< libAV codec id
+     c->codec_type = AVMEDIA_TYPE_VIDEO;       ///< The type of stream
+     c->bit_rate = 400000;                     ///< Target bitrate for the stream
+     c->width    = 512;                        ///< Image width in the stream
+     c->height   = 512;                        ///< Image height in the stream
+     c->time_base.den = STREAM_FRAME_RATE;
+     c->time_base.num = 1;                     ///< Time step size per stamp in seconds (num / den)
+     c->gop_size = 12;                         ///< Emit one intra frame at most every X frames
+     c->pix_fmt = STREAM_PIX_FMT;              ///< Pixel format of the underlying video data
+     if (c->codec_id == CODEC_ID_MPEG1VIDEO)
+     {
+         // Needed to avoid using macroblocks in which some coeffs overflow.
+         // This does not happen with normal video, it just happens here as
+         // the motion of the chroma plane does not match the luma plane. 
+         c->mb_decision=2;
+     }
+
+     // some formats want stream headers to be separate
+     if(m_oc->oformat->flags & AVFMT_GLOBALHEADER)
+         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+     // Allocate memory for the intermediary frames
+     allocPicture();
+}
+
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+void AviWriter::openVideo()
+{
+    auto c = m_videoSt->codec;
+ 
+    // Find the video encoder
+    auto codec = avcodec_find_encoder(c->codec_id);
+    if (!codec) 
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            "Call to avcodec_find_encoder failed", Error_Unknown);
+    }
+ 
+    // Open the codec
+    if (avcodec_open2(c, codec, nullptr) < 0) 
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            "Call to avcodec_open2 failed", Error_Unknown);
+    }
+ 
+    // Allocate the encoded raw picture 
+    allocPicture();
+}
+
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+void AviWriter::closeVideo()
+{
+    avcodec_close(m_videoSt->codec);
+    av_free(m_picture->data[0]);
+    av_free(m_picture);
+}
+
+// ----------------------------------------------------------------------------
+//  Adds a frame of video to the output stream
 // ----------------------------------------------------------------------------
 void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap)
 {
-    if (!m_headerWritten) writeHeader(ostr, bitmap.width(), bitmap.height());
+    AVCodecContext * c = m_videoSt->codec;
 
-    if (bitmap.width() != m_imageSize[0] || bitmap.height() != m_imageSize[1])
+    if (m_frameCount >= STREAM_NB_FRAMES) return;
+ 
+    auto dptr = (UInt8*)bitmap.data();
+    auto ptr = (UInt8*)bitmap.data();
+    for (int j = 0; j < bitmap.height(); j++)
     {
-        throw Error(__FILE__, __LINE__, VOX_SVID_LOG_CATEGORY,
-            "Attempt to write inconsistent image formats to video stream", 
-            Error_BadFormat);
+        for (int i = 0; i < bitmap.width(); i++)
+        {
+            *dptr++ = *ptr++;
+            *dptr++ = *ptr++;
+            *dptr++ = *ptr++;
+            ptr++;
+        }
+        ptr+=4;
     }
+
+    // Determine the src format so we can perform a conversion
+    AVPixelFormat srcFormat;
+    switch (bitmap.type())
+    {
+    case Bitmap::Format_RGBA:
+    case Bitmap::Format_RGB:
+        if (bitmap.depth() == 8)
+        {
+            srcFormat = PIX_FMT_RGB24;
+            break;
+        }
+    default:
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+            "Invalid image format", Error_Unknown);
+    }
+
+    // Convert the video frame into the output format
+    SwsContext * convertCtx = sws_getCachedContext(nullptr, 
+        bitmap.width(), bitmap.height(),
+        srcFormat,
+        c->width, c->height,
+        c->pix_fmt,
+        SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+    if (!convertCtx) 
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to sws_getContext failed", Error_Unknown);
+    }
+
+    AVFrame inframe;
+    avpicture_fill((AVPicture*)&inframe, (UInt8*)bitmap.data(), srcFormat, bitmap.width(), bitmap.height());
+
+    sws_scale(convertCtx, inframe.data, inframe.linesize,
+        0, c->height, m_picture->data, m_picture->linesize);
+    
+    // Push the next frame into the encoder
+    writeFrame(m_picture);
+
+    m_frameCount++;
 }
 
 // ----------------------------------------------------------------------------
+//  Writes video to the encoder and the output through the interleaver
+// ----------------------------------------------------------------------------
+bool AviWriter::writeFrame(AVFrame * frame)
+{
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.data = nullptr;
+    pkt.size = 0;
+    int got;
+    if (avcodec_encode_video2(m_videoSt->codec, &pkt, frame, &got))
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to avcodec_encode_video2 failed", Error_Unknown);
+    } 
+
+    // Write the next packet to the stream if got
+    if (got && av_interleaved_write_frame(m_oc, &pkt))
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+            "Call to av_interleaved_write_frame failed", Error_Unknown);
+    }
+    av_free_packet(&pkt); 
+
+    return got;
+}
+
+// ----------------------------------------------------------------------------
+//
 // ----------------------------------------------------------------------------
 void AviWriter::end(ResourceOStream & ostr)
 {
-    // Finalize the chunk/list sizes and indexing
+    // Ensure the encoder pipeline is empty
+    while (writeFrame(nullptr)) ;
+
+    // Write the trailer
+    av_write_trailer(m_oc);
+
+    // Close the output file
+    if (!(m_oc->oformat->flags & AVFMT_NOFILE)) 
+    {
+        avio_close(m_oc->pb);
+    }
+
+    //
+    closeVideo();
+
+    // Free the contexts
+    for(int i = 0; i < m_oc->nb_streams; i++) 
+    {
+        av_freep(&m_oc->streams[i]->codec);
+        av_freep(&m_oc->streams[i]);
+    }
+    av_free(m_oc);
 
     // Close the output stream
     ostr.close();
-}
-
-void AviWriter::writeHeader(ResourceOStream & ostr, unsigned int w, unsigned int h)
-{
-    m_headerWritten = true;
-    m_imageSize[0]  = w;
-    m_imageSize[1]  = h;
-
-    // Write the RIFF AVI header list
-    filescope::List riff;
-    riff.list   = filescope::RIFF;
-    riff.size   = 0; // Placeholder (written back on close)
-    riff.fourCC = filescope::AVI;
-    ostr.write((char*)&riff, sizeof(riff));
-
-    // Write the AVI header list
-    filescope::List hdrl;
-    hdrl.list   = filescope::LIST;
-    hdrl.size   = 0; // Placeholder
-    hdrl.fourCC = filescope::HDRL;
-    ostr.write((char*)&hdrl, sizeof(hdrl));
-
-    // Write the AVI header
-    filescope::AviHeaderChunk avih;
-    avih.streams = 1;
-    avih.width   = 0; // :TODO:
-    avih.height  = 0;
-
-    // Write the stream video header list
-    if (true)
-    {
-        auto size = sizeof(filescope::StreamHeaderChunk) +
-                    sizeof(filescope::BitmapInfoHeaderChunk);
-        filescope::List strlVideo;
-        strlVideo.list   = filescope::LIST;
-        strlVideo.size   = size;
-        strlVideo.fourCC = filescope::STRL;
-        ostr.write((char*)&strlVideo, sizeof(strlVideo));
-
-        filescope::StreamHeaderChunk strh;
-        strh.fccType    = filescope::VIDS;
-        strh.fccHandler = 0;
-        ostr.write((char*)&strh, sizeof(strh));
-
-        filescope::BitmapInfoHeaderChunk strf;
-        ostr.write((char*)&strf, sizeof(strf));
-    }
-    
-    // Allocate a block of memory for indexing data
-    // :TODO:
-    m_indexPos = ostr.tellp();
-
-    // Begin the video data list
-    filescope::List movi;
-    movi.fourCC = filescope::MOVI;
-    movi.list   = filescope::LIST;
-    movi.size   = 0;
 }
 
 } // namespace vox

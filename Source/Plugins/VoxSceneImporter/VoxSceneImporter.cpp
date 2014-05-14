@@ -34,13 +34,13 @@
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Error/FileError.h"
 #include "VoxScene/Camera.h"
-#include "VoxScene/Film.h"
 #include "VoxScene/Light.h"
 #include "VoxScene/RenderParams.h"
 #include "VoxScene/Transfer.h"
 #include "VoxScene/Volume.h"
 #include "VoxScene/Material.h"
 #include "VoxScene/PrimGroup.h"
+#include "VoxScene/IprImage.h"
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>
@@ -119,6 +119,7 @@ namespace
                 if (m_options.lookup("ExportTransfer", true))  writeTransfer(m_scene.transfer, m_scene.transferMap, m_tree);
                 if (m_options.lookup("ExportClipGeo", true))   writeClipGeometry(m_scene.clipGeometry, m_tree);
                 if (m_options.lookup("ExportParams", true))    writeParams(m_scene.parameters, m_tree);
+                if (m_options.lookup("ExportIpr", true))       writeIpr(nullptr);
                 if (m_options.lookup("ExportAnimation", true)) writeAnimator();
 
                 // Write the compiled XML data to the output stream
@@ -179,6 +180,30 @@ namespace
                 node.add(V_OFFSET, volume->offset());
 
                 tree.add_child("Scene.Volume", node);
+            }
+            
+            // --------------------------------------------------------------------
+            //  Write the in progress render information to a binary file
+            // --------------------------------------------------------------------
+            void writeIpr(std::shared_ptr<IprImage> ipr)
+            {
+                if (!ipr) return;
+
+                // Compose the volume format options
+                OptionSet options;
+
+                // Write the binary IPR file to the same base URL
+                auto baseUrl  = m_sink.identifier();
+                auto filename = baseUrl.extractFileName();
+                filename      = filename.substr(0, filename.find_last_of('.')) + ".ipr"; 
+                auto iprUrl   = baseUrl.applyRelativeReference(filename);
+
+                ResourceOStream ostr(iprUrl);
+                
+                // Imbed the import directives
+                boost::property_tree::ptree node;
+                node.add("Ipr", iprUrl);
+                m_tree.add_child("Scene", node);
             }
 
             // --------------------------------------------------------------------
@@ -338,9 +363,9 @@ namespace
                 BOOST_FOREACH (auto & key, m_scene.animator->keyframes())
                 {
                     boost::property_tree::ptree snode;
-                    snode.add("Frame", key.first);
+                    snode.add(P_ANI_INDEX, key.first);
                     writeKeyFrame(key.second, snode);
-                    node.add_child("Key", snode);
+                    node.add_child(P_ANI_KEY, snode);
                 }
 
                 m_tree.add_child("Scene.Animator", node);
@@ -418,8 +443,8 @@ namespace
                     if (m_options.lookup("ImportLights", true)) scene.lightSet     = loadLights();
                     if (m_options.lookup("ImportParams", true)) scene.parameters   = loadParams();
                     if (m_options.lookup("ImportTransfer", true)) loadTransfer(scene);
-                    if (m_options.lookup("ImportAnimator", true)) loadAnimator();
-                    scene.clipGeometry = loadClipGeometry();
+                    if (m_options.lookup("ImportAnimator", true)) scene.animator = loadAnimator(scene.volume);
+                    if (m_options.lookup("ImportClip", true)) scene.clipGeometry = loadClipGeometry();
                 }
 
                 // Malformed data on a node read attempt
@@ -446,21 +471,6 @@ namespace
             }
 
         private:
-            typedef std::pair<String const, boost::property_tree::ptree*> Iterator; ///< Stack pointer
-
-            static int const versionMajor = 0; ///< Scene version major [potentially breaking]
-            static int const versionMinor = 0; ///< Scene version minor [enforces non-breaking]
-
-            std::shared_ptr<void> & m_handle;
-
-            boost::property_tree::ptree   m_tree;        ///< Scenefile tree
-            boost::property_tree::ptree * m_node;        ///< Current node in tree (top of traversal stack)
-            OptionSet const&              m_options;     ///< Import options
-            String                        m_displayName; ///< Warning identifier for making log entries
-            ResourceId const&             m_identifier;  ///< Resource identifier for relative URLs
-            
-            std::vector<Iterator> m_stack; ///< Property tree traversal stack
-
             // --------------------------------------------------------------------
             //  Checks the scene file version info against the importer version
             // --------------------------------------------------------------------
@@ -487,8 +497,7 @@ namespace
                 catch(boost::property_tree::ptree_bad_path &)
                 {
                     Logger::addEntry(vox::Severity_Warning, vox::Error_MissingData, VOX_LOG_CATEGORY,
-                                     format("Scenefile is missing version info [%1%]", 
-                                            m_displayName), 
+                                     format("Scenefile is missing version info [%1%]", m_displayName), 
                                      __FILE__, __LINE__);
                 }
             }
@@ -821,7 +830,7 @@ namespace
             // --------------------------------------------------------------------
             //  Loads animation and keyframe information
             // --------------------------------------------------------------------
-            std::shared_ptr<Animator> loadAnimator()
+            std::shared_ptr<Animator> loadAnimator(std::shared_ptr<Volume> volume)
             {
                 if (!push("Animator", Preferred)) return nullptr;
 
@@ -841,14 +850,34 @@ namespace
                     // Load the keyframes
                     BOOST_FOREACH(auto & keyFrameNode, *m_node)
                     {
-                        VOX_LOG_INFO(VOX_LOG_CATEGORY, keyFrameNode.first);
-                    }
-           
-                    pop();
+                        if (keyFrameNode.first != P_ANI_KEY) continue;
 
-                    return animatorPtr;
+                        m_node = &keyFrameNode.second;
+                        m_stack.push_back(Iterator(keyFrameNode.first, m_node));
+                        
+                        KeyFrame keyframe;
+                        if (push("Scene", Optional))
+                        {
+                            keyframe.volume       = Volume::create();
+                            volume->clone(*keyframe.volume.get());
+
+                            keyframe.camera       = loadCamera();
+                            keyframe.lightSet     = loadLights();
+                            keyframe.parameters   = loadParams();
+                            keyframe.clipGeometry = loadClipGeometry();
+                            loadTransfer(keyframe);
+
+                            pop();
+                        }
+
+                        animator.addKeyframe(keyframe, m_node->get<int>(P_ANI_INDEX));
+
+                        pop();
+                    }
 
                 pop();
+
+                return animatorPtr;
             }
 
             // --------------------------------------------------------------------
@@ -978,6 +1007,22 @@ namespace
 
                 return path;
             }
+
+        private:
+            typedef std::pair<String const, boost::property_tree::ptree*> Iterator; ///< Stack pointer
+
+            static int const versionMajor = 0; ///< Scene version major [potentially breaking]
+            static int const versionMinor = 0; ///< Scene version minor [enforces non-breaking]
+
+            std::shared_ptr<void> & m_handle;
+
+            boost::property_tree::ptree   m_tree;        ///< Scenefile tree
+            boost::property_tree::ptree * m_node;        ///< Current node in tree (top of traversal stack)
+            OptionSet const&              m_options;     ///< Import options
+            String                        m_displayName; ///< Warning identifier for making log entries
+            ResourceId const&             m_identifier;  ///< Resource identifier for relative URLs
+            
+            std::vector<Iterator> m_stack; ///< Property tree traversal stack
         };
     }
 }

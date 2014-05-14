@@ -315,7 +315,7 @@ void RenderView::keyReleaseEvent(QKeyEvent * event)
         case Qt::Key_S: m_ioFlags &= ~filescope::KEY_DOWN;  break;
         case Qt::Key_D: m_ioFlags &= ~filescope::KEY_RIGHT; break;
 
-        // :TEST: Plane cut
+        // Plane cut
         case Qt::Key_Control: 
             if (m_activeTool == Tool_ClipPlane) 
             {
@@ -343,13 +343,20 @@ void RenderView::processSceneInteractions()
     static const float    camSpeed(5.0f);
     static const Vector2f camWSense(-0.0025f, 0.0025f);
 
+    // Compute the time statistics for speed scaling
+    auto curr    = std::chrono::high_resolution_clock::now();
+    auto elapsed = curr - m_lastTime; 
+    m_lastTime = curr;
+    m_lastTimeDiff = std::chrono::duration_cast<std::chrono::microseconds>(elapsed);
+
+    // Perform the camera translation/rotation
     auto camera = MainWindow::instance->scene().camera;
     if (!camera) return;
 
     camera->lock();
 
         // Handle camera strafe associated with key holds
-        float duration = 1.0f;
+        float duration = (float)m_lastTimeDiff.count() / 10000.0f;
         float distance = camSpeed * duration;
         if (m_ioFlags & filescope::KEY_UP)    { camera->move(distance);      camera->setDirty(); }
         if (m_ioFlags & filescope::KEY_RIGHT) { camera->moveRight(distance); camera->setDirty(); }
@@ -376,7 +383,8 @@ void RenderView::processSceneInteractions()
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
     vox::FrameBuffer & frame = *lock->framebuffer.get();
-
+     
+    //
     if (m_image.width() != frame.width() || m_image.height() != frame.height())
     {
         m_image = frame.copy();
@@ -392,12 +400,7 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
         m_image.stride(), QImage::Format_RGB32);
 
     // Compute the performance statistics for this frame
-    auto curr    = std::chrono::high_resolution_clock::now();
-    auto elapsed = curr - m_lastTime; 
-    m_lastTime = curr;
-
-    auto msc = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    auto fps = 1000000.0f / msc;
+    auto fps = 1000000.0f / m_lastTimeDiff.count();
 
     // Draws the statistical information overlay
     if (m_overlayStats)

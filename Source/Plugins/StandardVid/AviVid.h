@@ -33,6 +33,13 @@
 #include "VoxLib/Video/VidCodec.h"
 #include "VoxLib/IO/Resource.h"
 
+// FFMPEG Headers
+extern "C"
+{
+    #include "libavformat/avformat.h"
+    #include "libswscale/swscale.h"
+}
+
 // API namespace
 namespace vox 
 {
@@ -50,17 +57,26 @@ public:
     virtual void addFrame(ResourceOStream & ostr, Bitmap const& bitmap);
 
 private:
-    void addIndexEntry();
+    void addVideoStream();
+    void addAudioStream();
+    void addSubStream();
 
-    void writeHeader(ResourceOStream & ostr, unsigned int w, unsigned int h);
+    void openVideo();
+    void closeVideo();
+
+    void allocPicture();
+
+    bool writeFrame(AVFrame * frame);
 
 private:
     std::shared_ptr<void> m_handle;
 
-    bool     m_headerWritten;
-    Vector2u m_imageSize;
+    AVFormatContext * m_oc;
+    AVStream * m_audioSt; 
+    AVStream * m_videoSt;
+    AVFrame * m_picture;
 
-    std::streamsize m_indexPos; ///< Position of the write head for the video index header
+    unsigned int m_frameCount;
 };
 
 /** Reads an AVI format video file */

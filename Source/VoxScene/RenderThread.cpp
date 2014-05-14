@@ -32,7 +32,6 @@
 #include "VoxLib/Core/Geometry.h"
 #include "VoxLib/Core/Logging.h"
 #include "VoxScene/RenderController.h"
-#include "VoxScene/Film.h"
 #include "VoxScene/Volume.h"
 #include "VoxScene/Camera.h"
 

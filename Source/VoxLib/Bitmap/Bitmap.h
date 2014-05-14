@@ -52,6 +52,7 @@ namespace vox
             Format_RGBX,
             Format_Gray,
             Format_GrayAlpha,
+            Format_YUV420p,
             Format_Unknown,
             Format_End
         };

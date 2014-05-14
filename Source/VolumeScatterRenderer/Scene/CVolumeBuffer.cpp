@@ -99,8 +99,6 @@ void CVolumeBuffer::loadBuffer(std::shared_ptr<Volume> volume)
     m_invRange          = 1.0f / (valueRange[1] - valueRange[0]);
     m_dataMin           = valueRange[0];
 
-    VOX_LOG_INFO(VSR_LOG_CATEGORY, format("Volume data range: %1%", valueRange));
-
     size_t voxelSize = volume->voxelSize();
 
     // Specify the format for volume data access

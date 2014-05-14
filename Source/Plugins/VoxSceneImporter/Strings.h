@@ -80,3 +80,5 @@ auto P_EDGE_ENHANCE = "EdgeEnhance";        ///< Degree of edge enhancement [0.0
 // Animator
 
 auto P_ANI_FRAME = "Framerate"; ///< Animation framerate (Hz)
+auto P_ANI_INDEX = "Frame";     ///< Animation frame number
+auto P_ANI_KEY   = "Key";       ///< Animation keyframe

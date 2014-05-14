@@ -36,6 +36,7 @@ SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFO
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libpng)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/libjpeg)
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/zlib)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/Includes/${PLATFORM}/ffmpeg)
 SET(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v5.5")
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64")
 	
@@ -63,6 +64,20 @@ IF(OPENGL_FOUND)
 ELSE(OPENGL_FOUND)
     MESSAGE(FATAL_ERROR "OpenGL not found.")
 ENDIF(OPENGL_FOUND)
+
+#===============================================#
+#                     FFMPEG                    #
+#===============================================#
+
+FIND_PACKAGE(FFMPEG)
+
+IF(FFMPEG_FOUND)
+    MESSAGE(STATUS "FFMPEG include directory: " "${FFMPEG_INCLUDE_DIR}")
+    MESSAGE(STATUS "FFMPEG library directory: " "${FFMPEG_LIBRARIES}")
+    INCLUDE_DIRECTORIES(SYSTEM ${FFMPEG_INCLUDE_DIR})
+ELSE(FFMPEG_FOUND)
+    MESSAGE("FFMPEG not found.")
+ENDIF(FFMPEG_FOUND)
 
 #===============================================#
 #                      GLEW                     #

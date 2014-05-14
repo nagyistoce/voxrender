@@ -291,18 +291,23 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 	}
 
 	// Draw markings along X-axis 
+    int offset = (m_offset < 0) ? abs(m_offset) % 10 : (10 - (m_offset % 10)) % 10;
+    float xoffset = DX * (offset / 10.0f);
 	for (int i = 0; i <= m_range / m_step; i++)
 	{
-        auto w = gridRect.left()+i*DX;
+        auto w = gridRect.left() + i*DX + xoffset;
         
         // Draw the trace lines
-        if (i > 0 && i < m_range) painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.top()));
+        if (!offset || i != m_range / m_step) 
+        {
+            painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.top()));
 
-		// Draw frame number label
-		painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.bottom()+2));
-		painter->drawText(QRectF(gridRect.left()-0.5f*Width+i*DX, gridRect.bottom()+5, Width, Height), 
-                          Qt::AlignHCenter | Qt::AlignTop, 
-                          QString::number(m_offset + i*m_step));
+		    // Draw frame number label
+		    painter->drawLine(QPointF(w, gridRect.bottom()), QPointF(w, gridRect.bottom()+2));
+		    painter->drawText(QRectF(w-0.5f*Width, gridRect.bottom()+5, Width, Height), 
+                              Qt::AlignHCenter | Qt::AlignTop, 
+                              QString::number(m_offset + offset + i*m_step));
+        }
 	}
 
     // Draw the mouse frame hover line if the mouse is captured
@@ -319,6 +324,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     // Draw the frame drag ghost effect when repositioning a frame
     if (m_isDragging)
     {
+        auto xpos = gridRect.left() + DX * (m_framePos - m_offset) / ((float)m_step);
     }
 
     // Draw the active frame line if in the view

@@ -40,4 +40,5 @@ VOX_PROJECT(
         VoxLib
     LIBRARIES
         ${Boost_LIBRARIES}
+        ${FFMPEG_LIBRARIES}
     )

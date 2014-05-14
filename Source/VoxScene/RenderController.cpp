@@ -293,7 +293,7 @@ private:
             for (unsigned int i = 0; i < targetFrame; i++)
             {
                 auto frameUri = m_scene.animator->tempLocation();
-                frameUri.path += format("frame_%1%.png", currFrame);
+                frameUri.path += format("frame_%1%.png", i);
                 auto frame = Bitmap::imprt(frameUri);
                 vidstr.push(frame);
             }

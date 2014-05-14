@@ -28,7 +28,6 @@
 
 // Include Dependencies
 #include "VoxScene/Camera.h"
-#include "VoxScene/Film.h"
 #include "VoxScene/Scene.h"
 
 // API namespace

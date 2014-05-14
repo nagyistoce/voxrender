@@ -1,10 +1,10 @@
 /* ===========================================================================
 
-	Project: Film - render target definition
-    
-	Description: Defines the film class used as a render target.
+	Project: VoxRender
 
-    Copyright (C) 2012 Lucas Sherman
+	Description: Contains information on a partial render 
+
+    Copyright (C) 2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -23,5 +23,31 @@
 
 =========================================================================== */
 
-// Include Header
-#include "Film.h"
+// Begin definition
+#ifndef VOX_IPR_IMAGE_H
+#define VOX_IPR_IMAGE_H
+
+// Internal Dependencies
+#include "VoxScene/Common.h"
+#include "VoxLib/Core/Geometry/Vector.h"
+#include "VoxLib/Core/Geometry/Image.h"
+#include "VoxLib/Core/Geometry/Color.h"
+
+// API namespace
+namespace vox
+{
+	/** Rendering frame buffer class */
+    class VOXS_EXPORT IprImage
+	{
+	public:
+        Image<ColorLabxHdr> sampleBuffer;
+        Image<float> statsBuffer;
+
+    public:
+        void write(std::ostream & in);
+        void read(std::istream & out);
+	};
+}
+
+// End definition
+#endif // VOX_IPR_IMAGE_H

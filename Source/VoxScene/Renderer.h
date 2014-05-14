@@ -31,6 +31,7 @@
 #include "VoxScene/Common.h"
 #include "VoxScene/FrameBuffer.h"
 #include "VoxScene/Scene.h"
+#include "VoxScene/IprImage.h"
 
 // VoxLib Dependencies
 #include "VoxLib/Core/CudaCommon.h"
@@ -39,8 +40,6 @@
 // API namespace
 namespace vox 
 {
-
-typedef Image<ColorLabxHdr> IprImage; // Internal image format
 
 /** Abstract Renderer */
 class VOXS_EXPORT Renderer
@@ -84,12 +83,6 @@ public:
      * global framebuffer copy.
      */
     virtual void pushIpr(IprImage const& ipr) = 0;
-
-    /**
-     * Provides the renderer with an output stream to which it should
-     * send the raw image pixels in the Labx format, row major ordering.
-     */ 
-    virtual void backupIpr(std::ostream & out) = 0;
 
     /**
      * Extracts a tonemapped image of the current render (Only needs to

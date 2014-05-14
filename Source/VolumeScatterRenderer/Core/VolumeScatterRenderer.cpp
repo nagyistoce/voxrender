@@ -40,7 +40,6 @@
 #include "VoxLib/Error/CudaError.h"
 #include "VoxScene/Camera.h"
 #include "VoxScene/Scene.h"
-#include "VoxScene/Film.h"
 #include "VoxScene/Light.h"
 #include "VoxScene/Transfer.h"
 #include "VoxScene/Volume.h"
@@ -242,11 +241,6 @@ public:
     }
     
     // --------------------------------------------------------------------
-    //  Exports the scene data to the output resource :TODO:
-    // --------------------------------------------------------------------
-    void backupIpr(std::ostream & out) { } 
-    
-    // --------------------------------------------------------------------
     //  Merges the input image buffer with the internal one :TODO:
     // --------------------------------------------------------------------
     void pushIpr(IprImage const& ipr) 
@@ -258,16 +252,19 @@ public:
     // --------------------------------------------------------------------
     void pullIpr(IprImage & img) 
     { 
-        auto buffer = m_hdrBuffer.meanBuffer();
+        auto meanBuf = m_hdrBuffer.meanBuffer();
+        auto statBuf = m_hdrBuffer.varianceBuffer();
 
-        if (img.width() != buffer.width() || img.height() != buffer.height())
+        // Ensure the sample buffer sizes are correct
+        if (img.sampleBuffer.width()  != meanBuf.width() || 
+            img.sampleBuffer.height() != meanBuf.height())
         {
-            throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY, 
-                "Mismatch in IPR image and internal buffer sizes", 
-                Error_Bug);
+            img.sampleBuffer.resize(meanBuf.width(), meanBuf.height());
+            img.statsBuffer.resize(statBuf.width(), statBuf.height());
         }
 
-        buffer.copy(img.buffer().get(), img.stride(), cudaMemcpyDeviceToHost);
+        meanBuf.copy(img.sampleBuffer.buffer().get(), img.sampleBuffer.stride(), cudaMemcpyDeviceToHost);
+        statBuf.copy(img.statsBuffer.buffer().get(), img.statsBuffer.stride(), cudaMemcpyDeviceToHost);
     }
 
     // --------------------------------------------------------------------

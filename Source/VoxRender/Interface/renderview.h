@@ -115,6 +115,7 @@ private:
     void focusOutEvent(QFocusEvent * event);  ///< Releases any held keys
 
     std::chrono::high_resolution_clock::time_point m_lastTime; ///< Timepoint for latency calculation
+    std::chrono::microseconds m_lastTimeDiff;                  ///< Last time difference for framerate
 
     Tool m_activeTool;
 

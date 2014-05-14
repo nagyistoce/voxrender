@@ -33,12 +33,19 @@
 #include "VoxLib/Plugin/PluginManager.h"
 #include "VoxLib/Video/VidStream.h"
 
+// FFMPEG Headers
+extern "C"
+{
+    #include "libavformat/avformat.h"
+    #include "libswscale/swscale.h"
+}
+
 using namespace vox;
 
 namespace {
 namespace filescope {
 
-    std::shared_ptr<AviVid>  aviExim;
+    std::shared_ptr<AviVid> aviExim;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -52,6 +59,8 @@ void initPlugin()
     VOX_LOG_INFO(VOX_SVID_LOG_CATEGORY, "Loading the 'Vox.Standard Vid ExIm' plugin");
     
     filescope::handle = PluginManager::instance().acquirePluginHandle();
+
+    av_register_all();
 }
 
 // --------------------------------------------------------------------

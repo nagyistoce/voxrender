@@ -607,6 +607,8 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         setCurrentFile(filename); // Update window name
 
         m_renderController.stop();
+
+        beginRender();
     }
     catch (vox::Error & error)
     {
@@ -618,8 +620,6 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         VOX_LOG_ERROR(Error_Unknown, VOX_GUI_LOG_CAT, format(
             "Unexpected exception loading %1%: %2%", file, error.what()));
     }
-
-    beginRender();
 }
 
 // ----------------------------------------------------------------------------
@@ -1089,6 +1089,7 @@ void MainWindow::onActionOpenRecentFile()
 // ----------------------------------------------------------------------------
 void MainWindow::stopRender()
 {
+    HistogramGenerator::instance()->stopGeneratingImages();
     m_renderController.stop();
 }
 
@@ -1104,6 +1105,7 @@ void MainWindow::performFiltering(std::shared_ptr<volt::Filter> filter, OptionSe
         m_renderController.stop();
         HistogramGenerator::instance()->stopGeneratingImages();
         filter->execute(m_activeScene, options);
+        m_activeScene.volume->updateRange();
     }
     catch (Error & error)
     {
