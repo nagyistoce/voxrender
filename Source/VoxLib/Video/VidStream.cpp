@@ -194,6 +194,22 @@ void VidOStream::registerEncoder(String const& format, std::shared_ptr<VideoEnco
 }
 
 // --------------------------------------------------------------------
+//  Generates a list of the registered encoder formats
+// --------------------------------------------------------------------
+std::list<String> VidOStream::encoders()
+{
+    // Acquire a read-lock on the modules for thread safety
+    boost::unique_lock<decltype(filescope::encodeMutex)> lock(filescope::encodeMutex);
+
+    std::list<String> ret;
+    BOOST_FOREACH (auto & encoder, filescope::encoders)
+    {
+        ret.push_back(encoder.first);
+    }
+    return ret;
+}
+
+// --------------------------------------------------------------------
 //  Removes the resource module for a specified format
 // --------------------------------------------------------------------
 void VidIStream::removeDecoder(String const& format, std::shared_ptr<VideoDecoder> decoder)

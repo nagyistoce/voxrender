@@ -72,8 +72,10 @@ private slots:
     void sceneChanged();
 
     void on_spinBox_frame_valueChanged(int value);
+    void on_spinBox_framerate_valueChanged(int value);
 
     void on_pushButton_render_clicked();
+    void on_pushButton_preview_clicked();
     void on_pushButton_key_clicked();
     void on_pushButton_delete_clicked();
     void on_pushButton_load_clicked();

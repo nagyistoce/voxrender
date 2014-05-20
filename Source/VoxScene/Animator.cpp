@@ -50,6 +50,7 @@ namespace vox {
         unsigned int m_framerate;
         std::list<std::pair<int,KeyFrame>> m_keys;
         ResourceId m_uri;
+        ResourceId m_videoUri;
         String m_base;
     };
     
@@ -82,6 +83,22 @@ Animator::~Animator()
 std::list<std::pair<int,KeyFrame>> const& Animator::keyframes()
 {
     return m_pImpl->m_keys;
+}
+
+// --------------------------------------------------------------------
+//  Sets the output directory for the final video
+// --------------------------------------------------------------------
+void Animator::setOutputUri(ResourceId const& identifier)
+{
+    m_pImpl->m_videoUri = identifier;
+}
+
+// --------------------------------------------------------------------
+//  Returns the output directory for the final video
+// --------------------------------------------------------------------
+ResourceId const& Animator::outputUri()
+{
+    return m_pImpl->m_videoUri;
 }
 
 // --------------------------------------------------------------------

@@ -80,7 +80,14 @@ public:
         m_offset(offset), 
         m_timeSlice(0.f)
     { 
-        updateRange();
+        if (!m_data)
+        {
+            auto bytes = typeToSize(type) * m_extent.fold(&mul);
+            m_data = vox::makeSharedArray(bytes);
+            memset(m_data.get(), 0, bytes);
+            m_range = Vector2f(0.0f);
+        }
+        else updateRange();
     }
 
     // ----------------------------------------------------------------------------
@@ -114,6 +121,16 @@ public:
                     format("Unsupported volume data type (%1%)", Volume::typeToString(m_type)),
                     Error_NotImplemented);
         }
+    }
+
+    // ----------------------------------------------------------------------------
+    //  Returns a pointer to the voxel at the specified index
+    // ----------------------------------------------------------------------------
+    void* at(size_t x, size_t y, size_t z, size_t t)
+    {
+        size_t i = x + y * m_extent[0] + z * m_extent[0] * m_extent[1] + t * m_extent[0] * m_extent[1] * m_extent[2];
+        
+        return m_data.get() + i * typeToSize(m_type);
     }
 
     // ----------------------------------------------------------------------------
@@ -193,6 +210,7 @@ void Volume::setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent,
     { m_pImpl->setData(data, extent, type); }
 void Volume::updateRange() { m_pImpl->updateRange(); }
 float Volume::fetchNormalized(size_t x, size_t y, size_t z) const { return m_pImpl->fetchNormalized(x, y, z); }
+void * Volume::at(size_t x, size_t y, size_t z, size_t t) { return m_pImpl->at(x, y, z, t); }
 
 // ----------------------------------------------------------------------------
 //  Getters/Setters

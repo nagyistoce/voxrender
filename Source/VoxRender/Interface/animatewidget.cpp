@@ -33,6 +33,7 @@
 #include "animateview.h"
 #include "Actions/AddRemKeyAct.h"
 #include "VoxLib/Action/ActionManager.h"
+#include "VoxLib/Video/VidStream.h"
 
 using namespace vox;
 
@@ -69,6 +70,8 @@ void AnimateWidget::sceneChanged()
 
     auto animator = MainWindow::instance->scene().animator;
     if (!animator) { m_ignore = false; return; }
+
+    ui->spinBox_framerate->setValue((int)animator->framerate());
 
     animator->onAdd(std::bind(&AnimateWidget::onAddKey, this, 
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -128,6 +131,15 @@ void AnimateWidget::setFrameHover(int value)
 void AnimateWidget::on_spinBox_frame_valueChanged(int value)
 {
     m_animateView->setFrame(value);
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the graphics display when the frame index is changed
+// ----------------------------------------------------------------------------
+void AnimateWidget::on_spinBox_framerate_valueChanged(int value)
+{
+    if (m_ignore) return;
+    MainWindow::instance->scene().animator->setFramerate((unsigned int)value);
 }
 
 // ----------------------------------------------------------------------------
@@ -241,8 +253,32 @@ void AnimateWidget::on_pushButton_delete_clicked()
 // ----------------------------------------------------------------------------
 //  Begins rendering an animation sequence given the animation info
 // ----------------------------------------------------------------------------
+void AnimateWidget::on_pushButton_preview_clicked()
+{
+    MainWindow::instance->scene().animator->setOutputUri("");
+
+    MainWindow::instance->stopRender();
+    MainWindow::instance->beginRender(ui->spinBox_samples->value(), true);
+}
+
+// ----------------------------------------------------------------------------
+//  Begins rendering an animation sequence given the animation info
+// ----------------------------------------------------------------------------
 void AnimateWidget::on_pushButton_render_clicked()
 {
+    // Detect available export types from AV exporters
+    String fileTypes;
+    auto encoders = VidOStream::encoders();
+    BOOST_FOREACH (auto & encoder, encoders)
+        fileTypes += format("(*%1%)\n", encoder);
+
+    QString filename = QFileDialog::getSaveFileName( 
+        this, tr("Choose an video destination"), QString(), 
+        fileTypes.c_str());
+
+    ResourceId uri(("file:///" + filename).toUtf8().data());
+    MainWindow::instance->scene().animator->setOutputUri(uri);
+
     MainWindow::instance->stopRender();
     MainWindow::instance->beginRender(ui->spinBox_samples->value(), true);
 }

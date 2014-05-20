@@ -45,7 +45,7 @@ using namespace vox;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<AviVid> aviExim;
+    std::shared_ptr<AviVid> ffmpegExim;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -118,10 +118,49 @@ void enable()
 {  
     VOX_LOG_INFO(VOX_SVID_LOG_CATEGORY, "Enabling the 'Vox.Standard Vid ExIm' plugin");
     
-    filescope::aviExim  = std::shared_ptr<AviVid> (new AviVid(filescope::handle));
+    filescope::ffmpegExim  = std::shared_ptr<AviVid> (new AviVid(filescope::handle));
     
-    vox::VidOStream::registerEncoder(".avi", filescope::aviExim);
-    vox::VidIStream::registerDecoder(".avi", filescope::aviExim);
+    // Encoder formats
+    vox::VidOStream::registerEncoder(".avi", filescope::ffmpegExim);
+
+    vox::VidOStream::registerEncoder(".mpg", filescope::ffmpegExim);
+
+    vox::VidOStream::registerEncoder(".asf", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".wmv", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".wma", filescope::ffmpegExim);
+
+    vox::VidOStream::registerEncoder(".caf", filescope::ffmpegExim);
+
+    vox::VidOStream::registerEncoder(".flv", filescope::ffmpegExim);
+
+    vox::VidOStream::registerEncoder(".ogg", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".ogv", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".ogx", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".oga", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".ogm", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".spx", filescope::ffmpegExim);
+    vox::VidOStream::registerEncoder(".opus", filescope::ffmpegExim);
+
+    // Decoder formats
+    vox::VidIStream::registerDecoder(".avi", filescope::ffmpegExim);
+
+    vox::VidIStream::registerDecoder(".mpg", filescope::ffmpegExim);
+
+    vox::VidIStream::registerDecoder(".asf", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".wmv", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".wma", filescope::ffmpegExim);
+
+    vox::VidIStream::registerDecoder(".caf", filescope::ffmpegExim);
+
+    vox::VidIStream::registerDecoder(".flv", filescope::ffmpegExim);
+
+    vox::VidIStream::registerDecoder(".ogg", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".ogv", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".ogx", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".oga", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".ogm", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".spx", filescope::ffmpegExim);
+    vox::VidIStream::registerDecoder(".opus", filescope::ffmpegExim);
 }
 
 // --------------------------------------------------------------------
@@ -131,9 +170,9 @@ void disable()
 { 
     VOX_LOG_INFO(VOX_SVID_LOG_CATEGORY, "Disabling the 'Vox.Standard Vid ExIm' plugin");
     
-    vox::VidOStream::removeEncoder(filescope::aviExim);
-    vox::VidIStream::removeDecoder(filescope::aviExim);
+    vox::VidOStream::removeEncoder(filescope::ffmpegExim);
+    vox::VidIStream::removeDecoder(filescope::ffmpegExim);
     
-    filescope::aviExim.reset();
+    filescope::ffmpegExim.reset();
     filescope::handle.reset();
 }

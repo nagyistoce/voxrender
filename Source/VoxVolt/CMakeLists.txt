@@ -32,6 +32,7 @@ VOX_PROJECT(
         "Conv.h"
         "Filter.h"
         "Linear.h"
+        "HistogramVolume.h"
         "Impl/VolumeBlocker.h"
         "Version.h"
         "Core.h"
@@ -39,6 +40,7 @@ VOX_PROJECT(
         "Conv.cu"
         "Filter.cpp"
         "Linear.cpp"
+        "HistogramVolume.cpp"
         "Impl/VolumeBlocker.cpp"
     DEPENDENCIES
         VoxLib

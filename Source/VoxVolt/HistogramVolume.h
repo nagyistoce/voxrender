@@ -23,8 +23,40 @@
                                                                            
 =========================================================================== */
 
-// Include Headers
-#include "VoxVolt/Conv.h"
-#include "VoxVolt/Linear.h"
-#include "VoxVolt/HistogramVolume.h"
-#include "VoxVolt/Filter.h"
+// Begin definition
+#ifndef VOX_VOLT_HISTOGRAM_VOLUME_H
+#define VOX_VOLT_HISTOGRAM_VOLUME_H
+
+// Include Dependencies
+#include "VoxVolt/Common.h"
+#include "VoxScene/Volume.h"
+
+// API namespace
+namespace vox {
+namespace volt {
+
+/** Implements transforms for convolution operations */
+class VOX_VOLT_EXPORT HistogramVolume
+{
+public:
+    /**
+     * Generates a histogram volume from an input volume dataset
+     *
+     * @param volume The input volume data set
+     * @param size   The dimensions of the histogram volume
+     * @return A handle to the histogram volume
+     */
+    static std::shared_ptr<Volume> build(
+        std::shared_ptr<Volume> volume, 
+        Vector3s const& size  = Vector3s(256, 256, 256)
+        );
+
+private:
+    HistogramVolume();
+};
+
+} // namespace volt
+} // namespace vox
+
+// End definition
+#endif // VOX_VOLT_HISTOGRAM_VOLUME_H

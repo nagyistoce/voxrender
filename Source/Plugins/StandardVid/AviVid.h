@@ -57,9 +57,9 @@ public:
     virtual void addFrame(ResourceOStream & ostr, Bitmap const& bitmap);
 
 private:
-    void addVideoStream();
-    void addAudioStream();
-    void addSubStream();
+    void addVideoStream(OptionSet const& options);
+    void addAudioStream(OptionSet const& options);
+    void addSubStream(OptionSet const& options);
 
     void openVideo();
     void closeVideo();
@@ -71,12 +71,11 @@ private:
 private:
     std::shared_ptr<void> m_handle;
 
-    AVFormatContext * m_oc;
+    std::shared_ptr<AVFormatContext> m_oc;
+    std::shared_ptr<AVFrame> m_picture;
     AVStream * m_audioSt; 
     AVStream * m_videoSt;
-    AVFrame * m_picture;
-
-    unsigned int m_frameCount;
+    AVStream * m_subSt;
 };
 
 /** Reads an AVI format video file */

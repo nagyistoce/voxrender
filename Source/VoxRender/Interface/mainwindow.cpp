@@ -958,12 +958,12 @@ void MainWindow::on_pushButton_clipboard_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_addLight_clicked()
 { 
-    static int numLights = -1; numLights++; // Light UID generator
+    //static int numLights = -1; numLights++; // Light UID generator
 
-    LightDialogue lightDialogue(numLights);
-    int result = lightDialogue.exec();
+    //LightDialogue lightDialogue(numLights);
+    //int result = lightDialogue.exec();
 
-    if (result)
+    //if (result)
     {
         auto light = Light::create();
         m_activeScene.lightSet->lock();
@@ -1075,13 +1075,13 @@ void MainWindow::on_actionOpen_triggered()
 // ----------------------------------------------------------------------------
 void MainWindow::onActionOpenRecentFile() 
 {
-	if (!canStopRendering( )) return;
+	if (!canStopRendering()) return;
 
     // Get handle to sender action for file info access
-	QAction *action = qobject_cast<QAction*>( sender( ) );
+	QAction *action = qobject_cast<QAction*>(sender());
 
     // Load the file specified in the actions log
-    renderNewSceneFile( action->data( ).toString( ) );
+    renderNewSceneFile(action->data().toString());
 }
 
 // ----------------------------------------------------------------------------
@@ -1456,21 +1456,23 @@ void MainWindow::on_pushButton_pause_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_pushButton_addClip_clicked()
 { 
-    static int numClips = -1; numClips++; // Clip UID generator
+    //static int numClips = -1; numClips++; // Clip UID generator
 
-    ClipDialogue clipDialogue(numClips);
-    int result = clipDialogue.exec();
+    //ClipDialogue clipDialogue(numClips);
+    //int result = clipDialogue.exec();
 
-    if (!result) { numClips--; return; } // Cancelled, decrement UID generator
+    //if (!result) { numClips--; return; } // Cancelled, decrement UID generator
 
     std::shared_ptr<vox::Primitive> prim;
-    switch (clipDialogue.typeSelected())
-    {
-    case ClipType_Plane: prim = vox::Plane::create(); break;
-    default:
-        VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "Invalid geometry type selection");
-        return;
-    }
+    prim = vox::Plane::create(); 
+
+    //switch (clipDialogue.typeSelected())
+    //{
+    //case ClipType_Plane: prim = vox::Plane::create(); break;
+    //default:
+    //    VOX_LOG_ERROR(Error_Bug, VOX_GUI_LOG_CAT, "Invalid geometry type selection");
+    //    return;
+    //}
     
     MainWindow::instance->scene().clipGeometry->add(prim);
 }

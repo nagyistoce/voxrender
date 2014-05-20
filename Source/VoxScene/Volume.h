@@ -189,7 +189,7 @@ public:
     void updateRange();
 
     /** Raw voxel data accessor */
-    void* const& at(size_t x, size_t y, size_t z) const;
+    void* at(size_t x, size_t y, size_t z, size_t t);
    
     /** Voxel data accessor */
     float fetchNormalized(size_t x, size_t y, size_t z) const;

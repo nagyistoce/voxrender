@@ -254,9 +254,16 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButton_preview">
+       <property name="text">
+        <string>Preview</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="pushButton_render">
        <property name="text">
-        <string>Render Animation</string>
+        <string>Create Video</string>
        </property>
       </widget>
      </item>

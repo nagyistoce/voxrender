@@ -87,6 +87,9 @@ namespace vox
         /** Removes the encoder for a given format from the internal mapping */
         static void removeEncoder(String const& format, std::shared_ptr<VideoEncoder> encoder = nullptr);
 
+        /** Returns a list of the registered encoder formats */
+        static std::list<String> encoders();
+
     private:
         /** Acquires a writer suitable for the stream's format */
         void getWriter(String const& format);

@@ -231,6 +231,8 @@ private:
     {
         std::exception_ptr error = nullptr;
 
+        bool composeVideo = !m_scene.animator->outputUri().asString().empty();
+
         // Initialize the keyframe iterators
         auto keys = m_scene.animator->keyframes();
         auto currFrame   = keys.front().first;
@@ -275,10 +277,13 @@ private:
                 }
 
                 // Store the final frame in the temp directory
-                auto outDir = m_scene.animator->tempLocation();
-                outDir.path += format("frame_%1%.png", currFrame);
-                ResourceOStream ostream(outDir);
-                m_masterRenderer->writeFrame(ostream);
+                if (composeVideo)
+                {
+                    auto outDir = m_scene.animator->tempLocation();
+                    outDir.path += format("frame_%1%.png", currFrame);
+                    ResourceOStream ostream(outDir);
+                    m_masterRenderer->writeFrame(ostream);
+                }
 
                 // Reset the loop iterators
                 m_currIterations = 0;
@@ -287,17 +292,31 @@ private:
                 if (m_progressCallback) m_progressCallback((float)currFrame/targetFrame);
             }
 
-            // Compile the finalized images into a video file
-            ResourceId uri("Test.avi");
-            VidOStream vidstr(uri);
-            for (unsigned int i = 0; i < targetFrame; i++)
+            // Compose the final output video
+            if (composeVideo)
             {
-                auto frameUri = m_scene.animator->tempLocation();
-                frameUri.path += format("frame_%1%.png", i);
-                auto frame = Bitmap::imprt(frameUri);
-                vidstr.push(frame);
+                // Set the video output options
+                auto setCam = m_scene.animator->keyframes().front().second.camera;
+                OptionSet options;
+                if (setCam)
+                {
+                    options.addOption("width", setCam->filmWidth());
+                    options.addOption("height", setCam->filmHeight());
+                    options.addOption("framerate", m_scene.animator->framerate());
+                }
+
+                // Compile the finalized images into a video file
+                auto uri = m_scene.animator->outputUri();
+                VidOStream vidstr(uri, options);
+                for (unsigned int i = 0; i < targetFrame; i++)
+                {
+                    auto frameUri = m_scene.animator->tempLocation();
+                    frameUri.path += format("frame_%1%.png", i);
+                    auto frame = Bitmap::imprt(frameUri);
+                    vidstr.push(frame);
+                }
+                vidstr.close();
             }
-            vidstr.close();
         }
         catch (boost::thread_interrupted &)
         {

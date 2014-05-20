@@ -97,7 +97,7 @@ void ClipWidget::add(std::shared_ptr<Primitive> prim)
 
     pane->showOnOffButton();
     pane->showVisibilityButtons();
-    pane->setTitle(QString::fromLatin1(prim->idString().c_str()));
+    pane->setTitle("Clip Plane");
     pane->setIcon(":/icons/lightgroupsicon.png");
     pane->setWidget(currWidget);
     pane->expand();

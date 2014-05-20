@@ -38,6 +38,30 @@ namespace vox
 {
    
 /** Crop operation provided by volt library */
+class HistogramFilter: public volt::Filter
+{
+public:
+    HistogramFilter(std::shared_ptr<void> handle) : m_handle(handle) { }
+
+    String name() { return "Filters.Sampling.Histogram Volume"; }
+    
+    void getParams(Scene const& scene, std::list<volt::FilterParam> & params)
+    {
+        params.push_back(volt::FilterParam("Density Bins",  volt::FilterParam::Type_Int, "256", "[0 1024]"));
+        params.push_back(volt::FilterParam("Gradient Bins", volt::FilterParam::Type_Int, "256", "[0 1024]"));
+        params.push_back(volt::FilterParam("Laplace Bins",  volt::FilterParam::Type_Int, "128", "[0 1024]"));
+    }
+
+    void execute(Scene & scene, OptionSet const& params)
+    {
+        scene.volume = vox::volt::HistogramVolume::build(scene.volume);
+    }
+
+private:
+    std::shared_ptr<void> m_handle;
+};
+
+/** Crop operation provided by volt library */
 class CropFilter: public volt::Filter
 {
 public:

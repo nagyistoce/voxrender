@@ -29,6 +29,7 @@
 // Include Dependencies
 #include "VoxScene/Volume.h"
 #include "VoxLib/Core/Logging.h"
+#include "VoxVolt/HistogramVolume.h"
 
 using namespace vox;
 

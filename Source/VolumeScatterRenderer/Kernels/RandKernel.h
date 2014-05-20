@@ -61,7 +61,7 @@ public:
     RandBuffer() : m_states(nullptr), m_size(0) { }
 
     /** Destructor */
-    ~RandBuffer() { reset(); }
+    ~RandBuffer() { try { reset(); } catch(std::exception &) {} }
 
     /** Resets the buffer */
     void reset()

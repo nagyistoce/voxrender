@@ -45,6 +45,7 @@ namespace filescope {
     static std::shared_ptr<volt::Filter> lanczos;
     static std::shared_ptr<volt::Filter> linear;
     static std::shared_ptr<volt::Filter> crop;
+    static std::shared_ptr<volt::Filter> histo;
 
     static std::list<std::shared_ptr<volt::Filter>> views;
 
@@ -123,6 +124,7 @@ void enable()
     filescope::lanczos = std::shared_ptr<volt::Filter>(new LanczosFilter(filescope::handle));
     filescope::linear  = std::shared_ptr<volt::Filter>(new LinearFilter(filescope::handle));
     filescope::crop    = std::shared_ptr<volt::Filter>(new CropFilter(filescope::handle));
+    filescope::histo   = std::shared_ptr<volt::Filter>(new HistogramFilter(filescope::handle));
 
     volt::FilterManager::instance().add(filescope::gauss);
     volt::FilterManager::instance().add(filescope::mean);
@@ -130,6 +132,7 @@ void enable()
     volt::FilterManager::instance().add(filescope::lanczos);
     volt::FilterManager::instance().add(filescope::linear);
     volt::FilterManager::instance().add(filescope::crop);
+    volt::FilterManager::instance().add(filescope::histo);
 
     for (int i = View::Dir_Begin; i < View::Dir_End; ++i)
     {
@@ -152,7 +155,9 @@ void disable()
     volt::FilterManager::instance().remove(filescope::lanczos);
     volt::FilterManager::instance().remove(filescope::linear);
     volt::FilterManager::instance().remove(filescope::crop);
-
+    volt::FilterManager::instance().remove(filescope::histo);
+    
+    filescope::histo.reset();
     filescope::crop.reset();
     filescope::gauss.reset();
     filescope::mean.reset();
