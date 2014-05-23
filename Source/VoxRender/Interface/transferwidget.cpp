@@ -103,6 +103,8 @@ TransferWidget::TransferWidget(QWidget *parent) :
         this, SLOT(setSelectedNode(std::shared_ptr<vox::Node>)));
     connect(MainWindow::instance, SIGNAL(transferQuadSelected(std::shared_ptr<vox::Quad>,vox::Quad::Node)),
         this, SLOT(setSelectedQuad(std::shared_ptr<vox::Quad>,vox::Quad::Node)));
+        
+    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 
     setSelectedNode(nullptr); // Initialize the widget to no curr node settings
 }
@@ -196,7 +198,7 @@ void TransferWidget::setSelectedMaterial(std::shared_ptr<Material> material)
 // ----------------------------------------------------------------------------
 //  Synchronizes the transfer function widget with the active
 // ----------------------------------------------------------------------------
-void TransferWidget::synchronizeView()
+void TransferWidget::sceneChanged()
 {
     m_transfer = MainWindow::instance->scene().transfer;
 
@@ -399,7 +401,7 @@ void TransferWidget::on_pushButton_import_clicked()
     auto mainwindow = MainWindow::instance;
     mainwindow->stopRender();
     MainWindow::instance->scene().transfer = scene.transfer;
-    synchronizeView();
+    sceneChanged();
     mainwindow->beginRender();
 }
 

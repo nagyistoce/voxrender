@@ -308,7 +308,7 @@ private:
                 // Compile the finalized images into a video file
                 auto uri = m_scene.animator->outputUri();
                 VidOStream vidstr(uri, options);
-                for (unsigned int i = 0; i < targetFrame; i++)
+                for (int i = keys.front().first; i < targetFrame; i++)
                 {
                     auto frameUri = m_scene.animator->tempLocation();
                     frameUri.path += format("frame_%1%.png", i);

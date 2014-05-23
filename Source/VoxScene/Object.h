@@ -43,11 +43,8 @@ namespace vox
     class VOXS_EXPORT Object
     {
     public:
-        /** Generates an ID for the object */
-        Object();
-
         /** Assigns an ID to the object */
-        Object(int id);
+        Object(int id = 0);
 
         /** Destructor */
         ~Object();
@@ -119,6 +116,9 @@ namespace vox
     class VOXS_EXPORT SubObject : public Object
     {
     public:
+        /** SubObject constructor */
+        SubObject(int id = 0) : Object(id) { }
+
         /** Locks the parent object, or this object if no parent exists */
         virtual void lock() { if (m_parent) m_parent->lock(); else Object::lock(); }
 

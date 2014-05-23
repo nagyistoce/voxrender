@@ -193,6 +193,8 @@ void AnimateWidget::on_pushButton_load_clicked()
         }
     }
 
+    MainWindow::instance->sceneChanged();
+
     scene.animator = animator;
 
     MainWindow::instance->beginRender();

@@ -54,6 +54,10 @@ public:
 
     void execute(Scene & scene, OptionSet const& params)
     {
+        Vector3s bins;
+        bins[0] = params.lookup<size_t>("Density Bins", 256);
+        bins[1] = params.lookup<size_t>("Gradient Bins", 256);
+        bins[2] = params.lookup<size_t>("Laplace Bins", 128);
         scene.volume = vox::volt::HistogramVolume::build(scene.volume);
     }
 

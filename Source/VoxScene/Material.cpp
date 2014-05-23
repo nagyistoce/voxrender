@@ -31,4 +31,27 @@
 
 namespace vox {
 
+std::shared_ptr<Material> Material::clone()
+{
+    auto result = create();
+    
+    *result = *this;
+
+    return result;
+}
+
+std::shared_ptr<Material> Material::interp(std::shared_ptr<Material> k2, float f)
+{
+    auto result = create();
+    
+    result->opticalThickness = k2->opticalThickness * f + opticalThickness * (1.f - f);
+    result->glossiness       = k2->glossiness * f       + glossiness * (1.f - f);
+    result->emissiveStrength = k2->emissiveStrength * f + emissiveStrength * (1.f - f);
+    result->emissive         = k2->emissive * f         + emissive * (1.f - f);
+    result->diffuse          = k2->diffuse * f          + diffuse * (1.f - f);
+    result->specular         =k2-> specular * f         + specular * (1.f - f);
+
+    return result;
+}
+
 } // namespace vox

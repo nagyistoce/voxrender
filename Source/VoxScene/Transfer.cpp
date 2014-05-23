@@ -437,16 +437,58 @@ void Transfer1D::remove(std::shared_ptr<Node> node)
 }
 
 // ----------------------------------------------------------------------------
+//  
+// ----------------------------------------------------------------------------
+std::shared_ptr<Transfer> Transfer1D::clone()
+{
+    auto result = create(id());
+
+    BOOST_FOREACH (auto & node, nodes())
+    {
+        auto newNode = Node::create(node->density, node->material->clone());
+        newNode->setId(node->id());
+        result->add(newNode);
+    }
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
+//  
+// ----------------------------------------------------------------------------
+std::shared_ptr<Transfer> Transfer2D::clone()
+{
+    auto result = create(id());
+
+    BOOST_FOREACH (auto & quad, quads())
+    {
+        auto newQuad = Quad::create();
+        newQuad->setId(quad->id());
+        result->add(newQuad);
+    }
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
 //  Performs 1D transfer function interpolation
 // ----------------------------------------------------------------------------
 std::shared_ptr<Transfer> Transfer1D::interp(std::shared_ptr<Transfer> k2, float f)
 {
-    auto result = Transfer1D::create();
+    auto result = std::dynamic_pointer_cast<Transfer1D>(clone());
 
     if (auto key2 = dynamic_cast<Transfer1D*>(k2.get()))
     {
-        BOOST_FOREACH (auto & node, m_nodes)
+        auto keyNodes = key2->nodes();
+        BOOST_FOREACH (auto & node, result->nodes())
         {
+            BOOST_FOREACH (auto & keyNode, keyNodes)
+            if (node->id() == keyNode->id())
+            {
+                node->density  = keyNode->density * f + node->density * (1.f - f);
+                node->material = node->material->interp(keyNode->material, f);
+                break;
+            }
         }
     }
     

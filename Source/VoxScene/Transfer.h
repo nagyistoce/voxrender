@@ -106,13 +106,16 @@ namespace vox
     {
     public: 
         /** Initializes the default transfer function resolution */
-        Transfer() : m_resolution(128, 32, 1) { }
+        Transfer(int id = 0) : Object(id), m_resolution(128, 32, 1) { }
 
         /** Interpolates the transfer function towards k2 by a factor f */
         virtual std::shared_ptr<Transfer> interp(std::shared_ptr<Transfer> k2, float f) = 0;
 
         /** Updates the input map based on the this transfer function */
         virtual void generateMap(std::shared_ptr<TransferMap> map) = 0;
+
+        /** Clones a transfer function instance */
+        virtual std::shared_ptr<Transfer> clone() = 0;
 
         /** Returns the type identifier of the derived class */
         virtual Char const* type() = 0;
@@ -135,19 +138,22 @@ namespace vox
     {
     public:
         /** Constructs a new transfer function object */
-        static std::shared_ptr<Transfer1D> create() { return std::shared_ptr<Transfer1D>(new Transfer1D()); }
+        static std::shared_ptr<Transfer1D> create(int id = 0) 
+        { 
+            return std::shared_ptr<Transfer1D>(new Transfer1D(0)); 
+        }
 
         /** 1D transfer function interpolation */
         virtual std::shared_ptr<Transfer> interp(std::shared_ptr<Transfer> k2, float f);
 
-        /** Sets the 1D transfer function resolution without requiring a Vec3 */
-        void setResolution(size_t resolution)
-        {
-            Transfer::setResolution(Vector3u(resolution, 1, 1));
-        }
+        /** Sets the 1D transfer function resolution */
+        void setResolution(size_t resolution) { Transfer::setResolution(Vector3u(resolution, 1, 1)); }
 
         /** Generates the associated transfer map */
         virtual void generateMap(std::shared_ptr<TransferMap> map);
+
+        /** Generates a clone of the transfer function object */
+        virtual std::shared_ptr<Transfer> clone();
 
         /** Returns the type of a transfer function */
         virtual Char const* type() { return Transfer1D::typeID(); }
@@ -166,7 +172,9 @@ namespace vox
 
     private:
         /** Initializes a new transfer function object */
-        Transfer1D() { }
+        Transfer1D(int id) : Transfer(id) { }
+
+        Transfer1D(Transfer1D & copy);
 
         std::list<NodeH> m_nodes;
     };
@@ -176,19 +184,19 @@ namespace vox
     {
     public:
         /** Constructs a new transfer function object */
-        static std::shared_ptr<Transfer2D> create() { return std::shared_ptr<Transfer2D>(new Transfer2D()); }
+        static std::shared_ptr<Transfer2D> create(int id = 0) { return std::shared_ptr<Transfer2D>(new Transfer2D(id)); }
         
-        /** 1D transfer function interpolation */
-        virtual std::shared_ptr<Transfer> interp(std::shared_ptr<Transfer> k2, float f) { return nullptr; }
+        /** 2D transfer function interpolation */
+        virtual std::shared_ptr<Transfer> interp(std::shared_ptr<Transfer> k2, float f) { return k2; }
 
-        /** Sets the 1D transfer function resolution without requiring a Vec3 */
-        void setResolution(Vector2u resolution)
-        {
-            Transfer::setResolution(Vector3u(resolution[0], resolution[1], 1));
-        }
+        /** Sets the 2D transfer function resolution without requiring a Vec3 */
+        void setResolution(Vector2u res) { Transfer::setResolution(Vector3u(res[0], res[1], 1)); }
 
         /** Generates the associated transfer map */
         virtual void generateMap(std::shared_ptr<TransferMap> map);
+        
+        /** Generates a clone of the transfer function object */
+        virtual std::shared_ptr<Transfer> clone();
 
         /** Returns the type of a transfer function */
         virtual Char const* type() { return Transfer2D::typeID(); }
@@ -207,7 +215,7 @@ namespace vox
 
     private:
         /** Initializes a new transfer function object */
-        Transfer2D() { }
+        Transfer2D(int id) : Transfer(id) { }
 
         std::list<std::shared_ptr<Quad>> m_quads;
     };

@@ -39,11 +39,13 @@ namespace vox
     class VOXS_EXPORT Material
     {
     public:
+        /** Creates a new material */
         static std::shared_ptr<Material> create() 
         { 
             return std::shared_ptr<Material>(new Material()); 
         }
-
+        
+        /** Comparison operator for materials */
         bool operator==(Material const& rhs)
         {
             return opticalThickness == rhs.opticalThickness &&
@@ -54,8 +56,16 @@ namespace vox
                    emissive         == rhs.emissive;
         }
 
+        /** Comparison operator for materials */
         bool operator!=(Material const& rhs) { return !((*this)==(rhs)); }
 
+        /** Interpolates between material types */
+        std::shared_ptr<Material> interp(std::shared_ptr<Material> k2, float f);
+
+        /** Clones a material */
+        std::shared_ptr<Material> clone();
+
+    public:
         float opticalThickness; ///< Optical thickness of material (-INF, INF)
         float glossiness;       ///< Glossiness factor
         float emissiveStrength; ///< Emissive light intensity
@@ -64,6 +74,7 @@ namespace vox
         Vector<UInt8,3> diffuse;  ///< Diffuse reflection color
         Vector<UInt8,3> specular; ///< Specular reflection color
 
+    public:
         /** Initializes a default material */
         Material() :
           opticalThickness(0.2f),

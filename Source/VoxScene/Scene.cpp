@@ -233,17 +233,15 @@ KeyFrame Scene::generateKeyFrame()
 // --------------------------------------------------------------------
 void Scene::clone(Scene & scene) const
 {
-    scene.animator = nullptr;
+    scene.animator = nullptr; // Ignore the animator for logistical reasons (animator calls clone)
 
-    // :TODO: 
-    scene.transfer = transfer;
+    scene.transfer = transfer ? transfer->clone() : nullptr;
     
-    // Recreate
     scene.clipGeometry = clipGeometry ? 
         std::dynamic_pointer_cast<PrimGroup>(clipGeometry->clone()) : 
         nullptr;
 
-    // Efficient cloning 
+    // :Efficient cloning for interactive rendering
     if (volume)
     {
         if (!scene.volume) scene.volume = Volume::create();
@@ -288,7 +286,6 @@ void Scene::pad()
     if (!parameters)   parameters   = RenderParams::create();
     if (!clipGeometry) clipGeometry = PrimGroup::create();
     if (!lightSet)     lightSet     = LightSet::create();
-    if (!transferMap)  transferMap  = TransferMap::create(); // :TODO: Only required because of a bug
     if (!transfer)     transfer     = Transfer1D::create();
     if (!camera)       camera       = Camera::create();
     if (!animator)     animator     = Animator::create();

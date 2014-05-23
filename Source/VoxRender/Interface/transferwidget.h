@@ -49,8 +49,7 @@ class TransferWidget : public QWidget
 public:
     explicit TransferWidget(QWidget *parent = 0);
     ~TransferWidget();
-    
-    void synchronizeView();
+
     void processInteractions();
     
     /** Returns the currently selected transfer function node */
@@ -109,6 +108,7 @@ public slots:
 private slots:
     void beginMaterialChange();
     void endMaterialChange();
+    void sceneChanged();
 
 	// Node selection group box
 	void on_pushButton_delete_clicked();

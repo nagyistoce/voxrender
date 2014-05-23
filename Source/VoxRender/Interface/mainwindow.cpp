@@ -600,10 +600,6 @@ void MainWindow::renderNewSceneFile(QString const& filename)
         m_activeScene = vox::Scene::imprt(identifier);
         m_activeScene.pad();
 
-        // Synchronize the scene view
-        // :TODO: Signal
-        transferwidget->synchronizeView();
-
         setCurrentFile(filename); // Update window name
 
         m_renderController.stop();
