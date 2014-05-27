@@ -44,6 +44,7 @@
 
 // Boost XML Parser
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 // API namespace
 namespace vox
@@ -106,7 +107,7 @@ namespace
             // --------------------------------------------------------------------
             //  Write the boost::property_tree as an XML file to the stream
             // --------------------------------------------------------------------
-            void writeSceneFile()
+            void writeSceneFile(bool isXml)
             {
                 // Write the version info to the tree
                 m_tree.add("Scene.Version.Major", versionMajor);
@@ -123,8 +124,15 @@ namespace
                 if (m_options.lookup("ExportAnimation", true)) writeAnimator();
 
                 // Write the compiled XML data to the output stream
-                boost::property_tree::xml_writer_settings<char> settings('\t', 1);
-                boost::property_tree::xml_parser::write_xml(m_sink, m_tree, settings);
+                if (isXml)
+                {
+                    boost::property_tree::xml_writer_settings<char> settings('\t', 1);
+                    boost::property_tree::xml_parser::write_xml(m_sink, m_tree, settings);
+                }
+                else
+                {
+                    boost::property_tree::json_parser::write_json(m_sink, m_tree);
+                }
             }
 
         private:
@@ -389,15 +397,17 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the resource data from an XML format into a property tree
             // --------------------------------------------------------------------
-            SceneImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> handle) : 
+            SceneImporter(ResourceIStream & source, OptionSet const& options, std::shared_ptr<void> handle, bool isXml) : 
               m_options(options), m_node(&m_tree), m_identifier(source.identifier()), m_handle(handle)
             {
                 // Detect errors parsing the scene file's XML content
                 try
                 {
-                    boost::property_tree::xml_parser::read_xml(source, m_tree);
+                    if (isXml) boost::property_tree::xml_parser::read_xml(source, m_tree);
+                    else       boost::property_tree::json_parser::read_json(source, m_tree);
+                    
                 }
-                catch(boost::property_tree::xml_parser::xml_parser_error & error)
+                catch (boost::property_tree::file_parser_error & error)
                 {
                     throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
                         format("%1% at line %2%", error.message(), error.line()), 
@@ -1036,7 +1046,7 @@ void VoxSceneFile::exporter(ResourceOStream & sink, OptionSet const& options, Sc
     filescope::SceneExporter exportModule(sink, options, scene);
 
     // Write property tree to the stream
-    exportModule.writeSceneFile();
+    exportModule.writeSceneFile(m_isXml);
 }
 
 // --------------------------------------------------------------------
@@ -1045,7 +1055,7 @@ void VoxSceneFile::exporter(ResourceOStream & sink, OptionSet const& options, Sc
 Scene VoxSceneFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
-    filescope::SceneImporter importModule(source, options, m_handle);
+    filescope::SceneImporter importModule(source, options, m_handle, m_isXml);
 
     // Read property tree and load scene
     return importModule.parseSceneFile();

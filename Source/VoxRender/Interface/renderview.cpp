@@ -53,16 +53,17 @@ namespace filescope {
 } // namespace filescope
 } // namespace anonymous
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Constructor - initialize graphics scene for render view
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 RenderView::RenderView(QWidget *parent) : 
     QGraphicsView(parent),
     m_renderscene(new QGraphicsScene()),
     m_overlayStats(false),
     m_activeTool(Tool_Drag),
     m_ioFlags(0u),
-    m_zoomfactor(1.f)
+    m_zoomfactor(1.f),
+    m_displayMode(Stereo_Left)
 {
 	m_renderscene->setBackgroundBrush(QColor(127,127,127));
 	
@@ -78,9 +79,9 @@ RenderView::RenderView(QWidget *parent) :
 	setLogoMode();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Destructor - Free the view images
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 RenderView::~RenderView() 
 {
 	delete m_voxfb;
@@ -88,9 +89,9 @@ RenderView::~RenderView()
 	delete m_renderscene;
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Copies rendered image to clipboard
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::copyToClipboard() const
 {
 	// Verify render mode
@@ -115,16 +116,14 @@ void RenderView::copyToClipboard() const
     }
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Exports the contents of the render view to a file
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::saveImageToFile(String const& identifier) const
 {
     try
     {
-        auto buffer = std::shared_ptr<void>((void*)m_image.data(), [] (void *) {});
-        Bitmap(Bitmap::Format_RGBX, m_image.width(), m_image.height(), 
-            8, 1, m_image.stride(), buffer).exprt(identifier);
+        m_image.exprt(identifier);
     }
     catch (Error & error)
     {
@@ -136,17 +135,17 @@ void RenderView::saveImageToFile(String const& identifier) const
     }
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Detects render context changes and updates the view
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::sceneChanged() 
 {
     setViewMode();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Removes the render feed from the view 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::setLogoMode() 
 {
     resetTransform();
@@ -161,9 +160,9 @@ void RenderView::setLogoMode()
     m_zoomEnabled = false;
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Attaches render feed to view
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::setViewMode() 
 {
     m_lastTime = std::chrono::high_resolution_clock::now();
@@ -180,9 +179,9 @@ void RenderView::setViewMode()
     m_zoomEnabled = true;
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Image zoom in/out on mouse wheel event (NOT camera zoom)
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::wheelEvent(QWheelEvent* event) 
 {
 	if (!m_zoomEnabled) return;
@@ -207,9 +206,9 @@ void RenderView::wheelEvent(QWheelEvent* event)
 	emit viewChanged(m_zoomfactor);
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Mouse press event handler - begin tracking mouse movement
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::mousePressEvent(QMouseEvent* event) 
 {
     if (event->button() == Qt::RightButton)
@@ -267,9 +266,9 @@ void RenderView::mousePressEvent(QMouseEvent* event)
 	QGraphicsView::mousePressEvent(event);
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Mouse move event handler - track movement distance if down
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::mouseMoveEvent(QMouseEvent* event)
 {
     if (event->buttons() & Qt::RightButton)
@@ -284,9 +283,9 @@ void RenderView::mouseMoveEvent(QMouseEvent* event)
 	QGraphicsView::mouseMoveEvent(event);
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Tracks scene interaction through key event input
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::keyPressEvent(QKeyEvent * event)
 {
     switch (event->key())
@@ -302,9 +301,9 @@ void RenderView::keyPressEvent(QKeyEvent * event)
     }
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Tracks scene interaction through key event input
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::keyReleaseEvent(QKeyEvent * event)
 {
     switch (event->key())
@@ -327,17 +326,25 @@ void RenderView::keyReleaseEvent(QKeyEvent * event)
     }
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Releases held keys when the view loses focus
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::focusOutEvent(QFocusEvent * event)
 {
     m_ioFlags = 0;
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Sets the display mode used when stereo rendering is enabled
+// ----------------------------------------------------------------------------
+void RenderView::setDisplayMode(Stereo mode)
+{
+    m_displayMode = mode;
+}
+
+// ----------------------------------------------------------------------------
 //  Processes and applies scene interactions for this frame
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::processSceneInteractions()
 {
     static const float    camSpeed(5.0f);
@@ -377,15 +384,18 @@ void RenderView::processSceneInteractions()
     camera->unlock();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the display image for the render view
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
     vox::FrameBuffer & frame = *lock->framebuffer.get();
-     
-    //
-    if (m_image.width() != frame.width() || m_image.height() != frame.height())
+    
+    // Stuff here is messed up, need to thoroughly go through the docs to figure out
+    // how to do this properly
+    if (m_image.width() != frame.width() || 
+        m_image.height() != frame.height() || 
+        m_image.layers() != frame.layers())
     {
         m_image = frame.copy();
 
@@ -393,11 +403,30 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
         m_renderscene->setSceneRect(
             0.0f, 0.0f, (float)m_image.width(),  (float)m_image.height());
     }
-    else memcpy(m_image.data(), frame.data(), frame.size());
+    else for (unsigned int i = 0; i < frame.layers(); i++)
+    {
+        memcpy(m_image.data(i), frame.data(i), frame.size());
+    }
 
-    QImage qimage((unsigned char*)m_image.data(),
-        m_image.width(), m_image.height(),
-        m_image.stride(), QImage::Format_RGB32);
+    QImage qimage;
+    switch (m_displayMode)
+    {
+    case Stereo_Left:
+        qimage = QImage((unsigned char*)m_image.data(0),
+            m_image.width(), m_image.height(),
+            m_image.stride(), QImage::Format_RGB32);
+        break;
+    case Stereo_Right:
+        qimage = QImage((unsigned char*)m_image.data(m_image.layers() - 1),
+            m_image.width(), m_image.height(),
+            m_image.stride(), QImage::Format_RGB32);
+        break;
+    default:
+        qimage = QImage((unsigned char*)m_image.data(0),
+            m_image.width(), m_image.height(),
+            m_image.stride(), QImage::Format_RGB32);
+        break;
+    }
 
     // Compute the performance statistics for this frame
     auto fps = 1000000.0f / m_lastTimeDiff.count();

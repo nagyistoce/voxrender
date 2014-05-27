@@ -183,7 +183,7 @@ void Session::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
     // :TODO: Permanent JPEG TX buffer
     std::ostringstream imageStream;
     auto buffer = std::shared_ptr<void>((void*)frame->data(), [] (void *) {});
-    Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, 1, frame->stride(), buffer);
+    Bitmap image(Bitmap::Format_RGBX, frame->width(), frame->height(), 8, frame->stride(), buffer);
     image.exprt(imageStream, ".jpg");
     
     //auto tend = std::chrono::high_resolution_clock::now();

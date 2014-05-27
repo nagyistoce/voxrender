@@ -10,21 +10,24 @@
 		<FocalDistance>0</FocalDistance>
 		<FilmWidth>512</FilmWidth>
 		<FilmHeight>512</FilmHeight>
-		<Position>[-11.1304 500.386 -50.2438]</Position>
-		<Up>[0.613255 0.301047 0.730267]</Up>
-		<Right>[-0.74331 -0.0928254 0.662475]</Right>
+		<Position>[-50.8354 520.669 -22.325]</Position>
+		<Up>[0.659614 0.096761 0.74535]</Up>
+		<Right>[-0.745879 -0.0379037 0.665002]</Right>
 	</Camera>
 	<Volume>
 		<Import>
 			<Options>
 				<Size>[256 1 1 1]</Size>
-				<Spacing>[1 8 64 1]</Spacing>
 				<Type>uint8</Type>
 				<Offset>[0 0 0]</Offset>
+				<Compression>gzip</Compression>
+				<Endianess>little</Endianess>
 			</Options>
-			<Endianess>little</Endianess>
 			<Resource>gradient_256x1x1_zlib_8bit.raw</Resource>
 		</Import>
+		<Time>0</Time>
+		<Spacing>[1 8 64 1]</Spacing>
+		<Offset>[0 0 0]</Offset>
 	</Volume>
 	<Lights>
 		<Ambient>[0.7 0.7 0.7]</Ambient>
@@ -95,7 +98,11 @@
 	<Settings>
 		<PrimaryStepSize>2</PrimaryStepSize>
 		<ShadowStepSize>3</ShadowStepSize>
-		<OccludeStepSize>1</OccludeStepSize>
-		<OccludeSamples>0</OccludeSamples>
+		<GradientCutoff>0</GradientCutoff>
+		<ScatterCoefficient>0</ScatterCoefficient>
+		<EdgeEnhance>0</EdgeEnhance>
 	</Settings>
+	<Animator>
+		<Framerate>30</Framerate>
+	</Animator>
 </Scene>

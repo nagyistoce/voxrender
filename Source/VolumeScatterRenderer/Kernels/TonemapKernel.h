@@ -29,14 +29,14 @@
 
 // Common Library Header
 #include "VolumeScatterRenderer/Core/Common.h"
+#include "VolumeScatterRenderer/Core/CBuffer.h"
+#include "VolumeScatterRenderer/Core/CSampleBuffer.h"
 
 // API namespace
 namespace vox 
 {
     
 // Forward Declarations
-template<typename T> class CImgBuffer2D;
-class CSampleBuffer2D;
 struct ColorRgbaLdr;
 
 /** Defines the interface for building and executing render kernels */
@@ -44,7 +44,7 @@ class TonemapKernel
 {
 public:
     /** Executes the tonemapping kernel on the device */
-    static void execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure);
+    static void execute(CSampleBuffer2D sampleBuffer, CBuffer2D<ColorRgbaLdr> imageBuffer, float exposure);
 
     /** Returns the time for the last kernel execution */
     static float getTime() { return m_elapsedTime; }

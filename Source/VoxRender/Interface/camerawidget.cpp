@@ -81,12 +81,13 @@ void CameraWidget::sceneChanged()
     m_ignore = true;
 
     float fov = camera->fieldOfView() * 180.0f / M_PI;
-    ui->doubleSpinBox_camFov->setValue( fov );
+    ui->doubleSpinBox_camFov->setValue(fov);
     
-    ui->doubleSpinBox_focal->setValue( camera->focalDistance() );
-    ui->doubleSpinBox_aperture->setValue( camera->apertureSize() );
-    ui->spinBox_filmWidth->setValue( camera->filmWidth() );
-    ui->spinBox_filmHeight->setValue( camera->filmHeight() );
+    ui->doubleSpinBox_focal->setValue(camera->focalDistance());
+    ui->doubleSpinBox_aperture->setValue(camera->apertureSize());
+    ui->spinBox_filmWidth->setValue(camera->filmWidth());
+    ui->spinBox_filmHeight->setValue(camera->filmHeight());
+    ui->checkBox_eye->setChecked(camera->isStereoEnabled());
 
     m_ignore = false;
 }
@@ -103,10 +104,11 @@ void CameraWidget::updateCamera()
     camera->lock();
 
         float fov = ui->doubleSpinBox_camFov->value() / 180.0f * M_PI;
-        camera->setFieldOfView( fov );
+        camera->setFieldOfView(fov);
 
-        camera->setFocalDistance( ui->doubleSpinBox_focal->value() );
-        camera->setApertureSize( ui->doubleSpinBox_aperture->value() );
+        camera->setFocalDistance(ui->doubleSpinBox_focal->value());
+        camera->setApertureSize(ui->doubleSpinBox_aperture->value());
+        camera->setEyeDistance(ui->doubleSpinBox_eye->value());
         camera->setDirty();
 
     camera->unlock();
@@ -146,6 +148,35 @@ void CameraWidget::on_spinBox_filmWidth_valueChanged(int value)
     updateFilm();
 }
 
+// --------------------------------------------------------------------
+//  Change the rendering mode to/from stereo 3D when toggled
+// --------------------------------------------------------------------
+void CameraWidget::on_checkBox_eye_toggled(bool on)
+{
+    if (on)
+    {
+        ui->doubleSpinBox_eye->setEnabled(true);
+        ui->horizontalSlider_eye->setEnabled(true);
+    }
+    else
+    {
+        ui->doubleSpinBox_eye->setEnabled(false);
+        ui->horizontalSlider_eye->setEnabled(false);
+    }
+
+    if (!m_ignore) 
+    {
+        MainWindow::instance->scene().camera->setStereoEnabled(on);
+        MainWindow::instance->scene().camera->setFilmDirty();
+    }
+}
+
+// --------------------------------------------------------------------
+//  Change the rendering mode to/from stereo 3D when toggled
+// --------------------------------------------------------------------
+void CameraWidget::on_checkBox_autoFocus_toggled(bool on)
+{
+}
 
 // --------------------------------------------------------------------
 //  Modify the associated double spinbox to reflect slide value change
@@ -160,10 +191,6 @@ void CameraWidget::on_horizontalSlider_exposure_valueChanged(int value)
     MainWindow::instance->m_renderer->setExposure(
         ui->doubleSpinBox_exposure->value());
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated slider to reflect spinBox value change
-// --------------------------------------------------------------------
 void CameraWidget::on_doubleSpinBox_exposure_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -174,10 +201,6 @@ void CameraWidget::on_doubleSpinBox_exposure_valueChanged(double value)
     MainWindow::instance->m_renderer->setExposure(
         ui->doubleSpinBox_exposure->value());
 }
-
-// --------------------------------------------------------------------
-//  Update the camera on control element changes
-// --------------------------------------------------------------------
 void CameraWidget::on_horizontalSlider_camFov_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -205,6 +228,15 @@ void CameraWidget::on_horizontalSlider_focal_valueChanged(int value)
     
     updateCamera();
 }
+void CameraWidget::on_horizontalSlider_eye_valueChanged(int value)
+{
+    Utilities::forceSbToSl(
+        ui->doubleSpinBox_eye,
+        ui->horizontalSlider_eye,
+        value);
+    
+    updateCamera();
+}
 void CameraWidget::on_doubleSpinBox_camFov_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -228,6 +260,15 @@ void CameraWidget::on_doubleSpinBox_focal_valueChanged(double value)
     Utilities::forceSlToSb(
         ui->horizontalSlider_focal,
         ui->doubleSpinBox_focal,
+        value);
+    
+    updateCamera();
+}
+void CameraWidget::on_doubleSpinBox_eye_valueChanged(double value)
+{
+    Utilities::forceSlToSb(
+        ui->horizontalSlider_eye,
+        ui->doubleSpinBox_eye,
         value);
     
     updateCamera();

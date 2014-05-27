@@ -42,9 +42,6 @@ namespace filescope {
 } // namespace filescope
 } // namespace anonymous
 
-/* 5 seconds stream duration */
-#define STREAM_FRAME_RATE 30 /* 25 images/s */
-
 // ----------------------------------------------------------------------------
 //  Constructor
 // ----------------------------------------------------------------------------
@@ -75,8 +72,12 @@ void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
     }
     m_oc->oformat = format;
 
-    // Add the audio and video streams as necessary
-    if (format->video_codec != CODEC_ID_NONE) addVideoStream(options);
+    // Initialize the requested number of AV streams
+    if (format->video_codec != CODEC_ID_NONE)
+    {
+        m_videoStreams.resize(options.lookup<unsigned int>("videoStreams", 1));
+        BOOST_FOREACH (auto & stream, m_videoStreams) stream = addVideoStream(options);
+    }
     if (format->audio_codec != CODEC_ID_NONE) addAudioStream(options);
     if (format->subtitle_codec != CODEC_ID_NONE) addSubStream(options);
 
@@ -89,9 +90,8 @@ void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
                 "Call to avio_open failed", Error_Unknown);
         }
     }
-        
-    // Ensure the video codec is open
-    if (format->video_codec != CODEC_ID_NONE) openVideo();
+
+    allocPicture();
 
     // Write the stream header, if any
     avformat_write_header(m_oc.get(), nullptr);
@@ -102,7 +102,7 @@ void AviWriter::begin(ResourceOStream & ostr, OptionSet const& options)
 // ----------------------------------------------------------------------------
 void AviWriter::allocPicture()
 {
-    auto c = m_videoSt->codec;
+    auto c = m_videoStreams[0]->codec;
 
     m_picture.reset(av_frame_alloc(), &av_free);
     if (!m_picture)
@@ -130,17 +130,17 @@ void AviWriter::addAudioStream(OptionSet const& options)
 // ----------------------------------------------------------------------------
 void AviWriter::addSubStream(OptionSet const& options)
 {
-    AVCodecContext * c;
+    AVStream * stream;
     
      // Create the subtitle output stream
-     if (!(m_subSt = avformat_new_stream(m_oc.get(), 0))) 
+     if (!(stream = avformat_new_stream(m_oc.get(), 0))) 
      {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
             "Call to av_new_stream failed", Error_Unknown);
      }
      
      // Specify the subtitle codec parameters
-     c = m_subSt->codec;
+     auto c = stream->codec;
      c->codec_id = m_oc->oformat->subtitle_codec;   ///< LibAV codec id
      c->codec_type = AVMEDIA_TYPE_SUBTITLE;         ///< The type of the stream
 
@@ -152,47 +152,32 @@ void AviWriter::addSubStream(OptionSet const& options)
 // ----------------------------------------------------------------------------
 //  Adds a video stream to the AV file
 // ----------------------------------------------------------------------------
-void AviWriter::addVideoStream(OptionSet const& options)
+AVStream* AviWriter::addVideoStream(OptionSet const& options)
 {
-     AVCodecContext * c;
+    AVStream* stream;
  
-     // Create the video output stream
-     if (!(m_videoSt = avformat_new_stream(m_oc.get(), 0))) 
-     {
+    // Create the video output stream
+    if (!(stream = avformat_new_stream(m_oc.get(), 0))) 
+    {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
             "Call to av_new_stream failed", Error_Unknown);
-     }
+    }
  
-     // Specify the video codec parameters
-     c = m_videoSt->codec;
-     c->codec_id = m_oc->oformat->video_codec;              ///< libAV codec id
-     c->codec_type = AVMEDIA_TYPE_VIDEO;                    ///< The type of stream
-     c->bit_rate = options.lookup<int>("bitrate", 2500000); ///< Target bitrate for the stream (default = 2.5Mbs broadband average)
-     c->width    = options.lookup<int>("width", 640);       ///< Image width in the stream
-     c->height   = options.lookup<int>("height", 480);      ///< Image height in the stream
-     c->time_base.den = options.lookup<int>("framerate", 30);
-     c->time_base.num = 1;                                  ///< Time step size per stamp in seconds (num / den)
-     c->gop_size = 12;                                      ///< Emit one intra frame at most every X frames
-     c->pix_fmt = PIX_FMT_YUV420P;                          ///< Pixel format of the underlying video data
-     if (c->codec_id == CODEC_ID_MPEG1VIDEO)
-     {
-         // Needed to avoid using macroblocks in which some coeffs overflow.
-         // This does not happen with normal video, it just happens here as
-         // the motion of the chroma plane does not match the luma plane. 
-         c->mb_decision=2;
-     }
+    // Specify the video codec parameters
+    auto c = stream->codec;
+    c->codec_id = m_oc->oformat->video_codec;              ///< libAV codec id
+    c->codec_type = AVMEDIA_TYPE_VIDEO;                    ///< The type of stream
+    c->bit_rate = options.lookup<int>("bitrate", 2500000); ///< Target bitrate for the stream (default = 2.5Mbs broadband average)
+    c->width    = options.lookup<int>("width", 640);       ///< Image width in the stream
+    c->height   = options.lookup<int>("height", 480);      ///< Image height in the stream
+    c->time_base.den = options.lookup<int>("framerate", 30);
+    c->time_base.num = 1;                                  ///< Time step size per stamp in seconds (num / den)
+    c->gop_size = 12;                                      ///< Emit one intra frame at most every X frames
+    c->pix_fmt = PIX_FMT_YUV420P;                          ///< Pixel format of the underlying video data
 
-     // some formats want stream headers to be separate
-     if(m_oc->oformat->flags & AVFMT_GLOBALHEADER)
-         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
-}
-
-// ----------------------------------------------------------------------------
-//
-// ----------------------------------------------------------------------------
-void AviWriter::openVideo()
-{
-    auto c = m_videoSt->codec;
+    // some formats want stream headers to be separate
+    if(m_oc->oformat->flags & AVFMT_GLOBALHEADER)
+        c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
     // Find the video encoder
     auto codec = avcodec_find_encoder(c->codec_id);
@@ -208,25 +193,19 @@ void AviWriter::openVideo()
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
             "Call to avcodec_open2 failed", Error_Unknown);
     }
- 
-    // Allocate the encoded raw picture 
-    allocPicture();
-}
 
-// ----------------------------------------------------------------------------
-//
-// ----------------------------------------------------------------------------
-void AviWriter::closeVideo()
-{
-    avcodec_close(m_videoSt->codec);
+    return stream;
 }
 
 // ----------------------------------------------------------------------------
 //  Adds a frame of video to the output stream
 // ----------------------------------------------------------------------------
-void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap)
+void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap, unsigned int streamId)
 {
-    AVCodecContext * c = m_videoSt->codec;
+    if (streamId > m_videoStreams.size()) throw Error(__FILE__, __LINE__, 
+        VOX_LOG_CATEGORY, "streamId out of index", Error_Range);
+
+    auto c = m_videoStreams[streamId]->codec;
 
     auto dptr = (UInt8*)bitmap.data();
     auto ptr = (UInt8*)bitmap.data();
@@ -279,13 +258,13 @@ void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap)
         0, c->height, m_picture->data, m_picture->linesize);
     
     // Push the next frame into the encoder
-    writeFrame(m_picture.get());
+    writeFrame(m_picture.get(), streamId);
 }
 
 // ----------------------------------------------------------------------------
 //  Writes video to the encoder and the output through the interleaver
 // ----------------------------------------------------------------------------
-bool AviWriter::writeFrame(AVFrame * frame)
+bool AviWriter::writeFrame(AVFrame * frame, unsigned int streamId)
 {
     AVPacket pkt;
     av_init_packet(&pkt);
@@ -294,11 +273,12 @@ bool AviWriter::writeFrame(AVFrame * frame)
     std::shared_ptr<AVPacket> pktPtr(&pkt, &av_free_packet); 
 
     int got;
-    if (avcodec_encode_video2(m_videoSt->codec, &pkt, frame, &got))
+    if (avcodec_encode_video2(m_videoStreams[streamId]->codec, &pkt, frame, &got))
     {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
             "Call to avcodec_encode_video2 failed", Error_Unknown);
     } 
+    pkt.stream_index = streamId;
 
     // Write the next packet to the stream if got
     if (got && av_interleaved_write_frame(m_oc.get(), &pkt))
@@ -316,7 +296,8 @@ bool AviWriter::writeFrame(AVFrame * frame)
 void AviWriter::end(ResourceOStream & ostr)
 {
     // Ensure the encoder pipeline is empty
-    while (writeFrame(nullptr)) ;
+    for (unsigned int i = 0; i < m_videoStreams.size(); i++)
+        while (writeFrame(nullptr, i)) ;
 
     // Write the trailer
     av_write_trailer(m_oc.get());
@@ -327,12 +308,10 @@ void AviWriter::end(ResourceOStream & ostr)
         avio_close(m_oc->pb);
     }
 
-    //
-    closeVideo();
-
     // Free the contexts
     for(int i = 0; i < m_oc->nb_streams; i++) 
     {
+        avcodec_close(m_oc->streams[i]->codec);
         av_freep(&m_oc->streams[i]->codec);
         av_freep(&m_oc->streams[i]);
     }

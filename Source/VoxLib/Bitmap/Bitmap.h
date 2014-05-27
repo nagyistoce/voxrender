@@ -44,6 +44,13 @@ namespace vox
 	class VOX_EXPORT Bitmap
 	{
     public:
+        /** 
+         * Defines standard formats for images 
+         *
+         * Images are always assigned a format. For unknown formats, Format_Unknown 
+         * will be assigned. For user defined formats, ensure that the format value 
+         * is outside the range [Format_Begin, Format_End).
+         */
         enum Format
         {
             Format_Begin,
@@ -159,15 +166,48 @@ namespace vox
 
         /** Removes an image export module */
         static void removeExportModule(String const& extension);
+        
+        /** Registers a new image conversion module */
+        static void registerConvertModule(int srcFormat, int dstFormat, std::shared_ptr<void> converter);
+
+        /** Removes an image conversion module */
+        static void removeConvertModule(int srcFormat, int dstFormat);
 
     public:
+        /** Default constructor */
+        Bitmap() { reset(Format_Unknown, 0, 0, 0, 0, 0, 0); }
+
 		/** Initializes an image object for a known image format */
-		Bitmap(Format type, size_t width = 0, size_t height = 0, size_t bitDepth = 0, 
-            size_t nLayers = 1, size_t stride = 0, std::shared_ptr<void> data = nullptr);
+		Bitmap(Format type, unsigned int width = 0, unsigned int height = 0, unsigned int bitDepth = 0, 
+            unsigned int stride = 0, std::shared_ptr<void> data = nullptr);
 
         /** Initializes an image object for an unknown image format */
-        Bitmap(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
-            size_t nLayers = 1, size_t stride = 0, std::shared_ptr<void> data = nullptr);
+        Bitmap(unsigned int width, unsigned int height, unsigned int bitDepth, unsigned int nChannels, 
+            unsigned int stride = 0, std::shared_ptr<void> data = nullptr)
+        {
+            if (data) reset(Format_Unknown, width, height, bitDepth, nChannels, 1, stride, 
+                            std::list<std::shared_ptr<void>>(1, data));
+            else reset(Format_Unknown, width, height, bitDepth, nChannels, 1, stride);
+        }
+  
+        /** Advanced bitmap constructor */
+        Bitmap(int type, unsigned int width, unsigned int height, unsigned int bitDepth, 
+            unsigned int nChannels, unsigned int nLayers, unsigned int stride, 
+            std::list<std::shared_ptr<void>> layerData = std::list<std::shared_ptr<void>>())
+        {
+            reset(type, width, height, bitDepth, nChannels, nLayers, stride, layerData);
+        }
+
+        /** Resets the general attributes of a bitmap */
+        void reset(int type, unsigned int width, unsigned int height, unsigned int bitDepth,
+                   unsigned int nChannels, unsigned int nLayers, unsigned int stride,
+                   std::list<std::shared_ptr<void>> layerData = std::list<std::shared_ptr<void>>());
+
+        /** Performs conversion between bitmap formats */
+        void convert(int destinationFormat, OptionSet options = OptionSet());
+        
+        /** Performs conversion between bitmap formats */
+        Bitmap convertCopy(int destinationFormat, OptionSet options = OptionSet());
 
         /** 
          * Adjusts the padding of the image 
@@ -179,69 +219,66 @@ namespace vox
          */
         void pad(size_t newStride = 0, bool copyData = true);
 
-        /** Returns the raw image data pointer */
-        void * data() const { return m_buffer.get(); }
+        /** Returns a deep copy of the image */
+        Bitmap copy() const;
 
         /** Returns the raw image data pointer */
-        void * data() { return m_buffer.get(); }
+        void const* data(unsigned int layer = 0) const;
 
-        /** Resizes the image to the specified dimensions */
-        void resize(size_t width, size_t height)
-        {
-            resize(width, height, width*m_depth*m_channels);
-        }
+        /** Returns the raw image data pointer */
+        void * data(unsigned int layer = 0);
 
-        /** Resizes the image to the specified dimensions */
-        void resize(size_t width, size_t height, size_t stride)
-        {
-            m_width = width; m_height = height; m_stride = stride;
+        /** Resizes (does not scale) the image to the specified dimensions */
+        void resize(size_t width, size_t height, size_t stride = 0);
 
-            m_buffer = std::shared_ptr<void>(new UInt8[stride*height]);
-        }
-        
+        /** Adds an additional layer to the image */
+        void addLayer(std::shared_ptr<void> layer = nullptr, unsigned int index = 0);
+
+        /** Removes a layer from the image */
+        void removeLayer(unsigned int layer);
+
         /** Returns the format of the image */
-        Format type() const { return m_format; }
+        int type() const { return m_format; }
 
         /** Returns the image bit depth */
-        size_t depth() const { return m_depth; }
+        unsigned int depth() const { return m_depth; }
 
         /** Returns the number of channels in the image */
-        size_t channels() const { return m_channels; }
+        unsigned int channels() const { return m_channels; }
 
         /** Returns the number of layers in the image */
-        size_t layers() const { return m_layers; }
+        unsigned int layers() const { return m_buffer.size(); }
 
         /** Returns the size in bytes of an image pixel */
-        size_t elementSize() const { return m_depth*m_channels/8; }
+        unsigned int elementSize() const { return m_depth*m_channels/8; }
 
         /** Image width accessor */
-        size_t width() const { return m_width; }
+        unsigned int width() const { return m_width; }
 
         /** Image height accessor */
-        size_t height() const { return m_height; }
+        unsigned int height() const { return m_height; }
 
         /** Image stride accessor */
-        size_t stride() const { return m_stride; }
+        unsigned int stride() const { return m_stride; }
 
         /** Returns the size of the image content */
-        size_t size() const { return m_stride*m_height; }
+        unsigned int size() const { return m_stride*m_height; }
 
 	private:
-        size_t m_layers;   ///< Number of image layers
-        size_t m_height;   ///< Image height
-		size_t m_width;    ///< Image width
-		size_t m_stride;   ///< Image stride
-        size_t m_channels; ///< Number of data channels
-        Format m_format;   ///< Image data format
-        size_t m_depth;    ///< The size of an image pixel element 
+        unsigned int m_height;   ///< Image height
+		unsigned int m_width;    ///< Image width
+		unsigned int m_stride;   ///< Image stride
+        unsigned int m_channels; ///< Number of data channels
+        unsigned int m_depth;    ///< The size of an image pixel element 
+        int          m_format;   ///< Image data format
 
-        std::shared_ptr<void> m_buffer;  ///< Image buffer
+        std::vector<std::shared_ptr<void>> m_buffer; ///< Image layer data
 	};
 
 	/** 
 	 * Image File Importer
      *
-     * This typedef specifies the format of a image file importer. The VoxRender
+     * This class specifies the format of a image file importer. The VoxRender
      * library offers a built in system for controlling the import of image information. 
      * Image import/export modules are registered with the Image class through a static
      * interface and associated with a regular expression. When an attempt is made to 
@@ -286,6 +323,17 @@ namespace vox
     class ImageExporter { public: virtual void exporter(std::ostream & data, OptionSet const& options, 
                                                         Bitmap const& image) = 0; 
                           virtual ~ImageExporter() { } };
+    
+    /**
+     * Image format conversion class
+     */
+    class ImageConverter 
+    { 
+    public: 
+        virtual void convert(Bitmap const& src, Bitmap * dst, int dstFormat, OptionSet const& options) = 0; 
+                          
+        virtual ~ImageConverter() { } 
+    };
 }
 
 // End definition

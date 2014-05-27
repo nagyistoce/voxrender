@@ -292,6 +292,8 @@ private slots:
     void on_pushButton_refreshPlugins_clicked() { }
     void on_pushButton_loadPlugin_clicked();
 
+    void on_comboBox_stereo_currentIndexChanged(QString text);
+
     void onZoomChange(float zoom);
 
     void onProgressChanged(int progress);

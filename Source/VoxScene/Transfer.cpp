@@ -567,20 +567,20 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
 
     // Resize the map images as necessary
     auto & diffuse = map->diffuse();
-    diffuse.resize(256, 128, 1);
+    diffuse.resize(m_resolution[0], m_resolution[1], 1);
     diffuse.clear();
     auto & opacity = map->opacity();
-    opacity.resize(256, 128, 1);
+    opacity.resize(m_resolution[0], m_resolution[1], 1);
     opacity.clear();
     auto & specular = map->specular();
-    specular.resize(256, 128, 1);
+    specular.resize(m_resolution[0], m_resolution[1], 1);
     specular.clear();
     auto & emissive = map->emissive();
     emissive.resize(1, 1, 1);
     emissive.clear();
 
     // Cycle through each quad
-    auto res = Vector2f(256.f, 128.f);
+    auto res = Vector2f(m_resolution[0], m_resolution[1]);
     BOOST_FOREACH (auto & quad, m_quads)
     {
         auto h1 = quad->heights[0] / 2;

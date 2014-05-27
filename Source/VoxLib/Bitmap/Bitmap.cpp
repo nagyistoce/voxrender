@@ -40,6 +40,8 @@ namespace filescope {
     static std::map<String, std::shared_ptr<ImageImporter>> importers;   // Registered import modules
     static std::map<String, std::shared_ptr<ImageExporter>> exporters;   // Registered export modules 
 
+    static std::map<std::pair<int,int>, std::shared_ptr<void>> converters;   // Registered conversion modules 
+
     static boost::shared_mutex moduleMutex; // Module access mutex for read-write locks
 
 } // namespace filescope
@@ -196,13 +198,8 @@ void Bitmap::exprt(std::ostream & data, String const& extension, OptionSet const
 // ----------------------------------------------------------------------------
 //  Initializes an image for a known image format
 // ----------------------------------------------------------------------------
-Bitmap::Bitmap(Format type, size_t width, size_t height, size_t bitDepth, 
-               size_t nLayers, size_t stride, std::shared_ptr<void> data) :
-    m_format(type),
-    m_width(width),
-    m_height(height),
-    m_buffer(data),
-    m_layers(nLayers)
+Bitmap::Bitmap(Format type, unsigned int width, unsigned int height, unsigned int bitDepth, 
+               unsigned int stride, std::shared_ptr<void> data)
 {
     m_depth = bitDepth ? bitDepth : 8;
 
@@ -225,39 +222,84 @@ Bitmap::Bitmap(Format type, size_t width, size_t height, size_t bitDepth,
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, format("Unrecognized format: %1%", type));
     }
 
-    if (data) 
-    {
-        m_stride = stride ? stride : m_width * m_channels * m_depth/8;
-    }
-    else pad(0, false);
+    if (!data) reset(type, width, height, bitDepth, m_channels, 1, stride);
+    else reset(type, width, height, bitDepth, m_channels, 1, stride, 
+        std::list<std::shared_ptr<void>>(1, data));
 }
 
 // ----------------------------------------------------------------------------
-//  Initializes an image for an unknown image format
+//  Advanced bitmap constructor
 // ----------------------------------------------------------------------------
-Bitmap::Bitmap(size_t width, size_t height, size_t bitDepth, size_t nChannels, 
-               size_t nLayers, size_t stride, std::shared_ptr<void> data) :
-    m_format(Format_Unknown),
-    m_width(width),
-    m_height(height),
-    m_channels(nChannels),
-    m_depth(bitDepth),
-    m_buffer(data),
-    m_layers(nLayers)
-{
-    if (!data) pad(0, false);
-    else
+void Bitmap::reset(int type, unsigned int width, unsigned int height, unsigned int bitDepth, 
+                   unsigned int nChannels, unsigned int nLayers, unsigned int stride, 
+                   std::list<std::shared_ptr<void>> layerData)
+{ 
+    m_channels = nChannels;
+    m_depth    = bitDepth;
+    m_width    = width;
+    m_height   = height;
+    m_format   = type;
+
+    m_stride = stride ? stride : m_width * m_depth * m_channels / 8;
+    auto bytes = m_stride * m_height;
+
+    BOOST_FOREACH (auto & layer, layerData) m_buffer.push_back(layer);
+
+    if (m_buffer.size() > nLayers)
     {
-        m_stride = stride ? stride : m_width * m_depth/8 * m_channels;
+        m_buffer.resize(nLayers);
     }
+    else while (m_buffer.size() < nLayers)
+    {
+        m_buffer.push_back(std::shared_ptr<void>(new UInt8[bytes], arrayDeleter));
+    }
+}
+    
+// ----------------------------------------------------------------------------
+//  Adds an additional layer to the bitmap
+// ----------------------------------------------------------------------------
+void Bitmap::addLayer(std::shared_ptr<void> layer, unsigned int index)
+{
+    auto newLayer = layer ? layer : makeSharedArray(m_stride * m_height);
+    m_buffer.insert(m_buffer.begin() + index, newLayer);
+}
+
+// ----------------------------------------------------------------------------
+//  Removes a layer from the bitmap
+// ----------------------------------------------------------------------------
+void Bitmap::removeLayer(unsigned int layer)
+{
+    if (layer < m_buffer.size()) m_buffer.erase(m_buffer.begin() + layer);
+}
+
+// ----------------------------------------------------------------------------
+//  Bitmap data accessor
+// ----------------------------------------------------------------------------
+void const* Bitmap::data(unsigned int layer) const
+{
+    if (layer >= m_buffer.size()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+        "Layer out of index", Error_Range);
+
+    return m_buffer[layer].get();
+}
+        
+// ----------------------------------------------------------------------------
+//  Bitmap data accessor
+// ----------------------------------------------------------------------------
+void * Bitmap::data(unsigned int layer)
+{
+    if (layer >= m_buffer.size()) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+        "Layer out of index", Error_Range);
+
+    return m_buffer[layer].get();
 }
 
 // ----------------------------------------------------------------------------
 //  Adjusts the stride of an image
 // ----------------------------------------------------------------------------
-void Bitmap::pad(size_t newStride, bool copyData)
+void Bitmap::pad(unsigned int newStride, bool copyData)
 {
-    if (newStride == m_stride && m_buffer != nullptr) return;
+    if (newStride == m_stride) return;
 
     if (m_width == 0 || m_height == 0) return;
 
@@ -266,26 +308,59 @@ void Bitmap::pad(size_t newStride, bool copyData)
     if (actualStride < rowSize)
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Requested stride smaller than row size", Error_Range);
 
-    if (copyData)
+    BOOST_FOREACH (auto & handle, m_buffer)
     {
-        auto buffer   = makeSharedArray(m_stride * m_height);
-        auto writePtr = (char*)buffer.get();
-        auto readPtr  = (char*)m_buffer.get();
-        for (size_t i = 0; i < m_height; i++)
+        if (copyData)
         {
-            memcpy(writePtr, readPtr, rowSize);
-            writePtr += actualStride;
-            readPtr  += m_stride;
-        }
+            auto buffer   = makeSharedArray(m_stride * m_height);
+            auto writePtr = (char*)buffer.get();
+            auto readPtr  = (char*)handle.get();
+            for (size_t i = 0; i < m_height; i++)
+            {
+                memcpy(writePtr, readPtr, rowSize);
+                writePtr += actualStride;
+                readPtr  += m_stride;
+            }
 
-        m_buffer = buffer;
-    }
-    else 
-    {
-        m_buffer.reset(new UInt8[actualStride * m_height], arrayDeleter);
+            handle = buffer;
+        }
+        else 
+        {
+            handle.reset(new UInt8[actualStride * m_height], arrayDeleter);
+        }
     }
 
     m_stride = actualStride;
+}
+
+// ----------------------------------------------------------------------------
+//  Adjusts the size of the internal image buffers
+// ----------------------------------------------------------------------------
+void Bitmap::resize(unsigned int width, unsigned int height, unsigned int stride)
+{
+    auto actualStride = stride ? stride : width * m_depth * m_channels / 8;
+
+    m_width = width; m_height = height; m_stride = actualStride;
+
+    BOOST_FOREACH (auto & buffer, m_buffer)
+        buffer = std::shared_ptr<void>(new UInt8[actualStride*height]);
+}
+
+// ----------------------------------------------------------------------------
+//  Performs a deep copy operation on the image
+// ----------------------------------------------------------------------------
+Bitmap Bitmap::copy() const
+{
+    Bitmap result(m_format, m_width, m_height, m_depth, m_channels, m_buffer.size(), m_stride);
+
+    // Copy the image content
+    auto bytes = m_stride * m_height;
+    for (unsigned int i = 0; i < m_buffer.size(); ++i)
+    {
+        memcpy(result.m_buffer[i].get(), m_buffer[i].get(), bytes);
+    }
+
+    return result;
 }
 
 } // namespace vox

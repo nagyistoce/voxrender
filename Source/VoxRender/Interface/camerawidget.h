@@ -66,6 +66,11 @@ private slots:
     void on_doubleSpinBox_focal_valueChanged(double value);
     void on_horizontalSlider_exposure_valueChanged(int value);
     void on_doubleSpinBox_exposure_valueChanged(double value);
+    void on_horizontalSlider_eye_valueChanged(int value);
+    void on_doubleSpinBox_eye_valueChanged(double value);
+
+    void on_checkBox_eye_toggled(bool on);
+    void on_checkBox_autoFocus_toggled(bool on);
 
     void on_spinBox_filmHeight_valueChanged(int value);
     void on_spinBox_filmWidth_valueChanged(int value);

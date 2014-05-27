@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_SUITE( StandardImgSuite )
             for (size_t y = 0; y < h; y++)
                 ((UInt32*)(ptr + b*y))[x] = 0xFF0000FF;
 
-            Bitmap imageO(Bitmap::Format_RGBA, w, h, 8, 1, b, d);
+            Bitmap imageO(Bitmap::Format_RGBA, w, h, 8, b, d);
             imageO.exprt(IDENTIFIER);
             auto imageI = Bitmap::imprt(IDENTIFIER);
 

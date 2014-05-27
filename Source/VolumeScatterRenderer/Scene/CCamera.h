@@ -69,12 +69,15 @@ public:
     /** Generates a sampling ray for the camera */
     VOX_HOST_DEVICE inline Ray3f generateRay(
         Vector2f const& screenCoords, 
-        Vector2f const& apertureRnd) const
+        Vector2f const& apertureRnd,
+        int isLeftEye) const
     {
         float screenX = m_screenUpperLeft[0] + m_screenPerPixel[0] * screenCoords[0];
         float screenY = m_screenUpperLeft[1] + m_screenPerPixel[1] * screenCoords[1];
 
-        Ray3f ray(m_pos, m_eye + (m_right * screenX) - (m_up * screenY));
+        auto offset = m_right * m_eyeDistance;
+        if (isLeftEye) offset = - offset;
+        Ray3f ray(m_pos + offset, m_eye - offset / m_focalDistance + (m_right * screenX) - (m_up * screenY));
 
         ray.dir.normalize();
         ray.min = 0.0f;
@@ -105,6 +108,7 @@ private:
  
     float m_focalDistance;  ///< Focal distance (mm)
 	float m_apertureSize;   ///< Aperture size  (mm)
+    float m_eyeDistance;    ///< Eye distance (mm)
 };
 
 }

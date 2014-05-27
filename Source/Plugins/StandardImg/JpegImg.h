@@ -46,7 +46,16 @@ namespace vox
 class VOX_SIMG_EXPORT JpegImg : public ImageExporter, public ImageImporter
 {
 public:
-    JpegImg(std::shared_ptr<void> handle) : m_handle(handle) { }
+    enum Container
+    {
+        Container_JPG,
+        Container_MPO,
+        Container_JPS
+    };
+
+public:
+    JpegImg(std::shared_ptr<void> handle, Container container = Container_JPG) : 
+        m_handle(handle), m_container(container) { }
 
 	/** Vox Image File Exporter */
 	virtual void exporter(std::ostream & source, OptionSet const& options, Bitmap const& image);
@@ -56,6 +65,8 @@ public:
     
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
+
+    Container m_container;
 };
 
 }

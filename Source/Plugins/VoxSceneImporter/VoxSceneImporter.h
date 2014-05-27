@@ -58,7 +58,7 @@ enum ExportOpt
 class VSI_EXPORT VoxSceneFile : public SceneImporter, public SceneExporter
 {
 public:
-    VoxSceneFile(std::shared_ptr<void> handle) : m_handle(handle) { }
+    VoxSceneFile(std::shared_ptr<void> handle, bool isXml = true) : m_handle(handle), m_isXml(isXml) { }
 
 	/** 
      * @brief Vox Scene File Exporter
@@ -96,6 +96,7 @@ public:
 
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage
+    bool m_isXml;   ///< Determines whether to use XML or json encoding
 };
 
 }

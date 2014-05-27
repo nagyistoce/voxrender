@@ -37,7 +37,8 @@ using namespace vox;
 namespace {
 namespace filescope {
 
-    std::shared_ptr<VoxSceneFile> exim;
+    std::shared_ptr<VoxSceneFile> eximXml;
+    std::shared_ptr<VoxSceneFile> eximJson;
     std::shared_ptr<void> handle;
 
 } // namespace filescope
@@ -109,10 +110,13 @@ void enable()
 {  
     VOX_LOG_INFO(VSI_LOG_CATEGORY, "Enabling the 'Vox Scene ExIm' plugin");
     
-    filescope::exim = std::shared_ptr<VoxSceneFile>(new VoxSceneFile(filescope::handle));
+    filescope::eximXml  = std::shared_ptr<VoxSceneFile>(new VoxSceneFile(filescope::handle, true ));
+    filescope::eximJson = std::shared_ptr<VoxSceneFile>(new VoxSceneFile(filescope::handle, false));
 
-    vox::Scene::registerImportModule(".xml", filescope::exim);
-    vox::Scene::registerExportModule(".xml", filescope::exim);
+    vox::Scene::registerImportModule(".xml", filescope::eximXml);
+    vox::Scene::registerExportModule(".xml", filescope::eximXml);
+    vox::Scene::registerImportModule(".json", filescope::eximJson);
+    vox::Scene::registerExportModule(".json", filescope::eximJson);
 }
 
 // --------------------------------------------------------------------
@@ -122,9 +126,12 @@ void disable()
 { 
     VOX_LOG_INFO(VSI_LOG_CATEGORY, "Disabling the 'Vox Scene ExIm' plugin");
 
-    vox::Scene::removeImportModule(filescope::exim);
-    vox::Scene::removeExportModule(filescope::exim);
+    vox::Scene::removeImportModule(filescope::eximXml);
+    vox::Scene::removeExportModule(filescope::eximXml);
+    vox::Scene::removeImportModule(filescope::eximJson);
+    vox::Scene::removeExportModule(filescope::eximJson);
 
-    filescope::exim.reset();
+    filescope::eximXml.reset();
+    filescope::eximJson.reset();
     filescope::handle.reset();
 }

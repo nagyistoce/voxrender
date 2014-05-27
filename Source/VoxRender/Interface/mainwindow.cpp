@@ -202,6 +202,8 @@ MainWindow::~MainWindow()
     vox::PluginManager::instance().unloadAll();
     
     delete ui;
+
+    vox::Logger::setHandler(vox::ErrorIgnore);
 }
 
 // ----------------------------------------------------------------------------
@@ -1032,11 +1034,19 @@ void MainWindow::on_pushButton_devicesRemove_clicked()
 // ----------------------------------------------------------------------------
 void MainWindow::on_actionExport_Image_triggered()
 {
-    // :TODO: Detect available export types from Bitmap exporters
+    // :TODO: Detect additional export types from Bitmap exporters
     String fileTypes;
-    fileTypes += "PNG Image (*.png)\n";
-    fileTypes += "JPEG Image (*.jpg)\n";
-    fileTypes += "BMP Image (*.bmp)\n";
+    if (!m_activeScene.camera->isStereoEnabled())
+    {
+        fileTypes += "PNG Image (*.png)\n";
+        fileTypes += "JPEG Image (*.jpg)\n";
+        fileTypes += "BMP Image (*.bmp)\n";
+    }
+    else
+    {
+        fileTypes += "MPO Image (*.mpo)\n";
+        fileTypes += "JPG Stereo Image (*.jps)\n";
+    }
     fileTypes += "All Files (*)";
 
     QString filename = QFileDialog::getSaveFileName( 
@@ -1500,6 +1510,18 @@ void MainWindow::on_pushButton_loadPlugin_clicked()
 }
 
 // ----------------------------------------------------------------------------
+//  Configures the display mode for stereo rendering
+// ----------------------------------------------------------------------------
+void MainWindow::on_comboBox_stereo_currentIndexChanged(QString text)
+{
+    if      (text == "Left Eye Only")  m_renderView->setDisplayMode(RenderView::Stereo_Left);
+    else if (text == "Right Eye Only") m_renderView->setDisplayMode(RenderView::Stereo_Right);
+    else if (text == "Side-By-Side")   m_renderView->setDisplayMode(RenderView::Stereo_SideBySide);
+    else if (text == "Anaglyph")       m_renderView->setDisplayMode(RenderView::Stereo_Anaglyph);
+    else if (text == "Stereo Display") m_renderView->setDisplayMode(RenderView::Stereo_True);
+}
+
+// ----------------------------------------------------------------------------
 //  Callback from renderer with tonemapped framebuffer for interactive display
 // ----------------------------------------------------------------------------
 void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
@@ -1517,8 +1539,8 @@ void MainWindow::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 void MainWindow::on_actionExport_Scene_File_triggered()
 {
     QString filename = QFileDialog::getSaveFileName( 
-        this, tr("Choose a scene file to open"), 
-        m_lastOpenDir, tr("Vox Scene File (*.xml)"));
+        this, tr("Choose an output file location"), 
+        m_lastOpenDir, tr("Vox Scene File (*.xml)\nAll Files (*.json)"));
 
     std::string identifier(filename.toUtf8().data());
     if (identifier.empty()) return;

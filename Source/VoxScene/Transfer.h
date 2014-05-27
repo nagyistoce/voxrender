@@ -106,7 +106,7 @@ namespace vox
     {
     public: 
         /** Initializes the default transfer function resolution */
-        Transfer(int id = 0) : Object(id), m_resolution(128, 32, 1) { }
+        Transfer(int id = 0) : Object(id), m_resolution(256, 128, 8) { }
 
         /** Interpolates the transfer function towards k2 by a factor f */
         virtual std::shared_ptr<Transfer> interp(std::shared_ptr<Transfer> k2, float f) = 0;

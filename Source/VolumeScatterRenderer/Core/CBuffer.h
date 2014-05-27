@@ -48,9 +48,6 @@
 #include "VolumeScatterRenderer/Core/Common.h"
 
 // VoxLib Dependencies
-#include "VoxLib/Core/Geometry/Color.h"
-#include "VoxLib/Core/Geometry/Image.h"
-#include "VoxLib/Core/Geometry/Vector.h"
 #include "VoxLib/Error/CudaError.h"
 
 // API namespace
@@ -180,14 +177,8 @@ public:
         m_width  = 0;
     }
     
-    /** Writes data to the internal memory buffer */
-    // VOX_HOST void write(T const* buffer, size_t stride, cudaMemcpyKind kind = cudaMemcpyHostToDevice) { }
-
-    /** Reads data from internal memory buffer */
-    // VOX_HOST void read(T * buffer, size_t stride, cudaMemcpyKind kind = cudaMemcpyDeviceToHost) { }
-
     /** Performs a buffer transfer copy */
-    VOX_HOST void copy(T* buffer, size_t stride, cudaMemcpyKind kind)
+    VOX_HOST void copy(void * buffer, size_t stride, cudaMemcpyKind kind)
     {
             // :TODO: NOT CORRECT :BUG: //
         cudaMemcpy2D(buffer, stride, m_pData, m_pitch, 
@@ -271,30 +262,6 @@ protected:
     size_t m_height;
     size_t m_pitch;
     T *    m_pData;
-};
-
-// Specialization for device side frame buffers
-template <typename T>
-class CImgBuffer2D : public CBuffer2D<T>
-{
-public:
-    VOX_HOST CImgBuffer2D() : CBuffer2D<T>() { }
-
-    /** Initializes and allocates the image buffer */
-    VOX_HOST CImgBuffer2D(size_t x, size_t y) : 
-        CBuffer2D<T>(x, y) { }
-
-    /** Reads the CBuffer into the specified image */
-    VOX_HOST void read(Image<T> & img)
-    {
-        copy(img.data(), img.stride(), cudaMemcpyDeviceToHost);
-    }
-
-    /** Writes the specified image into the CBuffer */
-    VOX_HOST void write(Image<T> const& img)
-    {
-        copy(const_cast<T*>(img.data()), img.stride(), cudaMemcpyHostToDevice);
-    }
 };
 
 }

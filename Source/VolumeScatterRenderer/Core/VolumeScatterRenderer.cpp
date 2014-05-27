@@ -85,7 +85,8 @@ public:
         m_exposure(0.0f)
     {
         m_ldrBuffer.init();
-        m_hdrBuffer.init();
+        m_hdrBuffer[0].init();
+        m_hdrBuffer[1].init();
         m_lightBuffer.init();
         m_transferBuffer.init();
         m_volumeBuffer.init();
@@ -126,27 +127,41 @@ public:
         {
             size_t filmHeight = scene.camera->filmHeight();
             size_t filmWidth  = scene.camera->filmWidth();
+            
+            // Allocate/Resize the host side LDR framebuffer
+            if (m_frameBuffer) 
+            {
+                m_frameBuffer->wait(); 
+                
+                m_frameBuffer->resize(filmWidth, filmHeight);
+            }
+            else 
+            {
+                m_frameBuffer.reset(new FrameBuffer(filmWidth, filmHeight));
+                m_frameBuffer->addLayer();
+            }
 
             //BOOST_FOREACH(auto & device, m_devices)
             {
                 // Resize the device frame buffers
-                m_hdrBuffer.resize(filmWidth, filmHeight);
                 m_ldrBuffer.resize(filmWidth, filmHeight);
+                m_hdrBuffer[0].resize(filmWidth, filmHeight);
+                if (scene.camera->isStereoEnabled())
+                {
+                    m_hdrBuffer[1].resize(filmWidth, filmHeight);
+                }
+                else 
+                {
+                    m_hdrBuffer[1].reset();
+                }
                 m_randBuffer.resize(filmWidth * filmHeight);
-
                 RenderKernel::setFrameBuffers(m_hdrBuffer, m_randBuffer.states());
             }
-
-            // Allocate/Resize the host side LDR framebuffer
-            if (m_frameBuffer) 
-            {
-                m_frameBuffer->wait(); m_frameBuffer->resize(filmWidth, filmHeight);
-            }
-            else m_frameBuffer.reset(new FrameBuffer(filmWidth, filmHeight));
         }
         else
         {
-            m_hdrBuffer.clear();
+            m_hdrBuffer[0].clear();
+            m_hdrBuffer[1].clear();
         }
 
         // Volume data synchronization
@@ -204,9 +219,7 @@ public:
     {
         m_frameBuffer->wait(); // Await user lock release
 
-        Bitmap bitmap(Bitmap::Format_RGBX, m_frameBuffer->width(), m_frameBuffer->height(), 
-            8, 1, m_frameBuffer->stride(), m_frameBuffer->buffer()); 
-        bitmap.exprt(out);
+        m_frameBuffer->exprt(out);
     }
 
     // --------------------------------------------------------------------
@@ -215,15 +228,24 @@ public:
     void render()
     {
         // Execute one cycle of the device rendering kernel
-        RenderKernel::execute(0, 0, m_hdrBuffer.width(), m_hdrBuffer.height());
+        RenderKernel::execute(0, 0, m_hdrBuffer[0].width(), m_hdrBuffer[0].height(), 0);
 
         // Perform tonemapping on the HDR image buffer
-        TonemapKernel::execute(m_hdrBuffer, m_ldrBuffer, m_exposure);
+        TonemapKernel::execute(m_hdrBuffer[0], m_ldrBuffer, m_exposure);
+        if (m_hdrBuffer[1].width() != 0)
+        {
+            RenderKernel::execute(0, 0, m_hdrBuffer[1].width(), m_hdrBuffer[1].height(), 1);
+        }
 
         m_frameBuffer->wait(); // Await user lock release
 
         // Read the data back to the host
-        m_ldrBuffer.read(*m_frameBuffer);
+        m_ldrBuffer.copy(m_frameBuffer->data(), m_frameBuffer->stride(), cudaMemcpyDeviceToHost);
+        if (m_hdrBuffer[1].width() != 0) // Right eye view if stereo-enabled
+        {
+            TonemapKernel::execute(m_hdrBuffer[1], m_ldrBuffer, m_exposure);
+            m_ldrBuffer.copy(m_frameBuffer->data(1), m_frameBuffer->stride(), cudaMemcpyDeviceToHost);
+        }
 
         // Execute the user defined callback routine
         boost::mutex::scoped_lock lock(m_mutex);
@@ -252,19 +274,6 @@ public:
     // --------------------------------------------------------------------
     void pullIpr(IprImage & img) 
     { 
-        auto meanBuf = m_hdrBuffer.meanBuffer();
-        auto statBuf = m_hdrBuffer.varianceBuffer();
-
-        // Ensure the sample buffer sizes are correct
-        if (img.sampleBuffer.width()  != meanBuf.width() || 
-            img.sampleBuffer.height() != meanBuf.height())
-        {
-            img.sampleBuffer.resize(meanBuf.width(), meanBuf.height());
-            img.statsBuffer.resize(statBuf.width(), statBuf.height());
-        }
-
-        meanBuf.copy(img.sampleBuffer.buffer().get(), img.sampleBuffer.stride(), cudaMemcpyDeviceToHost);
-        statBuf.copy(img.statsBuffer.buffer().get(), img.statsBuffer.stride(), cudaMemcpyDeviceToHost);
     }
 
     // --------------------------------------------------------------------
@@ -273,7 +282,8 @@ public:
     void shutdown()
 	{
 		m_ldrBuffer.reset();
-		m_hdrBuffer.reset();
+		m_hdrBuffer[0].reset();
+		m_hdrBuffer[1].reset();
 		m_lightBuffer.reset();
 		m_transferBuffer.reset();
 		m_volumeBuffer.reset();
@@ -315,9 +325,9 @@ public:
 private:
     std::vector<int> m_devices; /// Authorized Device IDs
 
-    CImgBuffer2D<ColorRgbaLdr> m_ldrBuffer;    ///< LDR post-processed image
+    CBuffer2D<ColorRgbaLdr> m_ldrBuffer;    ///< LDR post-processed image
 
-    CSampleBuffer2D m_hdrBuffer;    ///< HDR raw sample data buffer
+    CSampleBuffer2D m_hdrBuffer[2]; ///< HDR raw sample data buffer 
     RandBuffer      m_randBuffer;   ///< States for random generator   
 
     CBuffer1D<CLight> m_lightBuffer;    ///< Array of scene lights

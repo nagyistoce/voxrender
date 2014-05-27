@@ -26,10 +26,6 @@
 // Include Header
 #include "TonemapKernel.h"
 
-// Include Headers
-#include "VolumeScatterRenderer/Core/CBuffer.h"
-#include "VolumeScatterRenderer/Core/CSampleBuffer.h"
-
 // Include Core Library Headers
 #include "VoxLib/Core/Geometry/Color.h"
 #include "VoxLib/Core/Geometry/Vector.h"
@@ -42,7 +38,7 @@ namespace filescope {
     // --------------------------------------------------------------------
     //  Performs reinhard based tonemapping of the input HDR image buffer
     // --------------------------------------------------------------------
-    __global__ void tonemapKernel(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
+    __global__ void tonemapKernel(CSampleBuffer2D sampleBuffer, CBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
     { 	
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
@@ -68,7 +64,7 @@ float TonemapKernel::m_elapsedTime;
 // --------------------------------------------------------------------
 //  Executes the tonemapping kernel for the active device
 // --------------------------------------------------------------------
-void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CImgBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
+void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CBuffer2D<ColorRgbaLdr> imageBuffer, float exposure)
 {
 	// Setup the execution configuration
 	static const unsigned int BLOCK_SIZE = 16;

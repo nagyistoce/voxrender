@@ -41,7 +41,7 @@ namespace vox
 
 typedef UInt32 FourCC; ///< FourCC compression code
 
-/** Handles the writing of video content to a stream */
+/** Handles the writing of AV content to a stream */
 class VOX_EXPORT VideoWriter
 {
 public:
@@ -49,12 +49,12 @@ public:
 
     virtual void begin(ResourceOStream & ostr, OptionSet const& options) { }
 
-    virtual void addFrame(ResourceOStream & ostr, Bitmap const& frame) { }
+    virtual void addFrame(ResourceOStream & ostr, Bitmap const& frame, unsigned int streamId = 0) { }
     
     virtual void end(ResourceOStream & ostr) { }
 };
 
-/** Handles the reading of video content from a stream */
+/** Handles the reading of AV content from a stream */
 class VOX_EXPORT VideoReader
 {
 public:
@@ -62,7 +62,7 @@ public:
 
     virtual void begin(ResourceIStream & ostr, OptionSet const& options) { }
     
-    virtual void getFrame() { }
+    virtual void getFrame(unsigned int streamId = 0) { }
 
     virtual void end(ResourceIStream & ostr) { }
 };

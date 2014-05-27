@@ -45,6 +45,9 @@ CCamera::CCamera(std::shared_ptr<Camera> const& camera) :
     m_right         (camera->right()),
     m_up            (camera->up())
 {
+    if (m_focalDistance < 50.0f) m_focalDistance = 50.0f; // Prevent errors from stereo offset
+    m_eyeDistance = camera->isStereoEnabled() ? camera->eyeDistance() * 0.05f : 0.0f;
+
     size_t width  = camera->filmWidth();
     size_t height = camera->filmHeight();
 

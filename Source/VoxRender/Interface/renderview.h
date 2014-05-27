@@ -58,6 +58,17 @@ public:
         Tool_ClipPlane
     };
 
+    enum Stereo
+    {
+        Stereo_Begin,
+        Stereo_Left = Stereo_Begin,
+        Stereo_Right,
+        Stereo_Anaglyph,
+        Stereo_True,
+        Stereo_SideBySide,
+        Stereo_End,
+    };
+
 public:
 	~RenderView();
 
@@ -78,6 +89,9 @@ public:
 
     /** Returns the current approximate framerate */
     float framerate() const { return m_framerate; }
+
+    /** Sets the stereo display mode */
+    void setDisplayMode(Stereo mode);
 
     /** Copies the current image to the clipboard */
 	void copyToClipboard() const; 
@@ -101,7 +115,7 @@ private:
     float m_zoomfactor;   ///< The current zoomfactor for the image zoom
     bool  m_overlayStats; ///< Flag indicating whether statistical overlay is enabled
     
-    vox::Image<vox::ColorRgbaLdr> m_image; ///< Current frame image data
+    vox::Bitmap m_image; ///< Current frame image data
 
 	QGraphicsScene*      m_renderscene;   ///< Scene graph
 	QGraphicsPixmapItem* m_voxlogo;       ///< Background logo for non-render mode display
@@ -129,6 +143,8 @@ private:
 
     float m_framerate;  ///< The current approximate framerate
     float m_lastFrame;  ///< The timestamp for the last frame
+
+    Stereo m_displayMode;
 
 signals:
 	void viewChanged(float zoomFactor);

@@ -32,25 +32,24 @@
 
 // External Dependencies
 #include "VoxLib/Core/Common.h"
-#include "VoxLib/Core/Geometry/Image.h"
-#include "VoxLib/Core/Geometry/Color.h"
+#include "VoxLib/Bitmap/Bitmap.h"
 
 // API namespace
 namespace vox
 {
 	/** Rendering frame buffer class */
-    class VOXS_EXPORT FrameBuffer : public Image<ColorRgbaLdr>
+    class VOXS_EXPORT FrameBuffer : public Bitmap
 	{
 	public:
         /** Constructs and image of the specified dimensions */
 		FrameBuffer(size_t width, size_t height) :
-            m_locked(false), Image(width, height, sizeof(ColorRgbaLdr)*width)
+            m_locked(false), Bitmap(Bitmap::Format_RGBA, width, height, 8)
         { 
         }
 
         /** Image constructor controlled by the renderer */
 		FrameBuffer(size_t width, size_t height, size_t stride) :
-            m_locked(false), Image(width, height, stride)
+            m_locked(false), Bitmap(Bitmap::Format_RGBA, width, height, 8, stride)
         { 
         }
 

@@ -73,7 +73,7 @@ namespace vox
         bool isOpen();
 
         /** Pushes a singe frame into the video stream */
-        void push(Bitmap const& frame);
+        void push(Bitmap const& frame, unsigned int streamId = 0);
 
         /** Stream style method for calling push */
         void operator<<(Bitmap const& frame) { push(frame); }

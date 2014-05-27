@@ -74,7 +74,7 @@ namespace
             // --------------------------------------------------------------------
             //  Write the boost::property_tree as an XML file to the stream
             // --------------------------------------------------------------------
-            void writeImageFile()
+            void writeImageFile(JpegImg::Container container)
             {
                 // Setup the compression options
                 struct jpeg_compress_struct cinfo;
@@ -129,48 +129,52 @@ namespace
                 DestinationManager manager(this);
                 cinfo.dest = (jpeg_destination_mgr*)&manager;
 
-                // Perform the actual JPEG encoding
-                jpeg_start_compress(&cinfo, true);
-                auto data   = (char*)m_image.data();
-                auto stride = m_image.stride();
-
-                // Check if we can write the image data without any transforms
-                if (!stripAlpha && !swapRgb)
+                unsigned int passes = (container == JpegImg::Container_MPO) ? m_image.layers() : 1;
+                for (unsigned int i = 0; i < passes; ++i)
                 {
-                    while (cinfo.next_scanline < cinfo.image_height) {
-                        JSAMPROW rowPointer = (JSAMPROW)(data + cinfo.next_scanline*stride);
-                        jpeg_write_scanlines(&cinfo, &rowPointer, 1);
-                    }
-                }
-                else // We need 1 or more data transforms
-                {
-                    auto stride    = m_image.width()*m_image.depth()/8*(stripAlpha ? m_image.channels()-1 : 0);
-                    auto rElemSize = m_image.depth()/8 * m_image.channels();
-                    auto wElemSize = stripAlpha ? (stripAlpha - 1) : rElemSize;
+                    // Perform the actual JPEG encoding
+                    jpeg_start_compress(&cinfo, true);
+                    auto data   = (char*)m_image.data(i);
+                    auto stride = m_image.stride();
 
-                    std::unique_ptr<UInt8[]> buf(new UInt8[stride]);
-                    JSAMPROW rowPointer = (JSAMPROW)(buf.get());
-                    while (cinfo.next_scanline < cinfo.image_height) {
-                        auto writePtr = (char*)buf.get();
-                        auto readPtr  = (char*)m_image.data() + m_image.stride() * cinfo.next_scanline;
-                        for (size_t i = 0; i < m_image.width(); i++)
-                        {
-                            memcpy(writePtr, readPtr, wElemSize);
-                            if (swapRgb) 
-                            {
-                                UInt8 temp = writePtr[0];
-                                writePtr[0] = writePtr[2];
-                                writePtr[2] = temp;
-                            }
-                            writePtr += wElemSize;
-                            readPtr  += rElemSize;
+                    // Check if we can write the image data without any transforms
+                    if (!stripAlpha && !swapRgb)
+                    {
+                        while (cinfo.next_scanline < cinfo.image_height) {
+                            JSAMPROW rowPointer = (JSAMPROW)(data + cinfo.next_scanline*stride);
+                            jpeg_write_scanlines(&cinfo, &rowPointer, 1);
                         }
-                        jpeg_write_scanlines(&cinfo, &rowPointer, 1);
+                    }
+                    else // We need 1 or more data transforms
+                    {
+                        auto stride    = m_image.width()*m_image.depth()/8*(stripAlpha ? m_image.channels()-1 : 0);
+                        auto rElemSize = m_image.depth()/8 * m_image.channels();
+                        auto wElemSize = stripAlpha ? (stripAlpha - 1) : rElemSize;
+
+                        std::unique_ptr<UInt8[]> buf(new UInt8[stride]);
+                        JSAMPROW rowPointer = (JSAMPROW)(buf.get());
+                        while (cinfo.next_scanline < cinfo.image_height) {
+                            auto writePtr = (char*)buf.get();
+                            auto readPtr  = data + m_image.stride() * cinfo.next_scanline;
+                            for (size_t i = 0; i < m_image.width(); i++)
+                            {
+                                memcpy(writePtr, readPtr, wElemSize);
+                                if (swapRgb) 
+                                {
+                                    UInt8 temp = writePtr[0];
+                                    writePtr[0] = writePtr[2];
+                                    writePtr[2] = temp;
+                                }
+                                writePtr += wElemSize;
+                                readPtr  += rElemSize;
+                            }
+                            jpeg_write_scanlines(&cinfo, &rowPointer, 1);
+                        }
+
                     }
 
+                    jpeg_finish_compress(&cinfo);
                 }
-
-                jpeg_finish_compress(&cinfo);
 
                 jpeg_destroy_compress(&cinfo);
             }
@@ -244,7 +248,7 @@ namespace
             // --------------------------------------------------------------------
             //  Read in the PNG image data using libPNG
             // --------------------------------------------------------------------
-            Bitmap readImageFile()
+            Bitmap readImageFile(JpegImg::Container container)
             {
                 // Setup the compression options
                 struct jpeg_decompress_struct cinfo;
@@ -286,7 +290,7 @@ namespace
                     break;
                 }
 
-                return Bitmap(type, cinfo.output_width, cinfo.output_height, 8, 1, stride, buffer);
+                return Bitmap(type, cinfo.output_width, cinfo.output_height, 8, stride, buffer);
             }
             
         private:
@@ -348,7 +352,7 @@ void JpegImg::exporter(std::ostream & sink, OptionSet const& options, Bitmap con
     filescope::ImgExporter exportModule(sink, options, image, m_handle);
 
     // Write property tree to the stream
-    exportModule.writeImageFile();
+    exportModule.writeImageFile(m_container);
 }
 
 // --------------------------------------------------------------------
@@ -360,7 +364,7 @@ Bitmap JpegImg::importer(std::istream & source, OptionSet const& options)
     filescope::ImgImporter importModule(source, options, m_handle);
 
     // Read property tree and load scene
-    return importModule.readImageFile();
+    return importModule.readImageFile(m_container);
 }
 
 } // namespace vox

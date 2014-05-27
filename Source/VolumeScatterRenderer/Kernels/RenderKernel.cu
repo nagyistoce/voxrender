@@ -62,19 +62,19 @@ float RenderKernel::m_elapsedTime;
 namespace {
 namespace filescope {
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //                   HOST HANDLES FOR DEVICE DATA
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
 
     std::shared_ptr<CClipGeometry> gh_clipRoot;
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //                        RENDER PARAMETERS
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
 
     __constant__ CCamera           gd_camera;           ///< Device camera model
     __constant__ CBuffer1D<CLight> gd_lights;           ///< Device light buffer
-    __constant__ CSampleBuffer2D   gd_sampleBuffer;     ///< HDR sample data buffer
+    __constant__ CSampleBuffer2D   gd_sampleBuffer[2];  ///< HDR sample data buffer
     __constant__ CVolumeBuffer     gd_volumeBuffer;     ///< Device volume buffer
     __constant__ CRenderParams     gd_renderParams;     ///< Rendering parameters
     __constant__ Vector3f          gd_ambient;          ///< Ambient light
@@ -84,9 +84,9 @@ namespace filescope {
 
     __constant__ ColorLabxHdr gd_backdropClr;       ///< Color of the backdrop for the volume
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //                        TEXTURE SAMPLERS
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
 
 #define VOX_TEXTURE(T) texture<##T,3,cudaReadModeNormalizedFloat>  gd_volumeTex_##T
     VOX_TEXTURE(Int8);
@@ -100,9 +100,9 @@ namespace filescope {
     texture<uchar4,3,cudaReadModeNormalizedFloat> gd_specularTex; // Specular data texture
     texture<float4,3,cudaReadModeElementType>     gd_emissiveTex; // Emission data texture
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Uses the appropriate texture sampler to acquire a density value
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE float sampleDensity(float x, float y, float z)
     {
         float density;
@@ -141,9 +141,9 @@ namespace filescope {
         return gd_volumeBuffer.normalizeSample(static_cast<float>(density));
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Computes the gradient at a specified location using central diffs
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE Vector3f sampleGradient(Vector3f const& location)
     {
         // :TODO: Factor in clipping boundaries
@@ -158,9 +158,9 @@ namespace filescope {
             );
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Samples the opacity texture to provide a sigma absorption value 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE float sampleAbsorption(Vector3f const& location)
     {
         float density = sampleDensity(location[0], location[1], location[2]);
@@ -169,10 +169,10 @@ namespace filescope {
         return tex3D(gd_opacityTex, density, gradMag, 0.0f);
     }
     
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Computes the ray intersection with the volume, taking into account
     //  any bounding volumes etc...
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE void intersectVolume(Ray3f & ray)
     {
         // Compute the intersection with the volume extent box
@@ -184,9 +184,9 @@ namespace filescope {
         if (filescope::gd_clipRoot) filescope::gd_clipRoot->clip(ray);
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Computes attenuation of light along the specified ray
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE inline float computeTransmission(CRandomGenerator & rng, Ray3f & sampleRay)
     {
         // Clip the ray to the scene geometry
@@ -217,18 +217,18 @@ namespace filescope {
         return max(1.0f - opacity, 0.0f);
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Obscurance model for approximating ambient lighting more quickly
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE float computeObscurance(CRandomGenerator & rng, Vector3f const& pos)
     {
         Ray3f ray(pos, rng.sampleSphere(), 0.0f, 10.0f);
         return computeTransmission(rng, ray);
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Samples the scene lighting to compute the radiance contribution
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE ColorLabxHdr estimateRadiance(CRandomGenerator & rng, Vector3f const& pos, Vector3f const& dir)
     {
         // Compute the gradient at the point of interest
@@ -295,17 +295,18 @@ namespace filescope {
         return ColorLabxHdr(Lv[0], Lv[1], Lv[2]);
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Performs ray marching to locate a sample point at the selected opacity
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     VOX_DEVICE bool selectVolumeSamplePoint(
         int px, int py, 
         CRandomGenerator & rng,
-        Vector3f & pos, Vector3f & dir
+        Vector3f & pos, Vector3f & dir,
+        int eye
         )
     {
         // Initialize the sample ray for marching
-        auto sampleRay = gd_camera.generateRay(Vector2f(px, py) + rng.sample2D(), rng.sampleDisk());
+        auto sampleRay = gd_camera.generateRay(Vector2f(px, py) + rng.sample2D(), rng.sampleDisk(), eye);
 
         // Clip the sample ray to the scene geometry
         intersectVolume(sampleRay);
@@ -342,47 +343,47 @@ namespace filescope {
         return true;
     }
 
-    // --------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     //  Performs a single pass of the rendering algorithm over the given
     //  region of the image buffer
-    // --------------------------------------------------------------------
-    __global__ void renderKernel()
+    // ----------------------------------------------------------------------------
+    __global__ void renderKernel(int eye)
     { 
 	    // Establish the image coordinates of this pixel
 	    int px = blockIdx.x * blockDim.x + threadIdx.x;
 	    int py = blockIdx.y * blockDim.y + threadIdx.y;
-        if (px >= gd_sampleBuffer.width() || 
-            py >= gd_sampleBuffer.height()) return;
+        if (px >= gd_sampleBuffer[eye].width() || 
+            py >= gd_sampleBuffer[eye].height()) return;
 
         // Construct the thread's random number generator
-        CRandomGenerator rng(gd_randStates[px + py * gd_sampleBuffer.height()]);
+        CRandomGenerator rng(gd_randStates[px + py * gd_sampleBuffer[eye].height()]);
         
         // Compute the volume sample point
         Vector3f sampPos, sampDir;
-        bool hit = selectVolumeSamplePoint(px, py, rng, sampPos, sampDir);
+        bool hit = selectVolumeSamplePoint(px, py, rng, sampPos, sampDir, eye);
 
         __syncthreads();
 
         // Evaluate the shading at a single volume point ...
         if (hit)
         {
-            gd_sampleBuffer.push(px, py, estimateRadiance(rng, sampPos, sampDir));
+            gd_sampleBuffer[eye].push(px, py, estimateRadiance(rng, sampPos, sampDir));
         }
         else // ... or sample environment
         {
-            gd_sampleBuffer.push(px, py, gd_backdropClr);
+            gd_sampleBuffer[eye].push(px, py, gd_backdropClr);
         }
 
         // Store the CRNG state for subsequent launches 
-        gd_randStates[px + py * gd_sampleBuffer.height()] = rng.state();
+        gd_randStates[px + py * gd_sampleBuffer[eye].height()] = rng.state();
     }
 
 } // namespace filescope
 } // namespace anonymous
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the root primitive for clipping operations
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setClipRoot(std::shared_ptr<CClipGeometry> root)
 {
     CClipGeometry::Clipper * ptr = root ? root->clipper() : nullptr;
@@ -392,34 +393,34 @@ void RenderKernel::setClipRoot(std::shared_ptr<CClipGeometry> root)
     filescope::gh_clipRoot = root; // Store the pointer so we don't free the memory accidently
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the camera model for the active device
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setCamera(CCamera const& camera)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_camera, &camera, sizeof(camera)));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the camera model for the active device
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setParameters(CRenderParams const& settings)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_renderParams, &settings, sizeof(settings)));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the lighting arrangement for the active device
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setLights(CBuffer1D<CLight> const& lights, Vector3f const& ambient)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_lights, &lights, sizeof(lights)));
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_ambient, &ambient, sizeof(ambient)));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the volume data buffer for the active device
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setVolume(CVolumeBuffer const& volume)
 {
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_volumeBuffer, &volume, sizeof(volume)));
@@ -451,9 +452,9 @@ void RenderKernel::setVolume(CVolumeBuffer const& volume)
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the transfer function for the active device
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void RenderKernel::setTransfer(CTransferBuffer const& transfer)
 {
 	// Diffuse texture sampler settings
@@ -523,20 +524,19 @@ void RenderKernel::setTransfer(CTransferBuffer const& transfer)
       transfer.emissiveHandle(), texFormatDescEmissive));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the device framebuffers used for rendering/post-processing
-// --------------------------------------------------------------------
-void RenderKernel::setFrameBuffers(CSampleBuffer2D const& sampleBuffer, curandState * randStates)
+// ----------------------------------------------------------------------------
+void RenderKernel::setFrameBuffers(CSampleBuffer2D const sampleBuffer[2], curandState * randStates)
 {
-    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_sampleBuffer, &sampleBuffer, sizeof(sampleBuffer)));
+    VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_sampleBuffer, sampleBuffer, sizeof(CSampleBuffer2D)*2));
     VOX_CUDA_CHECK(cudaMemcpyToSymbol(filescope::gd_randStates, &randStates, sizeof(randStates)));
 }
 
-// --------------------------------------------------------------------
-//  Executes the rendering stage kernel on the active device
-// --------------------------------------------------------------------
-void RenderKernel::execute(size_t xstart, size_t ystart,
-                           size_t width,  size_t height)
+// ----------------------------------------------------------------------------
+//  Executes the rendering kernel on the active device for a given subregion
+// ----------------------------------------------------------------------------
+void RenderKernel::execute(size_t xstart, size_t ystart, size_t width, size_t height, int left)
 {
     ColorLabxHdr backdrop = ColorLabxHdr(0.0f, 0.0f, 0.0f);
 
@@ -553,7 +553,7 @@ void RenderKernel::execute(size_t xstart, size_t ystart,
     cudaEvent_t start, stop;
     VOX_CUDA_CHECK(cudaEventCreate(&start));
     VOX_CUDA_CHECK(cudaEventRecord(start,0));
-	filescope::renderKernel<<<blocks,threads>>>();
+	filescope::renderKernel<<<blocks,threads>>>(left);
     VOX_CUDA_CHECK(cudaDeviceSynchronize());
     VOX_CUDA_CHECK(cudaEventCreate(&stop));
     VOX_CUDA_CHECK(cudaEventRecord(stop,0));

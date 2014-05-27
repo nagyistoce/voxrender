@@ -46,7 +46,8 @@ Camera::Camera() :
     m_eyeDistance    (0.0f),
     m_filmWidth      (512),
     m_filmHeight     (512),
-    m_isFilmDirty    (false)
+    m_isFilmDirty    (false),
+    m_isStereo       (false)
 { 
 }
 

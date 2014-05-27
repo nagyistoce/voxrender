@@ -117,12 +117,12 @@ void VidIStream::pull()
 // --------------------------------------------------------------------
 //  Pushes a frame to the output stream
 // --------------------------------------------------------------------
-void VidOStream::push(Bitmap const& frame)
+void VidOStream::push(Bitmap const& frame, unsigned int streamId)
 {
     if (!m_ostr) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
         "Video stream must be open to push", Error_BadStream);
 
-    m_device->addFrame(*m_ostr, frame);
+    m_device->addFrame(*m_ostr, frame, streamId);
 }
 
 // --------------------------------------------------------------------
@@ -134,7 +134,7 @@ void VidIStream::getReader(String const& format)
     boost::unique_lock<decltype(filescope::decodeMutex)> lock(filescope::decodeMutex);
 
     // Verify the video format has a registered encoder
-    auto & module = filescope::decoders.find(format);
+    auto & module = filescope::decoders.find(boost::to_lower_copy(format));
     if (module == filescope::decoders.end())
     {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
@@ -154,7 +154,7 @@ void VidOStream::getWriter(String const& format)
     boost::unique_lock<decltype(filescope::encodeMutex)> lock(filescope::encodeMutex);
 
     // Verify the video format has a registered encoder
-    auto & module = filescope::encoders.find(format);
+    auto & module = filescope::encoders.find(boost::to_lower_copy(format));
     if (module == filescope::encoders.end())
     {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 

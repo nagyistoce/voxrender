@@ -74,10 +74,10 @@ public:
     static void setClipRoot(std::shared_ptr<CClipGeometry> root);
 
     /** Sets the kernel frame buffers for the active device */
-    static void setFrameBuffers(CSampleBuffer2D const& sampleBuffer, curandState * randStates);
+    static void setFrameBuffers(CSampleBuffer2D const sampleBuffer[2], curandState * randStates);
     
-    /** Executes a single pass rendering kernel on the active device */
-    static void execute(size_t xstart, size_t ystart, size_t width,  size_t height);
+    /** Executes a single pass rendering kernel on the active device (left parameter selects the eye) */
+    static void execute(size_t xstart, size_t ystart, size_t width,  size_t height, int left);
     
     /** Returns the time for the last kernel execution */
     static float getTime() { return m_elapsedTime; }

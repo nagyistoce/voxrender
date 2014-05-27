@@ -41,6 +41,8 @@ namespace filescope {
 
     std::shared_ptr<PngImg>  pngExim;
     std::shared_ptr<JpegImg> jpegExim;
+    std::shared_ptr<JpegImg> jpsExim;
+    std::shared_ptr<JpegImg> mpoExim;
     std::shared_ptr<BmpImg>  bmpExim;
     std::shared_ptr<void> handle;
 
@@ -113,7 +115,9 @@ void enable()
     VOX_LOG_INFO(VOX_SIMG_LOG_CATEGORY, "Enabling the 'Vox.Standard Img ExIm' plugin");
     
     filescope::pngExim  = std::shared_ptr<PngImg> (new PngImg (filescope::handle));
-    filescope::jpegExim = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle));
+    filescope::jpegExim = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle, JpegImg::Container_JPG));
+    filescope::mpoExim  = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle, JpegImg::Container_MPO));
+    filescope::jpsExim  = std::shared_ptr<JpegImg>(new JpegImg(filescope::handle, JpegImg::Container_JPS));
     filescope::bmpExim  = std::shared_ptr<BmpImg> (new BmpImg (filescope::handle));
     
     vox::Bitmap::registerImportModule(".bmp",  filescope::bmpExim);
@@ -124,6 +128,10 @@ void enable()
     vox::Bitmap::registerExportModule(".jpeg", filescope::jpegExim);
     vox::Bitmap::registerImportModule(".jpg",  filescope::jpegExim);
     vox::Bitmap::registerExportModule(".jpg",  filescope::jpegExim);
+    vox::Bitmap::registerImportModule(".mpo",  filescope::mpoExim);
+    vox::Bitmap::registerExportModule(".mpo",  filescope::mpoExim);
+    vox::Bitmap::registerImportModule(".jps",  filescope::jpsExim);
+    vox::Bitmap::registerExportModule(".jps",  filescope::jpsExim);
 }
 
 // --------------------------------------------------------------------
@@ -139,9 +147,15 @@ void disable()
     vox::Bitmap::removeExportModule(filescope::pngExim);
     vox::Bitmap::removeImportModule(filescope::jpegExim);
     vox::Bitmap::removeExportModule(filescope::jpegExim);
+    vox::Bitmap::removeImportModule(filescope::mpoExim);
+    vox::Bitmap::removeExportModule(filescope::mpoExim);
+    vox::Bitmap::removeImportModule(filescope::jpsExim);
+    vox::Bitmap::removeExportModule(filescope::jpsExim);
     
     filescope::bmpExim.reset();
     filescope::pngExim.reset();
     filescope::jpegExim.reset();
+    filescope::mpoExim.reset();
+    filescope::jpsExim.reset();
     filescope::handle.reset();
 }

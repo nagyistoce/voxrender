@@ -212,16 +212,12 @@ void TransferWidget::sceneChanged()
         switchDimensions(1);
         setSelectedNode(transfer1D->nodes().empty() ? 
             nullptr : transfer1D->nodes().front());
-        ui->spinBox_resY->setDisabled(true);
-        ui->spinBox_resZ->setDisabled(true);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
     {
         switchDimensions(2);
         setSelectedQuad(transfer2D->quads().empty() ? 
             nullptr : transfer2D->quads().front());
-        ui->spinBox_resY->setDisabled(false);
-        ui->spinBox_resZ->setDisabled(true);
     }
     else m_currentNode = nullptr;
 
@@ -294,6 +290,9 @@ void TransferWidget::switchDimensions(int nDims)
 			ui->horizontalSlider_gradient2->hide( );
 			ui->doubleSpinBox_gradient2->hide( );
 			ui->label_gradient2->hide( );
+            ui->spinBox_resX->setEnabled(true);
+            ui->spinBox_resY->setEnabled(false);
+            ui->spinBox_resZ->setEnabled(false);
 			m_dimensions = 1;
 			break;
 
@@ -316,6 +315,9 @@ void TransferWidget::switchDimensions(int nDims)
 			ui->horizontalSlider_gradient2->hide( );
 			ui->doubleSpinBox_gradient2->hide( );
 			ui->label_gradient2->hide( );
+            ui->spinBox_resX->setEnabled(true);
+            ui->spinBox_resY->setEnabled(true);
+            ui->spinBox_resZ->setEnabled(false);
 			m_dimensions = 2;
 			break;
 
@@ -332,6 +334,9 @@ void TransferWidget::switchDimensions(int nDims)
 			ui->horizontalSlider_gradient2->show();
 			ui->doubleSpinBox_gradient2->show();
 			ui->label_gradient2->show();
+            ui->spinBox_resX->setEnabled(true);
+            ui->spinBox_resY->setEnabled(true);
+            ui->spinBox_resZ->setEnabled(true);
 			m_dimensions = 3;
 			break; 
 
