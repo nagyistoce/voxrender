@@ -54,12 +54,11 @@ PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> ligh
 	ui->setupUi(this);
 
     // Synchronize the widget controls with the associated light
-    float distance  = light->position().length();
-    float partial   = sqrt( pow(light->positionX(), 2) + pow(light->positionZ(), 2) );
-    float phi       = asin(light->positionY() / distance) / M_PI * 180.0f;
-    float theta     = - acos(light->positionX() / partial)  / M_PI * 180.0f;
+    auto position = light->position();
+    auto distance = position.length();
+    float phi     = acos(position[1] / distance) / M_PI * 180.0f;
+    float theta   = atan2(position[2], position[0])  / M_PI * 180.0f;
     float intensity = light->color().fold(high);
-    if (light->positionX() < 0) theta = - theta;
 
     ui->doubleSpinBox_distance->setValue(distance);
     ui->doubleSpinBox_latitude->setValue(phi);
@@ -94,15 +93,15 @@ void PointLightWidget::update()
 
     m_light->lock();
 
-        double latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
-        double longitude = ui->doubleSpinBox_longitude->value() / 180.0 * M_PI;
-        double distance  = ui->doubleSpinBox_distance->value();
+        auto latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
+        auto longitude = ui->doubleSpinBox_longitude->value() / 180.0 * M_PI;
+        auto distance  = ui->doubleSpinBox_distance->value();
 
-        float cl = cos(latitude);
+        float sl = sin(latitude);
 
-        m_light->setPositionX(cl * cos(longitude) * distance);
-        m_light->setPositionY(sin(latitude)       * distance);
-        m_light->setPositionZ(cl * sin(longitude) * distance);
+        m_light->setPositionX(sl * cos(longitude) * distance);
+        m_light->setPositionY(cos(latitude)       * distance);
+        m_light->setPositionZ(sl * sin(longitude) * distance);
 
         QColor color = m_colorButton->getColor();
         float  scale = ui->doubleSpinBox_intensity->value() / 255.0f;

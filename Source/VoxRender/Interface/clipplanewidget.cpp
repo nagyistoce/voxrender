@@ -53,16 +53,14 @@ ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane)
 {
 	ui->setupUi(this);
 
-    auto length = plane->normal().length();
     auto normal = plane->normal();
     auto pos    = normal * plane->distance();
     ui->doubleSpinBox_x->setValue(pos[0]);
     ui->doubleSpinBox_y->setValue(pos[1]);
     ui->doubleSpinBox_z->setValue(pos[2]);
 
-    float partial  = sqrt(pow(normal[0], 2) + pow(normal[2], 2));
-    float phi      = asin(normal[1]) / M_PI * 180.0f;
-    float theta    = - acos(normal[0] / partial)  / M_PI * 180.0f;
+    float phi      = acos(normal[1]) / M_PI * 180.0f;
+    float theta    = atan2(normal[2], normal[0])  / M_PI * 180.0f;
 
     ui->doubleSpinBox_pitch->setValue(phi);
     ui->doubleSpinBox_yaw->setValue(theta);
@@ -86,14 +84,14 @@ void ClipPlaneWidget::update()
     if (m_block) return;
 
     // Compute the new normal vector of the plane
-    double latitude  = ui->doubleSpinBox_pitch->value() / 180.0 * M_PI;
-    double longitude = ui->doubleSpinBox_yaw->value()   / 180.0 * M_PI;
-    float  cl        = cos(latitude);
+    double pitch  = ui->doubleSpinBox_pitch->value() / 180.0 * M_PI;
+    double yaw    = ui->doubleSpinBox_yaw->value()   / 180.0 * M_PI;
+    float  sp     = sin(pitch);
 
     Vector3f normal = Vector3f(
-        cl * cos(longitude),
-        sin(latitude),
-        cl * sin(longitude)).normalized();
+        sp * cos(yaw),
+        cos(pitch),
+        sp * sin(yaw)).normalized();
     m_plane->setNormal(normal);
 
     // Compute the minimum distance from the origin

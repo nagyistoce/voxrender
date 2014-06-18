@@ -30,25 +30,28 @@
 // Include Dependencies
 #include "VoxVolt/Common.h"
 #include "VoxScene/Volume.h"
+#include "VoxLib/IO/OptionSet.h"
 
 // API namespace
 namespace vox {
 namespace volt {
 
-/** Implements transforms for convolution operations */
+/** Manages a meta-volume for a volume dataset */
 class VOX_VOLT_EXPORT HistogramVolume
 {
 public:
     /**
      * Generates a histogram volume from an input volume dataset
      *
-     * @param volume The input volume data set
-     * @param size   The dimensions of the histogram volume
+     * @param volume  The input volume data set
+     * @param size    The dimensions of the histogram volume
+     * @param options [in out] allows configuration of the histogram and stats output
      * @return A handle to the histogram volume
      */
     static std::shared_ptr<Volume> build(
         std::shared_ptr<Volume> volume, 
-        Vector3s const& size  = Vector3s(256, 256, 256)
+        Vector3s const& size  = Vector3s(256, 256, 256),
+        OptionSet & options = OptionSet()
         );
 
 private:

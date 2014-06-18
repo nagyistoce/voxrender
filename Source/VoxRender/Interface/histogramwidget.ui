@@ -120,38 +120,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QLabel" name="label_histogramGamma">
+      <widget class="QPushButton" name="pushButton">
        <property name="text">
-        <string>Gamma:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSlider" name="slider_histogramGamma">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDoubleSpinBox" name="spinBox_histogramGamma">
-       <property name="minimum">
-        <double>2.200000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>5.000000000000000</double>
+        <string>Settings</string>
        </property>
       </widget>
      </item>

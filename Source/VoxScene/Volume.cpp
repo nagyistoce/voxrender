@@ -28,6 +28,7 @@
 
 // Standard Includes
 #include "VoxLib/Core/Common.h"
+#include "VoxLib/IO/Resource.h"
 
 namespace vox {
 
@@ -161,13 +162,13 @@ public:
     // ----------------------------------------------------------------------------
     void clone(Volume & volume)
     {
-        volume.m_pImpl->m_data = m_data;
+        volume.m_pImpl->m_data      = m_data;
         volume.m_pImpl->m_timeSlice = m_timeSlice;
-        volume.m_pImpl->m_range = m_range;
-        volume.m_pImpl->m_offset = m_offset;
-        volume.m_pImpl->m_spacing = m_spacing; 
-        volume.m_pImpl->m_extent = m_extent;
-        volume.m_pImpl->m_type = m_type;
+        volume.m_pImpl->m_range     = m_range;
+        volume.m_pImpl->m_offset    = m_offset;
+        volume.m_pImpl->m_spacing   = m_spacing; 
+        volume.m_pImpl->m_extent    = m_extent;
+        volume.m_pImpl->m_type      = m_type;
     }
     
     // ----------------------------------------------------------------------------
@@ -192,6 +193,8 @@ public:
     
     float m_timeSlice; ///< The current time slice to display
     
+    ResourceId diskCache; ///< Local disk cache of this volume dataset
+
     Vector2f m_range;       ///< Volume value range (normalized to type)
     Vector3f m_offset;      ///< Volume offset (mm)
     Vector4f m_spacing;     ///< Spacing between voxels (mm)

@@ -31,6 +31,8 @@
 #include "VoxLib/Core/Logging.h"
 #include "VoxVolt/HistogramVolume.h"
 
+#define R3I 0.57735026918962576450914878050196f;
+
 using namespace vox;
 
 namespace {
@@ -257,8 +259,8 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
         auto xd = volume->fetchNormalized(ip, j,  k ) - volume->fetchNormalized(im, j,  k );
         auto yd = volume->fetchNormalized(i,  jp, k ) - volume->fetchNormalized(i,  jm, k );
         auto zd = volume->fetchNormalized(i,  j,  kp) - volume->fetchNormalized(i,  j,  km);
-
-        auto gradient = sqrt(xd*xd + yd*yd + zd*zd);
+        
+        auto gradient = sqrt(xd*xd + yd*yd + zd*zd) * R3I;
         auto density  = volume->fetchNormalized(i, j, k);
 
         auto xpos = clamp<size_t>(density*(width-1), 0, width-1);
