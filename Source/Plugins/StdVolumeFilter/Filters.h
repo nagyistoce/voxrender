@@ -50,6 +50,7 @@ public:
         params.push_back(volt::FilterParam("Density Bins",  volt::FilterParam::Type_Int, "256", "[0 1024]"));
         params.push_back(volt::FilterParam("Gradient Bins", volt::FilterParam::Type_Int, "256", "[0 1024]"));
         params.push_back(volt::FilterParam("Laplace Bins",  volt::FilterParam::Type_Int, "128", "[0 1024]"));
+        params.push_back(volt::FilterParam("Outlier Percentage", volt::FilterParam::Type_Float, "0.05", "[0 1]"));
     }
 
     void execute(Scene & scene, OptionSet const& params)
@@ -58,7 +59,7 @@ public:
         bins[0] = params.lookup<size_t>("Density Bins", 256);
         bins[1] = params.lookup<size_t>("Gradient Bins", 256);
         bins[2] = params.lookup<size_t>("Laplace Bins", 128);
-        scene.volume = vox::volt::HistogramVolume::build(scene.volume);
+        scene.volume = vox::volt::HistogramVolume::build(scene.volume, bins, params);
     }
 
 private:

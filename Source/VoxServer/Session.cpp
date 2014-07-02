@@ -81,8 +81,8 @@ void Session::onConnect()
     using namespace boost::filesystem;
     if (!exists(path)) return;
 
+    // Scene file directory listing
     String results;
-
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(path); itr != end_itr; ++itr)
     if (!is_directory(itr->status())) // Ignore subdirectories
@@ -96,6 +96,27 @@ void Session::onConnect()
     char opCode = (char)OpCode_DirList;
     results = String(&opCode, 1) + results;
     m_socket.write(results);
+
+    // Filter lists
+    std::ostringstream filterOs;
+    volt::FilterManager::instance().getFilters(m_filters);
+    if (m_filters.size())
+    {
+        char opCode = (char)OpCode_FilterList;
+        filterOs << String(&opCode, 1);
+        filterOs << "[";
+        auto iter = m_filters.begin();
+        filterOs << "\"" << (*iter)->name() << "\"";
+        ++iter;
+        while (iter != m_filters.end())
+        {
+            filterOs << ",\"" << (*iter)->name() << "\"";
+            ++iter;
+        }
+        filterOs << "]";
+
+        m_socket.write(filterOs.str());
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -105,12 +126,17 @@ void Session::onMessage(String const& message)
 {
     try
     {
-        if (message.size() < 0) throw Error(__FILE__, __LINE__, VOX_SERV_LOG_CAT, 
-            "Message is missing OpCode", Error_BadFormat);
+        if (message.size() < 0) 
+            VOX_LOG_ERROR(Error_BadFormat, VOX_SERV_LOG_CAT,
+                "Message is missing OpCode");
         auto opCode = (UInt8)message[0];
 
         switch (opCode)
         {
+        case OpCode_Filter:
+            VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_Filter");
+            applyFilter(message);
+            break;
         case OpCode_BegStream:
             VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_BegStream");
             unloadScene();
@@ -119,6 +145,10 @@ void Session::onMessage(String const& message)
         case OpCode_EndStream:
             VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_EndStream");
             unloadScene();
+            break;
+        case OpCode_Update:
+            VOX_LOG_DEBUG(VOX_SERV_LOG_CAT, "Recieved OpCode_Update");
+            updateScene(message);
             break;
         default:
             throw Error(__FILE__, __LINE__, VOX_SERV_LOG_CAT,
@@ -154,11 +184,35 @@ void Session::loadScene(String const& message)
     auto * idStr = filename + filenameLen + 1;
     m_id = String(idStr, strlen(idStr)) + "\x01"; // This is stupid but some javascript implementations are apparently flagrantly disregarding 
                                                   // standards so we use 0x01 as our null terminator character for seperating strings.
+    
+    // Return the scene data to the user (as JSON)
+    auto flags = std::ios::in|std::ios::out|std::ios::binary;
+    auto buffer = std::make_shared<std::stringbuf>(flags);
+    ResourceStream outputStream(buffer);
+    auto opCode = (Char)OpCode_Scene;
+    outputStream << String(&opCode, 1) << m_id;
+    m_scene.exprt(outputStream, OptionSet(), ".json");
+    m_socket.write(buffer->str());
 
     // Begin rendering the scene
     m_renderController.render(m_renderer, m_scene, 100000);
 }
     
+// ----------------------------------------------------------------------------
+//  Updates the internal scene data
+// ----------------------------------------------------------------------------
+void Session::updateScene(String const& message)
+{
+    // Parse the scene file specification
+    auto buffer = std::make_shared<std::stringbuf>(message); // :TODO: Roll this out to work w/o copying
+    buffer->sbumpc();
+    ResourceStream sceneFile(buffer);
+    Scene scene = Scene::imprt(sceneFile, OptionSet(), ".json");
+
+    // Update the local scene
+    if (scene.camera) scene.camera->clone(*m_scene.camera);
+}
+
 // ------------------------------------------------------------------------
 //  Terminates the render and unloads the active scene
 // ------------------------------------------------------------------------
@@ -169,12 +223,47 @@ void Session::unloadScene()
 }
 
 // ------------------------------------------------------------------------
+//  Applies a filter to the volume
+// ------------------------------------------------------------------------
+void Session::applyFilter(String const& message)
+{
+    if (message.size() < 2) return;
+
+    if (!m_renderController.isActive()) return;
+
+    try
+    {
+        m_renderController.stop();
+        BOOST_FOREACH (auto & filter, m_filters)
+        if (filter->name() == &message[1])
+        {
+            filter->execute(m_scene, OptionSet());
+            break;
+        }
+    }
+    catch (Error & error)
+    {
+        error.message = "Filtering error: " + error.message;
+
+        VOX_LOG_EXCEPTION(Severity_Error, error);
+    }
+    catch (std::exception & error)
+    {
+        VOX_LOG_ERROR(Error_Unknown, VOX_SERV_LOG_CAT, String("Filtering error: ") + error.what());
+    }
+    
+    // Send a scene update to the client
+
+    // Begin rendering the scene
+    m_renderController.render(m_renderer, m_scene, 100000);
+}
+
+// ------------------------------------------------------------------------
 //  Callback function on frame ready
 // ------------------------------------------------------------------------
 void Session::onFrameReady(std::shared_ptr<vox::FrameBuffer> frame)
 {
     //:TODO: - Write output directly to socket stream
-    //       - Use zlib/gzip compressed raw data to circumvent caching issues
 
     frame->data();
     

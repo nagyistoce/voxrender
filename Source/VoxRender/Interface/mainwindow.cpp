@@ -1158,7 +1158,7 @@ void MainWindow::onFiltersChanged(std::shared_ptr<vox::volt::Filter> filter, boo
         }
 
         // Locate/create the submenu structure for the filter
-        for (int i = 1; i < path.size()-1; ++i)
+        for (unsigned int i = 1; i < path.size()-1; ++i)
         {
             // Attempt to locate the submenu in case it already exists
             bool found = false;

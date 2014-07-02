@@ -166,7 +166,8 @@ namespace filescope {
         float density = sampleDensity(location[0], location[1], location[2]);
         float gradMag = sampleGradient(location).length() * R3I;
 
-        return tex3D(gd_opacityTex, density, gradMag, 0.0f);
+        auto absorption = tex3D(gd_opacityTex, density, gradMag, 0.0f);
+        return absorption;
     }
     
     // ----------------------------------------------------------------------------

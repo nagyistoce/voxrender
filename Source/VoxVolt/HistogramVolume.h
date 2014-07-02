@@ -51,7 +51,7 @@ public:
     static std::shared_ptr<Volume> build(
         std::shared_ptr<Volume> volume, 
         Vector3s const& size  = Vector3s(256, 256, 256),
-        OptionSet & options = OptionSet()
+        OptionSet const& options = OptionSet()
         );
 
 private:

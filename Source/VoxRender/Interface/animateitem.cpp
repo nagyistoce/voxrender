@@ -263,7 +263,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
     while (eiter != frames.end() && eiter->first <= m_offset + m_range) eiter++;
 
 	// Draw markings along Y-axis 
-	for (int i = 0; i < m_numY+1; i++)
+	for (unsigned int i = 0; i < m_numY+1; i++)
 	{
         auto h = gridRect.top()+i*DY;
 

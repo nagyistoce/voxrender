@@ -60,6 +60,7 @@ namespace FundusWeb
                 "~/Scripts/ImageBar.js",
                 "~/Scripts/Server.js",
                 "~/Scripts/ToolBar.js",
+                "~/Scripts/MenuBar.js",
                 "~/Scripts/Message.js",
                 "~/Scripts/Page.js"));
         }

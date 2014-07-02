@@ -33,6 +33,7 @@
 #include "VoxLib/Core/Types.h"
 #include "VoxLib/Core/Functors.h"
 #include "VoxScene/RenderController.h"
+#include "VoxVolt/Core.h"
 
 // Standard Renderers for the Application
 #include "VolumeScatterRenderer/Core/VolumeScatterRenderer.h"
@@ -66,6 +67,12 @@ private:
     /** Imports and begins rendering the specified scene file */
     void loadScene(String const& message);
 
+    /** Updates the scene data structure */
+    void updateScene(String const& message);
+
+    /** Applies a filter to the volume */
+    void applyFilter(String const& message);
+
     /** Unloads the current scenefile and stops the render */
     void unloadScene();
 
@@ -76,6 +83,8 @@ private:
     Scene m_scene;
     std::shared_ptr<VolumeScatterRenderer> m_renderer;
     RenderController m_renderController;
+    
+    std::list<std::shared_ptr<volt::Filter>> m_filters;
 
     ResourceId m_rootDir;       ///< Root directory to which the client has permissions
     UInt64     m_key;           ///< Access key for the client's websocket connection

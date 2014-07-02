@@ -92,7 +92,7 @@ GenericDialogue::GenericDialogue(String const& title, std::list<FilterParam> par
             std::vector<String> tokens;
             boost::algorithm::split(tokens, param.range, boost::is_any_of(","));
             BOOST_FOREACH (auto & token, tokens) cbox->addItem(token.c_str());
-            for (int i = 0; i < tokens.size(); i++)
+            for (unsigned int i = 0; i < tokens.size(); i++)
             {
                 if (tokens[i] == param.value) cbox->setCurrentIndex(i);
             }

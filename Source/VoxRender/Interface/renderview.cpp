@@ -186,7 +186,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 {
 	if (!m_zoomEnabled) return;
 
-	const float zoomsteps[] = { 0.1, .125, 0.17, 0.25, 0.33, 0.45, 0.50, 0.67, 0.75, 1, 
+	const double zoomsteps[] = { 0.1, .125, 0.17, 0.25, 0.33, 0.45, 0.50, 0.67, 0.75, 1, 
 		1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20 };
 	
 	size_t numsteps = sizeof(zoomsteps) / sizeof(*zoomsteps);
@@ -197,7 +197,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 		// if zoomfactor is equal to zoomsteps[index-1] we need index-2
 		while (index > 0 && zoomsteps[--index] == m_zoomfactor);		
 	}
-	m_zoomfactor = zoomsteps[index];
+	m_zoomfactor = (float)zoomsteps[index];
 
 	resetTransform();
 

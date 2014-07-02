@@ -98,7 +98,7 @@ public:
     inline bool isOpen() throw() { return (m_buffer) ? true : false; }
 
     /** 
-     * Open a new resource for reading
+     * Open a new resource for IO operations
      *
      * @param identifier The URI for the resource
      * @param options    An option set for the loader
@@ -109,6 +109,15 @@ public:
         OptionSet const&  options     = OptionSet(),
         unsigned int      openMode    = 0
         );
+
+    /** 
+     * Wrap an existing streambuf in a Resource
+     *
+     * @param identifier The URI for the resource
+     * @param options    An option set for the loader
+     * @param openMode   A bitset of OpenMode options
+     */
+    void open(std::shared_ptr<std::streambuf> buffer, unsigned int openMode);
 
     /** 
      * Open a new resource for reading
@@ -284,18 +293,21 @@ public:
  * returned by the loader function to allow internal usage of the resource identifier in issuing
  * warning to the logger and identifying base URIs for relative references within the document. 
  */
-class VOX_EXPORT ResourceStream : public std::iostream, public ResourceIStream, public ResourceOStream
+class VOX_EXPORT ResourceStream : public ResourceIStream, public ResourceOStream
 {
 public:
     /** Default constructor - Initialize null streambuf */
-    ResourceStream() : std::iostream(0), std::istream(0), std::ostream(0) { m_setMask = Mode_Output | Mode_Input; }
+    ResourceStream();
+
+    /** Constructs a resource io stream wrapper around a streambuf */
+    ResourceStream(std::shared_ptr<std::streambuf> buffer, unsigned int openMode = 0);
 
     /** Initialization constructor */
     ResourceStream(ResourceId const& identifier, 
                    OptionSet const&  options     = OptionSet(),
                    unsigned int      openMode    = Mode_Output | Mode_Input
                    ) 
-        : std::iostream(0), std::istream(0), std::ostream(0)
+        : std::istream(0), std::ostream(0)
     {
         m_setMask = Mode_Output | Mode_Input;
 
@@ -304,7 +316,7 @@ public:
 
     /** Initialization constructor */
     ResourceStream(ResourceId const& identifier, unsigned int openMode) 
-        : std::iostream(0), std::istream(0), std::ostream(0)
+        : std::istream(0), std::ostream(0)
     { 
         m_setMask = Mode_Output | Mode_Input;
 

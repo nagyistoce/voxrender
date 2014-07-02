@@ -30,6 +30,7 @@
 
 // Convenience Header for Server DLL
 #include "VoxServer/Interface.h"
+#include "VoxLib/Core/Logging.h"
 
 using namespace vox;
 
@@ -41,6 +42,8 @@ BOOST_AUTO_TEST_SUITE( Server )
     // Tests the matrix functionality
     BOOST_AUTO_TEST_CASE( WebSocketConnect )
     {
+        Logger::setHandler(ErrorIgnore);
+
         while (true)
         {
             voxServerStart("C:/Users/Lucas/Documents/Projects/voxrender/trunk/Binaries/x86/Debug", false);

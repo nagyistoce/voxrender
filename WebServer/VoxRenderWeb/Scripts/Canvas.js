@@ -277,6 +277,9 @@ Canvas.prototype =
         var action = tool ? tool : this._tool;
         switch (action) {
             case CanvasTool.cursor:
+                this._scene.revolveCamera(mx, my);
+                break;
+            // :TODO:
                 var scale = this._scene._zoomLevel;
                 var moveX = mx/scale;
                 var moveY = my/scale;
@@ -309,7 +312,7 @@ Canvas.prototype =
     _scene: null,               /// <field name='_scene' type='VoxScene'>The image currently in this canvas</field>
     _canvasElem: null,          /// <field name='_canvasElem' type='Canvas'>The HTML canvas elemented associated with this object</field>
     _blockRedraws: false,       /// <field name='_blockRedraws' type='Boolean'>Blocks the draw function from being executed</field>
-    _tool: CanvasTool.cursor,   /// <field name='_blockRedraws' type='Boolean'></field>
+    _tool: CanvasTool.cursor,   /// <field name='_tool'></field>
 }
 
 // ----------------------------------------------------------------------------

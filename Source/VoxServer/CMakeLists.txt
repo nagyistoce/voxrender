@@ -41,6 +41,7 @@ VOX_PROJECT(
         "WebSocket.cpp"
         "Session.cpp"
     DEPENDENCIES
+        VoxVolt
         VoxLib
         VoxScene
         VolumeScatterRenderer

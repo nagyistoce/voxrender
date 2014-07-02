@@ -50,10 +50,12 @@ VoxScene.prototype =
 
     update: function (newImageData) {
         /// <summary>Processes the most recent frame from the server</summary>
-        // :TODO: This is why I don't do web development. This apparently causes cache leaks on
-        //        every single major browser because they decide to cache every image.
-
         if (this.baseImage) this.baseImage.src = newImageData;
+    },
+
+    setData: function (data) {
+        /// <summary>Sets the internal scene data structures</summary>
+        this.data = data;
     },
 
     setPosition: function (x, y) {
@@ -134,9 +136,27 @@ VoxScene.prototype =
 
         return elem;
     },
+    
+    revolveCamera: function (x, y) {
+        /// <summar>Rotates the scene camera around the focal point</summary>
+
+        var pos = this.data.Scene.Camera.Position;
+        var begin = pos.indexOf("[");
+        var vec3 = pos.substr(begin+1, pos.indexOf("]") - begin-1).split(" ");
+
+        vec3[0] = Number(vec3[0]) + x;
+        vec3[1] = Number(vec3[1]) + y;
+        vec3[2] = Number(vec3[2]);
+        this.data.Scene.Camera.Position = JSON.stringify(vec3);
+
+        var scene = { Scene: {} };
+        scene.Scene.Camera = this.data.Scene.Camera;
+        VoxRender.Server.msgUpdate(scene);
+    },
 
     id:        0,    /// <field name='id'        type='Number'>Unique identifier</field>
     baseImage: null, /// <field name='baseImage' type='URI'>The original image dataURI, or null if unloaded</field>
+    data: null,      /// <field name='data'>The JSON data structure defining the scene configuration</field>
 
     // *** Display Parameters ***
     _offset: { x: 0, y: 0 },

@@ -31,16 +31,16 @@ namespace vox {
 
 enum OpCode 
 {
-    OpCode_Error     = 0x00,    ///< Error message [S->C]
-    OpCode_BegStream = 0x01,    ///< Begin render stream [C->S]
-    OpCode_EndStream = 0x02,    ///< Terminate render stream [C->S]
-    OpCode_Status    = 0x03,    ///< Render status packet [S->C]
-    OpCode_StatusReq = 0x04,    ///< Request for render status packet to be sent [C->S]
-    OpCode_DirList   = 0x05,    ///< Contains a listing of scene file names from the rootDir [S->C]
-    OpCode_Update    = 0x06,    ///< Make change to current render scene [C->S]
-    OpCode_SceneReq  = 0x07,    ///< Send XML scene file back to client [S->C]
-    OpCode_Scene     = 0x08,    ///< Scene data file [S<->C]
-    OpCode_Frame     = 0x09     ///< Render frame [S->C]
+    OpCode_Error      = 0x00,    ///< Error message [S->C]
+    OpCode_BegStream  = 0x01,    ///< Begin render stream [C->S]
+    OpCode_EndStream  = 0x02,    ///< Terminate render stream [C->S]
+    OpCode_FilterList = 0x03,    ///< List of available scene modifiers [S->C]
+    OpCode_Filter     = 0x04,    ///< A scene modifier to apply [C->S]
+    OpCode_DirList    = 0x05,    ///< Contains a listing of scene file names from the rootDir [S->C]
+    OpCode_Update     = 0x06,    ///< Make change to current render scene [C->S]
+    OpCode_SceneReq   = 0x07,    ///< Send XML scene file back to client [S->C]
+    OpCode_Scene      = 0x08,    ///< Scene data file [S<->C]
+    OpCode_Frame      = 0x09,    ///< Render frame [S->C]
 };
 
 } // namespace vox

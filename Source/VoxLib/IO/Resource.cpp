@@ -68,9 +68,30 @@ namespace filescope {
 // Static member initialization
 ResourceId Resource::m_globalBaseUri("file", "", "", "", "", false);
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Initializes a null IOStream
+// ----------------------------------------------------------------------------
+ResourceStream::ResourceStream() : 
+    std::istream(0), std::ostream(0) 
+{ 
+    m_setMask = Mode_Output | Mode_Input; 
+}
+
+// ----------------------------------------------------------------------------
+//  Wraps a streambuffer as an IOStream
+// ----------------------------------------------------------------------------
+ResourceStream::ResourceStream(
+    std::shared_ptr<std::streambuf> buffer, 
+    unsigned int openMode
+    ) :
+  std::istream(0), std::ostream(0)
+{
+    open(buffer, openMode);
+}
+
+// ----------------------------------------------------------------------------
 //  Registers a new resource retrieval module if the scheme is valid
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Resource::registerModule(
     String const&   scheme,
     ResourceModuleH module
@@ -87,10 +108,36 @@ void Resource::registerModule(
     filescope::modules[scheme] = module; 
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Wraps a streambuffer as a Resource
+// ----------------------------------------------------------------------------
+void Resource::open(std::shared_ptr<std::streambuf> buffer, unsigned int openMode)
+{ 
+    if (m_buffer)
+    {
+        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                    "Resource already open", Error_NotAllowed);
+    }
+
+    m_buffer = buffer;
+
+    // Apply forced mode settings to the requested mode
+    m_openMode = (openMode|m_setMask);
+    if ( (openMode & Mode_Append) == Mode_Append )
+    {
+        m_openMode &= ((~Mode_Truncate)|Mode_Output);
+    }
+
+    m_identifier = ""; // Indicates not-a-resource
+
+    // Set the new source buffer
+    rdbuf(m_buffer.get());
+}
+
+// ----------------------------------------------------------------------------
 //  Attempts to open the specified resource for input using the first
 //  opener whose regular expression matches the identifier.
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Resource::open(
     ResourceId const& identifier, 
     OptionSet const&  options,
@@ -133,9 +180,9 @@ void Resource::open(
     rdbuf( m_buffer.get() );
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Performs a query operation on the specified resource
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 std::shared_ptr<QueryResult> Resource::query(ResourceId const& identifier, OptionSet const& options)
 {
     // Apply (potentially) relative reference URIs to the application base

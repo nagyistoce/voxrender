@@ -6,8 +6,8 @@
 /// <reference path="~/Scripts/ImageBar.js" />
 /// <reference path="~/Scripts/ToolBar.js" />
 /// <reference path="~/Scripts/Message.js" />
-
-// :TODO: Document header here
+/// <reference path="~/Scripts/MenuBar.js" />
+/// <reference path="~/Scripts/Server.js" />
 
 // ----------------------------------------------------------------------------
 //  Master object which manages the elements of the main page
@@ -51,6 +51,18 @@ Page.prototype =
         // Hook the resize event to the page
         window.onresize = $.proxy(this._onResize, this);
 
+        // IE String.format function
+        if (!String.prototype.format) {
+            String.format = function () {
+                var s = arguments[0];
+                for (var i = 0; i < arguments.length - 1; i++) {
+                    var reg = new RegExp("\\{" + i + "\\}", "gm");
+                    s = s.replace(reg, arguments[i + 1]);
+                }
+                return s;
+            }
+        }
+
         // Configure the undo/redo/reset buttons and the action history
         this.history = new ActionHistory();
         $("#undoButton").click(function () { WebPage.history.undo(); });
@@ -64,10 +76,11 @@ Page.prototype =
         $(this.history).bind("onAction", this._onAction);
         this._onAction(); // Initialize state
         
-        // Configure the image bar
+        // Configure the primary layout elements
         this.imageBar    = new ImageBar();
         this.toolBar     = new ToolBar();
         this.contextMenu = new ContextMenu();
+        this.menuBar     = new MenuBar();
 
         // Configure drag'n'drop image upload for the page
         $("#page")[0].addEventListener("dragover", function (e) { e.preventDefault(); }, false);
@@ -167,6 +180,7 @@ Page.prototype =
 
     // Public:
 
+    menuBar: null,  /// <field name='menuBar' type='MenuBar'>The menu bar along the top</field>
     history: null,  /// <field name='history' type='ActionHistory'>The action history</field>
     imageBar: null, /// <field name='imageBar' type='ImageBar'>Manages load fundus images</field>
     canvas: null,   /// <field name='canvas' type='Canvas'>Canvas used for image display/interaction</field>
@@ -189,11 +203,14 @@ Page.prototype =
             var msg = messageEvent.data.toString();
             var char = msg.charAt(0);
             switch (msg.charAt(0)) {
+                case "\x03": // Transform listing
+                    WebPage.menuBar.initializeMenus(msg.substr(1));
+                    break;
                 case "\x09": // Frame msg
                     var scene = WebPage.canvas.getScene();
                     var idPos = msg.indexOf('\x01');
-                    var id = msg.substr(1, idPos - 1);
-                    var data = msg.substr(idPos + 1);
+                    var id    = msg.substr(1, idPos - 1);
+                    var data  = msg.substr(idPos + 1);
                     if (scene && scene.id == parseInt(id)) scene.update(data);
                     break;
                 case "\x05": // Directory listing
@@ -202,6 +219,13 @@ Page.prototype =
                         var id = WebPage.generateUID();
                         WebPage.imageBar.add(new VoxScene(id, name), null, false);
                     }));
+                    break;
+                case "\x08": // Scene data file
+                    var scene = WebPage.canvas.getScene();
+                    var idPos = msg.indexOf('\x01');
+                    var id    = msg.substr(1, idPos - 1);
+                    var data  = msg.substr(idPos + 1);
+                    if (scene && scene.id == parseInt(id)) scene.setData(JSON.parse(data));
                     break;
             }
         };

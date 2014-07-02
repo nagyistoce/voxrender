@@ -171,9 +171,14 @@ namespace
                 // Write the raw format volume to the same base URL
                 auto baseUrl  = m_sink.identifier();
                 auto filename = baseUrl.extractFileName();
-                filename      = filename.substr(0, filename.find_last_of('.')) + ".raw"; 
-                auto volUrl   = baseUrl.applyRelativeReference(filename);
-                m_scene.exprt(volUrl, options);
+                if (!filename.empty())
+                {
+                    filename      = filename.substr(0, filename.find_last_of('.')) + ".raw"; 
+                    auto volUrl   = baseUrl.applyRelativeReference(filename);
+                    m_scene.exprt(volUrl, options);
+                }
+                else VOX_LOG_WARNING(Error_BadStream, VOX_LOG_CATEGORY, 
+                    "Unable to determine relative path for volume export")
 
                 // Imbed the import directives
                 node.add("Import.Options.Size", volume->extent());

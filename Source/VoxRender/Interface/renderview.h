@@ -111,9 +111,9 @@ private:
     void setViewMode();
 
 private:
-    bool  m_zoomEnabled;  ///< Flag indicating whether image zoom is enabled
-    float m_zoomfactor;   ///< The current zoomfactor for the image zoom
-    bool  m_overlayStats; ///< Flag indicating whether statistical overlay is enabled
+    bool   m_zoomEnabled;  ///< Flag indicating whether image zoom is enabled
+    double m_zoomfactor;   ///< The current zoomfactor for the image zoom
+    bool   m_overlayStats; ///< Flag indicating whether statistical overlay is enabled
     
     vox::Bitmap m_image; ///< Current frame image data
 
