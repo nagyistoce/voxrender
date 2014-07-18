@@ -31,6 +31,8 @@
 #include <QtWidgets/QGraphicsRectItem>
 #include <QtWidgets/QGraphicsView>
 
+#include "VoxScene/Scene.h"
+
 // Include Dependencies
 #include "nodeitem.h"
 #include "edgeitem.h"
@@ -58,8 +60,6 @@ public:
     
     /** Recalculates relative positions */
     void onResizeEvent();
-
-    void synchronizeView();
     
     /** Node item callback for position changing event */
     void onNodeItemChange(NodeItem * item, QPointF & point);
@@ -75,6 +75,10 @@ public slots:
 
     void updateQuad(std::shared_ptr<vox::Quad> quad);
     void updateNode(std::shared_ptr<vox::Node> node);
+
+private slots:
+    /** Regenerates the transfer function display */
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
 private:
     std::list<std::shared_ptr<NodeItem>> m_nodes; ///< Graphics items for transfer nodes

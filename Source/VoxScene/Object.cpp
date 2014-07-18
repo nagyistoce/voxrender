@@ -40,15 +40,9 @@ namespace filescope {
 } // namespace filescope
 } // namespace anonymous
 
-Object::Object(int id) : m_mutex(new boost::mutex()), m_isVisible(true) 
+Object::Object(int id) : m_isVisible(true) 
 { 
     m_id = id ? id : filescope::uidCounter++; 
 }
-
-Object::~Object() { delete m_mutex; }
-
-void Object::lock() { m_mutex->lock(); }
-        
-void Object::unlock() { m_mutex->unlock(); }
 
 } // namespace vox

@@ -46,9 +46,6 @@ namespace vox
         /** Assigns an ID to the object */
         Object(int id = 0);
 
-        /** Destructor */
-        ~Object();
-
         /** Returns the ID of the object */
         int id() { return m_id; }
 
@@ -65,12 +62,6 @@ namespace vox
 
         /** Returns the visibility state of the object */
         bool isVisible() { return m_isVisible; }
-
-        /** Locks the light set for read/write operations */
-        virtual void lock();
-        
-        /** Unlocks the light set */
-        virtual void unlock();
 
         /** Returns true if the context change flag is set */
         bool isDirty() const { return m_isDirty; }
@@ -90,26 +81,10 @@ namespace vox
     protected:
         int m_id; ///< ID of the object
 
-        boost::mutex * m_mutex; ///< Mutex for locking :TODO: Global scene locking, getting to be too many mutexes this way
-
         std::function<void(bool, bool)> m_visCallback; ///< Visibility callback
 
         bool m_isDirty;     ///< Dirty flag for tracking changes
         bool m_isVisible;   ///< Visibility state of the object
-    };
-
-    /** Scoped locking mechanism for scene components */
-    class SceneLock
-    {
-    public:
-        SceneLock(std::shared_ptr<Object> obj) : m_obj(obj) { m_obj->lock(); }
-
-        ~SceneLock() { reset(); }
-
-        void reset() { if (m_obj) { m_obj->unlock(); m_obj.reset(); } }
-
-    private:
-        std::shared_ptr<Object> m_obj;
     };
 
     /** Derived object which locks through a parent */
@@ -118,12 +93,6 @@ namespace vox
     public:
         /** SubObject constructor */
         SubObject(int id = 0) : Object(id) { }
-
-        /** Locks the parent object, or this object if no parent exists */
-        virtual void lock() { if (m_parent) m_parent->lock(); else Object::lock(); }
-
-        /** Unlocks the parent object, or this object if no parent exists */
-        virtual void unlock() { if (m_parent) m_parent->unlock(); else Object::unlock(); }
 
         /** Marks both the object and the parent dirty */
         virtual void setDirty() { if (m_parent) m_parent->setDirty(); Object::setDirty(); }

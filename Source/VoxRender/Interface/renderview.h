@@ -42,6 +42,7 @@
 // VoxRender Dependencies
 #include "VoxLib/Core/Geometry/Color.h"
 #include "VoxScene/FrameBuffer.h"
+#include "VoxScene/Scene.h"
 
 // 3rd party dependencies
 #include <chrono>
@@ -99,16 +100,15 @@ public:
     /** Executes scene interactions */
     void processSceneInteractions();
 
-public slots:
-    /** Resets the display image */
-    void sceneChanged( );
+    /** Clears the render view and displays the logo */
+	void setLogoMode();
 
+    /** Enables the render view and hides the logo */
+    void setViewMode();
+
+public slots:
     /** Updates the image in the render view */
     void setImage(std::shared_ptr<vox::FrameBufferLock> lock);
-
-private:
-	void setLogoMode();
-    void setViewMode();
 
 private:
     bool   m_zoomEnabled;  ///< Flag indicating whether image zoom is enabled

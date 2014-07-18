@@ -63,9 +63,6 @@ Camera::~Camera()
 // --------------------------------------------------------------------
 void Camera::clone(Camera & camera)
 {
-    lock(); 
-    camera.lock();
-
     camera.m_id = m_id;
     camera.m_isDirty = m_isDirty;
     camera.m_isFilmDirty = m_isFilmDirty;
@@ -79,9 +76,6 @@ void Camera::clone(Camera & camera)
     camera.m_eyeDistance = m_eyeDistance;
     camera.m_filmWidth = m_filmWidth;
     camera.m_filmHeight = m_filmHeight;
-
-    camera.unlock();
-    unlock();
 }
 
 // --------------------------------------------------------------------

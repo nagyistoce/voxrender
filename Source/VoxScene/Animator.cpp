@@ -44,11 +44,11 @@ namespace vox {
             m_uri = "file:///" + boost::filesystem::current_path().string() + "/Temp/";
         }
 
-        std::function<void(int, KeyFrame &, bool)> addCallback;
-        std::function<void(int, KeyFrame &, bool)> remCallback;
+        std::function<void(int, std::shared_ptr<KeyFrame>, bool)> addCallback;
+        std::function<void(int, std::shared_ptr<KeyFrame>, bool)> remCallback;
 
         unsigned int m_framerate;
-        std::list<std::pair<int,KeyFrame>> m_keys;
+        std::list<std::pair<int,std::shared_ptr<KeyFrame>>> m_keys;
         ResourceId m_uri;
         ResourceId m_videoUri;
         String m_base;
@@ -80,7 +80,7 @@ Animator::~Animator()
 // --------------------------------------------------------------------
 //  Returns the internal map of keyframes 
 // --------------------------------------------------------------------
-std::list<std::pair<int,KeyFrame>> const& Animator::keyframes()
+std::list<std::pair<int,std::shared_ptr<KeyFrame>>> const& Animator::keyframes()
 {
     return m_pImpl->m_keys;
 }
@@ -129,34 +129,42 @@ String const& Animator::baseName()
 // --------------------------------------------------------------------
 //  Performs keyframe interpolation
 // --------------------------------------------------------------------
-void Animator::interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f)
+std::shared_ptr<Scene> Animator::interp(
+    std::shared_ptr<KeyFrame> k1, 
+    std::shared_ptr<KeyFrame> k2, 
+    float f, 
+    std::shared_ptr<Scene> o)
 {
-    o.clipGeometry = std::dynamic_pointer_cast<PrimGroup>(
-        k1.clipGeometry->interp(k2.clipGeometry, f));
+    auto scene = o ? o : Scene::create();
 
-    o.camera       = k1.camera->interp(k2.camera, f);
-    o.lightSet     = k1.lightSet->interp(k2.lightSet, f);
-    o.volume       = k1.volume->interp(k2.volume, f);
-    o.parameters   = k1.parameters;
-    
-    if (!k1.transferMap)
+    scene->clipGeometry = std::dynamic_pointer_cast<PrimGroup>(
+        k1->clipGeometry->interp(k2->clipGeometry, f));
+
+    scene->camera       = k1->camera->interp(k2->camera, f);
+    scene->lightSet     = k1->lightSet->interp(k2->lightSet, f);
+    scene->volume       = k1->volume->interp(k2->volume, f);
+    scene->parameters   = k1->parameters;
+
+    if (!k1->transferMap)
     {
-        if (k1.transfer)
+        if (k1->transfer)
         {
-            o.transfer = k1.transfer->interp(k2.transfer, f);
-            o.transferMap = TransferMap::create();
-            o.transfer->generateMap(o.transferMap);
+            scene->transfer = k1->transfer->interp(k2->transfer, f);
+            scene->transferMap = TransferMap::create();
+            scene->transfer->generateMap(o->transferMap);
         }
         else
         {
-            o.transfer = nullptr;
-            o.transferMap = nullptr;
+            scene->transfer = nullptr;
+            scene->transferMap = nullptr;
         }
     }
     else
     {
-        o.transferMap = k1.transferMap;
+        scene->transferMap = k1->transferMap;
     }
+
+    return scene;
 }
 
 // --------------------------------------------------------------------
@@ -170,7 +178,7 @@ void Animator::clear()
 // --------------------------------------------------------------------
 //  Inserts a keyframe into the scene at the specified time index
 // --------------------------------------------------------------------
-void Animator::addKeyframe(KeyFrame keyFrame, int frame, bool suppress)
+void Animator::addKeyframe(std::shared_ptr<KeyFrame> keyFrame, int frame, bool suppress)
 {
     auto iter = m_pImpl->m_keys.begin();
     while (iter != m_pImpl->m_keys.end() && (*iter).first < frame)
@@ -221,7 +229,13 @@ unsigned int Animator::framerate()
 // ----------------------------------------------------------------------------
 //  Callback event modifier functions
 // ----------------------------------------------------------------------------
-void Animator::onAdd(std::function<void(int, KeyFrame &, bool)> callback)    { m_pImpl->addCallback = callback; }
-void Animator::onRemove(std::function<void(int, KeyFrame &, bool)> callback) { m_pImpl->remCallback = callback; }
+void Animator::onAdd(std::function<void(int, std::shared_ptr<KeyFrame>, bool)> callback)    
+{ 
+    m_pImpl->addCallback = callback; 
+}
+void Animator::onRemove(std::function<void(int, std::shared_ptr<KeyFrame>, bool)> callback) 
+{ 
+    m_pImpl->remCallback = callback; 
+}
 
 } // namespace vox

@@ -64,15 +64,16 @@ public:
      * @brief Vox Scene File Exporter
      *
      * \b{Valid Options}
-     *  - ExportVolume   : bool   [default=true]  | Specifies whether to export volume data
-     *  - ExportCamera   : bool   [default=true]  | Specifies whether to export camera data
-     *  - ExportTransfer : bool   [default=true]  | Specifies whether to export transfer data
-     *  - ExportLights   : bool   [default=true]  | Specifies whether to export lighting data
-     *  - ExportFilm     : bool   [default=false] | Specifies whether to export the current film
-     *  - Compress       : string [default=""]    | Specifies compression types and order, supported
-     *                                              compression modes include 'zlib', 'bzip2', and 'gzip'.
-     *                                              Compression is applied from left to right treating
-     *                                              the most common control characters as delimiters
+     *  - ExportVolume     : bool   [default=true]  | Specifies whether to export volume data
+     *  - ExportCamera     : bool   [default=true]  | Specifies whether to export camera data
+     *  - ExportTransfer   : bool   [default=true]  | Specifies whether to export transfer data
+     *  - ExportLights     : bool   [default=true]  | Specifies whether to export lighting data
+     *  - ExportFilm       : bool   [default=false] | Specifies whether to export the current film
+     *  - ForceTransferMap : strnig [default=""]    | Forces export of the transfer as an image in the specified .ext
+     *  - Compress         : string [default=""]    | Specifies compression types and order, supported
+     *                                                compression modes include 'zlib', 'bzip2', and 'gzip'.
+     *                                                Compression is applied from left to right treating
+     *                                                the most common control characters as delimiters
      *
      * \b{Required Options}
      *  - None
@@ -92,7 +93,7 @@ public:
      * \b{Required Options}
      *  - None
      */
-	Scene importer(ResourceIStream & data, OptionSet const& options);
+	std::shared_ptr<Scene> importer(ResourceIStream & data, OptionSet const& options);
 
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage

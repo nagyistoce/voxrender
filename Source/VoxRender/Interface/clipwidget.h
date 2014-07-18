@@ -33,6 +33,7 @@
 
 // Include Dependencies
 #include "VoxScene/Primitive.h"
+#include "VoxScene/Scene.h"
 #include "panewidget.h"
 
 // Point light interface
@@ -61,7 +62,7 @@ private:
 
 private slots:
     /** Slot for scene change events */
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
     /** Pane removal slot called on light deletion */
     void remove(PaneWidget * pane);

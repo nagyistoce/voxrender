@@ -297,6 +297,9 @@ struct VOX_EXPORT ResourceId
     /** Attempts to extract a file extension from the URI */
     String extractFileExtension() const;
 
+    /** Sets the file extension on the URL's path component */
+    void setFileExtension(String const& extension);
+
     /** Attempts to extract a filename from the URI */
     String extractFileName() const
     {

@@ -44,35 +44,20 @@ using namespace vox;
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
 // --------------------------------------------------------------------
-PointLightWidget::PointLightWidget(QWidget * parent, std::shared_ptr<Light> light) : 
+PointLightWidget::PointLightWidget(QWidget * parent, void * userInfo, std::shared_ptr<Light> light) : 
     QWidget(parent), 
     ui(new Ui::PointLightWidget),
+    m_userInfo(userInfo),
     m_light(light),
     m_colorButton(new QColorPushButton()),
-    m_ignore(true)
+    m_ignore(false)
 {
 	ui->setupUi(this);
 
-    // Synchronize the widget controls with the associated light
-    auto position = light->position();
-    auto distance = position.length();
-    float phi     = acos(position[1] / distance) / M_PI * 180.0f;
-    float theta   = atan2(position[2], position[0])  / M_PI * 180.0f;
-    float intensity = light->color().fold(high);
-
-    ui->doubleSpinBox_distance->setValue(distance);
-    ui->doubleSpinBox_latitude->setValue(phi);
-    ui->doubleSpinBox_longitude->setValue(theta);
-    ui->doubleSpinBox_intensity->setValue(intensity);
-
-    // Initialize the color control elements
-    m_colorButton = new QColorPushButton();
-    Vector3f color = intensity ? light->color() / intensity * 255.0f : Vector3f(0.0f, 0.0f, 0.0f);
-    m_colorButton->setColor(QColor(color[0], color[1], color[2]), true); 
     ui->layout_colorButton->addWidget(m_colorButton);
     connect(m_colorButton, SIGNAL(currentColorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
 
-    m_ignore = false;
+    sceneChanged();
 }
 
 // --------------------------------------------------------------------
@@ -85,31 +70,55 @@ PointLightWidget::~PointLightWidget()
 }
 
 // --------------------------------------------------------------------
+//  Synchronizes the widget with the light
+// --------------------------------------------------------------------
+void PointLightWidget::sceneChanged()
+{
+    m_ignore = true;
+    
+    // Synchronize the widget controls with the associated light
+    auto position = m_light->position();
+    auto distance = position.length();
+    float phi     = acos(position[1] / distance) / M_PI * 180.0f;
+    float theta   = atan2(position[2], position[0])  / M_PI * 180.0f;
+    float intensity = m_light->color().fold(high);
+
+    ui->doubleSpinBox_distance->setValue(distance);
+    ui->doubleSpinBox_latitude->setValue(phi);
+    ui->doubleSpinBox_longitude->setValue(theta);
+    ui->doubleSpinBox_intensity->setValue(intensity);
+    
+    // Update the color button
+    Vector3f color = intensity ? m_light->color() / intensity * 255.0f : Vector3f(0.0f, 0.0f, 0.0f);
+    m_colorButton->setColor(QColor(color[0], color[1], color[2]), true); 
+
+    m_ignore = false;
+}
+
+// --------------------------------------------------------------------
 //  Synchronizes the light widget's position controls with the scene
 // --------------------------------------------------------------------
 void PointLightWidget::update()
 {
     if (m_ignore) return;
 
-    m_light->lock();
+    auto lock = MainWindow::instance->scene()->lock(m_userInfo);
 
-        auto latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
-        auto longitude = ui->doubleSpinBox_longitude->value() / 180.0 * M_PI;
-        auto distance  = ui->doubleSpinBox_distance->value();
+    auto latitude  = ui->doubleSpinBox_latitude->value() / 180.0 * M_PI;
+    auto longitude = ui->doubleSpinBox_longitude->value() / 180.0 * M_PI;
+    auto distance  = ui->doubleSpinBox_distance->value();
 
-        float sl = sin(latitude);
+    float sl = sin(latitude);
 
-        m_light->setPositionX(sl * cos(longitude) * distance);
-        m_light->setPositionY(cos(latitude)       * distance);
-        m_light->setPositionZ(sl * sin(longitude) * distance);
+    m_light->setPositionX(sl * cos(longitude) * distance);
+    m_light->setPositionY(cos(latitude)       * distance);
+    m_light->setPositionZ(sl * sin(longitude) * distance);
 
-        QColor color = m_colorButton->getColor();
-        float  scale = ui->doubleSpinBox_intensity->value() / 255.0f;
-        m_light->setColor(Vector3f(color.red(), color.green(), color.blue()) * scale);
+    QColor color = m_colorButton->getColor();
+    float  scale = ui->doubleSpinBox_intensity->value() / 255.0f;
+    m_light->setColor(Vector3f(color.red(), color.green(), color.blue()) * scale);
 
-        m_light->setDirty();
-
-    m_light->unlock();
+    m_light->setDirty();
 }
 
 // --------------------------------------------------------------------
@@ -117,18 +126,13 @@ void PointLightWidget::update()
 // --------------------------------------------------------------------
 void PointLightWidget::changeEvent(QEvent * event)
 {
-    if (event->type() != QEvent::EnabledChange) return;
+    if (event->type() != QEvent::EnabledChange ||
+        isEnabled() == m_light->isVisible()) return;
     
-    if (isEnabled() && !m_light->isVisible()) 
-    {
-        m_light->setVisible(true);
-        m_light->setDirty(); 
-    }
-    else if (!isEnabled() && m_light->isVisible()) 
-    {
-        m_light->setVisible(false);
-        m_light->setDirty(); 
-    }
+    auto lock = MainWindow::instance->scene()->lock(m_userInfo);
+
+    m_light->setVisible(isEnabled());
+    m_light->setDirty(); 
 }
 
 // --------------------------------------------------------------------

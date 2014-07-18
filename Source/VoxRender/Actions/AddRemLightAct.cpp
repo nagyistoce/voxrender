@@ -36,23 +36,23 @@
 void AddRemLightAct::undo()
 {
     auto scene = MainWindow::instance->scene();
-    if (!scene.lightSet)
+    if (!scene->lightSet)
     {
         throw vox::Error(__FILE__, __LINE__, "GUI", "Current scene light set is missing", vox::Error_Bug);
         return;
     }
 
-    vox::SceneLock lock(scene.lightSet);
+    auto lock = scene->lock(this);
 
-    if (scene.lightSet->find(m_light->id()))
+    if (scene->lightSet->find(m_light->id()))
     {
-        scene.lightSet->remove(m_light, true);
+        scene->lightSet->remove(m_light, true);
         
-        scene.lightSet->setDirty();
+        scene->lightSet->setDirty();
     }
     else 
     {
-        scene.lightSet->add(m_light, true);
+        scene->lightSet->add(m_light, true);
 
         m_light->setDirty();
     }

@@ -6,7 +6,7 @@
 	 Implements an interface for modifying the sampling parameters of the
 	 volume ray tracer.
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -31,6 +31,7 @@
 
 // QT Includes
 #include <QtWidgets/QWidget>
+#include "VoxScene/Scene.h"
 
 namespace Ui { class SamplingWidget; }
 
@@ -42,7 +43,7 @@ class SamplingWidget : public QWidget
 public:
 	explicit SamplingWidget(QWidget *parent = 0);
 
-	~SamplingWidget( );
+	~SamplingWidget();
 
 private:
 	Ui::SamplingWidget *ui;
@@ -52,7 +53,7 @@ private:
     bool m_ignore;
 
 signals:
-	void valuesChanged( );
+	void valuesChanged();
 
 private slots:
 	void on_horizontalSlider_gradient_valueChanged(int value);
@@ -66,7 +67,7 @@ private slots:
 	void on_doubleSpinBox_edge_valueChanged(double value);
     void on_horizontalSlider_edge_valueChanged(int value);
 
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 };
 
 // End definition

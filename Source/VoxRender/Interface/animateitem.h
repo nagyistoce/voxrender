@@ -82,7 +82,7 @@ private:
     int m_range;    ///< Number of frames visible in the window
     int m_step;     ///< Number of frame between trace lines
     
-    vox::KeyFrame m_dragFrame; ///< Cache of frame being repositioned
+    std::shared_ptr<vox::KeyFrame> m_dragFrame; ///< Cache of frame being repositioned
     int  m_dragIndex;          ///< The original index of a frame being moved
     bool m_isDragging;         ///< Flag to determine if frame drag is occurring
 

@@ -32,8 +32,10 @@
 #include <QtWidgets/QLayoutItem>
 
 // Include Dependencies
+#include "VoxScene/Scene.h"
 #include "VoxScene/Light.h"
 #include "panewidget.h"
+#include "ambientlightwidget.h"
 
 // Point light interface
 class LightingWidget : public QWidget
@@ -54,15 +56,15 @@ private:
     /** Removes a light from the scene */
     void remove(std::shared_ptr<vox::Light> light);
 
-    PaneWidget *           m_ambientPane;   ///< Ambient light widget
-	std::list<PaneWidget*> m_panes;    ///< Other light widgets
+    AmbientLightWidget *   m_ambientWidget; ///< Ambient light widget
+	std::list<PaneWidget*> m_panes;         ///< Light panes (besides ambient)
     QSpacerItem *          m_spacer;        ///< Spacing element for pane list
     QLayout *              m_layout;        ///< Layout for light panes
     QWidget *              m_parent;        ///< Parent widget 
 
 private slots:
     /** Slot for scene change events */
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
     /** Pane removal slot called on light deletion */
     void remove(PaneWidget * pane);

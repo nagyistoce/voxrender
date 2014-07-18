@@ -56,7 +56,6 @@ HistogramView::HistogramView(QWidget *parent, bool createTransferView) :
 	setDragMode(QGraphicsView::ScrollHandDrag);
 
     // Configure the slots'n'signals for histogram image generation and update
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(updateHistogramData()));
     auto generator = HistogramGenerator::instance();
     connect(generator, SIGNAL(histogramComplete(int)), this, SLOT(onHistogramReady(int)));
 
@@ -138,33 +137,15 @@ void HistogramView::updateImage()
     case DataType_Density:
         m_histogramItem.setPixmap(generator->densityPixmap().scaled(size));
         break;
-
     case DataType_DensityGrad:
         m_histogramItem.setPixmap(generator->gradientPixmap().scaled(size));
         break;
-
+    case DataType_DensityLap:
+        m_histogramItem.setPixmap(generator->laplacePixmap().scaled(size));
+        break;
     default:
         VOX_LOG_ERROR(Error_Bug, "GUI", format("Unrecognized histogram type: %1%", m_type));
     }
-}
-
-// ----------------------------------------------------------------------------
-//  Updates the transfer function item for this view (if enabled)
-// ----------------------------------------------------------------------------
-void HistogramView::updateTransfer() 
-{ 
-    if (m_transferItem) 
-    { 
-        m_transferItem->synchronizeView(); 
-    }
-}
-
-// ----------------------------------------------------------------------------
-// Updates the histogram data buffer
-// ----------------------------------------------------------------------------
-void HistogramView::updateHistogramData()
-{
-    // :TODO: Enable loading animation in place of histogram
 }
 
 // ----------------------------------------------------------------------------

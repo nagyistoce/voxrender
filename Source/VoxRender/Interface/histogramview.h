@@ -67,14 +67,9 @@ public:
     /** Constructs a new HistogramView with an option transfer function editor */
 	HistogramView(QWidget *parent = 0, bool createTransferView = false);
 
-    /** Updates the transfer function views */
-    void updateTransfer();
-    
     void setType(int dataType);
 
 private slots:
-    void updateHistogramData();
-
     void onHistogramReady(int dataType);
 
 private:

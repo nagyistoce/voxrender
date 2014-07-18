@@ -43,7 +43,7 @@ void MaterialEditAct::undo()
     *m_material = *m_reference;
     *m_reference = *temp;
 
-    MainWindow::instance->scene().transfer->setDirty();
+    MainWindow::instance->scene()->transfer->setDirty();
     auto widget = MainWindow::instance->transferWidget();
     // :TODO: Update material in transfer widget
 }

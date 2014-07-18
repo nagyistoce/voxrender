@@ -79,7 +79,8 @@ public:
         m_spacing(spacing), 
         m_type(type), 
         m_offset(offset), 
-        m_timeSlice(0.f)
+        m_timeSlice(0.f),
+        m_isDataDirty(true)
     { 
         if (!m_data)
         {
@@ -162,13 +163,14 @@ public:
     // ----------------------------------------------------------------------------
     void clone(Volume & volume)
     {
-        volume.m_pImpl->m_data      = m_data;
-        volume.m_pImpl->m_timeSlice = m_timeSlice;
-        volume.m_pImpl->m_range     = m_range;
-        volume.m_pImpl->m_offset    = m_offset;
-        volume.m_pImpl->m_spacing   = m_spacing; 
-        volume.m_pImpl->m_extent    = m_extent;
-        volume.m_pImpl->m_type      = m_type;
+        volume.m_pImpl->m_isDataDirty = !(volume.m_pImpl->m_data.get() == m_data.get());
+        volume.m_pImpl->m_data        = m_data;
+        volume.m_pImpl->m_timeSlice   = m_timeSlice;
+        volume.m_pImpl->m_range       = m_range;
+        volume.m_pImpl->m_offset      = m_offset;
+        volume.m_pImpl->m_spacing     = m_spacing; 
+        volume.m_pImpl->m_extent      = m_extent;
+        volume.m_pImpl->m_type        = m_type;
     }
     
     // ----------------------------------------------------------------------------
@@ -177,6 +179,7 @@ public:
     std::shared_ptr<Volume> interp(std::shared_ptr<Volume> k2, float f)
     {
         auto volume = Volume::create();
+        volume->m_pImpl->m_isDataDirty = false;
         volume->m_pImpl->m_data      = m_data;
         volume->m_pImpl->m_timeSlice = m_timeSlice * (1.f - f) + k2->m_pImpl->m_timeSlice * f; 
         volume->m_pImpl->m_range     = m_range;
@@ -194,6 +197,8 @@ public:
     float m_timeSlice; ///< The current time slice to display
     
     ResourceId diskCache; ///< Local disk cache of this volume dataset
+
+    bool m_isDataDirty; ///< Volume binary data dirty flag
 
     Vector2f m_range;       ///< Volume value range (normalized to type)
     Vector3f m_offset;      ///< Volume offset (mm)
@@ -225,8 +230,11 @@ Volume::Type    Volume::type() const       { return m_pImpl->m_type; }
 Vector4f const& Volume::spacing() const     { return m_pImpl->m_spacing; } 
 Vector4s const& Volume::extent() const      { return m_pImpl->m_extent; }  
 Vector3f const& Volume::offset() const      { return m_pImpl->m_offset; }
-float           Volume::timeSlice()         { return m_pImpl->m_timeSlice; }
+float           Volume::timeSlice() const   { return m_pImpl->m_timeSlice; }
 Vector2f const& Volume::valueRange() const  { return m_pImpl->m_range; }
+void            Volume::setDataDirty()      { m_pImpl->m_isDataDirty = true; setDirty(); }
+void            Volume::setClean()          { Object::setClean(); m_pImpl->m_isDataDirty = false; }
+bool            Volume::isDataDirty() const { return m_pImpl->m_isDataDirty; }
 void            Volume::setSpacing(Vector4f const& spacing) { m_pImpl->m_spacing = spacing; }
 void            Volume::setOffset(Vector3f const& offset)   { m_pImpl->m_offset = offset; }
 void            Volume::setTimeSlice(float timeSlice)       { m_pImpl->m_timeSlice = timeSlice; }

@@ -40,8 +40,10 @@ using namespace vox;
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
 // --------------------------------------------------------------------
-AmbientLightWidget::AmbientLightWidget(QWidget * parent) : 
+AmbientLightWidget::AmbientLightWidget(QWidget * parent, void * userInfo) : 
     QWidget(parent), 
+    m_ignore(false),
+    m_userInfo(userInfo),
     ui(new Ui::AmbientLightWidget)
 {
 	ui->setupUi(this);
@@ -55,8 +57,6 @@ AmbientLightWidget::AmbientLightWidget(QWidget * parent) :
 
     connect(ui->horizontalSlider_intensity, SIGNAL(sliderPressed()), this, SLOT(beginChange()));
     connect(ui->horizontalSlider_intensity, SIGNAL(sliderReleased()), this, SLOT(endChange()));
-
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
 }
 
 // --------------------------------------------------------------------
@@ -111,9 +111,11 @@ void AmbientLightWidget::endChange()
 // --------------------------------------------------------------------
 void AmbientLightWidget::update()
 {
-    auto lightSet = MainWindow::instance->scene().lightSet;
+    if (m_ignore) return;
 
-    SceneLock lock(lightSet);
+    auto scene    = MainWindow::instance->scene();
+    auto lightSet = scene->lightSet;
+    auto lock     = scene->lock(m_userInfo);
 
     auto color = m_colorButton->getColor();
     Vector3f light = Vector3f(color.red(), color.green(), color.blue()) * 
@@ -127,14 +129,15 @@ void AmbientLightWidget::update()
 // --------------------------------------------------------------------
 void AmbientLightWidget::sceneChanged()
 {
-    auto & scene = MainWindow::instance->scene();
-    if (!scene.lightSet) return;
+    m_ignore = true;
 
-    Vector3f ambient = scene.lightSet->ambientLight();
+    Vector3f ambient = MainWindow::instance->scene()->lightSet->ambientLight();
     float magnitude = ambient.fold(high);
     ambient = magnitude ? ambient * 255.0f / magnitude : Vector3f(255.0f, 255.0f, 255.0f);
     ui->doubleSpinBox_intensity->setValue(magnitude);
     m_colorButton->setColor(QColor((int)ambient[0], (int)ambient[1], (int)ambient[2]), true);
+
+    m_ignore = false;
 }
 
 // --------------------------------------------------------------------

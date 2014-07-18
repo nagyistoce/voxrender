@@ -37,11 +37,8 @@
 
 // Transfer function modification wrapper for auto-update
 #define DO_LOCK(T, X)   \
-    T->lock();          \
     X                   \
-    T->setDirty();      \
-    T->unlock();
-// :TODO: Check auto update set 
+    T->setDirty();   
 
 using namespace vox;
 
@@ -70,13 +67,17 @@ namespace filescope {
 TransferItem::TransferItem(QGraphicsItem* parent)
 	: QGraphicsRectItem(parent)
 {
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 }
 
 // ----------------------------------------------------------------------------
 //  Regenerates the transfer function display nodes
 // ----------------------------------------------------------------------------
-void TransferItem::synchronizeView()
+void TransferItem::sceneChanged(vox::Scene & scene, void * userInfo)
 {
+    if (!scene.transfer) return;
+
     disconnect(this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
     connect(MainWindow::instance->transferWidget(), SIGNAL(nodePositionChanged(std::shared_ptr<vox::Node>)), 
             this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
@@ -84,15 +85,11 @@ void TransferItem::synchronizeView()
     m_nodes.clear();
     m_edges.clear();
 
-    auto transfer = MainWindow::instance->scene().transfer;
-    if (!transfer) return;
-
-    if (auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get()))
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(scene.transfer.get()))
     {
         // Update transfer function nodes
-        auto nodes = transfer1D->nodes();
         std::shared_ptr<NodeItem> prevItem;
-        BOOST_FOREACH (auto & node, nodes)
+        BOOST_FOREACH (auto node, transfer1D->nodes())
         {
             // Create a graphics object for the next transfer function node
             auto nodeItem = std::shared_ptr<NodeItem>(new NodeItem(
@@ -111,7 +108,7 @@ void TransferItem::synchronizeView()
             prevItem = nodeItem;
         }
     }
-    else if (auto transfer2D = dynamic_cast<Transfer2D*>(transfer.get()))
+    else if (auto transfer2D = dynamic_cast<Transfer2D*>(scene.transfer.get()))
     {
         auto quads = transfer2D->quads();
         BOOST_FOREACH (auto & quad, quads)
@@ -213,7 +210,8 @@ void TransferItem::updateQuad(std::shared_ptr<vox::Quad> quad)
 // ----------------------------------------------------------------------------
 void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
 {
-    auto transfer = MainWindow::instance->scene().transfer;
+    auto scene = MainWindow::instance->scene();
+    auto transfer = scene->transfer;
     if (transfer->type() == Transfer1D::typeID())
     {
         auto node = std::static_pointer_cast<vox::Node>(item->data());
@@ -222,7 +220,7 @@ void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
     }
     else if (transfer->type() == Transfer2D::typeID())
     {
-        transfer->lock();
+        //auto lock = scene->lock();
 
         auto quadItem = std::static_pointer_cast<filescope::QuadIndex>(item->data());
         switch (quadItem->node)
@@ -245,7 +243,6 @@ void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
             break;
         }
 
-        transfer->unlock();
         transfer->setDirty();
 
         updateQuad(quadItem->quad);
@@ -257,7 +254,7 @@ void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
 // ----------------------------------------------------------------------------
 void TransferItem::onNodeItemChange(NodeItem * item, QPointF & pos)
 {
-    auto transfer = MainWindow::instance->scene().transfer;
+    auto transfer = MainWindow::instance->scene()->transfer;
     if (transfer->type() == Transfer1D::typeID())
     {
         for (auto iter = m_nodes.begin(); iter != m_nodes.end(); ++iter)
@@ -326,7 +323,7 @@ void TransferItem::onNodeItemChange(NodeItem * item, QPointF & pos)
 // ----------------------------------------------------------------------------
 void TransferItem::onNodeItemSelected(NodeItem * item, bool selected)
 {
-    auto transfer = MainWindow::instance->scene().transfer;
+    auto transfer = MainWindow::instance->scene()->transfer;
     if (transfer->type() == Transfer1D::typeID())
     {
         auto node = std::static_pointer_cast<vox::Node>(item->data());
@@ -342,8 +339,7 @@ void TransferItem::onNodeItemSelected(NodeItem * item, bool selected)
 }
 
 // ----------------------------------------------------------------------------
-//  Deselects or creates new nodes within the transfer function on right click 
-//  events
+//  Deselects or creates new nodes within the transfer function on right click events
 // ----------------------------------------------------------------------------
 void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 {
@@ -351,8 +347,9 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 
     if (pEvent->button() == Qt::LeftButton) return;
 
-    auto transfer = MainWindow::instance->scene().transfer;
-    transfer->lock();
+    auto scene = MainWindow::instance->scene();
+    auto transfer = scene->transfer;
+    auto lock = scene->lock(this);
 
     if (auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get()))
     {
@@ -383,8 +380,6 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
     }
 
     transfer->setDirty();
-    transfer->unlock();
-    MainWindow::instance->transferWidget()->onTransferFunctionChanged();
 }
 
 // ----------------------------------------------------------------------------
@@ -392,7 +387,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 // ----------------------------------------------------------------------------
 void TransferItem::onResizeEvent()
 {
-    auto transfer = MainWindow::instance->scene().transfer;
+    auto transfer = MainWindow::instance->scene()->transfer;
     if (!transfer) return;
 
     if (transfer->type() == Transfer1D::typeID())
@@ -407,6 +402,6 @@ void TransferItem::onResizeEvent()
     }
     else if (transfer->type() == Transfer2D::typeID())
     {
-        synchronizeView();
+        //synchronizeView();
     }
 }

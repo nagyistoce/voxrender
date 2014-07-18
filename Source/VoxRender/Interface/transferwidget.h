@@ -34,6 +34,7 @@
 
 // VoxLib Includes
 #include "VoxScene/Transfer.h"
+#include "VoxScene/Scene.h"
 
 // QT Includes
 #include <QtWidgets/QWidget>
@@ -55,17 +56,11 @@ public:
     /** Returns the currently selected transfer function node */
     std::shared_ptr<vox::Node> selectedNode();
 
-    /** Regenerates the transfer function displays */
-    void onTransferFunctionChanged() 
-    { 
-        m_primaryView->updateTransfer();
-        m_secondaryView->updateTransfer();
-    }
-
 private:
     Ui::TransferWidget *ui;
 
     bool m_blockNodeUpdates;
+    bool m_ignore;
 
 	// Color Selection Dialogue
     QColorPushButton * m_colorDiffuse;
@@ -108,7 +103,7 @@ public slots:
 private slots:
     void beginMaterialChange();
     void endMaterialChange();
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
 	// Node selection group box
 	void on_pushButton_delete_clicked();

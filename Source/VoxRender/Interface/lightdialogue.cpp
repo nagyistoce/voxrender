@@ -37,13 +37,13 @@ LightDialogue::LightDialogue(int index) :
     ui->setupUi(this);
 
     // Connect radio button toggles to description box update functions
-    connect( ui->radioButton_area,        SIGNAL(toggled(bool)), this, SLOT(toggleArea(bool))  );
-    connect( ui->radioButton_environment, SIGNAL(toggled(bool)), this, SLOT(toggleEnv(bool))   );
-    connect( ui->radioButton_point,       SIGNAL(toggled(bool)), this, SLOT(togglePoint(bool)) );
-    connect( ui->radioButton_spot,        SIGNAL(toggled(bool)), this, SLOT(toggleSpot(bool))  );
+    connect(ui->radioButton_area,        SIGNAL(toggled(bool)), this, SLOT(toggleArea(bool)) );
+    connect(ui->radioButton_environment, SIGNAL(toggled(bool)), this, SLOT(toggleEnv(bool))  );
+    connect(ui->radioButton_point,       SIGNAL(toggled(bool)), this, SLOT(togglePoint(bool)));
+    connect(ui->radioButton_spot,        SIGNAL(toggled(bool)), this, SLOT(toggleSpot(bool)) );
 
     // Append the light number to the name
-    ui->lineEdit_name->setText( QString("Light_%1").arg(index) );
+    ui->lineEdit_name->setText(QString("Light_%1").arg(index));
 
     // Select the default (Point) light
     ui->radioButton_point->setChecked(true);
@@ -111,9 +111,7 @@ void LightDialogue::toggleArea(bool checked)
 { 
     if (!checked) return;
 
-    ui->textEdit_description->setText(
-        "Area Light"
-        );
+    ui->textEdit_description->setText("Area Light");
 }
 
 // --------------------------------------------------------------------
@@ -123,9 +121,7 @@ void LightDialogue::togglePoint(bool checked)
 { 
     if (!checked) return;
 
-    ui->textEdit_description->setText(
-        "Point Light"
-        );
+    ui->textEdit_description->setText("Point Light");
 }
 
 // --------------------------------------------------------------------
@@ -135,7 +131,5 @@ void LightDialogue::toggleSpot(bool checked)
 { 
     if (!checked) return;
 
-    ui->textEdit_description->setText(
-        "Spot Light"
-        );
+    ui->textEdit_description->setText("Spot Light");
 }

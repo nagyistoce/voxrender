@@ -180,7 +180,7 @@ public:
     Vector3f const& offset() const;
     
     /** Returns the time slice of the volume for display */
-    float timeSlice();
+    float timeSlice() const;
 
     /** Returns the normalized value range of the data for the underlying type */
     Vector2f const& valueRange() const;
@@ -195,9 +195,7 @@ public:
     float fetchNormalized(size_t x, size_t y, size_t z) const;
 
     /** Data modifier */ 
-    void setData(std::shared_ptr<UInt8> const& data, 
-                 Vector4s               const& extent,
-				 Type                          type);
+    void setData(std::shared_ptr<UInt8> const& data, Vector4s const& extent, Type type);
 
     /** Raw voxel data accessor */
     UInt8 * mutableData();
@@ -210,6 +208,15 @@ public:
 
     /** Returns the format of the data (type) */
     Type type() const;
+
+    /** Sets the volume data dirty flag */
+    void setDataDirty();
+
+    /** Returns true if the data is dirty */
+    bool isDataDirty() const;
+
+    /** Marks the volume meta-data AND data clean */
+    void setClean();
 
 private:
     friend RenderController;

@@ -111,7 +111,7 @@ void ClipPlaneWidget::update()
 void ClipPlaneWidget::changeEvent(QEvent * event)
 {
     if (event->type() != QEvent::EnabledChange) return;
-
+    
     if (isEnabled() && !m_plane->isVisible()) 
     {
         m_plane->setVisible(true);

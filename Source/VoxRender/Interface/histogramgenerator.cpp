@@ -105,8 +105,9 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 HistogramGenerator::HistogramGenerator() 
 {
-    // Ensure the generator recieves image update requests
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(generateHistogramImages()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(onSceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
+
     connect(this, SIGNAL(histogramImageReady(int)), this, SLOT(onHistogramImageReady(int)));
 }
 
@@ -133,7 +134,6 @@ void HistogramGenerator::onHistogramImageReady(int dataType)
         m_densityPixmap.convertFromImage(densityImage);
         }
         break;
-
     case HistogramView::DataType_DensityGrad:
         {
         auto gradientImage = QImage(reinterpret_cast<uchar*>(m_gradientImage.data()), 
@@ -142,16 +142,14 @@ void HistogramGenerator::onHistogramImageReady(int dataType)
         m_gradientPixmap.convertFromImage(gradientImage);
         }
         break;
-
     case HistogramView::DataType_DensityLap:
         {
-        auto gradientImage = QImage(reinterpret_cast<uchar*>(m_gradientImage.data()), 
-            m_gradientImage.width(), m_gradientImage.height(), m_gradientImage.stride(), 
+        auto laplaceImage = QImage(reinterpret_cast<uchar*>(m_laplaceImage.data()), 
+            m_laplaceImage.width(), m_laplaceImage.height(), m_laplaceImage.stride(), 
             QImage::Format_ARGB32);
-        m_laplacePixmap.convertFromImage(gradientImage);
+        m_laplacePixmap.convertFromImage(laplaceImage);
         }
         break;
-
     default:
         VOX_LOG_ERROR(Error_Bug, "GUI", "Unrecognized histogram type");
         return;
@@ -161,12 +159,16 @@ void HistogramGenerator::onHistogramImageReady(int dataType)
 }
 
 // ----------------------------------------------------------------------------
+//  Entry point for histogram image generation thread
 // ----------------------------------------------------------------------------
 void HistogramGenerator::threadEntryPoint(std::shared_ptr<vox::Volume> volume)
 {
     generateDensityHistogram(volume);
-    generateGradientHistogram(volume);
-    generateLaplacianHistogram(volume);
+    
+    auto histoVol = volt::HistogramVolume::build(volume);
+
+    generateGradientHistogram(histoVol);
+    generateLaplacianHistogram(histoVol);
 }
 
 // ----------------------------------------------------------------------------
@@ -219,80 +221,52 @@ void HistogramGenerator::generateDensityHistogram(std::shared_ptr<vox::Volume> v
 }
 
 // ----------------------------------------------------------------------------
+//
 // ----------------------------------------------------------------------------
 void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> volume)
 {
     auto tbeg = std::chrono::high_resolution_clock::now();
 
-    switch (volume->type())
-    {
-        case Volume::Type_UInt8:  m_gradientImage.resize(256, 128); break;
-        case Volume::Type_UInt16: m_gradientImage.resize(512, 256); break;
-        case Volume::Type_Int16: m_gradientImage.resize(512, 256); break;
-        default:
-            throw Error(__FILE__, __LINE__, VSR_LOG_CATEGORY,
-                format("Unsupported volume data type (%1%)", 
-                        Volume::typeToString(volume->type())),
-                Error_NotImplemented);
-    }
-
-    auto const height  = m_gradientImage.height();
-    auto const width   = m_gradientImage.width();
-    vox::Image<size_t> bins(width, height);
-    
+    auto extent = volume->extent();
+    m_gradientImage.resize(extent[0], extent[1]);
     m_gradientImage.clear();
+
+    vox::Image<unsigned long> bins(extent[0], extent[1]);
     bins.clear(0);
 
-    auto extent = volume->extent();
-	for (size_t k = 0; k < extent[2]; k++)
-	for (size_t j = 0; j < extent[1]; j++)
-	for (size_t i = 0; i < extent[0]; i++)
+    // Collapse the volume into the mag-grad range
+    auto dataPtr = volume->data();
+    for (size_t k = 0; k < extent[2]; ++k)
+    for (size_t j = 0; j < extent[1]; ++j)
+    for (size_t i = 0; i < extent[0]; ++i)
     {
-        auto im = i ? i-1 : 0;
-        auto jm = j ? j-1 : 0;
-        auto km = k ? k-1 : 0;
-
-        auto ip = low<size_t>(i+1, extent[0]-1);
-        auto jp = low<size_t>(j+1, extent[1]-1);
-        auto kp = low<size_t>(k+1, extent[2]-1);
-
-        auto xd = volume->fetchNormalized(ip, j,  k ) - volume->fetchNormalized(im, j,  k );
-        auto yd = volume->fetchNormalized(i,  jp, k ) - volume->fetchNormalized(i,  jm, k );
-        auto zd = volume->fetchNormalized(i,  j,  kp) - volume->fetchNormalized(i,  j,  km);
-        
-        auto gradient = sqrt(xd*xd + yd*yd + zd*zd) * R3I;
-        auto density  = volume->fetchNormalized(i, j, k);
-
-        auto xpos = clamp<size_t>(density*(width-1), 0, width-1);
-        auto ypos = height-1-clamp<size_t>(gradient*(height-1), 0, height-1);
-
-        ++ bins.at(xpos, ypos);
+        bins.at(i,j) += *(dataPtr++);
     }
     
     // Compute the bounds on the counts
-    size_t cmin = bins.at(0,0);
-    size_t cmax = cmin;
-	for (size_t j = 0; j < height; j++)
-	for (size_t i = 0; i < width;  i++)
+    unsigned long cmax = 0;
+	for (size_t j = 0; j < extent[1]; j++)
+	for (size_t i = 0; i < extent[0];  i++)
     {
         auto count = bins.at(i, j);
-        if (cmin > count) cmin = count;
-        else if (cmax < count) cmax = count;
+        if (cmax < count) cmax = count;
     }
-
+    
     // Compute the image pixel colors
     float logMax = log((double)cmax);
-	for (size_t j = 0; j < height; j++)
-	for (size_t i = 0; i < width;  i++)
+	for (size_t j = 0; j < extent[1]; j++)
+	for (size_t i = 0; i < extent[0]; i++)
     {
         auto count = bins.at(i, j);
-        if (count < 10) { // Prevent negative error
-            m_gradientImage.at(i, j).a = 0;
-            continue;
+        if (count < 10) 
+        {
+            m_gradientImage.at(i, extent[1]-1-j).a = 0;
         }
-
-        int normVal = (int)(255.0 * (log((double)count) / logMax));
-        m_gradientImage.at(i, j).a = vox::clamp(normVal, 0, 255);
+        else
+        {
+            UInt8 normVal = (UInt8)(255.0 * (log((double)count) / logMax));
+            m_gradientImage.at(i, extent[1]-1-j).a = vox::clamp<UInt8>(normVal, 0, 255);
+        }
     }
 
     auto tend = std::chrono::high_resolution_clock::now();
@@ -304,32 +278,76 @@ void HistogramGenerator::generateGradientHistogram(std::shared_ptr<vox::Volume> 
 }
         
 // ----------------------------------------------------------------------------
+//
 // ----------------------------------------------------------------------------
 void HistogramGenerator::generateLaplacianHistogram(std::shared_ptr<vox::Volume> volume)
 {
+    auto tbeg = std::chrono::high_resolution_clock::now();
+    auto extent = volume->extent();
+    m_laplaceImage.resize(extent[0], extent[1]);
+    m_laplaceImage.clear();
+
+    vox::Image<unsigned long> bins(extent[0], extent[2]);
+    bins.clear(0);
+
+    // Collapse the volume into the mag-grad range
+    auto dataPtr = volume->data();
+    for (size_t k = 0; k < extent[2]; ++k)
+    for (size_t j = 0; j < extent[1]; ++j)
+    for (size_t i = 0; i < extent[0]; ++i)
+    {
+        bins.at(i,k) += *(dataPtr++);
+    }
+    
+    // Compute the bounds on the counts
+    unsigned long cmax = 0;
+	for (size_t j = 0; j < extent[2]; j++)
+	for (size_t i = 0; i < extent[0];  i++)
+    {
+        auto count = bins.at(i, j);
+        if (cmax < count) cmax = count;
+    }
+    
+    // Compute the image pixel colors
+    float logMax = log((double)cmax);
+	for (size_t j = 0; j < extent[2]; j++)
+	for (size_t i = 0; i < extent[0]; i++)
+    {
+        auto count = bins.at(i, j);
+        if (count < 10) 
+        {
+            m_laplaceImage.at(i, extent[1]-1-j).a = 0;
+        }
+        else
+        {
+            UInt8 normVal = (UInt8)(255.0 * (log((double)count) / logMax));
+            m_laplaceImage.at(i, extent[1]-1-j).a = vox::clamp<UInt8>(normVal, 0, 255);
+        }
+    }
+
+    auto tend = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(tend-tbeg);
+
+    VOX_LOG_INFO("GUI", format("Laplacian histogram generation time: %1%", time.count()));
+
     emit histogramImageReady(HistogramView::DataType_DensityLap);
 }
 
 // ----------------------------------------------------------------------------
+//
 // ----------------------------------------------------------------------------
-void HistogramGenerator::generateHistogramImages()
+void HistogramGenerator::onSceneChanged(Scene & scene, void * userInfo)
 {
-    auto volume = MainWindow::instance->scene().volume;
+    if (!scene.volume || !scene.volume->isDataDirty()) return;
 
     stopGeneratingImages();
 
-    if (volume)
-    {
-        m_thread = std::shared_ptr<boost::thread>( 
-            new boost::thread(std::bind(&HistogramGenerator::threadEntryPoint, this, volume)));
-    }
-    else
-    {
-        for (int i = HistogramView::DataType_Begin; i < HistogramView::DataType_End; i++) emit histogramComplete(i);
-    }
+    m_thread = std::shared_ptr<boost::thread>( 
+        new boost::thread(std::bind(&HistogramGenerator::threadEntryPoint, this, scene.volume)));
 }
 
 // ----------------------------------------------------------------------------
+//
 // ----------------------------------------------------------------------------
 void HistogramGenerator::stopGeneratingImages()
 {

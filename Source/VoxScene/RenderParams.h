@@ -69,17 +69,11 @@ public:
     /** Clones the camera into an existing structure */
     void clone(RenderParams & params)
     {
-        lock();
-        params.lock();
-
-        m_primaryStep = m_primaryStep;
-        m_shadowStep = m_shadowStep;
-        m_gradCutoff = m_gradCutoff;
-        m_scatterCoefficient = m_scatterCoefficient;
-        m_isDirty = m_isDirty;
-
-        params.unlock();
-        unlock();
+        params.m_primaryStep = m_primaryStep;
+        params.m_shadowStep = m_shadowStep;
+        params.m_gradCutoff = m_gradCutoff;
+        params.m_scatterCoefficient = m_scatterCoefficient;
+        params.m_isDirty = m_isDirty;
     }
 
     /** Returns true if the dirty flag is set */
@@ -118,18 +112,10 @@ public:
     /** Sets the edge enhancement factor */
     void setEdgeEnhancement(float enhancement) { m_edgeEnhancement = clamp(enhancement, 0.f, 100.f); }
 
-    /** Locks the parameters for editing */
-    void lock() { m_mutex.lock(); }
-
-    /** Unlocks the parameters for editing */
-    void unlock() { m_mutex.unlock(); }
-
 private:
     friend RenderController;
 
     void setClean() { m_isDirty = false; }
-
-    boost::mutex m_mutex; ///< Mutex for scene locking
 
     float m_primaryStep;    ///< Step size for primary volume trace
     float m_shadowStep;     ///< Step size for shadow ray trace

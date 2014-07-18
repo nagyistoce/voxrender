@@ -144,10 +144,10 @@ VoxScene.prototype =
         var begin = pos.indexOf("[");
         var vec3 = pos.substr(begin+1, pos.indexOf("]") - begin-1).split(" ");
 
-        vec3[0] = Number(vec3[0]) + x;
+        vec3[0] = Number(vec3[0]);
         vec3[1] = Number(vec3[1]) + y;
-        vec3[2] = Number(vec3[2]);
-        this.data.Scene.Camera.Position = JSON.stringify(vec3);
+        vec3[2] = Number(vec3[2]) + x;
+        this.data.Scene.Camera.Position = "[" + vec3[0] + " " + vec3[1] + " " + vec3[2] + "]";
 
         var scene = { Scene: {} };
         scene.Scene.Camera = this.data.Scene.Camera;
@@ -156,7 +156,7 @@ VoxScene.prototype =
 
     id:        0,    /// <field name='id'        type='Number'>Unique identifier</field>
     baseImage: null, /// <field name='baseImage' type='URI'>The original image dataURI, or null if unloaded</field>
-    data: null,      /// <field name='data'>The JSON data structure defining the scene configuration</field>
+    data:      null, /// <field name='data'>The JSON data structure defining the scene configuration</field>
 
     // *** Display Parameters ***
     _offset: { x: 0, y: 0 },

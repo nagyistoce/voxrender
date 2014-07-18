@@ -69,45 +69,53 @@ ul#menu {
     height:50px;
     list-style:none;
     margin:0;
-    padding:0;
 }
+
+    .menu-selected {
+    }
 
     ul#menu li {
         float:left;
     }
 
     ul#menu ul {
+        z-index:99;
         position:absolute;
+        list-style:none;
+        padding: 0;
+        border:1px solid rgb(180,180,180);
+        background-color:rgb(214,214,214);
+        box-shadow:rgba(0,0,0,0.4) 4px 4px 2px;
+    }
+
+    ul#menu ul ul {
+        left: 150px;
     }
 
     ul#menu li li {
         float:none;
     }
     
-    ul#menu li li a {
+    ul#menu li li span {
         display:inline-block;
     }
 
-    ul#menu li a {
+    ul#menu li span {
+        font: bold 16px sans-serif;
+        text-align:center;
         position:relative;
         height:50px;
+        width:150px;
+        margin:0px;
+        line-height:50px;
         display:block;
-        width:159px;
-    }
-
-    ul#menu li span {
-        width:100%;
-        height:100%;
         z-index:100;
-        top:0;
-        left:0;
-        position:absolute;
         display:block;
     }
 
-    ul#menu li a span:hover {
+    ul#menu li span:hover {
         cursor:pointer;
-        background-color:darkgray;
+        background-color:rgb(250, 250, 250);
     }
 
 /* PRIMARY LAYOUT ELEMENTS   

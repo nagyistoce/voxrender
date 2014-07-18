@@ -80,11 +80,9 @@ private:
     boost::asio::io_service m_ioService; ///< IO service object for this session
     WebSocket m_socket; ///< Underlying websocket for the connection
 
-    Scene m_scene;
+    std::shared_ptr<Scene> m_scene;
     std::shared_ptr<VolumeScatterRenderer> m_renderer;
     RenderController m_renderController;
-    
-    std::list<std::shared_ptr<volt::Filter>> m_filters;
 
     ResourceId m_rootDir;       ///< Root directory to which the client has permissions
     UInt64     m_key;           ///< Access key for the client's websocket connection

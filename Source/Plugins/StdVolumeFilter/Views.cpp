@@ -48,8 +48,6 @@ namespace filescope {
 // ----------------------------------------------------------------------------
 void View::execute(Scene & scene, OptionSet const& params)
 {
-    SceneLock lock(scene.camera); // Lock the scene for editing
-
     static const double PAD_FACTOR = 1.2;
 
     auto extent  = scene.volume->extent();

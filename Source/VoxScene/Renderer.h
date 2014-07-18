@@ -65,7 +65,7 @@ public:
     virtual bool exception(std::exception_ptr & exception);
 
     /** Synchronization Stage : Scene change propogation */
-    virtual void syncScene(Scene const& scene, bool force = false) = 0;
+    virtual void syncScene(Scene & scene, bool force = false) = 0;
 
     /** Raycasting stage : Generate samples */
     virtual void render() = 0;

@@ -189,8 +189,8 @@ MainWindow::~MainWindow()
 
     HistogramGenerator::instance()->stopGeneratingImages();
 
-    m_activeScene.reset();
     m_renderController.stop();
+    m_activeScene.reset();
     m_renderer.reset();
 
     delete histogramwidget;
@@ -392,6 +392,14 @@ void MainWindow::printLogEntry(
             ui->tabWidget_main->setTabIcon(filescope::logTabId, icon);
         } 
     }
+}
+
+// ----------------------------------------------------------------------------
+//  Callback handler for a scene change event (issued after an unlock)
+// ----------------------------------------------------------------------------
+void MainWindow::sceneChangeHandler(Scene & scene, void * userInfo)
+{
+    emit sceneChanged(scene, userInfo);
 }
 
 // ----------------------------------------------------------------------------
@@ -598,13 +606,16 @@ void MainWindow::renderNewSceneFile(QString const& filename)
     // Load specified scene file
     try
     {
+        m_renderController.stop();
+
         // Attempt to parse the scene file content
         m_activeScene = vox::Scene::imprt(identifier);
-        m_activeScene.pad();
+        m_activeScene->pad();
+        m_activeScene->onSceneChanged([] (Scene & scene, void * userInfo) {
+            MainWindow::instance->sceneChangeHandler(scene, userInfo); });
+        m_activeScene->lock(this).reset(); // Trigger scene change event
 
         setCurrentFile(filename); // Update window name
-
-        m_renderController.stop();
 
         beginRender();
     }
@@ -635,6 +646,8 @@ void MainWindow::beginRender(size_t samples, bool animation)
     // attempt to begin the render
     try
     {
+        m_renderView->setViewMode();
+
         m_renderController.setProgressCallback([this] (float p) 
             { 
                 int value = (int)(p*100.f);
@@ -643,11 +656,9 @@ void MainWindow::beginRender(size_t samples, bool animation)
             });
 
         // Initiate rendering of the scene
-        if (animation) m_renderController.render(m_renderer, m_activeScene.animator, samples);
+        if (animation) m_renderController.render(m_renderer, m_activeScene->animator, samples);
         else
         {
-            emit sceneChanged(); // Send the scene change signal
-
             m_renderController.render(m_renderer, m_activeScene, samples);
         }
 
@@ -656,9 +667,11 @@ void MainWindow::beginRender(size_t samples, bool animation)
     }
     catch (Error & error) 
     { 
+        m_renderView->setLogoMode();
+
         changeRenderState(RenderState_Waiting);
 
-        VOX_LOG_EXCEPTION(Severity_Error, error); 
+        VOX_LOG_EXCEPTION(Severity_Error, error);
     }
 }
 
@@ -716,14 +729,19 @@ void MainWindow::changeRenderState(RenderState state)
 		case RenderState_Stopped:
 			ui->pushButton_clipboard->setEnabled( true );
 			ui->pushButton_resume->setEnabled( true );
+			ui->tabWidget_render->setEnabled( false );
 			ui->pushButton_pause->setEnabled( false );
 			ui->pushButton_stop->setEnabled( false );
+			ui->label_zoomIcon->setVisible( true );
+			ui->label_zoom->setVisible( true );
 			activityMessage->setText(tr("Render stopped"));
 			break;
 		case RenderState_Paused:
 			ui->pushButton_resume->setEnabled( true );
 			ui->pushButton_pause->setEnabled( false );
 			ui->pushButton_stop->setEnabled( true );
+			ui->label_zoomIcon->setVisible( true );
+			ui->label_zoom->setVisible( true );
 			activityMessage->setText(tr("Rendering is paused"));
 			break;
 	}
@@ -964,10 +982,9 @@ void MainWindow::on_pushButton_addLight_clicked()
     //if (result)
     {
         auto light = Light::create();
-        m_activeScene.lightSet->lock();
-        m_activeScene.lightSet->add(light);
-        m_activeScene.lightSet->setDirty();
-        m_activeScene.lightSet->unlock();
+        auto lock = m_activeScene->lock(this);
+        m_activeScene->lightSet->add(light);
+        m_activeScene->lightSet->setDirty();
     }
 }
 
@@ -1036,7 +1053,7 @@ void MainWindow::on_actionExport_Image_triggered()
 {
     // :TODO: Detect additional export types from Bitmap exporters
     String fileTypes;
-    if (!m_activeScene.camera->isStereoEnabled())
+    if (!m_activeScene->camera->isStereoEnabled())
     {
         fileTypes += "PNG Image (*.png)\n";
         fileTypes += "JPEG Image (*.jpg)\n";
@@ -1104,14 +1121,15 @@ void MainWindow::stopRender()
 // ----------------------------------------------------------------------------
 void MainWindow::performFiltering(std::shared_ptr<volt::Filter> filter, OptionSet const& options)
 {
-    if (!m_activeScene.volume) return;
+    if (!m_activeScene->volume) return;
 
     try
     {
         m_renderController.stop();
+        auto lock = m_activeScene->lock(this);
         HistogramGenerator::instance()->stopGeneratingImages();
-        filter->execute(m_activeScene, options);
-        m_activeScene.volume->updateRange();
+        filter->execute(*m_activeScene, options);
+        m_activeScene->volume->updateRange();
     }
     catch (Error & error)
     {
@@ -1267,7 +1285,7 @@ void MainWindow::onFilterExecuted()
 
         // Acquire the user parameters and perform the filtering
         std::list<volt::FilterParam> params;
-        filter->getParams(m_activeScene, params);
+        filter->getParams(*m_activeScene, params);
         if (params.empty()) 
         {
             performFiltering(filter, OptionSet());
@@ -1350,12 +1368,18 @@ void MainWindow::on_actionFull_Screen_triggered()
 // ----------------------------------------------------------------------------
 //  Undoes the last action in the action manager
 // ----------------------------------------------------------------------------
-void MainWindow::on_actionUndo_triggered() { ActionManager::instance().undo(); }
+void MainWindow::on_actionUndo_triggered() 
+{ 
+    ActionManager::instance().undo(); 
+}
 
 // ----------------------------------------------------------------------------
 //  Reperforms the last action in the action manager
 // ----------------------------------------------------------------------------
-void MainWindow::on_actionRedo_triggered() { ActionManager::instance().redo(); }
+void MainWindow::on_actionRedo_triggered() 
+{ 
+    ActionManager::instance().redo(); 
+}
 
 // ----------------------------------------------------------------------------
 // Clears the log information from textEdit_log
@@ -1480,7 +1504,9 @@ void MainWindow::on_pushButton_addClip_clicked()
     //    return;
     //}
     
-    MainWindow::instance->scene().clipGeometry->add(prim);
+    auto lock = m_activeScene->lock(this);
+    m_activeScene->clipGeometry->add(prim);
+    m_activeScene->clipGeometry->setDirty();
 }
 
 // ----------------------------------------------------------------------------
@@ -1548,5 +1574,5 @@ void MainWindow::on_actionExport_Scene_File_triggered()
 
     vox::ResourceOStream ofile(identifier);
 
-    scene().exprt(ofile);
+    scene()->exprt(ofile);
 }

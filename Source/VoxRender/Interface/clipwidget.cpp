@@ -48,7 +48,8 @@ ClipWidget::ClipWidget(QWidget * parent, QLayout * layout) :
 {
     m_parent = parent;
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
     
 	// Set alignment of panes within lighting tab layout 
 	m_layout->setAlignment(Qt::AlignTop);
@@ -131,8 +132,8 @@ void ClipWidget::remove(PaneWidget * pane)
     if (clipwidget) 
     {
         auto scene = MainWindow::instance->scene();
-        scene.clipGeometry->remove(clipwidget->plane());
-        scene.clipGeometry->setDirty();
+        scene->clipGeometry->remove(clipwidget->plane());
+        scene->clipGeometry->setDirty();
     }
 
     m_layout->removeWidget(pane);
@@ -164,10 +165,21 @@ void ClipWidget::remove(std::shared_ptr<Primitive> prim)
 // --------------------------------------------------------------------
 //  Slot for handling scene change events
 // --------------------------------------------------------------------
-void ClipWidget::sceneChanged()
+void ClipWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    auto scene = MainWindow::instance->scene();
+    if (userInfo == this || !scene.clipGeometry) return;
     
+    // Connect to the geometry callback events for event detection
+    if (userInfo == MainWindow::instance) // initial load by mainwindow
+    {
+        scene.clipGeometry->onAdd([this] (std::shared_ptr<Primitive> prim, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
+            add(prim); });
+        scene.clipGeometry->onRemove([this] (std::shared_ptr<Primitive> prim, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
+            remove(prim); });
+    }
+
     // Synchronize the lighting controls
     while (!m_panes.empty())
     {
@@ -177,12 +189,4 @@ void ClipWidget::sceneChanged()
     }
     BOOST_FOREACH (auto & prim, scene.clipGeometry->children()) 
         add(prim);
-    
-    // Callbacks for geometry change events
-    scene.clipGeometry->onAdd([this] (std::shared_ptr<Primitive> prim, bool suppress) {
-        if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
-        add(prim); });
-    scene.clipGeometry->onRemove([this] (std::shared_ptr<Primitive> prim, bool suppress) {
-        if (!suppress) ActionManager::instance().push(AddRemClipAct::create(prim));
-        remove(prim); });
 }

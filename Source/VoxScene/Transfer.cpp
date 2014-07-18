@@ -510,8 +510,6 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
 
     VOX_ASSERT(map);
 
-    map->lock();
-
     auto & diffuse = map->diffuse();
     diffuse.resize(m_resolution[0], 1, 1);
     auto & opacity = map->opacity();
@@ -531,8 +529,6 @@ void Transfer1D::generateMap(std::shared_ptr<TransferMap> map)
     else opacity.clear();
 
     map->setDirty();
-
-    map->unlock();
 }
 
 // ----------------------------------------------------------------------------
@@ -562,8 +558,6 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
     m_range[1] = Vector3f(1.f, 1.f, 1.f);
 
     VOX_ASSERT(map);
-
-    map->lock();
 
     // Resize the map images as necessary
     auto & diffuse = map->diffuse();
@@ -598,8 +592,6 @@ void Transfer2D::generateMap(std::shared_ptr<TransferMap> map)
     }
 
     map->setDirty();
-
-    map->unlock();
 }
 
 } // namespace vox

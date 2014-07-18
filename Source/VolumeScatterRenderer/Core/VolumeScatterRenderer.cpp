@@ -120,7 +120,7 @@ public:
     // --------------------------------------------------------------------
     //  Binds the specified scene components to the device memory
     // --------------------------------------------------------------------
-    void syncScene(Scene const& scene, bool force)
+    void syncScene(Scene & scene, bool force)
     {                
         // Buffer size synchronization
         if (scene.camera->isFilmDirty() || force)

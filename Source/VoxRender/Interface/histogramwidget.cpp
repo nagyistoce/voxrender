@@ -46,8 +46,8 @@ HistogramWidget::HistogramWidget( QWidget *parent ) :
 	ui->setupUi(this);
 	
     // Create the histogram view 
-	histogramView = new HistogramView( ui->frame_histogram );
-	ui->histogramLayout->addWidget( histogramView, 0, 0, 1, 1 );
+	histogramView = new HistogramView(ui->frame_histogram);
+	ui->histogramLayout->addWidget(histogramView, 0, 0, 1, 1);
 }
     
 // ---------------------------------------------------------
@@ -80,7 +80,7 @@ void HistogramWidget::on_comboBox_histogramChannel_activated(QString str)
 	{
         histogramView->setType(HistogramView::DataType_DensityGrad);
 	}
-	else if (str == "Laplacian")
+	else if (str == "2nd Derivative")
 	{
         histogramView->setType(HistogramView::DataType_DensityLap);
 	}

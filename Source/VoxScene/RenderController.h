@@ -78,7 +78,7 @@ namespace vox
         void setProgressCallback(ProgressCallback callback);
 
 		/** Returns the scene currently being renderered */
-        Scene const& scene() const;
+        std::shared_ptr<Scene> scene() const;
 
 		/**
 		 * Initiates rendering operations on a scene
@@ -89,10 +89,10 @@ namespace vox
          * @param errorCallback The callback function for controller exceptions
 		 */
         void render(
-            MasterHandle  renderer,
-            Scene const&  scene, 
-            size_t        iterations,
-            ErrorCallback onError = nullptr
+            MasterHandle           renderer,
+            std::shared_ptr<Scene> scene, 
+            size_t                 iterations,
+            ErrorCallback          onError = nullptr
             );
 
 		/**

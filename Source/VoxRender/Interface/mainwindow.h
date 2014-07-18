@@ -112,7 +112,7 @@ public:
     RenderState renderState() { return m_guiRenderState; }
 
     /** Current scene accessor */
-    vox::Scene & scene() { return m_activeScene; }
+    std::shared_ptr<vox::Scene> scene() { return m_activeScene; }
 
     /** Returns the currently active renderer */ 
     vox::VolumeScatterRenderer & renderer() { return *m_renderer; }
@@ -149,7 +149,7 @@ public:
 
 signals:
     /** Signal sent when the active scene is reloaded */
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
     /** Progress change callback */
     void progressChanged(int progress);
@@ -187,7 +187,10 @@ private:
     /** Sets the current scene file display name */
     void setCurrentFile(const QString& path);
     
-    // Frame Ready Callback
+    /** Scene change event handler */
+    void sceneChangeHandler(vox::Scene & scene, void * userInfo);
+
+    /** Frame Ready Callback */
     void onFrameReady(std::shared_ptr<vox::FrameBuffer> frame);
 
 	// Render state control
@@ -213,7 +216,7 @@ private:
 
 	RenderView * m_renderView; ///< View panel for current render
     
-	vox::Scene m_activeScene; ///< Current scene
+	std::shared_ptr<vox::Scene> m_activeScene; ///< Current scene
 
 	// File / Directory Info
 	enum { MaxRecentFiles = 5 };

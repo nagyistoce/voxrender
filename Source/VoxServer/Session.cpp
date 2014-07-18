@@ -99,16 +99,17 @@ void Session::onConnect()
 
     // Filter lists
     std::ostringstream filterOs;
-    volt::FilterManager::instance().getFilters(m_filters);
-    if (m_filters.size())
+    std::list<std::shared_ptr<volt::Filter>> filters;
+    volt::FilterManager::instance().getFilters(filters);
+    if (filters.size())
     {
         char opCode = (char)OpCode_FilterList;
         filterOs << String(&opCode, 1);
         filterOs << "[";
-        auto iter = m_filters.begin();
+        auto iter = filters.begin();
         filterOs << "\"" << (*iter)->name() << "\"";
         ++iter;
-        while (iter != m_filters.end())
+        while (iter != filters.end())
         {
             filterOs << ",\"" << (*iter)->name() << "\"";
             ++iter;
@@ -177,7 +178,7 @@ void Session::loadScene(String const& message)
 
     // Load the specified scene file
     m_scene = Scene::imprt(uri);
-    m_scene.pad();
+    m_scene->pad();
 
     // Extract the scene id tag for post back frames
     size_t filenameLen = strlen(filename);
@@ -191,7 +192,7 @@ void Session::loadScene(String const& message)
     ResourceStream outputStream(buffer);
     auto opCode = (Char)OpCode_Scene;
     outputStream << String(&opCode, 1) << m_id;
-    m_scene.exprt(outputStream, OptionSet(), ".json");
+    m_scene->exprt(outputStream, OptionSet(), ".json");
     m_socket.write(buffer->str());
 
     // Begin rendering the scene
@@ -207,10 +208,10 @@ void Session::updateScene(String const& message)
     auto buffer = std::make_shared<std::stringbuf>(message); // :TODO: Roll this out to work w/o copying
     buffer->sbumpc();
     ResourceStream sceneFile(buffer);
-    Scene scene = Scene::imprt(sceneFile, OptionSet(), ".json");
+    auto scene = Scene::imprt(sceneFile, OptionSet(), ".json");
 
     // Update the local scene
-    if (scene.camera) scene.camera->clone(*m_scene.camera);
+    if (scene->camera) scene->camera->clone(*m_scene->camera);
 }
 
 // ------------------------------------------------------------------------
@@ -234,10 +235,13 @@ void Session::applyFilter(String const& message)
     try
     {
         m_renderController.stop();
-        BOOST_FOREACH (auto & filter, m_filters)
+        
+        std::list<std::shared_ptr<volt::Filter>> filters;
+        volt::FilterManager::instance().getFilters(filters);
+        BOOST_FOREACH (auto & filter, filters)
         if (filter->name() == &message[1])
         {
-            filter->execute(m_scene, OptionSet());
+            filter->execute(*m_scene, OptionSet());
             break;
         }
     }

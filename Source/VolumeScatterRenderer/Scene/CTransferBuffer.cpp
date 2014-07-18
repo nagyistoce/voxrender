@@ -52,12 +52,10 @@ void CTransferBuffer::setTransfer(std::shared_ptr<TransferMap> transfer)
 {
     reset(); // Ensure previous data is released
  
-    transfer->lock();
     bindDiffuseBuffer(transfer);
     bindOpacityBuffer(transfer);
     bindSpecularBuffer(transfer);
     bindEmissiveBuffer(transfer);
-    transfer->unlock();
 }
 
 // --------------------------------------------------------------------

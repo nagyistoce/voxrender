@@ -182,9 +182,9 @@ public:
         Image3D<float> kernel(size, size, size);
         std::vector<float> avgVec;
         volt::Conv::makeMeanKernel(avgVec, size);
-        for (int x = 0; x < size; x++)
-        for (int y = 0; y < size; y++)
-        for (int z = 0; z < size; z++)
+        for (unsigned int x = 0; x < size; x++)
+        for (unsigned int y = 0; y < size; y++)
+        for (unsigned int z = 0; z < size; z++)
             kernel.at(x, y, z) = avgVec[x] * avgVec[y] * avgVec[z];
         scene.volume = volt::Conv::execute(scene.volume, kernel);
     }
@@ -215,9 +215,9 @@ public:
         volt::Conv::makeGaussianKernel(gaussVec, variance, size);
         size = gaussVec.size();
         Image3D<float> kernel(size, size, size);
-        for (int x = 0; x < size; x++)
-        for (int y = 0; y < size; y++)
-        for (int z = 0; z < size; z++)
+        for (unsigned int x = 0; x < size; x++)
+        for (unsigned int y = 0; y < size; y++)
+        for (unsigned int z = 0; z < size; z++)
             kernel.at(x, y, z) = gaussVec[x] * gaussVec[y] * gaussVec[z];
         scene.volume = volt::Conv::execute(scene.volume, kernel);
     }

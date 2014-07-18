@@ -444,6 +444,23 @@ String ResourceId::extractFileExtension() const
 }
 
 // --------------------------------------------------------------------
+//  Replaces the file extension in the path component of the URI 
+// --------------------------------------------------------------------
+void ResourceId::setFileExtension(String const& extension)
+{
+    auto filenameDelim = path.find_last_of('/'); 
+    auto extensionDelim = path.find_last_of('.');
+    if (extensionDelim == path.npos || (filenameDelim != path.npos && filenameDelim > extensionDelim))
+    {
+        path += extension;
+    }
+    else
+    {
+        path.replace(extensionDelim, path.npos, extension);
+    }
+}
+
+// --------------------------------------------------------------------
 //  Appends a key/value pair to the query component of the URI
 // --------------------------------------------------------------------
 void ResourceId::appendQueryParam(String const& key, String const& val)

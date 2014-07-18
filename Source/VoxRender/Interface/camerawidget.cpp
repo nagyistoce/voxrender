@@ -35,19 +35,7 @@
 #include "Actions/CamEditAct.h"
 #include "VoxLib/Action/ActionManager.h"
 
-namespace {
-namespace filescope {
-
-    enum EditType
-    {
-        EditType_Film,
-        EditType_Aperture,
-        EditType_FieldOfView,
-        EditType_Exposure,
-    };
-
-}
-}
+using namespace vox;
 
 // --------------------------------------------------------------------
 //  Constructor
@@ -59,7 +47,8 @@ CameraWidget::CameraWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 }
     
 // --------------------------------------------------------------------
@@ -73,10 +62,10 @@ CameraWidget::~CameraWidget()
 // --------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // --------------------------------------------------------------------
-void CameraWidget::sceneChanged()
+void CameraWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    auto camera = MainWindow::instance->scene().camera;
-    if (!camera) return;
+    if (userInfo == this || !scene.camera) return;
+    auto camera = scene.camera;
     
     m_ignore = true;
 
@@ -98,20 +87,18 @@ void CameraWidget::sceneChanged()
 void CameraWidget::updateCamera()
 {
     if (m_ignore) return;
-    auto camera = MainWindow::instance->scene().camera;
+    auto scene = MainWindow::instance->scene();
+    auto camera = scene->camera;
     if (!camera) return;
 
-    camera->lock();
+    auto lock = scene->lock(this);
 
-        float fov = ui->doubleSpinBox_camFov->value() / 180.0f * M_PI;
-        camera->setFieldOfView(fov);
-
-        camera->setFocalDistance(ui->doubleSpinBox_focal->value());
-        camera->setApertureSize(ui->doubleSpinBox_aperture->value());
-        camera->setEyeDistance(ui->doubleSpinBox_eye->value());
-        camera->setDirty();
-
-    camera->unlock();
+    float fov = ui->doubleSpinBox_camFov->value() / 180.0f * M_PI;
+    camera->setFieldOfView(fov);
+    camera->setFocalDistance(ui->doubleSpinBox_focal->value());
+    camera->setApertureSize(ui->doubleSpinBox_aperture->value());
+    camera->setEyeDistance(ui->doubleSpinBox_eye->value());
+    camera->setDirty();
 }
 
 // --------------------------------------------------------------------
@@ -120,16 +107,15 @@ void CameraWidget::updateCamera()
 void CameraWidget::updateFilm()
 {
     if (m_ignore) return;
-    auto camera = MainWindow::instance->scene().camera;
+    auto scene = MainWindow::instance->scene();
+    auto camera = scene->camera;
     if (!camera) return;
     
-    camera->lock();
+    auto lock = scene->lock(this);
 
-        camera->setFilmWidth( ui->spinBox_filmWidth->value() );
-        camera->setFilmHeight( ui->spinBox_filmHeight->value() );
-        camera->setFilmDirty();
-
-    camera->unlock();
+    camera->setFilmWidth(ui->spinBox_filmWidth->value());
+    camera->setFilmHeight(ui->spinBox_filmHeight->value());
+    camera->setFilmDirty();
 }
 
 // --------------------------------------------------------------------
@@ -166,8 +152,8 @@ void CameraWidget::on_checkBox_eye_toggled(bool on)
 
     if (!m_ignore) 
     {
-        MainWindow::instance->scene().camera->setStereoEnabled(on);
-        MainWindow::instance->scene().camera->setFilmDirty();
+        MainWindow::instance->scene()->camera->setStereoEnabled(on);
+        MainWindow::instance->scene()->camera->setFilmDirty();
     }
 }
 

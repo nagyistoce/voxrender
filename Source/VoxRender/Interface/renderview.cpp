@@ -72,8 +72,6 @@ RenderView::RenderView(QWidget *parent) :
 	m_voxlogo = m_renderscene->addPixmap(QPixmap(":/images/voxlogo_bg.png"));
 	m_voxfb   = m_renderscene->addPixmap(QPixmap(":/images/voxlogo_bg.png"));
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
-
     setDragMode(QGraphicsView::ScrollHandDrag);
 
 	setLogoMode();
@@ -136,14 +134,6 @@ void RenderView::saveImageToFile(String const& identifier) const
 }
 
 // ----------------------------------------------------------------------------
-//  Detects render context changes and updates the view
-// ----------------------------------------------------------------------------
-void RenderView::sceneChanged() 
-{
-    setViewMode();
-}
-
-// ----------------------------------------------------------------------------
 //  Removes the render feed from the view 
 // ----------------------------------------------------------------------------
 void RenderView::setLogoMode() 
@@ -158,7 +148,7 @@ void RenderView::setLogoMode()
 
 	setInteractive(false);
     m_zoomEnabled = false;
-}
+} 
 
 // ----------------------------------------------------------------------------
 //  Attaches render feed to view
@@ -169,9 +159,8 @@ void RenderView::setViewMode()
 
     resetTransform();
 
-    if (!m_voxfb->isVisible()) m_voxfb->show();
-
-    if (m_voxlogo->isVisible()) m_voxlogo->hide();
+    m_voxfb->show();
+    m_voxlogo->hide();
     
     centerOn(m_voxfb);
 
@@ -211,10 +200,7 @@ void RenderView::wheelEvent(QWheelEvent* event)
 // ----------------------------------------------------------------------------
 void RenderView::mousePressEvent(QMouseEvent* event) 
 {
-    if (event->button() == Qt::RightButton)
-    {
-        m_prevPos = event->pos();
-    }
+    if (event->button() == Qt::RightButton) m_prevPos = event->pos();
     
     // Handle the events for the active tool
     if (event->button() == Qt::LeftButton)
@@ -223,10 +209,10 @@ void RenderView::mousePressEvent(QMouseEvent* event)
         {
         case Tool_ClipPlane:
             auto scene = MainWindow::instance->scene();
-            if (!scene.clipGeometry) return; 
+            if (!scene->clipGeometry) return; 
 
             // Convert the position to image coordinates
-            auto camera = MainWindow::instance->scene().camera;
+            auto camera = MainWindow::instance->scene()->camera;
             auto p = event->pos() - viewport()->mapToParent(mapFromScene(0, 0));
             p /= m_zoomfactor;
 
@@ -253,7 +239,7 @@ void RenderView::mousePressEvent(QMouseEvent* event)
 
                     // Add the new clipping plane to the scene
                     auto plane = vox::Plane::create(normal, Vector3f::dot(normal, camera->position()));
-                    scene.clipGeometry->add(plane);
+                    scene->clipGeometry->add(plane);
                 }
                 m_clipLine.setP1(QPoint());
                 m_clipLine.setP2(QPoint());
@@ -344,6 +330,8 @@ void RenderView::setDisplayMode(Stereo mode)
 
 // ----------------------------------------------------------------------------
 //  Processes and applies scene interactions for this frame
+//  :TODO: This is the old scene change mechanism, locking is used now for simplicity
+//         DO NOT LOCK here because we are not on the UI thread anymore.
 // ----------------------------------------------------------------------------
 void RenderView::processSceneInteractions()
 {
@@ -357,31 +345,28 @@ void RenderView::processSceneInteractions()
     m_lastTimeDiff = std::chrono::duration_cast<std::chrono::microseconds>(elapsed);
 
     // Perform the camera translation/rotation
-    auto camera = MainWindow::instance->scene().camera;
+    auto scene = MainWindow::instance->scene();
+    auto camera = scene->camera;
     if (!camera) return;
 
-    camera->lock();
+    // Handle camera strafe associated with key holds
+    float duration = (float)m_lastTimeDiff.count() / 10000.0f;
+    float distance = camSpeed * duration;
+    if (m_ioFlags & filescope::KEY_UP)    { camera->move(distance);      camera->setDirty(); }
+    if (m_ioFlags & filescope::KEY_RIGHT) { camera->moveRight(distance); camera->setDirty(); }
+    if (m_ioFlags & filescope::KEY_DOWN)  { camera->move(-distance);     camera->setDirty(); }
+    if (m_ioFlags & filescope::KEY_LEFT)  { camera->moveLeft(distance);  camera->setDirty(); }
 
-        // Handle camera strafe associated with key holds
-        float duration = (float)m_lastTimeDiff.count() / 10000.0f;
-        float distance = camSpeed * duration;
-        if (m_ioFlags & filescope::KEY_UP)    { camera->move(distance);      camera->setDirty(); }
-        if (m_ioFlags & filescope::KEY_RIGHT) { camera->moveRight(distance); camera->setDirty(); }
-        if (m_ioFlags & filescope::KEY_DOWN)  { camera->move(-distance);     camera->setDirty(); }
-        if (m_ioFlags & filescope::KEY_LEFT)  { camera->moveLeft(distance);  camera->setDirty(); }
-
-        // Handle camera rotation from mouse movement
-        int dx = m_mouseDeltaX.fetchAndStoreRelaxed(0);
-        int dy = m_mouseDeltaY.fetchAndStoreRelaxed(0);
-        if (dx || dy)
-        {
-            Vector2f rotation = Vector2f(dx, dy) * camWSense;
-            camera->pitch(rotation[1]); 
-            camera->yaw(rotation[0]);
-            camera->setDirty();
-        }
-
-    camera->unlock();
+    // Handle camera rotation from mouse movement
+    int dx = m_mouseDeltaX.fetchAndStoreRelaxed(0);
+    int dy = m_mouseDeltaY.fetchAndStoreRelaxed(0);
+    if (dx || dy)
+    {
+        Vector2f rotation = Vector2f(dx, dy) * camWSense;
+        camera->pitch(rotation[1]); 
+        camera->yaw(rotation[0]);
+        camera->setDirty();
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -449,6 +434,6 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     }
 
     m_voxfb->pixmap().convertFromImage(qimage);
-
+    
     m_voxfb->update();
 }

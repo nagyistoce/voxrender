@@ -29,6 +29,7 @@
 
 // QT Includes
 #include <QtWidgets/QWidget>
+#include "VoxScene/Scene.h"
 
 namespace Ui { class TimingWidget; }
 
@@ -50,7 +51,7 @@ private:
     bool m_ignore;
 
 private slots:
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
     void on_doubleSpinBox_x_valueChanged(double value);
     void on_doubleSpinBox_y_valueChanged(double value);

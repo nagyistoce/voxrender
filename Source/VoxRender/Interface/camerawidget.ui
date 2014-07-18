@@ -286,6 +286,9 @@
        <property name="singleStep">
         <number>1</number>
        </property>
+       <property name="value">
+        <number>50</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -356,7 +359,7 @@
           <string>Stereo 3D</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -374,8 +377,14 @@
      </item>
      <item row="4" column="1">
       <widget class="QSlider" name="horizontalSlider_eye">
+       <property name="minimum">
+        <number>0</number>
+       </property>
        <property name="maximum">
-        <number>10</number>
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>64</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -388,13 +397,13 @@
         <string> mm</string>
        </property>
        <property name="minimum">
-        <double>20.000000000000000</double>
+        <double>0.000000000000000</double>
        </property>
        <property name="maximum">
-        <double>70.000000000000000</double>
+        <double>100.000000000000000</double>
        </property>
        <property name="singleStep">
-        <double>5.000000000000000</double>
+        <double>1.000000000000000</double>
        </property>
        <property name="value">
         <double>64.000000000000000</double>

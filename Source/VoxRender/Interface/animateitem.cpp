@@ -95,7 +95,7 @@ void AnimateItem::scrollWindow()
 // ------------------------------------------------------------
 void AnimateItem::onMouseWheel(QWheelEvent * pEvent)
 {
-    m_offset += pEvent->delta() / 12;
+    m_offset += pEvent->delta() / 60;
 
     update();
 }
@@ -109,7 +109,7 @@ void AnimateItem::onMousePress(QMouseEvent* pEvent)
     {
         auto frame = m_mousePos + m_offset;
 
-        auto animator = MainWindow::instance->scene().animator;
+        auto animator = MainWindow::instance->scene()->animator;
         auto keys = animator->keyframes();
         auto iter = keys.begin();
         while (iter != keys.end() && iter->first < frame)
@@ -146,7 +146,7 @@ void AnimateItem::onMouseRelease(QMouseEvent* pEvent)
     {
         if (m_isDragging)
         {
-            auto animator = MainWindow::instance->scene().animator;
+            auto animator = MainWindow::instance->scene()->animator;
             animator->addKeyframe(m_dragFrame, m_offset + m_mousePos);
             m_dragFrame.reset();
         }
@@ -256,7 +256,7 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 	painter->setFont(m_font);
 
     // Determine the visible range of keyframes in the animator
-    auto frames = MainWindow::instance->scene().animator->keyframes();
+    auto frames = MainWindow::instance->scene()->animator->keyframes();
     auto biter = frames.begin();
     while (biter != frames.end() && m_offset > biter->first) ++biter;
     auto eiter = biter;

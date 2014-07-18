@@ -47,7 +47,7 @@ using namespace vox;
 // --------------------------------------------------------------------
 //  Tests the raw volume export/import given a volume and option set
 // --------------------------------------------------------------------
-void testVolumeExIm(Scene const& scene, String const& compression)
+void testVolumeExIm(Scene & scene, String const& compression)
 {
     std::cout << "Testing compression mode \"" << compression << "\"" << std::endl;
 
@@ -65,11 +65,11 @@ void testVolumeExIm(Scene const& scene, String const& compression)
     // Import scene information
     options.addOption("Type", scene.volume->typeToString(scene.volume->type()));
     options.addOption("Size", "[256 256 256 1]");
-    Scene copy = Scene::imprt(identifier, options);
+    auto copy = Scene::imprt(identifier, options);
 
     // Ensure the volume data was imported sucessfully
     auto const* dataOrig = scene.volume->data();
-    auto const* dataCopy = copy.volume->data();
+    auto const* dataCopy = copy->volume->data();
     size_t bytes = 256*256*256*1*1;
     BOOST_CHECK( memcmp(dataOrig, dataCopy, bytes) == 0 );
 

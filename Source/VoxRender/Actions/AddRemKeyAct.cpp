@@ -36,13 +36,13 @@
 void AddRemKeyAct::add()
 {
     auto scene = MainWindow::instance->scene();
-    if (!scene.animator)
+    if (!scene->animator)
     {
         throw vox::Error(__FILE__, __LINE__, "GUI", "Current scene animator is missing", vox::Error_Bug);
         return;
     }
 
-    scene.animator->addKeyframe(m_keyframe, m_index, true);
+    scene->animator->addKeyframe(m_keyframe, m_index, true);
 }
 
 // ----------------------------------------------------------------------------
@@ -51,11 +51,11 @@ void AddRemKeyAct::add()
 void AddRemKeyAct::rem()
 {
     auto scene = MainWindow::instance->scene();
-    if (!scene.animator)
+    if (!scene->animator)
     {
         throw vox::Error(__FILE__, __LINE__, "GUI", "Current scene animator is missing", vox::Error_Bug);
         return;
     }
 
-    scene.animator->removeKeyframe(m_index, true);
+    scene->animator->removeKeyframe(m_index, true);
 }

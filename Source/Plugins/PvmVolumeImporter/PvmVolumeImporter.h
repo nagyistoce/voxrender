@@ -64,7 +64,7 @@ public:
      *
      * \b{Required Options}
      */
-	virtual Scene importer(ResourceIStream & source, OptionSet const& options);
+	virtual std::shared_ptr<Scene> importer(ResourceIStream & source, OptionSet const& options);
     
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage

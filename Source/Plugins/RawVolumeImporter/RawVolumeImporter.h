@@ -69,7 +69,7 @@ public:
      *  Size          : Vector4u | Specifies the extent of the 3D volume in the order [x y z t]
      *  Endianess     : String   | Specifies endianess ("little" or "big") Optional if BytesPerVoxel=8.
      */
-	virtual Scene importer(ResourceIStream & source, OptionSet const& options);
+	virtual std::shared_ptr<Scene> importer(ResourceIStream & source, OptionSet const& options);
     
 private:
     std::shared_ptr<void> m_handle; ///< Plugin handle to track this DLL's usage

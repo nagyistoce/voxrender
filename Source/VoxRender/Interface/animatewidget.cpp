@@ -42,15 +42,15 @@ using namespace vox;
 // ----------------------------------------------------------------------------
 AnimateWidget::AnimateWidget(QWidget * parent) : 
 	QWidget(parent), 
-    ui(new Ui::AnimateWidget),
-    m_ignore(false)
+    ui(new Ui::AnimateWidget)
 {
 	ui->setupUi(this);
 
 	m_animateView = new AnimateView(this);
 	ui->frameLayout->addWidget(m_animateView, 0, 0, 1, 1 );
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 }
     
 // ----------------------------------------------------------------------------
@@ -64,34 +64,27 @@ AnimateWidget::~AnimateWidget()
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void AnimateWidget::sceneChanged()
+void AnimateWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    m_ignore = true;
+    // Register the change event callbacks 
+    if (userInfo == MainWindow::instance)
+    {
+        auto animator = MainWindow::instance->scene()->animator;
+        if (!animator) return;
 
-    auto animator = MainWindow::instance->scene().animator;
-    if (!animator) { m_ignore = false; return; }
+        ui->spinBox_framerate->setValue((int)animator->framerate());
 
-    ui->spinBox_framerate->setValue((int)animator->framerate());
-
-    animator->onAdd(std::bind(&AnimateWidget::onAddKey, this, 
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    animator->onRemove(std::bind(&AnimateWidget::onRemoveKey, this, 
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-    m_ignore = false;
+        animator->onAdd(std::bind(&AnimateWidget::onAddKey, this, 
+            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        animator->onRemove(std::bind(&AnimateWidget::onRemoveKey, this, 
+            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    }
 }
 
 // ----------------------------------------------------------------------------
 //  Applies widget control changes to the scene 
 // ----------------------------------------------------------------------------
-void AnimateWidget::update()
-{
-}
-
-// ----------------------------------------------------------------------------
-//  Applies widget control changes to the scene 
-// ----------------------------------------------------------------------------
-void AnimateWidget::onAddKey(int index, KeyFrame & key, bool suppress)
+void AnimateWidget::onAddKey(int index, std::shared_ptr<KeyFrame> key, bool suppress)
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, true));
     m_animateView->update();
@@ -100,7 +93,7 @@ void AnimateWidget::onAddKey(int index, KeyFrame & key, bool suppress)
 // ----------------------------------------------------------------------------
 //  Applies widget control changes to the scene 
 // ----------------------------------------------------------------------------
-void AnimateWidget::onRemoveKey(int index, KeyFrame & key, bool suppress)
+void AnimateWidget::onRemoveKey(int index, std::shared_ptr<KeyFrame> key, bool suppress)
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, false));
     m_animateView->update();
@@ -138,8 +131,7 @@ void AnimateWidget::on_spinBox_frame_valueChanged(int value)
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_spinBox_framerate_valueChanged(int value)
 {
-    if (m_ignore) return;
-    MainWindow::instance->scene().animator->setFramerate((unsigned int)value);
+    MainWindow::instance->scene()->animator->setFramerate((unsigned int)value);
 }
 
 // ----------------------------------------------------------------------------
@@ -149,7 +141,7 @@ void AnimateWidget::on_pushButton_key_clicked()
 {
     auto & scene = MainWindow::instance->scene();
     auto frame = ui->spinBox_frame->value();
-    scene.animator->addKeyframe(scene.generateKeyFrame(), frame);
+    scene->animator->addKeyframe(scene->generateKeyFrame(), frame);
 }
 
 // ----------------------------------------------------------------------------
@@ -158,26 +150,30 @@ void AnimateWidget::on_pushButton_key_clicked()
 void AnimateWidget::on_pushButton_load_clicked()
 {
     auto & scene  = MainWindow::instance->scene();
-    auto animator = scene.animator;
+    auto animator = scene->animator;
 
     auto index  = ui->spinBox_frame->value();
-    auto frames = scene.animator->keyframes();
+    auto frames = scene->animator->keyframes();
     if (frames.empty()) return;
 
     MainWindow::instance->stopRender();
+    
+    auto lock = scene->lock(); // Lock for edit
 
-    if      (frames.front().first > index) frames.front().second.clone(scene);
-    else if (frames.back().first  < index) frames.back().second.clone(scene);
+    // Load the endpoint if the selected frame is outside the existing range of frame values
+    if      (frames.front().first > index) frames.front().second->clone(scene);
+    else if (frames.back().first  < index) frames.back().second->clone(scene);
     else
     {
         auto iter = frames.begin();
         while (iter->first < index) iter++;
-
+        
+        // If on an actual frame then load it ...
         if (iter->first == index)
         {
-            scene = iter->second;
+            scene = iter->second->clone(scene);
         }
-        else
+        else // ... interpolate to the selected frame
         {
             auto  fend = iter->second;
             float tend = iter->first;
@@ -187,15 +183,11 @@ void AnimateWidget::on_pushButton_load_clicked()
         
             float factor = (index - tbeg) / (tend - tbeg);
 
-            scene.reset();
-            scene.animator->interp(fbeg, fend, scene, factor);
-
+            scene->animator->interp(fbeg, fend, factor, scene);
         }
     }
 
-    MainWindow::instance->sceneChanged();
-
-    scene.animator = animator;
+    lock.reset();
 
     MainWindow::instance->beginRender();
 }
@@ -207,7 +199,7 @@ void AnimateWidget::on_pushButton_next_clicked()
 { 
     auto currFrame = ui->spinBox_frame->value();
 
-    auto animator = MainWindow::instance->scene().animator;
+    auto animator = MainWindow::instance->scene()->animator;
     auto frames = animator->keyframes();
     auto iter = frames.begin();
     while (iter != frames.end() && iter->first <= currFrame) ++iter;
@@ -217,7 +209,7 @@ void AnimateWidget::on_pushButton_prev_clicked()
 { 
     auto currFrame = ui->spinBox_frame->value();
     
-    auto animator = MainWindow::instance->scene().animator;
+    auto animator = MainWindow::instance->scene()->animator;
     auto frames = animator->keyframes();
     if (frames.empty() || frames.front().first >= currFrame) return;
     auto iter = frames.begin();
@@ -227,7 +219,7 @@ void AnimateWidget::on_pushButton_prev_clicked()
 }
 void AnimateWidget::on_pushButton_first_clicked()
 { 
-    auto animator = MainWindow::instance->scene().animator;
+    auto animator = MainWindow::instance->scene()->animator;
     auto frames = animator->keyframes();
     if (frames.empty()) return;
 
@@ -235,7 +227,7 @@ void AnimateWidget::on_pushButton_first_clicked()
 }
 void AnimateWidget::on_pushButton_last_clicked()
 { 
-    auto animator = MainWindow::instance->scene().animator;
+    auto animator = MainWindow::instance->scene()->animator;
     auto frames = animator->keyframes();
     if (frames.empty()) return;
 
@@ -249,7 +241,7 @@ void AnimateWidget::on_pushButton_delete_clicked()
 {
     auto & scene = MainWindow::instance->scene();
     auto frame = ui->spinBox_frame->value();
-    scene.animator->removeKeyframe(frame);
+    scene->animator->removeKeyframe(frame);
 }
 
 // ----------------------------------------------------------------------------
@@ -257,7 +249,7 @@ void AnimateWidget::on_pushButton_delete_clicked()
 // ----------------------------------------------------------------------------
 void AnimateWidget::on_pushButton_preview_clicked()
 {
-    MainWindow::instance->scene().animator->setOutputUri("");
+    MainWindow::instance->scene()->animator->setOutputUri("");
 
     MainWindow::instance->stopRender();
     MainWindow::instance->beginRender(ui->spinBox_samples->value(), true);
@@ -279,7 +271,7 @@ void AnimateWidget::on_pushButton_render_clicked()
         fileTypes.c_str());
 
     ResourceId uri(("file:///" + filename).toUtf8().data());
-    MainWindow::instance->scene().animator->setOutputUri(uri);
+    MainWindow::instance->scene()->animator->setOutputUri(uri);
 
     MainWindow::instance->stopRender();
     MainWindow::instance->beginRender(ui->spinBox_samples->value(), true);

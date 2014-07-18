@@ -4,7 +4,7 @@
 
 	Description: Defines the Scene class used by the Renderer
 
-    Copyright (C) 2012 Lucas Sherman
+    Copyright (C) 2012-2014 Lucas Sherman
 
 	Lucas Sherman, email: LucasASherman@gmail.com
 
@@ -53,18 +53,17 @@ namespace vox
 	/** 
 	 * Scene File Importer
      *
-     * This typedef specifies the format of a scene file importer. The VoxRender
+     * This is the interface class for a scene import module. The VoxRender
      * library offers a built in system for controlling the import of scene information. 
      * Scene import/export modules are registered with the Scene class through a static
-     * interface and associated with a regular expression. When an attempt is made to 
-     * import a scene file through the Scene::import interface, the first SceneLoader whose
-     * regular expression matches the parameter provided to load will be executed.
+     * interface and associated with a file type/extension. When an attempt is made to 
+     * import a scene file through the Scene::import interface, the SceneLoader whose
+     * type matches the parameter provided to imprt method will be executed.
      *
      * This mechanism makes it easy to load scene files by overloading the load function
-     * for different file types or transfer mechanisms. If a scene file is requested from 
-     * a remote resource repository for instance, a specific importer can be setup to match 
-     * the transfer protocol and perform the file transfer before executing a load function
-     * again for the specific file format which was transferred.
+     * for different file types or transfer mechanisms. In conjunction with the Resource
+     * library, it is possible to develop flexible importers for various types in remote
+     * locations with highly abstract code.
      *
      * The default scene file loader for example is quite flexible, allowing certain scene 
      * elements within a scene file to be specified based on filename and type. The following 
@@ -108,25 +107,35 @@ namespace vox
      * @sa
      *  ::SceneExporter
 	 */              
-    class SceneImporter { public: virtual Scene importer(ResourceIStream & data, OptionSet const& options) = 0;
-                          virtual ~SceneImporter() { } };
+    class SceneImporter 
+    { 
+    public: 
+        virtual std::shared_ptr<Scene> importer(ResourceIStream & data, OptionSet const& options) = 0;
+                          
+        virtual ~SceneImporter() { } 
+    };
 
     /**
 	 * Scene File Exporter
      *
-     * This typedef specifies the format of a scene file exporter. The VoxRender
+     * This interface class for a scene export module. The VoxRender
      * library offers a built in system for controlling the export of scene information. 
      * Scene import/export modules are registered with the Scene class through a static
-     * interface and associated with a regular expression. When an attempt is made to 
-     * export a scene file through the Scene::export interface, the first SceneExporter whose
-     * extension matches the parameter provided to load will be executed.
+     * interface and associated with a file type/extension. When an attempt is made to 
+     * export a scene file through the Scene::export interface, the SceneExporter whose
+     * extension matches the extension provided will be executed.
      *
      * @sa
      *  ::SceneImporter
      */
-    class SceneExporter { public: virtual void exporter(ResourceOStream & data, OptionSet const& options, 
-                                                        Scene const& scene) = 0; 
-                          virtual ~SceneExporter() { } };
+    class SceneExporter 
+    { 
+    public: 
+        virtual void exporter(
+            ResourceOStream & data, OptionSet const& options, Scene const& scene) = 0; 
+                          
+        virtual ~SceneExporter() { } 
+    };
 
 	/** 
 	 * @brief Scene Class
@@ -135,9 +144,15 @@ namespace vox
      * There are also several static functions for managing the import and export of 
      * the scene data in an abstract manner.
 	 */
-	class VOXS_EXPORT Scene
-	{
-	public:
+	class VOXS_EXPORT Scene : public std::enable_shared_from_this<Scene>
+    {
+    public:
+        /**  Instantiates a new scene object */
+        static std::shared_ptr<Scene> create()
+        {
+            return std::make_shared<Scene>();
+        }
+
 		/**
 		 * @brief Overload for imprt
          *
@@ -145,7 +160,8 @@ namespace vox
          * identifier as the resource identifer and matchname and the matchname for 
          * selecting an Importer.
 		 */
-	    inline static Scene imprt(ResourceId const& identifier, OptionSet const& options = OptionSet())
+	    inline static std::shared_ptr<Scene> imprt(
+            ResourceId const& identifier, OptionSet const& options = OptionSet())
         {
             return imprt(ResourceIStream(identifier), options);
         }
@@ -160,18 +176,20 @@ namespace vox
          * @sa 
          *  ::SceneExporter
          *
-		 * @param data       [in] The data stream with the imported content
-         * @param matchname  [in] The match string for the importer selection
-         * @param options    [in] Optional string containing 'name: value' options 
+		 * @param data      [in] The data stream with the imported content
+         * @param options   [in] Additional options to be passed to the importer
+         * @param extension [in] An override type/extension (otherwise it will be deduced
+         *                       from the data parameter's URL file path component)
          *
          * @returns The loaded scene object
          *
          * @throws
          *  ::Error No import module is defined which accepts the matchname
 		 */
-	    static Scene imprt(ResourceIStream & data, 
-                           OptionSet const&  options   = OptionSet(),
-                           String const&     extension = String()); 
+	    static std::shared_ptr<Scene> imprt(
+            ResourceIStream & data, 
+            OptionSet const&  options   = OptionSet(),
+            String const&     extension = String()); 
 
 		/**
 		 * @brief Overload for exprt
@@ -194,11 +212,14 @@ namespace vox
          * @sa 
          *  ::SceneExporter
          *
-		 * @param data       [out] The data stream for the exported content
-         * @param matchname  [in]  The match string for the exporter selection
+		 * @param data      [in] The data stream for the exported content
+         * @param options   [in] Additional options to be passed to the exporter
+         * @param extension [in] An override type/extension (otherwise it will be deduced
+         *                       from the data parameter's URL file path component)
          *
          * @throws
          *  ::Error No export module is defined which accepts the matchname
+         *  ::Error The export module returned an error
 		 */
 		void exprt(ResourceOStream & data, 
                    OptionSet const&  options   = OptionSet(), 
@@ -209,7 +230,7 @@ namespace vox
          * specified which has a conflicting extension, it will be overridden.
 		 * 
 		 * @param importer [in] The new scene importer to be registered
-		 * @param matcher  [in] The regular expression for matching
+		 * @param matcher  [in] The file type/extension for matching
 		 */
         static void registerImportModule(String const& extension, std::shared_ptr<SceneImporter> importer);
 
@@ -219,14 +240,14 @@ namespace vox
          * expression matcher, the new exporter will take precedence.
 		 * 
 		 * @param loader  [in] The new scene exporter to be registered
-		 * @param matcher [in] The regular expression for matching
+		 * @param matcher [in] The file type/extension for matching
 		 */
         static void registerExportModule(String const& extension, std::shared_ptr<SceneExporter> exporter);
 
-        /** Removes a scene import module */
+        /** Removes a scene import module for a specified extension, or all by default */
         static void removeImportModule(std::shared_ptr<SceneImporter> importer, String const& extension = "");
 
-        /** Removes a scene export module */
+        /** Removes a scene export module for a specified extension, or all by default */
         static void removeExportModule(std::shared_ptr<SceneExporter> exporter, String const& extension = "");
         
         /** Removes a scene import module */
@@ -235,20 +256,27 @@ namespace vox
         /** Removes a scene export module */
         static void removeExportModule(String const& extension);
 
-        /** Releases handles to the scene's internal data components */
-        void reset();
-
         /** Constructs a keyframe for the current state of a scene */
-        KeyFrame generateKeyFrame();
+        std::shared_ptr<KeyFrame> generateKeyFrame();
 
-        /** Clones the scene */
-        void clone(Scene & sceneCopy) const;
+        /** Clones the scene (optionally into an preallocated scene) */
+        std::shared_ptr<Scene> clone(std::shared_ptr<Scene> inPlace = nullptr);
 
         /** Returns true if any of the scene components are dirty */
         bool isDirty() const;
 
-        /** Pads the scene to ensure that it is viable for rendering */
+        /** 
+         * Pads the scene to ensure that it is viable for rendering 
+         *
+         * Padding involves allocating default scene components for any null members.
+         */
         void pad();
+
+        /** Sets the scene change event callback */
+        void onSceneChanged(std::function<void(Scene&,void*)> callback);
+
+        /** Locks the scene for editing */
+        std::shared_ptr<void> lock(void * userInfo = nullptr);
 
         std::shared_ptr<RenderParams> parameters;   ///< Rendering parameters
         std::shared_ptr<LightSet>     lightSet;     ///< Lighting Data
@@ -258,7 +286,15 @@ namespace vox
 		std::shared_ptr<Volume>       volume;	    ///< Volume data
 		std::shared_ptr<Camera>       camera;	    ///< Scene camera
         std::shared_ptr<Animator>     animator;     ///< Scene animation data
-	};
+        
+    public:
+        Scene();
+        ~Scene();
+
+    private:
+        class Impl;
+        Impl * m_pImpl;
+    };
 }
 
 // End definition

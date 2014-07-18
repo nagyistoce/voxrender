@@ -55,22 +55,64 @@ namespace filescope {
 } // namespace filescope
 } // namespace anonymous
 
-// --------------------------------------------------------------------
-//  Resets the scene element pointers
-// --------------------------------------------------------------------
-void Scene::reset()
+// ----------------------------------------------------------------------------
+//  Implementation class for Scene
+// ----------------------------------------------------------------------------
+class Scene::Impl
 {
-    camera.reset();
-    transfer.reset(); 
-    lightSet.reset(); 
-    volume.reset(); 
-    clipGeometry.reset();
-    parameters.reset();
-}
+public:
+    // ----------------------------------------------------------------------------
+    //  Unlocks the scene object after signalling the audit
+    // ----------------------------------------------------------------------------
+    void unlock(std::shared_ptr<Scene> scene, void * userInfo)
+    {
+        signal(scene.get(), userInfo);
 
-// --------------------------------------------------------------------
+        m_mutex.unlock();
+    }
+    
+    // ----------------------------------------------------------------------------
+    //  Signals a scene change event
+    // ----------------------------------------------------------------------------
+    void signal(Scene * scene, void * userInfo)
+    {
+        if (m_callback && scene->isDirty())
+        {
+            if (!m_signal) m_signal = Scene::create();
+
+            m_signal->camera       = scene->camera       && scene->camera->isDirty()       ? scene->camera : nullptr;
+            m_signal->lightSet     = scene->lightSet     && scene->lightSet->isDirty()     ? scene->lightSet : nullptr;
+            m_signal->parameters   = scene->parameters   && scene->parameters->isDirty()   ? scene->parameters : nullptr;
+            m_signal->clipGeometry = scene->clipGeometry && scene->clipGeometry->isDirty() ? scene->clipGeometry : nullptr;
+            m_signal->volume       = scene->volume       && scene->volume->isDirty()       ? scene->volume : nullptr;
+            m_signal->transfer     = scene->transfer     && scene->transfer->isDirty()     ? scene->transfer : nullptr;
+            m_signal->transferMap  = scene->transferMap  && scene->transferMap->isDirty()  ? scene->transferMap : nullptr;
+
+            m_callback(*m_signal, userInfo);
+        }
+    }
+
+public:
+    std::shared_ptr<Scene> m_signal;
+
+    std::function<void(Scene&,void*)> m_callback;
+
+    boost::mutex m_mutex;
+};
+
+// ----------------------------------------------------------------------------
+//  Constructor
+// ----------------------------------------------------------------------------
+Scene::Scene() : m_pImpl(new Impl()) { }
+
+// ----------------------------------------------------------------------------
+//  Destructor
+// ----------------------------------------------------------------------------
+Scene::~Scene() { delete m_pImpl; }
+
+// ----------------------------------------------------------------------------
 //  Registers a new resource import module
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Scene::registerImportModule(String const& extension, std::shared_ptr<SceneImporter> importer)
 { 
     // Acquire a read-lock on the modules for thread safety support
@@ -82,9 +124,9 @@ void Scene::registerImportModule(String const& extension, std::shared_ptr<SceneI
     filescope::importers[extension] = importer; 
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Registers a new resource export module
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Scene::registerExportModule(String const& extension, std::shared_ptr<SceneExporter> exporter)
 { 
     // Acquire a read-lock on the modules for thread safety support
@@ -96,9 +138,9 @@ void Scene::registerExportModule(String const& extension, std::shared_ptr<SceneE
     filescope::exporters[extension] = exporter; 
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Removes a scene import module
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Scene::removeImportModule(std::shared_ptr<SceneImporter> importer, String const& extension)
 {
     // Acquire a read-lock on the modules for thread safety support
@@ -128,9 +170,9 @@ void Scene::removeImportModule(std::shared_ptr<SceneImporter> importer, String c
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Removes a scene export module
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Scene::removeExportModule(std::shared_ptr<SceneExporter> exporter, String const& extension)
 {
     // Acquire a read-lock on the modules for thread safety support
@@ -160,10 +202,10 @@ void Scene::removeExportModule(std::shared_ptr<SceneExporter> exporter, String c
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Imports a scene using a matching registered importer
-// --------------------------------------------------------------------
-Scene Scene::imprt(ResourceIStream & data, OptionSet const& options, String const& extension)
+// ----------------------------------------------------------------------------
+std::shared_ptr<Scene> Scene::imprt(ResourceIStream & data, OptionSet const& options, String const& extension)
 {
     // Acquire a read-lock on the modules for thread safety support
     boost::shared_lock<decltype(filescope::moduleMutex)> lock(filescope::moduleMutex);
@@ -181,9 +223,9 @@ Scene Scene::imprt(ResourceIStream & data, OptionSet const& options, String cons
                 "No import module found", Error_BadToken);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Exports a scene using a matching registered exporter
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const& extension) const
 {
     // Acquire a read-lock on the modules for thread safety support
@@ -204,9 +246,9 @@ void Scene::exprt(ResourceOStream & data, OptionSet const& options, String const
     }
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Clones a scene, referencing the volume and copying the other comps
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 bool Scene::isDirty() const
 {
     return (camera && camera->isDirty())           ||
@@ -218,71 +260,88 @@ bool Scene::isDirty() const
            (clipGeometry && clipGeometry->isDirty());
 }
 
-// --------------------------------------------------------------------
-//  Constructs a keyframe for the current state of this scene
-// --------------------------------------------------------------------
-KeyFrame Scene::generateKeyFrame()
+// ----------------------------------------------------------------------------
+//  Locks the scene object for editing
+// ----------------------------------------------------------------------------
+std::shared_ptr<void> Scene::lock(void * userInfo)
 {
-    Scene scene;
-    clone(scene);
-    return scene;
+    m_pImpl->m_mutex.lock();
+
+    auto scene = shared_from_this();
+    return std::shared_ptr<void>(nullptr, [scene, userInfo] (void*) { 
+        scene->m_pImpl->unlock(scene, userInfo); });
 }
 
-// --------------------------------------------------------------------
-//  Clones a scene, referencing the volume and copying the other comps
-// --------------------------------------------------------------------
-void Scene::clone(Scene & scene) const
+// ----------------------------------------------------------------------------
+//  Constructs a keyframe for the current state of this scene
+// ----------------------------------------------------------------------------
+std::shared_ptr<KeyFrame> Scene::generateKeyFrame() 
+{ 
+    return clone(); 
+}
+
+// ----------------------------------------------------------------------------
+//  Sets the scene's change event callback
+// ----------------------------------------------------------------------------
+void Scene::onSceneChanged(std::function<void(Scene&,void*)> callback)
 {
-    scene.animator = nullptr; // Ignore the animator for logistical reasons (animator calls clone)
+    m_pImpl->m_callback = callback;
+}
 
-    scene.transfer = transfer ? transfer->clone() : nullptr;
+// ----------------------------------------------------------------------------
+//  Clones a scene, referencing the volume and copying the other comps
+// ----------------------------------------------------------------------------
+std::shared_ptr<Scene> Scene::clone(std::shared_ptr<Scene> outScene)
+{
+    auto scene = outScene ? outScene : create();
+
+    scene->transfer = transfer ? transfer->clone() : nullptr;
     
-    scene.clipGeometry = clipGeometry ? 
-        std::dynamic_pointer_cast<PrimGroup>(clipGeometry->clone()) : 
-        nullptr;
+    if (clipGeometry)
+    {
+        scene->clipGeometry = std::dynamic_pointer_cast<PrimGroup>(clipGeometry->clone());
+    }
+    else scene->clipGeometry.reset();
 
-    // :Efficient cloning for interactive rendering
     if (volume)
     {
-        if (!scene.volume) scene.volume = Volume::create();
-        volume->clone(*scene.volume.get());
+        if (!scene->volume) scene->volume = Volume::create();
+        volume->clone(*scene->volume.get());
     }
+    else scene->volume.reset();
 
     if (lightSet)
     {
-        if (!scene.lightSet) scene.lightSet = LightSet::create();
-        lightSet->clone(*scene.lightSet.get());
+        if (!scene->lightSet) scene->lightSet = LightSet::create();
+        lightSet->clone(*scene->lightSet.get());
     }
+    else scene->lightSet.reset();
 
     if (camera)
     {
-        if (!scene.camera) scene.camera = Camera::create();
-        camera->clone(*scene.camera.get());
+        if (!scene->camera) scene->camera = Camera::create();
+        camera->clone(*scene->camera.get());
     }
-    else scene.camera.reset();
+    else scene->camera.reset();
     
     if (parameters)
     {
-        if (!scene.parameters) scene.parameters = RenderParams::create();
-        parameters->clone(*scene.parameters.get());
+        if (!scene->parameters) scene->parameters = RenderParams::create();
+        parameters->clone(*scene->parameters.get());
     }
-    else scene.parameters.reset();
+    else scene->parameters.reset();
 
-    if (transfer)
-    {
-    }
-    else if (transferMap)
-    {
-    }
-    else scene.transferMap.reset();
+    return scene;
 }
 
-// --------------------------------------------------------------------
-//  Returns true if the scene is a valid render scene
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Pads out any missing scene elements with the defaults, volume is required
+// ----------------------------------------------------------------------------
 void Scene::pad()
 {    
-    if (!volume) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "Scene is missing volume data", Error_MissingData);
+    if (!volume) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+        "Scene is missing volume data", Error_MissingData);
+
     if (!parameters)   parameters   = RenderParams::create();
     if (!clipGeometry) clipGeometry = PrimGroup::create();
     if (!lightSet)     lightSet     = LightSet::create();

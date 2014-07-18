@@ -58,7 +58,7 @@ public:
     // ----------------------------------------------------------------------------
     //  Initiates rendering of the specified scene
     // ----------------------------------------------------------------------------
-    void render(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError)
+    void render(MasterHandle renderer, std::shared_ptr<Scene> scene, size_t iterations, ErrorCallback onError)
     {
         initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPoint, this));
     }
@@ -71,14 +71,15 @@ public:
         if (animator->keyframes().size() < 2) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
             "Animator must contain at least 2 keyframes", Error_MissingData);
 
-        Scene scene; scene.animator = animator;
+        auto scene = Scene::create(); 
+        scene->animator = animator;
         initRender(renderer, scene, iterations, onError, std::bind(&Impl::entryPointAnimate, this));
     }
     
     // ----------------------------------------------------------------------------
     //  Initializes the rendering process
     // ----------------------------------------------------------------------------
-    void initRender(MasterHandle renderer, Scene const& scene, size_t iterations, ErrorCallback onError, std::function<void()> entry)
+    void initRender(MasterHandle renderer, std::shared_ptr<Scene> scene, size_t iterations, ErrorCallback onError, std::function<void()> entry)
     {
         boost::mutex::scoped_lock lock(m_controlMutex);
 
@@ -128,7 +129,7 @@ public:
     // ----------------------------------------------------------------------------
     //  Returns the current scene being used for rendering
     // ----------------------------------------------------------------------------
-    Scene const& scene() { return m_scene; }
+    std::shared_ptr<Scene> const& scene() { return m_scene; }
 
     // ----------------------------------------------------------------------------
     //  Adds an additional renderer to the renderer list
@@ -155,7 +156,7 @@ public:
     // ----------------------------------------------------------------------------
     void setTransferFunction(std::shared_ptr<Transfer> transfer)
     {
-        m_scene.transfer = transfer; // :TODO: LOCK FOR CHANGE 
+        m_scene->transfer = transfer; // :TODO: LOCK FOR CHANGE 
     }
 
     // ----------------------------------------------------------------------------
@@ -204,6 +205,7 @@ public:
             m_controlThread->interrupt();
             m_controlThread->join(); 
             m_controlThread.reset();
+            m_sceneCopy.reset();
             m_scene.reset();
         }
     }
@@ -231,15 +233,15 @@ private:
     {
         std::exception_ptr error = nullptr;
 
-        bool composeVideo = !m_scene.animator->outputUri().asString().empty();
+        bool composeVideo = !m_scene->animator->outputUri().asString().empty();
 
         // Initialize the keyframe iterators
-        auto keys = m_scene.animator->keyframes();
+        auto keys = m_scene->animator->keyframes();
         auto currFrame   = keys.front().first;
         auto targetFrame = keys.back().first; 
         auto prevIter = keys.begin();
         auto nextIter = ++keys.begin();
-        Scene interpScene;
+        auto interpScene = Scene::create();
 
         try
         {
@@ -259,8 +261,8 @@ private:
                 auto f1 = prevIter->first;
                 auto f2 = nextIter->first;
                 auto f = (float)(currFrame - f1) / (float)(f2 - f1);
-                m_scene.animator->interp(prevIter->second, nextIter->second, interpScene, f);
-                m_masterRenderer->syncScene(interpScene, true);
+                m_scene->animator->interp(prevIter->second, nextIter->second, f, interpScene);
+                m_masterRenderer->syncScene(*interpScene, true);
 
                 // Render the next frame
                 while (m_targetIterations > m_currIterations)
@@ -279,7 +281,7 @@ private:
                 // Store the final frame in the temp directory
                 if (composeVideo)
                 {
-                    auto outDir = m_scene.animator->tempLocation();
+                    auto outDir = m_scene->animator->tempLocation();
                     outDir.path += format("frame_%1%.png", currFrame);
                     ResourceOStream ostream(outDir);
                     m_masterRenderer->writeFrame(ostream);
@@ -296,23 +298,23 @@ private:
             if (composeVideo)
             {
                 // Set the video output options
-                auto setCam = m_scene.animator->keyframes().front().second.camera;
+                auto setCam = m_scene->animator->keyframes().front().second->camera;
                 OptionSet options;
                 if (setCam)
                 {
                     options.addOption("width", setCam->filmWidth());
                     options.addOption("height", setCam->filmHeight());
-                    options.addOption("framerate", m_scene.animator->framerate());
+                    options.addOption("framerate", m_scene->animator->framerate());
                     options.addOption("bitrate", 40000000);
                     options.addOption("videoStreams", 2);
                 }
 
                 // Compile the finalized images into a video file
-                auto uri = m_scene.animator->outputUri();
+                auto uri = m_scene->animator->outputUri();
                 VidOStream vidstr(uri, options);
                 for (int i = keys.front().first; i < targetFrame; i++)
                 {
-                    auto frameUri = m_scene.animator->tempLocation();
+                    auto frameUri = m_scene->animator->tempLocation();
                     frameUri.path += format("frame_%1%.png", i);
                     auto frame = Bitmap::imprt(frameUri);
                     vidstr.push(frame, 0);
@@ -340,7 +342,7 @@ private:
     // ----------------------------------------------------------------------------
     void entryPoint()
     {
-        m_scene.pad();
+        m_scene->pad();
 
         std::exception_ptr error = nullptr;
 
@@ -430,28 +432,36 @@ private:
     // ----------------------------------------------------------------------------
     void synchronizationSubroutine(bool force = false)
     {
-        if (force || m_scene.isDirty())
+        if (force || m_scene->isDirty())
         {
-            // Clone the scene data to prevent sync issues
-            m_scene.clone(m_sceneCopy);
+            // :TODO:
+
+            // Clone instances of non-volume data
+            auto lock = m_scene->lock(nullptr);
 
             // Detect changes to the transfer map generator
-            if (force || (m_scene.transfer && m_scene.transfer->isDirty()))
+            if (force || (m_scene->transfer && m_scene->transfer->isDirty()))
             {
-                if (!m_scene.transferMap) m_scene.transferMap = TransferMap::create();
-                m_scene.transfer->generateMap(m_scene.transferMap);
+                if (!m_scene->transferMap) m_scene->transferMap = TransferMap::create();
+                m_scene->transfer->generateMap(m_scene->transferMap);
             }
 
-            // Synchronize the scene with the master renderer
-            m_masterRenderer->syncScene(m_scene, force);
+            m_sceneCopy = m_scene->clone(m_sceneCopy);
 
-            m_scene.lightSet->setClean();
-            m_scene.camera->setClean();
-            m_scene.transfer->setClean();
-            m_scene.parameters->setClean();
-            m_scene.volume->setClean();
-            m_scene.clipGeometry->setClean();
-            m_scene.transferMap->setClean();
+            // Synchronize the scene with the master renderer
+            m_masterRenderer->syncScene(*m_scene, force);
+
+            m_scene->camera->clone(*m_sceneCopy->camera);
+
+            m_scene->lightSet->setClean();
+            m_scene->camera->setClean();
+            m_scene->transfer->setClean();
+            m_scene->parameters->setClean();
+            m_scene->volume->setClean();
+            m_scene->clipGeometry->setClean();
+            m_scene->transferMap->setClean();
+
+            lock.reset();
 
             // Reset the rendering timestamp
             m_startTime = std::chrono::system_clock::now();
@@ -518,8 +528,9 @@ private:
     ErrorCallback m_errorCallback;    ///< User callback for master renderer failure
     size_t        m_targetIterations; ///< Targeted number of iterations
     size_t        m_currIterations;   ///< Current number of iterations
-    Scene         m_scene;            ///< Handles to scene components 
-    Scene         m_sceneCopy;        ///< Handle to scene for rendering operations
+    
+    std::shared_ptr<Scene> m_scene;     ///< Handles to scene components 
+    std::shared_ptr<Scene> m_sceneCopy; ///< Handle to scene for rendering operations
 
     // ControlThread syncronization context
     std::shared_ptr<boost::thread> m_controlThread;
@@ -542,8 +553,8 @@ size_t RenderController::numRenderers() const { return m_pImpl->numRenderers(); 
 void RenderController::addRenderer(SlaveHandle renderer) { m_pImpl->addRenderer(renderer); }
 void RenderController::removeRenderer(SlaveHandle renderer) { m_pImpl->removeRenderer(renderer); }
 void RenderController::setTransferFunction(std::shared_ptr<Transfer> transfer) { m_pImpl->setTransferFunction(transfer); }
-Scene const& RenderController::scene() const { return m_pImpl->scene(); }
-void RenderController::render(MasterHandle renderer, Scene const& scene, 
+std::shared_ptr<Scene> RenderController::scene() const { return m_pImpl->scene(); }
+void RenderController::render(MasterHandle renderer, std::shared_ptr<Scene> scene, 
                               size_t iterations, ErrorCallback onError) 
 { 
     m_pImpl->render(renderer, scene, iterations, onError); 

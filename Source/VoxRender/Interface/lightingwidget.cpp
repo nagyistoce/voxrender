@@ -33,7 +33,6 @@
 #include "Actions/AddRemLightAct.h"
 #include "mainwindow.h"
 #include "pointlightwidget.h"
-#include "ambientlightwidget.h"
 
 using namespace vox;
 
@@ -47,22 +46,21 @@ LightingWidget::LightingWidget(QWidget * parent, QLayout * layout) :
 {
     m_parent = parent;
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
     
 	// Set alignment of panes within lighting tab layout 
 	m_layout->setAlignment(Qt::AlignTop);
     m_spacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding );
 
     // Create new pane for the ambient light setting widget
-    m_ambientPane = new PaneWidget(m_parent);
-    QWidget * currWidget = new AmbientLightWidget(m_ambientPane); 
-
-    m_ambientPane->setTitle("Environment");
-    m_ambientPane->setIcon(":/icons/lightgroupsicon.png");
-    m_ambientPane->setWidget(currWidget);
-    m_ambientPane->expand();
-
-    m_layout->addWidget(m_ambientPane);
+    auto pane = new PaneWidget(m_parent);
+    m_ambientWidget = new AmbientLightWidget(pane, this); 
+    pane->setTitle("Environment");
+    pane->setIcon(":/icons/lightgroupsicon.png");
+    pane->setWidget(m_ambientWidget);
+    pane->expand();
+    m_layout->addWidget(pane);
 
     // Reinsert spacer following new pane
 	m_layout->addItem(m_spacer);
@@ -88,7 +86,7 @@ void LightingWidget::add(std::shared_ptr<Light> light)
     // Create new pane for the light setting widget
     PaneWidget * pane = new PaneWidget(m_parent);
    
-    QWidget * currWidget = new PointLightWidget(pane, light); 
+    QWidget * currWidget = new PointLightWidget(pane, this, light); 
 
     pane->showOnOffButton();
     pane->showVisibilityButtons();
@@ -111,7 +109,7 @@ void LightingWidget::add(std::shared_ptr<Light> light)
     light->onVisibilityChanged([=] (bool isVisible, bool suppress) {
         auto functor = [=] () { light->setVisible(!light->isVisible(), true); light->setDirty(); };
         if (!suppress) ActionManager::instance().push(functor, functor);
-        pane->setOn(isVisible);
+        //pane->setOn(isVisible);
     });
 }
 
@@ -126,8 +124,9 @@ void LightingWidget::remove(PaneWidget * pane)
     if (lightwidget) 
     {
         auto scene = MainWindow::instance->scene();
-        scene.lightSet->remove(lightwidget->light());
-        scene.lightSet->setDirty();
+        auto lock = scene->lock(this);
+        scene->lightSet->remove(lightwidget->light());
+        scene->lightSet->setDirty();
     }
 
     m_layout->removeWidget(pane);
@@ -157,10 +156,21 @@ void LightingWidget::remove(std::shared_ptr<Light> light)
 // --------------------------------------------------------------------
 //  Slot for handling scene change events
 // --------------------------------------------------------------------
-void LightingWidget::sceneChanged()
+void LightingWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    auto scene = MainWindow::instance->scene();
+    if (!scene.lightSet || userInfo == this) return;
     
+    // Connect to the light callback events for event detection
+    if (userInfo == MainWindow::instance) // initial load by mainwindow
+    {
+        scene.lightSet->onAdd([this] (std::shared_ptr<Light> light, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
+            add(light); });
+        scene.lightSet->onRemove([this] (std::shared_ptr<Light> light, bool suppress) {
+            if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
+            remove(light); });
+    }
+
     // Synchronize the lighting controls
     while (!m_panes.empty())
     {
@@ -168,14 +178,7 @@ void LightingWidget::sceneChanged()
         m_panes.pop_back();
         delete pane;
     }
-    BOOST_FOREACH (auto & light, scene.lightSet->lights()) 
-        add(light);
+    BOOST_FOREACH (auto & light, scene.lightSet->lights()) add(light);
 
-    // Connect to the light callback events for event detection
-    scene.lightSet->onAdd([this] (std::shared_ptr<Light> light, bool suppress) {
-        if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
-        add(light); });
-    scene.lightSet->onRemove([this] (std::shared_ptr<Light> light, bool suppress) {
-        if (!suppress) ActionManager::instance().push(AddRemLightAct::create(light));
-        remove(light); });
+    m_ambientWidget->sceneChanged(); // Ambient light control
 }

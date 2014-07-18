@@ -48,7 +48,8 @@ SamplingWidget::SamplingWidget(QWidget *parent) :
 {
 	ui->setupUi(this);
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 }
     
 // ----------------------------------------------------------------------------
@@ -62,19 +63,18 @@ SamplingWidget::~SamplingWidget()
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void SamplingWidget::sceneChanged()
+void SamplingWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    // Synchronize the camera object controls
-    auto settings = MainWindow::instance->scene().parameters;
-    if (!settings) return;
+    if (userInfo == this || !scene.parameters) return;
+    auto settings = scene.parameters;
 
     m_ignore = true;
 
-    ui->doubleSpinBox_primaryStep->setValue( (double)settings->primaryStepSize() );
-    ui->doubleSpinBox_shadowStep->setValue ( (double)settings->shadowStepSize()  );
-    ui->doubleSpinBox_coefficient->setValue( (double)settings->scatterCoefficient() );
+    ui->doubleSpinBox_primaryStep->setValue((double)settings->primaryStepSize());
+    ui->doubleSpinBox_shadowStep->setValue ((double)settings->shadowStepSize());
+    ui->doubleSpinBox_coefficient->setValue((double)settings->scatterCoefficient());
     
-    ui->doubleSpinBox_gradient->setValue( (double)settings->gradientCutoff() );
+    ui->doubleSpinBox_gradient->setValue((double)settings->gradientCutoff());
 
     m_ignore = false;
 }
@@ -86,17 +86,18 @@ void SamplingWidget::update()
 {
     if (m_ignore) return;
 
-    auto settings = MainWindow::instance->scene().parameters;
+    auto scene = MainWindow::instance->scene();
+    auto settings = scene->parameters;
     if (!settings) return;
 
-    settings->lock();
-        settings->setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
-        settings->setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
-        settings->setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
-        settings->setEdgeEnhancement( (float)ui->doubleSpinBox_edge->value() );
-        settings->setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
-        settings->setDirty();
-    settings->unlock();
+    auto lock = scene->lock(this);
+
+    settings->setPrimaryStepSize( (float)ui->doubleSpinBox_primaryStep->value() );
+    settings->setShadowStepSize ( (float)ui->doubleSpinBox_shadowStep->value()  );
+    settings->setScatterCoefficient( (float)ui->doubleSpinBox_coefficient->value() );
+    settings->setEdgeEnhancement( (float)ui->doubleSpinBox_edge->value() );
+    settings->setGradientCutoff( (float)ui->doubleSpinBox_gradient->value() );
+    settings->setDirty();
 }
 
 // ----------------------------------------------------------------------------

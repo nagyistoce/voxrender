@@ -148,7 +148,7 @@ namespace
             // --------------------------------------------------------------------
             //  Null operation, there is nothing to parse here
             // --------------------------------------------------------------------
-            Scene readRawDataFile()
+            std::shared_ptr<Scene> readRawDataFile()
             {
                 // Extract the required volume data size parameters
                 auto typeStr = m_options.lookup<String>("Type");
@@ -192,9 +192,11 @@ namespace
                 {
                     auto dataPtr = data.get();
                     auto slice = voxels / size[3]; // Time slice size 
-                    auto range = m_options.lookup<Vector2u>("Range");
+                    auto start = m_options.lookup<unsigned int>("Start");
                     auto place = m_options.lookup<String>("Place");
-                    for (unsigned int i = range[0]; i <= range[1]; i++)
+
+                    // Load the volume sets (:TODO: this will change when the at-use-time volume loading stuff is done)
+                    for (unsigned int i = start; i < start + size[3]; i++)
                     {
                         auto tag = boost::lexical_cast<String>(i);
                         auto relative = multiFile;
@@ -221,8 +223,8 @@ namespace
                 }
 
                 // Construct the volume object for the response
-                Scene scene;
-                scene.volume = Volume::create(data, size, spacing, offset, type);
+                auto scene = Scene::create();
+                scene->volume = Volume::create(data, size, spacing, offset, type);
 
                 return scene;
             }
@@ -231,7 +233,7 @@ namespace
             // --------------------------------------------------------------------
             //  Constructs the filter for processing the formatted file data
             // --------------------------------------------------------------------
-            inline void readInputData(size_t bpv, size_t voxels, UInt8* data)
+            void readInputData(size_t bpv, size_t voxels, UInt8* data)
             {
                 auto chain = boost::iostreams::filtering_streambuf<boost::iostreams::input>();
                 
@@ -306,7 +308,7 @@ void RawVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, S
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-Scene RawVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
+std::shared_ptr<Scene> RawVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::RawImporter importModule(source, options, m_handle);

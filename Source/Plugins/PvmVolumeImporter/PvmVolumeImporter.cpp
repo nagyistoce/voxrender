@@ -248,7 +248,7 @@ namespace
             // --------------------------------------------------------------------
             //  Null operation, there is nothing to parse here
             // --------------------------------------------------------------------
-            Scene readPvmDataFile()
+            std::shared_ptr<Scene> readPvmDataFile()
             {
                 return readPvmHelper(m_source);
             }
@@ -257,7 +257,7 @@ namespace
             // --------------------------------------------------------------------
             //  Reads a PVM format file
             // --------------------------------------------------------------------
-            Scene readPvmHelper(std::istream & stream)
+            std::shared_ptr<Scene> readPvmHelper(std::istream & stream)
             {
                 // Verify the 'PVM' file header
                 String header;
@@ -279,7 +279,7 @@ namespace
             // --------------------------------------------------------------------
             //  Reads a differential data stream format PVM file
             // --------------------------------------------------------------------
-            Scene readDdsDataFile(String const& header, std::istream & stream) 
+            std::shared_ptr<Scene> readDdsDataFile(String const& header, std::istream & stream) 
             { 
                 static size_t CHUNK_SIZE_BITS = 7;
                 static size_t OFFSET_VAL_BITS = 3;
@@ -328,7 +328,7 @@ namespace
             // --------------------------------------------------------------------
             //  Reads a RAW format PVM file
             // --------------------------------------------------------------------
-            Scene readRawDataFile(String const& header, std::istream & stream) 
+            std::shared_ptr<Scene> readRawDataFile(String const& header, std::istream & stream) 
             {
                 // Extract the PVM header information
                 Vector3u extent;
@@ -369,8 +369,8 @@ namespace
 
                 // Construct the volume object for return
                 auto offset  = m_options.lookup("Offset", Vector3f(0.0f, 0.0f, 0.0f));
-                Scene scene;
-                scene.volume = Volume::create(data, Vector4u(extent[0], extent[1], extent[2], 1), 
+                auto scene = Scene::create();
+                scene->volume = Volume::create(data, Vector4u(extent[0], extent[1], extent[2], 1), 
                     Vector4f(spacing[0], spacing[1], spacing[2], 1), offset, type);
 
                 return scene; 
@@ -449,7 +449,7 @@ void PvmVolumeFile::exporter(ResourceOStream & sink, OptionSet const& options, S
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-Scene PvmVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
+std::shared_ptr<Scene> PvmVolumeFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::PvmImporter importModule(source, options, m_handle);

@@ -37,23 +37,23 @@
 void AddRemClipAct::undo()
 {
     auto scene = MainWindow::instance->scene();
-    if (!scene.clipGeometry)
+    if (!scene->clipGeometry)
     {
         throw vox::Error(__FILE__, __LINE__, "GUI", "Current scene clip geometry is missing", vox::Error_Bug);
         return;
     }
 
-    vox::SceneLock lock(scene.lightSet);
+    auto lock = scene->lock(this);
 
-    if (scene.clipGeometry->find(m_prim->id()))
+    if (scene->clipGeometry->find(m_prim->id()))
     {
-        scene.clipGeometry->remove(m_prim, true);
+        scene->clipGeometry->remove(m_prim, true);
         
-        scene.clipGeometry->setDirty();
+        scene->clipGeometry->setDirty();
     }
     else 
     {
-        scene.clipGeometry->add(m_prim, true);
+        scene->clipGeometry->add(m_prim, true);
 
         m_prim->setDirty();
     }

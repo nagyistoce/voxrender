@@ -221,7 +221,7 @@ Canvas.prototype =
              .attr("download", "Render.png");
             this.draw();
         }, this));
-
+            
         // DOM 2 Events for initiating the anchor link
         var dispatchMouseEvent = function (target, var_args) {
             var e = document.createEvent("MouseEvents");

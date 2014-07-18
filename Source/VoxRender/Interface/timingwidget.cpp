@@ -46,7 +46,8 @@ TimingWidget::TimingWidget(QWidget *parent) :
 {
 	ui->setupUi(this);
 
-    connect(MainWindow::instance, SIGNAL(sceneChanged()), this, SLOT(sceneChanged()));
+    connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
+            this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 }
     
 // ----------------------------------------------------------------------------
@@ -60,11 +61,10 @@ TimingWidget::~TimingWidget()
 // ----------------------------------------------------------------------------
 //  Synchronizes the widget controls with the current scene 
 // ----------------------------------------------------------------------------
-void TimingWidget::sceneChanged()
+void TimingWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    // Synchronize the camera object controls
-    auto volume = MainWindow::instance->scene().volume;
-    if (!volume) return;
+    if (userInfo == this || !scene.volume) return;
+    auto volume = scene.volume;
 
     m_ignore = true;
 
@@ -99,23 +99,21 @@ void TimingWidget::sceneChanged()
 void TimingWidget::update()
 {
     if (m_ignore) return;
-
-    auto volume = MainWindow::instance->scene().volume;
+    auto scene = MainWindow::instance->scene();
+    auto volume = scene->volume;
     if (!volume) return;
 
-    volume->lock();
+    auto lock = scene->lock(this);
 
-        Vector4f spacing = volume->spacing();
-        spacing[0] = ui->doubleSpinBox_x->value();
-        spacing[1] = ui->doubleSpinBox_y->value();
-        spacing[2] = ui->doubleSpinBox_z->value();
-        volume->setSpacing(spacing);
+    Vector4f spacing = volume->spacing();
+    spacing[0] = ui->doubleSpinBox_x->value();
+    spacing[1] = ui->doubleSpinBox_y->value();
+    spacing[2] = ui->doubleSpinBox_z->value();
+    volume->setSpacing(spacing);
 
-        volume->setTimeSlice(ui->spinBox_t->value());
+    volume->setTimeSlice(ui->spinBox_t->value());
 
-        volume->setDirty();
-
-    volume->unlock();
+    volume->setDirty();
 }
 
 // ----------------------------------------------------------------------------

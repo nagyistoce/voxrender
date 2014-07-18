@@ -37,14 +37,14 @@
 class AddRemKeyAct : public vox::Action
 {
 public:
-    AddRemKeyAct(int index, vox::KeyFrame & keyframe, bool add) : 
+    AddRemKeyAct(int index, std::shared_ptr<vox::KeyFrame> keyframe, bool add) : 
         m_keyframe(keyframe),
         m_isAdd(add),
         m_index(index)
     {
     }
 
-    static std::shared_ptr<AddRemKeyAct> create(int index, vox::KeyFrame & keyframe, bool add)
+    static std::shared_ptr<AddRemKeyAct> create(int index, std::shared_ptr<vox::KeyFrame> keyframe, bool add)
     {
         return std::make_shared<AddRemKeyAct>(index, keyframe, add);
     }
@@ -58,7 +58,7 @@ private:
     void rem();
 
 private:
-    vox::KeyFrame m_keyframe;
+    std::shared_ptr<vox::KeyFrame> m_keyframe;
     bool m_isAdd;
     int m_index;
 };

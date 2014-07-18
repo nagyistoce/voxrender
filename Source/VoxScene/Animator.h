@@ -55,7 +55,7 @@ namespace vox
         ~Animator();
 
         /** Returns a list of the keyframes */
-        std::list<std::pair<int,KeyFrame>> const& keyframes();
+        std::list<std::pair<int,std::shared_ptr<KeyFrame>>> const& keyframes();
 
         /** Clears the list of keyframe data */
         void clear();
@@ -76,10 +76,14 @@ namespace vox
         ResourceId const& outputUri();
 
         /** Generates an interpolated keyframe for rendering: k1*f + k2*(1-f) */
-        void interp(KeyFrame const& k1, KeyFrame const& k2, Scene & o, float f);
+        std::shared_ptr<Scene> interp(
+            std::shared_ptr<KeyFrame> k1, 
+            std::shared_ptr<KeyFrame> k2,  
+            float f, 
+            std::shared_ptr<Scene> o = nullptr);
 
         /** Adds a keyframe to the animation */
-        void addKeyframe(KeyFrame keyFrame, int frame, bool suppress = false);
+        void addKeyframe(std::shared_ptr<KeyFrame> keyFrame, int frame, bool suppress = false);
 
         /** Deletes a keyframe from the animation */
         void removeKeyframe(int frame, bool suppress = false);
@@ -91,10 +95,10 @@ namespace vox
         unsigned int framerate();
         
         /** Sets the callback event for adding a light */
-        void onAdd(std::function<void(int, KeyFrame &, bool)> callback);
+        void onAdd(std::function<void(int, std::shared_ptr<KeyFrame>, bool)> callback);
 
         /** Sets the callback event for removing a light */
-        void onRemove(std::function<void(int, KeyFrame &, bool)> callback);
+        void onRemove(std::function<void(int, std::shared_ptr<KeyFrame>, bool)> callback);
 
     private:
         /** Constructor */

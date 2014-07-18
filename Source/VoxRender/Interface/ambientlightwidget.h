@@ -32,6 +32,8 @@
 
 #include "Extensions/QColorPushButton.h"
 
+#include "VoxScene/Scene.h" 
+
 // Generated class
 namespace Ui { class AmbientLightWidget; }
 
@@ -44,18 +46,22 @@ class AmbientLightWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit AmbientLightWidget(QWidget * parent);
+	explicit AmbientLightWidget(QWidget * parent, void * userInfo);
 
 	~AmbientLightWidget();
+    
+    void sceneChanged();
 
 private:
     void update();
 
 	Ui::AmbientLightWidget * ui;
     QColorPushButton *       m_colorButton;
+    void *                   m_userInfo;
 
     QColor  m_tempColor;
     double  m_tempIntensity;
+    bool    m_ignore;
 
 private slots:
 	void on_horizontalSlider_intensity_valueChanged(int value);
@@ -65,8 +71,6 @@ private slots:
     void endChange();
 
     void colorChanged(QColor const& color);
-
-    void sceneChanged();
 };
 
 #endif // AMBIENT_LIGHT_WIDGET_H

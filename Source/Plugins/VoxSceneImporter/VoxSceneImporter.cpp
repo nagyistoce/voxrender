@@ -243,19 +243,23 @@ namespace
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree
             // --------------------------------------------------------------------
-            static void writeTransfer(std::shared_ptr<Transfer> transfer, 
-                                      std::shared_ptr<TransferMap> transferMap, 
-                                      boost::property_tree::ptree & tree)
+            void writeTransfer(std::shared_ptr<Transfer> transfer, 
+                               std::shared_ptr<TransferMap> transferMap, 
+                               boost::property_tree::ptree & tree)
             {
                 if (!transfer && !transferMap) return;
 
                 boost::property_tree::ptree node;
                 
-                if (!transfer) // Transfer map only (or no transfer)
+                if (!transfer || !m_options.lookup("ForceTransferMap").empty()) // Transfer map
                 {
-                    // :TODO: Export raw map data
-                    throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
-                        "TransferMap export not implemented", Error_NotImplemented);
+                    auto useMap = transferMap;
+                    if (!useMap)
+                    {
+                        useMap = TransferMap::create();
+                        transfer->generateMap(useMap);
+                    }
+                    writeTransferMap(useMap, node);
                 }
                 else if (transfer->type() == Transfer1D::typeID()) writeTransfer1D(transfer, node);
                 else if (transfer->type() == Transfer2D::typeID()) writeTransfer2D(transfer, node);
@@ -267,6 +271,28 @@ namespace
                 tree.add_child("Scene.Transfer", node);
             }
             
+            // --------------------------------------------------------------------
+            //  Write the transfer settings to an importable image file
+            // --------------------------------------------------------------------
+            void writeTransferMap(std::shared_ptr<TransferMap> map, boost::property_tree::ptree & node)
+            {
+                auto extension = m_options.lookup("ForceTransferMap", ".png");
+
+                // Write the image to the same base URL
+                auto baseUrl  = m_sink.identifier();
+                auto filename = baseUrl.extractFileName();
+                if (!filename.empty())
+                {
+                    filename = filename.substr(0, filename.find_last_of('.')); 
+                    auto diffuse = map->diffuse();
+                    Bitmap(Bitmap::Format_RGBA, diffuse.width(), diffuse.height(), 8, 0, diffuse.buffer())
+                        .exprt(baseUrl.applyRelativeReference(filename + "_DIFFUSE" + extension));
+                    auto specular = map->specular();
+                    Bitmap(Bitmap::Format_RGBX, specular.width(), specular.height(), 8, 0, specular.buffer())
+                        .exprt(baseUrl.applyRelativeReference(filename + "_SPECULAR" + extension));
+                }
+            }
+
             // --------------------------------------------------------------------
             //  Write the transfer settings to the property tree (1D)
             // --------------------------------------------------------------------
@@ -353,13 +379,13 @@ namespace
             // --------------------------------------------------------------------
             //  Writes an abridged scene file corresponding to a keyframe
             // --------------------------------------------------------------------
-            static void writeKeyFrame(Scene const& scene, boost::property_tree::ptree & tree)
+            void writeKeyFrame(std::shared_ptr<Scene> scene, boost::property_tree::ptree & tree)
             {
-                writeCamera(scene.camera, tree);
-                writeLighting(scene.lightSet, tree);
-                writeTransfer(scene.transfer, scene.transferMap, tree);
-                writeClipGeometry(scene.clipGeometry, tree);
-                writeParams(scene.parameters, tree);
+                writeCamera(scene->camera, tree);
+                writeLighting(scene->lightSet, tree);
+                writeTransfer(scene->transfer, scene->transferMap, tree);
+                writeClipGeometry(scene->clipGeometry, tree);
+                writeParams(scene->parameters, tree);
             }
 
             // --------------------------------------------------------------------
@@ -436,11 +462,11 @@ namespace
             // --------------------------------------------------------------------
             //  Parse the property tree and composes the output scene object
             // --------------------------------------------------------------------
-            Scene parseSceneFile()
+            std::shared_ptr<Scene> parseSceneFile()
             {
                 m_stack.reserve(6); // Reserve some space
 
-                Scene scene;
+                std::shared_ptr<Scene> scene;
 
                 try
                 {
@@ -453,13 +479,13 @@ namespace
                     scene = executeImportDirectives();
 
                     // Load scene components
-                    if (m_options.lookup("ImportVolume", true)) scene.volume       = loadVolume();
-                    if (m_options.lookup("ImportCamera", true)) scene.camera       = loadCamera();
-                    if (m_options.lookup("ImportLights", true)) scene.lightSet     = loadLights();
-                    if (m_options.lookup("ImportParams", true)) scene.parameters   = loadParams();
-                    if (m_options.lookup("ImportTransfer", true)) loadTransfer(scene);
-                    if (m_options.lookup("ImportAnimator", true)) scene.animator = loadAnimator(scene.volume);
-                    if (m_options.lookup("ImportClip", true)) scene.clipGeometry = loadClipGeometry();
+                    if (m_options.lookup("ImportVolume", true)) scene->volume       = loadVolume();
+                    if (m_options.lookup("ImportCamera", true)) scene->camera       = loadCamera();
+                    if (m_options.lookup("ImportLights", true)) scene->lightSet     = loadLights();
+                    if (m_options.lookup("ImportParams", true)) scene->parameters   = loadParams();
+                    if (m_options.lookup("ImportTransfer", true)) loadTransfer(*scene);
+                    if (m_options.lookup("ImportAnimator", true)) scene->animator = loadAnimator(scene->volume);
+                    if (m_options.lookup("ImportClip", true)) scene->clipGeometry = loadClipGeometry();
                 }
 
                 // Malformed data on a node read attempt
@@ -525,7 +551,7 @@ namespace
                 if (!push("Camera", Preferred)) return nullptr;
                 
                   // Instantiate default volume object
-                  auto cameraPtr = executeImportDirectives().camera;
+                  auto cameraPtr = executeImportDirectives()->camera;
                   if (!cameraPtr) cameraPtr = Camera::create();
                   auto & camera = *cameraPtr;
                 
@@ -602,7 +628,7 @@ namespace
                 if (!push("Volume", Preferred)) return nullptr;
 
                   // Instantiate default volume object
-                  auto volumePtr = executeImportDirectives().volume;
+                  auto volumePtr = executeImportDirectives()->volume;
                   if (!volumePtr) volumePtr = Volume::create();
                   auto & volume = *volumePtr;
         
@@ -628,7 +654,7 @@ namespace
                 if (!push("Settings", Preferred)) return nullptr;
 
                   // Instantiate default volume object
-                  auto paramPtr = executeImportDirectives().parameters;
+                  auto paramPtr = executeImportDirectives()->parameters;
                   if (!paramPtr) paramPtr = RenderParams::create();
                   auto & parameters = *paramPtr;
         
@@ -653,10 +679,10 @@ namespace
 
                   // Execute a transfer function import directive if specified
                   auto transferImprt = executeImportDirectives();
-                  if (transferImprt.transfer || transferImprt.transferMap) 
+                  if (transferImprt->transfer || transferImprt->transferMap) 
                   { 
-                      scene.transferMap = transferImprt.transferMap;
-                      scene.transfer = transferImprt.transfer;
+                      scene.transferMap = transferImprt->transferMap;
+                      scene.transfer = transferImprt->transfer;
                       return;
                   }
                   // End
@@ -686,9 +712,9 @@ namespace
 
                   // Execute a transfer function import directive if specified
                   auto transferImprt = executeImportDirectives();
-                  if (transferImprt.transfer || transferImprt.transferMap) 
+                  if (transferImprt->transfer || transferImprt->transferMap) 
                   { 
-                      scene.transferMap = transferImprt.transferMap;
+                      scene.transferMap = transferImprt->transferMap;
                       return;
                   }
 
@@ -804,7 +830,7 @@ namespace
                 if (!push("ClipGeometry", Preferred)) return nullptr;
 
                     // Instantiate default volume object
-                    auto geoPtr = executeImportDirectives().clipGeometry;
+                    auto geoPtr = executeImportDirectives()->clipGeometry;
                     if (!geoPtr) geoPtr = PrimGroup::create();
                     auto & geometrySet = *geoPtr;
 
@@ -850,7 +876,7 @@ namespace
                 if (!push("Animator", Preferred)) return nullptr;
 
                     // Instantiate default volume object
-                    auto animatorPtr = executeImportDirectives().animator;
+                    auto animatorPtr = executeImportDirectives()->animator;
                     if (!animatorPtr) animatorPtr = Animator::create();
                     auto & animator = *animatorPtr;
 
@@ -870,17 +896,20 @@ namespace
                         m_node = &keyFrameNode.second;
                         m_stack.push_back(Iterator(keyFrameNode.first, m_node));
                         
-                        KeyFrame keyframe;
+                        std::shared_ptr<KeyFrame> keyframe = KeyFrame::create();
                         if (push("Scene", Optional))
                         {
-                            keyframe.volume       = Volume::create();
-                            volume->clone(*keyframe.volume.get());
+                            if (volume)
+                            {
+                                keyframe->volume       = Volume::create();
+                                volume->clone(*keyframe->volume.get());
+                            }
 
-                            keyframe.camera       = loadCamera();
-                            keyframe.lightSet     = loadLights();
-                            keyframe.parameters   = loadParams();
-                            keyframe.clipGeometry = loadClipGeometry();
-                            loadTransfer(keyframe);
+                            keyframe->camera       = loadCamera();
+                            keyframe->lightSet     = loadLights();
+                            keyframe->parameters   = loadParams();
+                            keyframe->clipGeometry = loadClipGeometry();
+                            loadTransfer(*keyframe);
 
                             pop();
                         }
@@ -901,10 +930,10 @@ namespace
             //  only necessary scene components to be loaded using the generic
             //  exim 'Ignore' flag :TODO:
             // --------------------------------------------------------------------
-            Scene executeImportDirectives(String const& component = "")
+            std::shared_ptr<Scene> executeImportDirectives(String const& component = "")
             {
                 // Check for external importer specifications
-                if (!push("Import")) return Scene();
+                if (!push("Import")) return Scene::create();
 
                   // Build options set for the import operation
                   OptionSet optionSet;
@@ -951,7 +980,7 @@ namespace
                                        error.what()));
                 }
 
-                return Scene();
+                return Scene::create();
             }
 
             // --------------------------------------------------------------------
@@ -1057,7 +1086,7 @@ void VoxSceneFile::exporter(ResourceOStream & sink, OptionSet const& options, Sc
 // --------------------------------------------------------------------
 //  Reads a vox scene file from the stream
 // --------------------------------------------------------------------
-Scene VoxSceneFile::importer(ResourceIStream & source, OptionSet const& options)
+std::shared_ptr<Scene> VoxSceneFile::importer(ResourceIStream & source, OptionSet const& options)
 {
     // Parse XML format input file into boost::property_tree
     filescope::SceneImporter importModule(source, options, m_handle, m_isXml);

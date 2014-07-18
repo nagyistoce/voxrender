@@ -55,12 +55,8 @@ public:
 private:
 	Ui::AnimateWidget * ui;
 
-    void update();
-
-    void onAddKey(int index, vox::KeyFrame & key, bool suppress);
-    void onRemoveKey(int index, vox::KeyFrame & key, bool suppress);
-
-    bool m_ignore;
+    void onAddKey(int index, std::shared_ptr<vox::KeyFrame> key, bool suppress);
+    void onRemoveKey(int index, std::shared_ptr<vox::KeyFrame> key, bool suppress);
 
     float m_frameOffset; ///< Frame at left edge of window
 
@@ -69,7 +65,7 @@ private:
     AnimateView * m_animateView;
 
 private slots:
-    void sceneChanged();
+    void sceneChanged(vox::Scene & scene, void * userInfo);
 
     void on_spinBox_frame_valueChanged(int value);
     void on_spinBox_framerate_valueChanged(int value);

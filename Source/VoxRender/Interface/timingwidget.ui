@@ -28,7 +28,7 @@
         <number>100</number>
        </property>
        <property name="value">
-        <number>60</number>
+        <number>20</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -67,6 +67,12 @@
      </item>
      <item row="2" column="1">
       <widget class="QSlider" name="horizontalSlider_y">
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>20</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -87,6 +93,12 @@
      </item>
      <item row="3" column="1">
       <widget class="QSlider" name="horizontalSlider_z">
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="value">
+        <number>20</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>

@@ -45,21 +45,32 @@ class PointLightWidget : public QWidget
 	Q_OBJECT
 
 public:
-	explicit PointLightWidget(QWidget * parent, std::shared_ptr<vox::Light> light);
+    /** Initializes a widget associated with a given scene light  */
+	explicit PointLightWidget(QWidget * parent, void * userInfo, std::shared_ptr<vox::Light> light);
 
-	~PointLightWidget();
+    /** Destructor */
+ 	~PointLightWidget();
 
+    /** Returns the light associated with this widget */
     std::shared_ptr<vox::Light> light() { return m_light; }
 
+    /** Synchronizes the widget with it's associated light */
+    void sceneChanged();
+
 protected:
+    /** Signals visibility change event */
     virtual void changeEvent(QEvent * event);
+    
+private:
+    /** Updates the light from the widget controls */
+    void update(); 
 
 private:
 	Ui::PointLightWidget* ui;
 
     std::shared_ptr<vox::Light> m_light; ///< Associated scene object
     
-    void update();
+    void * m_userInfo; ///< User info for scene locking
 
     QColorPushButton * m_colorButton; ///< Customized color swatch + button widget
 

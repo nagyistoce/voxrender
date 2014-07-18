@@ -57,7 +57,7 @@ public:
     QPixmap & laplacePixmap()  { return m_laplacePixmap;  }
 
 public slots:
-    void generateHistogramImages();
+    void onSceneChanged(vox::Scene & scene, void * userInfo);
 
     void stopGeneratingImages();
 

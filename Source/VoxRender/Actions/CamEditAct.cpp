@@ -39,13 +39,13 @@ void CamEditAct::undo()
     m_camera->clone(*temp);
 
     auto scene = MainWindow::instance->scene();
-    if (!scene.camera)
+    if (!scene->camera)
     {
         throw vox::Error(__FILE__, __LINE__, "GUI", "Scene camera is missing", vox::Error_Bug);
         return;
     }
 
-    scene.camera->clone(*m_camera); // Handle undo/redo with single function by flip/flopping
+    scene->camera->clone(*m_camera); // Handle undo/redo with single function by flip/flopping
    
-    temp->clone(*scene.camera);
+    temp->clone(*scene->camera);
 }
