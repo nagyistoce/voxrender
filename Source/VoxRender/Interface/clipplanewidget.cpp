@@ -45,27 +45,16 @@ using namespace vox;
 // --------------------------------------------------------------------
 //  Constructor - Initialize the widget ui
 // --------------------------------------------------------------------
-ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, std::shared_ptr<Plane> plane) : 
+ClipPlaneWidget::ClipPlaneWidget(QWidget * parent, void * userInfo, std::shared_ptr<Plane> plane) : 
     QWidget(parent), 
     ui(new Ui::ClipPlaneWidget),
     m_plane(plane),
-    m_block(true)
+    m_userInfo(userInfo),
+    m_ignore(false)
 {
 	ui->setupUi(this);
 
-    auto normal = plane->normal();
-    auto pos    = normal * plane->distance();
-    ui->doubleSpinBox_x->setValue(pos[0]);
-    ui->doubleSpinBox_y->setValue(pos[1]);
-    ui->doubleSpinBox_z->setValue(pos[2]);
-
-    float phi      = acos(normal[1]) / M_PI * 180.0f;
-    float theta    = atan2(normal[2], normal[0])  / M_PI * 180.0f;
-
-    ui->doubleSpinBox_pitch->setValue(phi);
-    ui->doubleSpinBox_yaw->setValue(theta);
-
-    m_block = false;
+    sceneChanged();
 }
 
 // --------------------------------------------------------------------
@@ -77,11 +66,33 @@ ClipPlaneWidget::~ClipPlaneWidget()
 }
 
 // --------------------------------------------------------------------
-//  Synchronizes the light widget's position controls with the scene
+//  Synchronizes the widget's controls with the scene
+// --------------------------------------------------------------------
+void ClipPlaneWidget::sceneChanged()
+{
+    m_ignore = true;
+    
+    auto normal = m_plane->normal();
+    auto pos    = normal * m_plane->distance();
+    ui->doubleSpinBox_x->setValue(pos[0]);
+    ui->doubleSpinBox_y->setValue(pos[1]);
+    ui->doubleSpinBox_z->setValue(pos[2]);
+
+    float phi      = acos(normal[1]) / M_PI * 180.0f;
+    float theta    = atan2(normal[2], normal[0])  / M_PI * 180.0f;
+
+    ui->doubleSpinBox_pitch->setValue(phi);
+    ui->doubleSpinBox_yaw->setValue(theta);
+
+    m_ignore = false;
+}
+
+// --------------------------------------------------------------------
+//  Synchronizes the scene with the widget's controls
 // --------------------------------------------------------------------
 void ClipPlaneWidget::update()
 {
-    if (m_block) return;
+    if (m_ignore) return;
 
     // Compute the new normal vector of the plane
     double pitch  = ui->doubleSpinBox_pitch->value() / 180.0 * M_PI;
@@ -110,18 +121,13 @@ void ClipPlaneWidget::update()
 // --------------------------------------------------------------------
 void ClipPlaneWidget::changeEvent(QEvent * event)
 {
-    if (event->type() != QEvent::EnabledChange) return;
+    if (event->type() != QEvent::EnabledChange ||
+        isEnabled() == m_plane->isVisible()) return;
     
-    if (isEnabled() && !m_plane->isVisible()) 
-    {
-        m_plane->setVisible(true);
-        m_plane->setDirty(); 
-    }
-    else if (!isEnabled() && m_plane->isVisible()) 
-    {
-        m_plane->setVisible(false);
-        m_plane->setDirty(); 
-    }
+    auto lock = MainWindow::instance->scene()->lock(m_userInfo);
+
+    m_plane->setVisible(isEnabled());
+    m_plane->setDirty(); 
 }
 
 // --------------------------------------------------------------------

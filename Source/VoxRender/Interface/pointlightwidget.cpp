@@ -136,7 +136,15 @@ void PointLightWidget::changeEvent(QEvent * event)
 }
 
 // --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
+//  Signals a color change in the color selection widget
+// --------------------------------------------------------------------
+void PointLightWidget::colorChanged(QColor const& color)
+{
+    update();
+}
+
+// --------------------------------------------------------------------
+//  Spinbox <-> Slider connections
 // --------------------------------------------------------------------
 void PointLightWidget::on_horizontalSlider_intensity_valueChanged(int value)
 {
@@ -147,10 +155,6 @@ void PointLightWidget::on_horizontalSlider_intensity_valueChanged(int value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modifies the intensity component of the light's emissions
-// --------------------------------------------------------------------
 void PointLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -160,10 +164,6 @@ void PointLightWidget::on_doubleSpinBox_intensity_valueChanged(double value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
-// --------------------------------------------------------------------
 void PointLightWidget::on_horizontalSlider_latitude_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -173,10 +173,6 @@ void PointLightWidget::on_horizontalSlider_latitude_valueChanged(int value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modifies the latitude of the light's position relative to the data
-// --------------------------------------------------------------------
 void PointLightWidget::on_doubleSpinBox_latitude_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -186,10 +182,6 @@ void PointLightWidget::on_doubleSpinBox_latitude_valueChanged(double value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
-// --------------------------------------------------------------------
 void PointLightWidget::on_horizontalSlider_longitude_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -199,10 +191,6 @@ void PointLightWidget::on_horizontalSlider_longitude_valueChanged(int value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modifies the longitude of the light's position relative to the data
-// --------------------------------------------------------------------
 void PointLightWidget::on_doubleSpinBox_longitude_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -212,10 +200,6 @@ void PointLightWidget::on_doubleSpinBox_longitude_valueChanged(double value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modify the associated double spinbox to reflect slide value change
-// --------------------------------------------------------------------
 void PointLightWidget::on_horizontalSlider_distance_valueChanged(int value)
 {
     Utilities::forceSbToSl(
@@ -225,10 +209,6 @@ void PointLightWidget::on_horizontalSlider_distance_valueChanged(int value)
     
     update();
 }
-
-// --------------------------------------------------------------------
-//  Modifies the distance of the light from the data
-// --------------------------------------------------------------------
 void PointLightWidget::on_doubleSpinBox_distance_valueChanged(double value)
 {
     Utilities::forceSlToSb(
@@ -236,13 +216,5 @@ void PointLightWidget::on_doubleSpinBox_distance_valueChanged(double value)
         ui->doubleSpinBox_distance,
         value);
   
-    update();
-}
-
-// --------------------------------------------------------------------
-//  Signals a color change in the color selection widget
-// --------------------------------------------------------------------
-void PointLightWidget::colorChanged(QColor const& color)
-{
     update();
 }

@@ -60,7 +60,6 @@ private:
 	std::list<PaneWidget*> m_panes;         ///< Light panes (besides ambient)
     QSpacerItem *          m_spacer;        ///< Spacing element for pane list
     QLayout *              m_layout;        ///< Layout for light panes
-    QWidget *              m_parent;        ///< Parent widget 
 
 private slots:
     /** Slot for scene change events */

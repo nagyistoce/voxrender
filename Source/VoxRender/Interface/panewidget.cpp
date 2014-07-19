@@ -41,14 +41,17 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent* event)
 	emit clicked();
 }
 
+// ----------------------------------------------------------------------------
+//  Creates a new pane widget
+// ----------------------------------------------------------------------------
 PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& icon, bool onoffbutton, bool rembutton) : 
     QWidget(parent), 
-    ui(new Ui::PaneWidget)
+    ui(new Ui::PaneWidget),
+    m_powerOn(true),
+    expanded(false),
+    onofflabel(nullptr),
+    remLabel(nullptr)
 {
-	expanded = false;
-	onofflabel = nullptr;
-	remLabel = nullptr;
-
 	ui->setupUi(this);
 	
 	ui->frame->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color:          \
@@ -56,12 +59,16 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
         stop:0.8 rgb(230, 230, 230))\n""}\n"""));
 
 	if (!icon.isEmpty())
+    {
 		ui->labelPaneIcon->setPixmap(QPixmap(icon));
-		ui->labelPaneIcon->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
-	
+    }
+    ui->labelPaneIcon->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+
 	if (!label.isEmpty())
+    {
 		ui->labelPaneName->setText(label);
-		ui->labelPaneName->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
+    }
+    ui->labelPaneName->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
 
     expandlabel.reset(new ClickableLabel(">", this));
 	expandlabel->setPixmap(QPixmap(":/icons/collapsedicon.png"));
@@ -70,46 +77,43 @@ PaneWidget::PaneWidget(QWidget *parent, const QString& label, const QString& ico
  
 	connect(expandlabel.get(), SIGNAL(clicked()), this, SLOT(expandClicked()));
 
-	m_powerOn = false;
-	
 	if (onoffbutton) showOnOffButton();
 
 	if (rembutton) showVisibilityButtons();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the pane window title
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::setTitle(const QString& title)
 {
 	ui->labelPaneName->setText(title);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Sets the pane window icon
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::setIcon(const QString& icon)
 {
 	ui->labelPaneIcon->setPixmap(QPixmap(icon));
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::setOn(bool on)
 {
     if (m_powerOn != on) onofflabel->clicked();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Enables an on/off button for this pane
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::showOnOffButton(bool showbutton)
 {
 	if (onofflabel == nullptr) 
     {
 		onofflabel.reset(new ClickableLabel("*", this));
-		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
 		onofflabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
 		onofflabel->setToolTip("Click to enable/disable this scene element.");
 
@@ -125,39 +129,28 @@ void PaneWidget::showOnOffButton(bool showbutton)
 	else            onofflabel->hide();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Triggers the on/off state of the pane 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::onoffClicked()
 {
-	if (mainwidget->isEnabled()) 
-    {
-		m_powerOn = false;
-		mainwidget->setEnabled(false);
-		onofflabel->setPixmap(QPixmap(":/icons/powerofficon.png"));
-		emit turnedOff();
-	}
-	else 
-    {
-		m_powerOn = true;
-		mainwidget->setEnabled(true);
-		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
-		emit turnedOn();
-	}
+    m_powerOn = !m_powerOn;
+    mainwidget->setEnabled(m_powerOn);
+    updateOnOffLabel();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Toggle the panes state between expanded and collapsed
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::expandClicked()
 {
 	if (expanded) collapse();
 	else expand();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Toggles the display of the delete icon
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::showVisibilityButtons(bool showbutton)
 {
 	if (remLabel == nullptr) 
@@ -178,17 +171,17 @@ void PaneWidget::showVisibilityButtons(bool showbutton)
 	else            remLabel->hide();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Signals that the solo label on the pane was clicked
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::removeClicked()
 {
     emit removed(this);
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Toggles display of the child widget inside the pane to shown
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::expand()
 {
 	expanded = true;
@@ -196,9 +189,9 @@ void PaneWidget::expand()
 	mainwidget->show();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Toggles display of the child widget inside the pane to hidden
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void PaneWidget::collapse()
 {
 	expanded = false;
@@ -206,27 +199,38 @@ void PaneWidget::collapse()
 	mainwidget->hide();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Updates the on/off label (:TODO: implement toggle button control)
+// ----------------------------------------------------------------------------
+void PaneWidget::updateOnOffLabel()
+{
+    if (!onofflabel) return;
+
+	if (m_powerOn) 
+    {
+		onofflabel->setPixmap(QPixmap(":/icons/poweronicon.png"));
+	}
+	else 
+    {
+		onofflabel->setPixmap(QPixmap(":/icons/powerofficon.png"));
+	}
+}
+
+// ----------------------------------------------------------------------------
 //  Sets the child widget for this pane
-// --------------------------------------------------------------------
-void PaneWidget::setWidget(QWidget *widget)
+// ----------------------------------------------------------------------------
+void PaneWidget::setWidget(QWidget * widget)
 {
 	mainwidget = widget;
 	ui->paneLayout->addWidget(widget);
-#if defined(__APPLE__)
-	expandlabel->setStyleSheet(QString::fromUtf8(" QFrame {\n""background-color: rgba(232, 232, 232, 0)\n""}"));
-#endif
-	if (!mainwidget->isEnabled())
-		onofflabel->setPixmap(QPixmap(":/icons/powerofficon.png"));
-	if (expanded)
-		mainwidget->show();
-	else
-		mainwidget->hide();
+    mainwidget->setVisible(expanded);
+    mainwidget->setEnabled(m_powerOn);
+    updateOnOffLabel();
 }
 
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Returns the child widget for this pane
-// --------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 QWidget * PaneWidget::getWidget()
 {
 	return mainwidget;

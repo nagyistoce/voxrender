@@ -41,11 +41,8 @@ using namespace vox;
 // --------------------------------------------------------------------
 LightingWidget::LightingWidget(QWidget * parent, QLayout * layout) : 
     QWidget(parent),
-    m_layout(layout),
-    m_parent(parent)
+    m_layout(layout)
 {
-    m_parent = parent;
-
     connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
             this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
     
@@ -54,7 +51,7 @@ LightingWidget::LightingWidget(QWidget * parent, QLayout * layout) :
     m_spacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding );
 
     // Create new pane for the ambient light setting widget
-    auto pane = new PaneWidget(m_parent);
+    auto pane = new PaneWidget(parentWidget());
     m_ambientWidget = new AmbientLightWidget(pane, this); 
     pane->setTitle("Environment");
     pane->setIcon(":/icons/lightgroupsicon.png");
@@ -84,7 +81,7 @@ void LightingWidget::add(std::shared_ptr<Light> light)
     m_layout->removeItem(m_spacer);
 
     // Create new pane for the light setting widget
-    PaneWidget * pane = new PaneWidget(m_parent);
+    PaneWidget * pane = new PaneWidget(parentWidget());
    
     QWidget * currWidget = new PointLightWidget(pane, this, light); 
 

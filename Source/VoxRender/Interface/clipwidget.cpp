@@ -43,11 +43,8 @@ using namespace vox;
 // --------------------------------------------------------------------
 ClipWidget::ClipWidget(QWidget * parent, QLayout * layout) : 
     QWidget(parent),
-    m_layout(layout),
-    m_parent(parent)
+    m_layout(layout)
 {
-    m_parent = parent;
-
     connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
             this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
     
@@ -77,7 +74,7 @@ void ClipWidget::add(std::shared_ptr<Primitive> prim)
     m_layout->removeItem(m_spacer);
 
     // Create new pane for the light setting widget
-    PaneWidget *pane = new PaneWidget(m_parent);
+    PaneWidget *pane = new PaneWidget(parentWidget());
    
     // Create the control widget to populate the pane
     QWidget * currWidget = nullptr;
@@ -86,7 +83,7 @@ void ClipWidget::add(std::shared_ptr<Primitive> prim)
         auto plane = std::dynamic_pointer_cast<vox::Plane>(prim);
         if (!plane) throw Error(__FILE__, __LINE__, "GUI", 
             "Error interpreting primitive :TODO:");
-        currWidget = new ClipPlaneWidget(pane, plane); 
+        currWidget = new ClipPlaneWidget(pane, this, plane); 
     }
     else
     {
@@ -167,7 +164,7 @@ void ClipWidget::remove(std::shared_ptr<Primitive> prim)
 // --------------------------------------------------------------------
 void ClipWidget::sceneChanged(Scene & scene, void * userInfo)
 {
-    if (userInfo == this || !scene.clipGeometry) return;
+    if (!scene.clipGeometry || userInfo == this) return;
     
     // Connect to the geometry callback events for event detection
     if (userInfo == MainWindow::instance) // initial load by mainwindow
@@ -187,6 +184,5 @@ void ClipWidget::sceneChanged(Scene & scene, void * userInfo)
         m_panes.pop_back();
         delete pane;
     }
-    BOOST_FOREACH (auto & prim, scene.clipGeometry->children()) 
-        add(prim);
+    BOOST_FOREACH (auto & prim, scene.clipGeometry->children()) add(prim);
 }

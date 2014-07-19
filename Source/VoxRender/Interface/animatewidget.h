@@ -55,6 +55,8 @@ public:
 private:
 	Ui::AnimateWidget * ui;
 
+    void updateControls();
+
     void onAddKey(int index, std::shared_ptr<vox::KeyFrame> key, bool suppress);
     void onRemoveKey(int index, std::shared_ptr<vox::KeyFrame> key, bool suppress);
 

@@ -78,6 +78,8 @@ void AnimateWidget::sceneChanged(Scene & scene, void * userInfo)
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         animator->onRemove(std::bind(&AnimateWidget::onRemoveKey, this, 
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        
+        updateControls();
     }
 }
 
@@ -88,6 +90,7 @@ void AnimateWidget::onAddKey(int index, std::shared_ptr<KeyFrame> key, bool supp
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, true));
     m_animateView->update();
+    updateControls();
 }
 
 // ----------------------------------------------------------------------------
@@ -97,6 +100,52 @@ void AnimateWidget::onRemoveKey(int index, std::shared_ptr<KeyFrame> key, bool s
 {
     if (!suppress) ActionManager::instance().push(AddRemKeyAct::create(index, key, false));
     m_animateView->update();
+    updateControls();
+}
+
+// ----------------------------------------------------------------------------
+//  Updates the enabled status of the animation control buttons as necessary
+// ----------------------------------------------------------------------------
+void AnimateWidget::updateControls()
+{
+    auto scene = MainWindow::instance->scene();
+    if (!scene) return;
+    auto animator = scene->animator;
+    if (!animator) return;
+    auto keys = animator->keyframes();
+
+    if (!keys.size())
+    { 
+        ui->pushButton_load->setEnabled(false);
+        ui->pushButton_prev->setEnabled(false);
+        ui->pushButton_next->setEnabled(false);
+        ui->pushButton_first->setEnabled(false);
+        ui->pushButton_last->setEnabled(false);
+    }
+    else
+    {
+        ui->pushButton_load->setEnabled(true);
+        ui->pushButton_prev->setEnabled(true);
+        ui->pushButton_next->setEnabled(true);
+        ui->pushButton_first->setEnabled(true);
+        ui->pushButton_last->setEnabled(true);
+    }
+
+    if (keys.size() < 2)
+    {
+        ui->pushButton_preview->setEnabled(false);
+        ui->pushButton_render->setEnabled(false);
+    }
+    else
+    {
+        ui->pushButton_preview->setEnabled(true);
+        ui->pushButton_render->setEnabled(true);
+    }
+
+    auto iter = keys.begin();
+    while (iter != keys.end() && iter->first < ui->spinBox_frame->value()) ++iter;
+    ui->pushButton_delete->setEnabled(
+        iter != keys.end() && iter->first == ui->spinBox_frame->value());
 }
 
 // ----------------------------------------------------------------------------
@@ -105,6 +154,7 @@ void AnimateWidget::onRemoveKey(int index, std::shared_ptr<KeyFrame> key, bool s
 void AnimateWidget::setFrame(int value)
 {
     ui->spinBox_frame->setValue(value);
+    updateControls();
 }
 
 // ----------------------------------------------------------------------------
@@ -124,6 +174,7 @@ void AnimateWidget::setFrameHover(int value)
 void AnimateWidget::on_spinBox_frame_valueChanged(int value)
 {
     m_animateView->setFrame(value);
+    updateControls();
 }
 
 // ----------------------------------------------------------------------------
@@ -204,6 +255,8 @@ void AnimateWidget::on_pushButton_next_clicked()
     auto iter = frames.begin();
     while (iter != frames.end() && iter->first <= currFrame) ++iter;
     if (iter != frames.end()) ui->spinBox_frame->setValue(iter->first);
+
+    updateControls();
 }
 void AnimateWidget::on_pushButton_prev_clicked()
 { 
@@ -216,6 +269,8 @@ void AnimateWidget::on_pushButton_prev_clicked()
     while (iter != frames.end() && iter->first < currFrame) ++iter;
     --iter;
     if (iter != frames.end()) ui->spinBox_frame->setValue(iter->first);
+    
+    updateControls();
 }
 void AnimateWidget::on_pushButton_first_clicked()
 { 
@@ -224,6 +279,8 @@ void AnimateWidget::on_pushButton_first_clicked()
     if (frames.empty()) return;
 
     ui->spinBox_frame->setValue(frames.front().first);
+    
+    updateControls();
 }
 void AnimateWidget::on_pushButton_last_clicked()
 { 
@@ -232,6 +289,8 @@ void AnimateWidget::on_pushButton_last_clicked()
     if (frames.empty()) return;
 
     ui->spinBox_frame->setValue(frames.back().first);
+    
+    updateControls();
 }
 
 // ----------------------------------------------------------------------------

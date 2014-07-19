@@ -135,6 +135,9 @@ std::shared_ptr<Scene> Animator::interp(
     float f, 
     std::shared_ptr<Scene> o)
 {
+    if (!k1 || !k2) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+        "Cannot interpolate between null keyframes", Error_MissingData);
+
     auto scene = o ? o : Scene::create();
 
     scene->clipGeometry = std::dynamic_pointer_cast<PrimGroup>(
@@ -204,8 +207,9 @@ void Animator::removeKeyframe(int frame, bool suppress)
     for (auto iter = m_pImpl->m_keys.begin(); iter != m_pImpl->m_keys.end(); ++iter)
     if ((*iter).first == frame)
     {
-        if (m_pImpl->remCallback) m_pImpl->remCallback(frame, iter->second, suppress);
+        auto key = iter->second;
         m_pImpl->m_keys.erase(iter);
+        if (m_pImpl->remCallback) m_pImpl->remCallback(frame, key, suppress);
         return;
     }
 }

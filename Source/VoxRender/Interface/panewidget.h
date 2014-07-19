@@ -120,10 +120,10 @@ private:
 
 	bool m_powerOn;
 
+    void updateOnOffLabel();
+
 signals:
 	void removed(PaneWidget *);
-	void turnedOn();
-	void turnedOff();
 
 private slots:
 	void expandClicked();

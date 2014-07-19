@@ -36,29 +36,39 @@
 // Generated class
 namespace Ui { class ClipPlaneWidget; }
 
-// Scene Light class
+// Scene clip plane class
 namespace vox { class Plane; }
 
-// Point light interface
+/** Widget for controlling clipping planes in the scene */
 class ClipPlaneWidget : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit ClipPlaneWidget(QWidget * parent, std::shared_ptr<vox::Plane> plane);
+    /** Constructs a new widget with an associated plane object in the scene */
+	explicit ClipPlaneWidget(QWidget * parent, void * userInfo, std::shared_ptr<vox::Plane> plane);
 
+    /** Destructor */
 	~ClipPlaneWidget();
 
+    /** Returns the clip plane associated with this control */
     std::shared_ptr<vox::Plane> plane() { return m_plane; }
 
+    /** Called when the plane is modified externally to synchronize the controls */
+    void sceneChanged();
+
+private:
+    /** Synchronizes the clip plane with the widget's controls */
+    void update();
+    
 private:
 	Ui::ClipPlaneWidget* ui;
 
     std::shared_ptr<vox::Plane> m_plane; ///< Associated scene object
-    
-    void update();
 
-    bool m_block;
+    bool m_ignore; ///< Simple blockSignals alternative
+    
+    void * m_userInfo; ///< User info for scene change events
 
 protected:
     void changeEvent(QEvent * event);
