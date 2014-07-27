@@ -38,12 +38,16 @@ using namespace vox;
 // ----------------------------------------------------------------------------
 void MaterialEditAct::undo()
 {
+    auto scene = MainWindow::instance->scene();
+    if (!scene) return;
+    auto transfer = scene->transfer;
+
+    auto lock = scene->lock();
+
     auto temp = Material::create();
     *temp = *m_material;
     *m_material = *m_reference;
     *m_reference = *temp;
 
-    MainWindow::instance->scene()->transfer->setDirty();
-    auto widget = MainWindow::instance->transferWidget();
-    // :TODO: Update material in transfer widget
+    transfer->setDirty();
 }

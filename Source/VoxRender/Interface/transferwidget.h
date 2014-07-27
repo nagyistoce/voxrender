@@ -48,18 +48,63 @@ class TransferWidget : public QWidget
     Q_OBJECT
     
 public:
-    explicit TransferWidget(QWidget *parent = 0);
+    /** Destructor */
     ~TransferWidget();
 
-    void processInteractions();
+    /** Instance method for transfer function widget */
+    static TransferWidget * instance()
+    {
+        static TransferWidget * singleton = nullptr;
+        if (!singleton) 
+        {
+            singleton = new TransferWidget();
+        }
+        return singleton;
+    }
+
+    /** Loads a new transfer function */
+    void load();
+
+    /** Saves the transfer function */
+    void save();
     
+protected:
+    friend TransferItem;
+
+    /** Node change event type */
+    enum EditType
+    {
+        EditType_Begin,
+        EditType_Attr = EditType_Begin, ///< Node attribute changed
+        EditType_Reference,             ///< Current node changed
+        EditType_Create,                ///< Node was created
+        EditType_Remove,                ///< Node was removed
+        EditType_End,
+    };
+
+    /** Validates a node position change event and returns the resolved position */
+    void validateNodePositionChange(float * x, float * y = nullptr, float * z = nullptr);
+
     /** Returns the currently selected transfer function node */
     std::shared_ptr<vox::Node> selectedNode();
+    
+    /** Returns the currently selected transfer function node */
+    std::shared_ptr<vox::Quad> selectedQuad(vox::Quad::Node * node = nullptr);
+
+    /** Sets the active 1D transfer function node for the widget */
+    void setSelectedNode(std::shared_ptr<vox::Node> node, bool signal = true);
+
+    /** Sets the active 2D transfer function node for the widget */
+    void setSelectedQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node = vox::Quad::Node_End, bool signal = true);
+    
+    /** Notifies the widget of a node position change */
+    void onNodeChanged();
 
 private:
-    Ui::TransferWidget *ui;
+    explicit TransferWidget(QWidget *parent = 0);
 
-    bool m_blockNodeUpdates;
+    Ui::TransferWidget * ui;
+
     bool m_ignore;
 
 	// Color Selection Dialogue
@@ -68,15 +113,16 @@ private:
     QColorPushButton * m_colorSpecular;
 
 	// Transfer function view
-	HistogramView* m_primaryView;
-	HistogramView* m_secondaryView;
-	int            m_dimensions;
+	HistogramView * m_primaryView;
+	HistogramView * m_secondaryView;
+	int             m_dimensions;
 
 	// Transfer function information
     std::shared_ptr<vox::Transfer> m_transfer;
     std::shared_ptr<vox::Node>     m_currentNode;
     std::shared_ptr<vox::Quad>     m_currentQuad;
     std::shared_ptr<vox::Material> m_currentMaterial;
+    vox::Quad::Node m_currentIndex;
 
     // Edit clones for managing undo/redo operations
     std::shared_ptr<vox::Material> m_editMaterial;
@@ -87,18 +133,21 @@ private:
     
     void keyPressEvent(QKeyEvent * event);
 
+    /** Sets the active material for editing in the widget */
     void setSelectedMaterial(std::shared_ptr<vox::Material> material);
 
+    /** Updates the transfer function map's resolution */
     void updateResolution();
 
 signals:
-	void transferChanged();
+    /** Issued when a different node has been set as the active node */
+    void transferNodeSelected(std::shared_ptr<vox::Node> node); 
 
-    void nodePositionChanged(std::shared_ptr<vox::Node> node);
-
-public slots:
-    void setSelectedNode(std::shared_ptr<vox::Node> node);
-    void setSelectedQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node = vox::Quad::Node_End);
+    /** Issued when a different quad has been set as the active quad */
+    void transferQuadSelected(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node); 
+    
+    /** Issued when the current transfer function node/etc. has been modified */
+    void nodeChanged(int editType = EditType_Attr);
 
 private slots:
     void beginMaterialChange();
@@ -135,10 +184,6 @@ private slots:
     void colorDiffuseChanged(QColor const& color);
     void colorEmissiveChanged(QColor const& color);
     void colorSpecularChanged(QColor const& color);
-
-    // Transfer function import/export support
-    void on_pushButton_export_clicked();
-    void on_pushButton_import_clicked();
 };
 
 #endif // TRANSFERWIDGET_H

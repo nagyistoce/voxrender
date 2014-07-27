@@ -89,7 +89,7 @@ private:
 
 	float zoomfactor;   ///< Current zoom level on histogram display
     
-	TransferItem* m_transferItem; ///< Optional transfer function interaction item
+	TransferItem * m_transferItem; ///< Optional transfer function interaction item
 
     int m_type; ///< Current data type of this histogram
 

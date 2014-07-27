@@ -27,13 +27,13 @@
 #ifndef TRANSFER_ITEM_H
 #define TRANSFER_ITEM_H
 
-// QT4 Dependencies
+// QT Dependencies
 #include <QtWidgets/QGraphicsRectItem>
 #include <QtWidgets/QGraphicsView>
 
-#include "VoxScene/Scene.h"
-
 // Include Dependencies
+#include "VoxScene/Scene.h"
+#include "transferwidget.h"
 #include "nodeitem.h"
 #include "edgeitem.h"
 
@@ -45,7 +45,6 @@ namespace vox { class Quad; };
  *
  * This class implements a QT Graphics Item which functions as a container for a 
  * representation of a transfer function along a single plane.
- *
  */
 class TransferItem : public QObject, public QGraphicsRectItem
 {
@@ -61,26 +60,33 @@ public:
     /** Recalculates relative positions */
     void onResizeEvent();
     
-    /** Node item callback for position changing event */
+    /** Node item callback for position is changing event */
     void onNodeItemChange(NodeItem * item, QPointF & point);
 
-    /** Node item callback for position changed event */
-    void onNodeItemChanged(NodeItem * item, float x, float y);
+    /** Node item callback for position has changed event */
+    void onNodeItemChanged(NodeItem * item);
 
     /** Node item callback for selection event */
     void onNodeItemSelected(NodeItem * item, bool selected);
 
 public slots:
+    /** Mouse event handler (Creaties new nodes on user input) */
     void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 
-    void updateQuad(std::shared_ptr<vox::Quad> quad);
-    void updateNode(std::shared_ptr<vox::Node> node);
+    /** Slot for when a node is changed by a transfer editor component */
+    void nodeChanged(int editType);
 
 private slots:
     /** Regenerates the transfer function display */
     void sceneChanged(vox::Scene & scene, void * userInfo);
 
 private:
+    /** Updates the specified quad on the graphic */
+    void updateQuad(std::shared_ptr<vox::Quad> quad);
+    
+    /** Updates the specified node on the graphic */
+    void updateNode(std::shared_ptr<vox::Node> node);
+
     std::list<std::shared_ptr<NodeItem>> m_nodes; ///< Graphics items for transfer nodes
     std::list<std::shared_ptr<EdgeItem>> m_edges; ///< Graphics items for transfer edges
 };

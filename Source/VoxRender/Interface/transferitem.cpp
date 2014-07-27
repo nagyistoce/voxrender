@@ -28,6 +28,7 @@
 
 // Include Dependencies
 #include "mainwindow.h"
+#include "transferwidget.h"
 
 // VoxLib Dependencies
 #include "VoxScene/Transfer.h"
@@ -49,10 +50,7 @@ namespace filescope {
     class QuadIndex 
     {
     public:
-        QuadIndex(std::shared_ptr<Quad> q, Quad::Node n) :
-            quad(q), node(n)
-        {
-        }
+        QuadIndex(std::shared_ptr<Quad> q, Quad::Node n) : quad(q), node(n) { }
 
         std::shared_ptr<Quad> quad;
         Quad::Node node;
@@ -76,11 +74,11 @@ TransferItem::TransferItem(QGraphicsItem* parent)
 // ----------------------------------------------------------------------------
 void TransferItem::sceneChanged(vox::Scene & scene, void * userInfo)
 {
-    if (!scene.transfer) return;
+    if (userInfo == TransferWidget::instance() || !scene.transfer) return;
 
-    disconnect(this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
-    connect(MainWindow::instance->transferWidget(), SIGNAL(nodePositionChanged(std::shared_ptr<vox::Node>)), 
-            this, SLOT(updateNode(std::shared_ptr<vox::Node>)));
+    disconnect(this, SLOT(nodeChanged(int)));
+    connect(TransferWidget::instance(), SIGNAL(nodeChanged(int)), 
+            this, SLOT(nodeChanged(int)));
 
     m_nodes.clear();
     m_edges.clear();
@@ -153,15 +151,29 @@ void TransferItem::sceneChanged(vox::Scene & scene, void * userInfo)
 }
 
 // ----------------------------------------------------------------------------
+//  Handles a node change event from the transfer widget
+// ----------------------------------------------------------------------------
+void TransferItem::nodeChanged(int editType)
+{
+    auto transfer = MainWindow::instance->scene()->transfer;
+    if (!transfer) return;
+
+    if (transfer->type() == Transfer1D::typeID())      updateNode(TransferWidget::instance()->selectedNode());
+    else if (transfer->type() == Transfer2D::typeID()) updateQuad(TransferWidget::instance()->selectedQuad());
+}
+
+// ----------------------------------------------------------------------------
 //  Updates the specified node on the transfer function
 // ----------------------------------------------------------------------------
 void TransferItem::updateNode(std::shared_ptr<vox::Node> node)
 {
     BOOST_FOREACH (auto & nodeElem, m_nodes)
-    if (nodeElem->data() == node) 
+    if (!node || nodeElem->data() == node) 
     {
-        nodeElem->setSelected(node == MainWindow::instance->transferWidget()->selectedNode());
-        nodeElem->setPosition(node->density, node->material->opticalThickness);
+        auto nodeRef = std::static_pointer_cast<vox::Node>(nodeElem->data());
+        nodeElem->setSelected(nodeRef == TransferWidget::instance()->selectedNode());
+        nodeElem->setPosition(nodeRef->density, nodeRef->material->opticalThickness);
+        if (node) return;
     }
 }
 
@@ -173,33 +185,34 @@ void TransferItem::updateQuad(std::shared_ptr<vox::Quad> quad)
     BOOST_FOREACH (auto & nodeElem, m_nodes)
     {
         auto quadItem = std::static_pointer_cast<filescope::QuadIndex>(nodeElem->data());
-        if (quadItem->quad == quad)
+        auto oQuad = quadItem->quad;
+        if (!quad || oQuad == quad)
         switch (quadItem->node)
         {
         case Quad::Node_LL:
             nodeElem->setPosition(
-                quad->position[0] - quad->widths[1] / 2,
-                quad->position[1] - quad->heights[0] / 2);
+                oQuad->position[0] - oQuad->widths[1] / 2,
+                oQuad->position[1] - oQuad->heights[0] / 2);
             break;
         case Quad::Node_UL:
             nodeElem->setPosition(
-                quad->position[0] - quad->widths[0] / 2,
-                quad->position[1] + quad->heights[0] / 2);
+                oQuad->position[0] - oQuad->widths[0] / 2,
+                oQuad->position[1] + oQuad->heights[0] / 2);
             break;
         case Quad::Node_LR:
             nodeElem->setPosition(
-                quad->position[0] + quad->widths[1] / 2,
-                quad->position[1] - quad->heights[1] / 2);
+                oQuad->position[0] + oQuad->widths[1] / 2,
+                oQuad->position[1] - oQuad->heights[1] / 2);
             break;
         case Quad::Node_UR:
             nodeElem->setPosition(
-                quad->position[0] + quad->widths[0] / 2,
-                quad->position[1] + quad->heights[1] / 2);
+                oQuad->position[0] + oQuad->widths[0] / 2,
+                oQuad->position[1] + oQuad->heights[1] / 2);
             break;
         case Quad::Node_End:
             nodeElem->setPosition(
-                quad->position[0],
-                quad->position[1]);
+                oQuad->position[0],
+                oQuad->position[1]);
             break;
         }
     }
@@ -208,20 +221,25 @@ void TransferItem::updateQuad(std::shared_ptr<vox::Quad> quad)
 // ----------------------------------------------------------------------------
 //  Synchronizes nodeItem changes with the associated transfer function feature
 // ----------------------------------------------------------------------------
-void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
+void TransferItem::onNodeItemChanged(NodeItem * item)
 {
     auto scene = MainWindow::instance->scene();
     auto transfer = scene->transfer;
+    auto lock = scene->lock(TransferWidget::instance());
+    
+    // Get the new item position
+    float x, y;
+    item->getPosition(x, y);
+
+    // Synchronize the position with the scene's transfer function element
     if (transfer->type() == Transfer1D::typeID())
     {
         auto node = std::static_pointer_cast<vox::Node>(item->data());
-        DO_LOCK(transfer, node->density = x; node->material->opticalThickness = y;)
-        MainWindow::instance->transferWidget()->setSelectedNode(node);
+        node->density = x; 
+        node->material->opticalThickness = y;
     }
     else if (transfer->type() == Transfer2D::typeID())
     {
-        //auto lock = scene->lock();
-
         auto quadItem = std::static_pointer_cast<filescope::QuadIndex>(item->data());
         switch (quadItem->node)
         {
@@ -243,14 +261,16 @@ void TransferItem::onNodeItemChanged(NodeItem * item, float x, float y)
             break;
         }
 
-        transfer->setDirty();
-
         updateQuad(quadItem->quad);
     }
+    
+    transfer->setDirty();
+
+    TransferWidget::instance()->onNodeChanged();
 }
 
 // ----------------------------------------------------------------------------
-//  Ensures a node item does not stray outside its bounds
+//  Validates a node item position change to ensure bounds are respected
 // ----------------------------------------------------------------------------
 void TransferItem::onNodeItemChange(NodeItem * item, QPointF & pos)
 {
@@ -327,14 +347,14 @@ void TransferItem::onNodeItemSelected(NodeItem * item, bool selected)
     if (transfer->type() == Transfer1D::typeID())
     {
         auto node = std::static_pointer_cast<vox::Node>(item->data());
-        if (!selected) MainWindow::instance->setTransferNode(node);
-        else MainWindow::instance->setTransferNode(nullptr);
+        if (!selected) TransferWidget::instance()->setSelectedNode(node);
+        else           TransferWidget::instance()->setSelectedNode(nullptr);
     }
     else if (transfer->type() == Transfer2D::typeID())
     {
         auto quadItem = std::static_pointer_cast<filescope::QuadIndex>(item->data());
-        if (!selected) MainWindow::instance->setTransferQuad(quadItem->quad, quadItem->node);
-        else ;
+        if (!selected) TransferWidget::instance()->setSelectedQuad(quadItem->quad, quadItem->node);
+        else           TransferWidget::instance()->setSelectedQuad(nullptr);
     }
 }
 
@@ -349,7 +369,7 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 
     auto scene = MainWindow::instance->scene();
     auto transfer = scene->transfer;
-    auto lock = scene->lock(this);
+    auto lock = scene->lock(nullptr);
 
     if (auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get()))
     {
@@ -360,8 +380,10 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
         auto node = Node::create(density);
         node->material->opticalThickness = 1.0f - thickness;
         transfer1D->add(node);
-
-        MainWindow::instance->setTransferNode(node);
+        
+        transfer->setDirty();
+        lock.reset();
+        TransferWidget::instance()->setSelectedNode(node);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(transfer.get()))
     {
@@ -376,10 +398,10 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 
         auto pos = pEvent->pos();
 
-        MainWindow::instance->setTransferNode(nullptr);
+        transfer->setDirty();
+        lock.reset();
+        TransferWidget::instance()->setSelectedQuad(quad);
     }
-
-    transfer->setDirty();
 }
 
 // ----------------------------------------------------------------------------
@@ -387,21 +409,11 @@ void TransferItem::mousePressEvent(QGraphicsSceneMouseEvent* pEvent)
 // ----------------------------------------------------------------------------
 void TransferItem::onResizeEvent()
 {
-    auto transfer = MainWindow::instance->scene()->transfer;
+    auto scene = MainWindow::instance->scene();
+    if (!scene) return;
+    auto transfer = scene->transfer;
     if (!transfer) return;
 
-    if (transfer->type() == Transfer1D::typeID())
-    {
-        BOOST_FOREACH(auto & item, m_nodes)
-        {
-            auto node = std::static_pointer_cast<vox::Node>(item->data());
-            float x = node->density;
-            float y = node->material->opticalThickness;
-            item->setPosition(x, y);
-        }
-    }
-    else if (transfer->type() == Transfer2D::typeID())
-    {
-        //synchronizeView();
-    }
+    if (transfer->type() == Transfer1D::typeID())      updateNode(nullptr);
+    else if (transfer->type() == Transfer2D::typeID()) updateQuad(nullptr);
 }

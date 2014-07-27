@@ -59,7 +59,7 @@ public:
         m_gradCutoff(0.0f),
         m_scatterCoefficient(0.0f),
         m_edgeEnhancement(0.0f),
-        m_isDirty(false)
+        m_isDirty(true)
     {
     }
     

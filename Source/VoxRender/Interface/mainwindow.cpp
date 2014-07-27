@@ -154,8 +154,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     configurePlugins();
 
 	// Create transfer function widget
-	transferwidget = new TransferWidget();
-	ui->transferAreaLayout->addWidget(transferwidget);
+	ui->transferAreaLayout->addWidget(TransferWidget::instance());
 
 	// Configure the render view + interaction widget
 	m_renderView = new RenderView(ui->frame_render);
@@ -194,7 +193,7 @@ MainWindow::~MainWindow()
     m_renderer.reset();
 
     delete histogramwidget;
-    delete transferwidget;
+    delete TransferWidget::instance();
     delete m_lightingWidget;
 	delete m_renderView;
     delete m_clipWidget;
@@ -967,6 +966,22 @@ void MainWindow::onZoomChange(float zoomFactor)
 void MainWindow::on_pushButton_clipboard_clicked()
 {
 	m_renderView->copyToClipboard();
+}
+
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+void MainWindow::on_pushButton_loadTransfer_clicked()
+{
+    TransferWidget::instance()->load();
+}
+
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+void MainWindow::on_pushButton_saveTransfer_clicked()
+{
+    TransferWidget::instance()->save();
 }
 
 // ----------------------------------------------------------------------------

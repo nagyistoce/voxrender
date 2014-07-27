@@ -251,7 +251,7 @@ namespace
 
                 boost::property_tree::ptree node;
                 
-                if (!transfer || !m_options.lookup("ForceTransferMap").empty()) // Transfer map
+                if (!transfer || !m_options.lookup("ForceTransferMap", "").empty()) // Transfer map
                 {
                     auto useMap = transferMap;
                     if (!useMap)

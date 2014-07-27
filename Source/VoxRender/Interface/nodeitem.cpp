@@ -89,9 +89,9 @@ NodeItem::NodeItem(TransferItem* parent, float x, float y, std::shared_ptr<void>
 	setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 	setFlag(QGraphicsItem::ItemIsSelectable);
 
-    setZValue(500.f);
+    setAcceptHoverEvents(true);
 
-    setPosition(x, y);
+    setZValue(500.f);
 
     // Set the node rectangle
     QRectF ellipseRect;
@@ -99,6 +99,8 @@ NodeItem::NodeItem(TransferItem* parent, float x, float y, std::shared_ptr<void>
     ellipseRect.setWidth( 2.0f * filescope::radius );
     ellipseRect.setHeight( 2.0f * filescope::radius );
     setRect(ellipseRect);
+
+    setPosition(x, y);
 };
 
 // --------------------------------------------------------------------
@@ -162,10 +164,8 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     }
 
     // Ensure the node remains within the parent boundaries
-    if (change == QGraphicsItem::ItemPositionChange)
+    if (change == QGraphicsItem::ItemPositionChange && !m_ignorePosChange)
     {
-        if (m_ignorePosChange) return position;
-
         QPointF const nodeRangeMin = m_parent->rect().topLeft();
         QPointF const nodeRangeMax = m_parent->rect().bottomRight();
 
@@ -180,15 +180,12 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     // Update the associated transfer function node when moved
     if (change == QGraphicsItem::ItemPositionHasChanged && !m_ignorePosChange)
     {
-        float xNorm = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
-        float yNorm = 1.f - (position.y() - m_parent->rect().y()) / m_parent->rect().height();
-        
-        m_parent->onNodeItemChanged(this, xNorm, yNorm);
+        m_parent->onNodeItemChanged(this);
 
         return position;
     }
 
-    return QGraphicsItem::itemChange( change, value );
+    return QGraphicsItem::itemChange(change, value);
 }
 
 // --------------------------------------------------------------------
@@ -213,7 +210,17 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent)
 }
 
 // --------------------------------------------------------------------
-//  Updates the position of the node item 
+//  Returns the normalized node position
+// --------------------------------------------------------------------
+void NodeItem::getPosition(float & x, float & y)
+{
+    auto position = this->pos();
+    x = (position.x() - m_parent->rect().x()) / m_parent->rect().width();
+    y = 1.f - (position.y() - m_parent->rect().y()) / m_parent->rect().height();
+}
+
+// --------------------------------------------------------------------
+//  Sets the normalized node position
 // --------------------------------------------------------------------
 void NodeItem::setPosition(float x, float y)
 {
@@ -228,4 +235,32 @@ void NodeItem::setPosition(float x, float y)
     m_ignorePosChange = true;
     QGraphicsEllipseItem::setPos(newPos);
     m_ignorePosChange = false;
+}
+
+// --------------------------------------------------------------------
+//  Sets the selected state of the item
+// --------------------------------------------------------------------
+void NodeItem::setSelected(bool selected)
+{
+    m_ignorePosChange = true;
+    QGraphicsEllipseItem::setSelected(selected);
+    m_ignorePosChange = false;
+}
+
+// --------------------------------------------------------------------
+//  Repaint for hover effect
+// --------------------------------------------------------------------
+void NodeItem::hoverEnterEvent(QGraphicsSceneHoverEvent * pEvent)
+{
+    QGraphicsEllipseItem::hoverEnterEvent(pEvent);
+	update();	
+}
+ 
+// --------------------------------------------------------------------
+//  Repaint for hover effect
+// --------------------------------------------------------------------
+void NodeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent * pEvent)
+{
+    QGraphicsEllipseItem::hoverLeaveEvent(pEvent);
+	update();
 }

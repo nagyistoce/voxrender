@@ -99,12 +99,6 @@ TransferWidget::TransferWidget(QWidget *parent) :
     connect(m_colorEmissive, SIGNAL(endColorSelection()), this, SLOT(endMaterialChange()));
     connect(m_colorSpecular, SIGNAL(endColorSelection()), this, SLOT(endMaterialChange()));
 
-    // Ensure transfer node selection is detected 
-    connect(MainWindow::instance, SIGNAL(transferNodeSelected(std::shared_ptr<vox::Node>)),
-        this, SLOT(setSelectedNode(std::shared_ptr<vox::Node>)));
-    connect(MainWindow::instance, SIGNAL(transferQuadSelected(std::shared_ptr<vox::Quad>,vox::Quad::Node)),
-        this, SLOT(setSelectedQuad(std::shared_ptr<vox::Quad>,vox::Quad::Node)));
-        
     connect(MainWindow::instance, SIGNAL(sceneChanged(vox::Scene &,void *)), 
             this, SLOT(sceneChanged(vox::Scene &,void *)), Qt::DirectConnection);
 
@@ -128,9 +122,19 @@ std::shared_ptr<Node> TransferWidget::selectedNode()
 }
 
 // ----------------------------------------------------------------------------
+//  Returns the currently selected transfer function node
+// ----------------------------------------------------------------------------
+std::shared_ptr<Quad> TransferWidget::selectedQuad(Quad::Node * node)
+{
+    if (node) *node = m_currentIndex;
+
+    return m_currentQuad;
+}
+
+// ----------------------------------------------------------------------------
 //  Sets the selected node for 1D transfer function editing
 // ----------------------------------------------------------------------------
-void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
+void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node, bool signal)
 {
     m_currentNode = node;
     
@@ -156,6 +160,8 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
         ui->groupBox_currNode->setDisabled(true);
         ui->groupBox_nodePos->setDisabled(true);
     }
+    
+    if (signal) emit nodeChanged(EditType_Reference);
 
     m_ignore = false;
 }
@@ -163,8 +169,10 @@ void TransferWidget::setSelectedNode(std::shared_ptr<vox::Node> node)
 // ----------------------------------------------------------------------------
 //  Sets the selected quad for 2D transfer function editing
 // ----------------------------------------------------------------------------
-void TransferWidget::setSelectedQuad(std::shared_ptr<Quad> quad, Quad::Node node)
+void TransferWidget::setSelectedQuad(std::shared_ptr<Quad> quad, Quad::Node node, bool signal)
 {
+    m_ignore = true;
+
     // Set the selected material within the quad
     if (!quad || node == Quad::Node::Node_End) 
         setSelectedMaterial(nullptr);
@@ -172,6 +180,11 @@ void TransferWidget::setSelectedQuad(std::shared_ptr<Quad> quad, Quad::Node node
 
     // Set the node controls for the selected component of the quad
     m_currentQuad = quad;
+    m_currentIndex = node;
+
+    if (signal) emit nodeChanged(EditType_Reference);
+    
+    m_ignore = false;
 }
 
 // ----------------------------------------------------------------------------
@@ -195,6 +208,18 @@ void TransferWidget::setSelectedMaterial(std::shared_ptr<Material> material)
 }
 
 // ----------------------------------------------------------------------------
+//  Processes and re-emits a node change event
+// ----------------------------------------------------------------------------
+void TransferWidget::onNodeChanged()
+{
+    // Reload the node into the widgets
+    if      (m_currentNode) setSelectedNode(m_currentNode, false);
+    else if (m_currentQuad) setSelectedQuad(m_currentQuad, Quad::Node_End, false);
+
+    emit nodeChanged();
+}
+
+// ----------------------------------------------------------------------------
 //  Synchronizes the transfer function widget with the active
 // ----------------------------------------------------------------------------
 void TransferWidget::sceneChanged(Scene & scene, void * userInfo)
@@ -214,16 +239,21 @@ void TransferWidget::sceneChanged(Scene & scene, void * userInfo)
     if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
         switchDimensions(1);
-        setSelectedNode(transfer1D->nodes().empty() ? 
-            nullptr : transfer1D->nodes().front());
+    
+        auto nodes = transfer1D->nodes();
+        if (std::find(nodes.begin(), nodes.end(), m_currentNode) == nodes.end()) m_currentNode = nullptr;
+        m_currentQuad = nullptr;
+        setSelectedNode(m_currentNode);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
     {
         switchDimensions(2);
-        setSelectedQuad(transfer2D->quads().empty() ? 
-            nullptr : transfer2D->quads().front());
+
+        auto nodes = transfer2D->quads();
+        m_currentNode = nullptr;
+        if (std::find(nodes.begin(), nodes.end(), m_currentQuad) == nodes.end()) m_currentQuad = nullptr;
+        setSelectedQuad(m_currentQuad);
     }
-    else m_currentNode = nullptr;
 }
 
 // ----------------------------------------------------------------------------
@@ -265,6 +295,11 @@ bool TransferWidget::canSwitchDimensions()
 // ----------------------------------------------------------------------------
 void TransferWidget::switchDimensions(int nDims)
 {
+    if (nDims == m_dimensions) return;
+
+    setSelectedNode(nullptr, false);
+    setSelectedQuad(nullptr, Quad::Node_End, false);
+
 	// Block radio button signals
 	ui->radioButton_1->blockSignals(true);
 	ui->radioButton_2->blockSignals(true);
@@ -289,7 +324,6 @@ void TransferWidget::switchDimensions(int nDims)
             ui->spinBox_resX->setEnabled(true);
             ui->spinBox_resY->setEnabled(false);
             ui->spinBox_resZ->setEnabled(false);
-			m_dimensions = 1;
 			break;
 
 		case 2:
@@ -308,7 +342,6 @@ void TransferWidget::switchDimensions(int nDims)
             ui->spinBox_resX->setEnabled(true);
             ui->spinBox_resY->setEnabled(true);
             ui->spinBox_resZ->setEnabled(false);
-			m_dimensions = 2;
 			break;
 
 		case 3:
@@ -327,18 +360,19 @@ void TransferWidget::switchDimensions(int nDims)
             ui->spinBox_resX->setEnabled(true);
             ui->spinBox_resY->setEnabled(true);
             ui->spinBox_resZ->setEnabled(true);
-			m_dimensions = 3;
 			break; 
 
         default:
             break;
 	}
 
+    m_dimensions = nDims;
+
     // Update the scene
     if (m_transfer != MainWindow::instance->scene()->transfer)
     {
         auto main = MainWindow::instance;
-        auto lock = main->scene()->lock(this);
+        auto lock = main->scene()->lock();
         main->scene()->transfer = m_transfer;
         main->m_renderController.setTransferFunction(m_transfer); 
         // :TODO: Some sort of scene transfer swapping functionality, this should NOT be through render controller
@@ -378,7 +412,7 @@ void TransferWidget::on_radioButton_3_toggled(bool checked)
 // ----------------------------------------------------------------------------
 //  Opens a dialogue to import a transfer function from a user defined file
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_import_clicked()
+void TransferWidget::load()
 {
     QString filename = QFileDialog::getOpenFileName( 
         this, tr("Choose a scene file to open"), 
@@ -415,7 +449,7 @@ void TransferWidget::on_pushButton_import_clicked()
 // ----------------------------------------------------------------------------
 //  Opens a dialogue to export a transfer function to a user defined file
 // ----------------------------------------------------------------------------
-void TransferWidget::on_pushButton_export_clicked()
+void TransferWidget::save()
 {
     try
     {
@@ -536,18 +570,23 @@ void TransferWidget::on_pushButton_last_clicked()
 // ----------------------------------------------------------------------------
 void TransferWidget::on_pushButton_delete_clicked()
 {
+    if (!m_currentNode && !m_currentQuad) return;
+
+    auto scene = MainWindow::instance->scene();
+    auto lock = scene->lock();
+
+    //emit nodeChanged(EditType_Remove);
+
     if (auto transfer1D = dynamic_cast<Transfer1D*>(m_transfer.get()))
     {
-        if (!m_currentNode) return;
-        DO_LOCK(transfer1D->remove(m_currentNode);)
-        setSelectedNode(nullptr);
+        transfer1D->remove(m_currentNode);
     }
     else if (auto transfer2D = dynamic_cast<Transfer2D*>(m_transfer.get()))
     {
-        if (!m_currentQuad) return;
-        DO_LOCK(transfer2D->remove(m_currentQuad);)
-        setSelectedQuad(nullptr);
+        transfer2D->remove(m_currentQuad);
     }
+
+    m_transfer->setDirty();
 }
 
 // ----------------------------------------------------------------------------
@@ -563,8 +602,7 @@ void TransferWidget::on_horizontalSlider_density_valueChanged(int value)
     if (m_ignore) return;
 
     auto val = ui->doubleSpinBox_density->value() / 100.0f;
-    DO_LOCK(m_currentNode->density = val;)
-    emit nodePositionChanged(m_currentNode);
+    DO_LOCK(m_currentNode->density = val; emit nodeChanged();)
 }
 
 // ----------------------------------------------------------------------------
@@ -580,8 +618,7 @@ void TransferWidget::on_doubleSpinBox_density_valueChanged(double value)
     if (m_ignore) return;
 
     auto val = ui->doubleSpinBox_density->value() / 100.0f;
-    DO_LOCK(m_currentNode->density = val;)
-    emit nodePositionChanged(m_currentNode);
+    DO_LOCK(m_currentNode->density = val; emit nodeChanged();)
 }
 
 // ----------------------------------------------------------------------------
@@ -629,8 +666,7 @@ void TransferWidget::on_horizontalSlider_opacity_valueChanged(int value)
     if (m_ignore) return;
 
     auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
-    DO_LOCK(m_currentMaterial->opticalThickness = val;)
-    emit nodePositionChanged(m_currentNode);
+    DO_LOCK(m_currentMaterial->opticalThickness = val; emit nodeChanged();)
 }
 
 // ----------------------------------------------------------------------------
@@ -646,8 +682,7 @@ void TransferWidget::on_doubleSpinBox_opacity_valueChanged(double value)
     if (m_ignore) return;
 
     auto val = ui->doubleSpinBox_opacity->value() / 100.0f;
-    DO_LOCK(m_currentMaterial->opticalThickness = val;)
-    emit nodePositionChanged(m_currentNode);
+    DO_LOCK(m_currentMaterial->opticalThickness = val; emit nodeChanged();)
 }
 
 // ----------------------------------------------------------------------------

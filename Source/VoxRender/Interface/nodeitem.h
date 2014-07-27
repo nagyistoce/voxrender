@@ -63,12 +63,20 @@ public:
     /** Updates the position of the node item */
     void setPosition(float x, float y);
     
+    /** Returns the position of the node item */
+    void getPosition(float & x, float & y);
+
     /** Returns the transfer function data associated with this element */
     std::shared_ptr<void> data() { return m_data; }
+
+    /** Sets the selected state of the item */
+    void setSelected(bool selected);
 
 protected:
 	virtual void mousePressEvent(QGraphicsSceneMouseEvent* pEvent);
 	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* pEvent);
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent * pEvent);
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent * pEvent);
 
 	virtual void paint( 
         QPainter* pPainter, 

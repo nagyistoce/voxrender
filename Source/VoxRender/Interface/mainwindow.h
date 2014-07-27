@@ -103,11 +103,8 @@ public:
 
     ~MainWindow();
     
-    static MainWindow* instance;
+    static MainWindow* instance; ///< Global instance
     
-    /** Adds a control for managing a clipping object in the render scene */
-    void addClippingGeometry(std::shared_ptr<vox::Primitive> prim);
-
     /** Returns the current render state of the application */
     RenderState renderState() { return m_guiRenderState; }
 
@@ -116,20 +113,6 @@ public:
 
     /** Returns the currently active renderer */ 
     vox::VolumeScatterRenderer & renderer() { return *m_renderer; }
-
-    /** Returns the transfer widget object handle */
-    TransferWidget * transferWidget() { return transferwidget; }
-
-    /** Sets the working transfer node for global editing */
-    // :TODO: Move to TransferWidget class
-    void setTransferNode(std::shared_ptr<vox::Node> node)
-    {
-        emit transferNodeSelected(node);
-    }
-    void setTransferQuad(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node)
-    {
-        emit transferQuadSelected(quad, node);
-    }
 
     /** Returns the last directory accessed by the user */
     QString const& lastOpenDir() { return m_lastOpenDir; }
@@ -154,10 +137,6 @@ signals:
     /** Progress change callback */
     void progressChanged(int progress);
 
-    /** Signal sent when the working transfer node is changed */
-    void transferNodeSelected(std::shared_ptr<vox::Node> node); 
-    void transferQuadSelected(std::shared_ptr<vox::Quad> quad, vox::Quad::Node node); 
-
     /** Signal sent when the RenderController feeds back a frame */
     void frameReady(std::shared_ptr<vox::FrameBufferLock> frame);
 
@@ -169,7 +148,7 @@ signals:
     void filtersChanged(std::shared_ptr<vox::volt::Filter> filter, bool available);
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow * ui;
     
     /** Vox GUI Error Handler - Logs to std::clog and log tab pane */
     void voxGuiErrorHandler(char const* file, int line, int severity, 
@@ -195,8 +174,8 @@ private:
 
 	// Render state control
 	RenderState m_guiRenderState;
-    void renderNewSceneFile( const QString& filename );
-	void changeRenderState( RenderState state );
+    void renderNewSceneFile(const QString& filename);
+	void changeRenderState(RenderState state);
 	bool canStopRendering();
     void synchronizeView();
 
@@ -246,8 +225,6 @@ private:
 	PaneWidget* advpanes[NumAdvPanes];  ///< Advanced tab widget panes
 
 	enum { NumTransferPanes = 0 };
-	TransferWidget * transferwidget;
-    
 	InfoWidget *     m_infowidget;
     LightingWidget * m_lightingWidget;
     ClipWidget *     m_clipWidget;
@@ -291,6 +268,9 @@ private slots:
     void on_pushButton_stop_clicked();
     void on_pushButton_resume_clicked();
     void on_pushButton_pause_clicked();
+    
+    void on_pushButton_loadTransfer_clicked();
+    void on_pushButton_saveTransfer_clicked();
 
     void on_pushButton_refreshPlugins_clicked() { }
     void on_pushButton_loadPlugin_clicked();

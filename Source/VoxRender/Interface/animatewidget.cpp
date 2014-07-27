@@ -328,6 +328,8 @@ void AnimateWidget::on_pushButton_render_clicked()
     QString filename = QFileDialog::getSaveFileName( 
         this, tr("Choose an video destination"), QString(), 
         fileTypes.c_str());
+    
+    if (filename.isEmpty()) return;
 
     ResourceId uri(("file:///" + filename).toUtf8().data());
     MainWindow::instance->scene()->animator->setOutputUri(uri);
