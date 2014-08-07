@@ -306,7 +306,7 @@ private:
                     options.addOption("height", setCam->filmHeight());
                     options.addOption("framerate", m_scene->animator->framerate());
                     options.addOption("bitrate", 40000000);
-                    options.addOption("videoStreams", 2);
+                    options.addOption("videoStreams", interpScene->camera->isStereoEnabled() ? 2 : 1);
                 }
 
                 // Compile the finalized images into a video file
@@ -317,8 +317,7 @@ private:
                     auto frameUri = m_scene->animator->tempLocation();
                     frameUri.path += format("frame_%1%.png", i);
                     auto frame = Bitmap::imprt(frameUri);
-                    vidstr.push(frame, 0);
-                    vidstr.push(frame, 1);
+                    vidstr.push(frame);
                 }
                 vidstr.close();
             }

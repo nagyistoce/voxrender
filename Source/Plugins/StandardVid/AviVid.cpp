@@ -200,71 +200,83 @@ AVStream* AviWriter::addVideoStream(OptionSet const& options)
 // ----------------------------------------------------------------------------
 //  Adds a frame of video to the output stream
 // ----------------------------------------------------------------------------
-void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap, unsigned int streamId)
+void AviWriter::addFrame(ResourceOStream & ostr, Bitmap const& bitmap, int streamId)
 {
-    if (streamId > m_videoStreams.size()) throw Error(__FILE__, __LINE__, 
-        VOX_LOG_CATEGORY, "streamId out of index", Error_Range);
-
-    auto c = m_videoStreams[streamId]->codec;
-
-    auto dptr = (UInt8*)bitmap.data();
-    auto ptr = (UInt8*)bitmap.data();
-    for (int j = 0; j < bitmap.height(); j++)
-    {
-        for (int i = 0; i < bitmap.width(); i++)
-        {
-            *dptr++ = *ptr++;
-            *dptr++ = *ptr++;
-            *dptr++ = *ptr++;
-            ptr++;
-        }
-        ptr+=4;
-    }
+    if (streamId > 0 && streamId > m_videoStreams.size()) throw 
+        Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, "streamId out of index", Error_Range);
 
     // Determine the src format so we can perform a conversion
     AVPixelFormat srcFormat;
-    switch (bitmap.type())
+    if (bitmap.depth() == 8)
     {
-    case Bitmap::Format_RGBA:
-    case Bitmap::Format_RGB:
-        if (bitmap.depth() == 8)
+        switch (bitmap.type())
         {
-            srcFormat = PIX_FMT_RGB24;
-            break;
+        case Bitmap::Format_RGBA:      srcFormat = AV_PIX_FMT_RGBA;    break;
+        case Bitmap::Format_RGB:       srcFormat = AV_PIX_FMT_RGB8;    break;
+        case Bitmap::Format_Gray:      srcFormat = AV_PIX_FMT_GRAY8;   break;
+        case Bitmap::Format_RGBX:      srcFormat = AV_PIX_FMT_RGB0;    break;
+        case Bitmap::Format_GrayAlpha: srcFormat = AV_PIX_FMT_GRAY8A;  break;
+        default:
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
+                "Invalid image format", Error_Unknown);
         }
-    default:
+    }
+    else
+    {
         throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
             "Invalid image format", Error_Unknown);
     }
-
-    // Convert the video frame into the output format
-    SwsContext * convertCtx = sws_getCachedContext(nullptr, 
-        bitmap.width(), bitmap.height(),
-        srcFormat,
-        c->width, c->height,
-        c->pix_fmt,
-        SWS_BICUBIC, nullptr, nullptr, nullptr);
-
-    if (!convertCtx) 
-    {
-        throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
-            "Call to sws_getContext failed", Error_Unknown);
-    }
-
-    AVFrame inframe;
-    avpicture_fill((AVPicture*)&inframe, (UInt8*)bitmap.data(), srcFormat, bitmap.width(), bitmap.height());
-
-    sws_scale(convertCtx, inframe.data, inframe.linesize,
-        0, c->height, m_picture->data, m_picture->linesize);
     
-    // Push the next frame into the encoder
-    writeFrame(m_picture.get(), streamId);
+    // streamId negative => auto detect ID
+    unsigned int front = 0; 
+    unsigned int back  = 0;
+    if (streamId < 0)
+    {
+        // Make sure the layers and stream counts match on auto
+        if (bitmap.layers() != 1 && m_videoStreams.size() != 1) 
+        {
+            if (m_videoStreams.size() != bitmap.layers()) 
+                throw Error(__FILE__, __LINE__, VOX_SVID_LOG_CATEGORY, 
+                    "Bitmap layer count and video stream count must match.");
+            back = m_videoStreams.size() - 1;
+        }
+    }
+    else front = back = streamId;
+
+    // Process each layer of the next frame
+    for (auto sId = front; sId <= back; sId++)
+    {
+        auto c = m_videoStreams[sId]->codec;
+
+        // Convert the video frame into the output format
+        SwsContext * convertCtx = sws_getCachedContext(nullptr, 
+            bitmap.width(), bitmap.height(),
+            srcFormat,
+            c->width, c->height,
+            c->pix_fmt,
+            SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+        if (!convertCtx) 
+        {
+            throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY, 
+                "Call to sws_getContext failed", Error_Unknown);
+        }
+
+        AVFrame inframe;
+        avpicture_fill((AVPicture*)&inframe, (UInt8*)bitmap.data(sId), srcFormat, bitmap.width(), bitmap.height());
+
+        sws_scale(convertCtx, inframe.data, inframe.linesize,
+            0, c->height, m_picture->data, m_picture->linesize);
+    
+        // Push the next frame into the encoder
+        writeFrame(m_picture.get(), sId);
+    }
 }
 
 // ----------------------------------------------------------------------------
 //  Writes video to the encoder and the output through the interleaver
 // ----------------------------------------------------------------------------
-bool AviWriter::writeFrame(AVFrame * frame, unsigned int streamId)
+int AviWriter::writeFrame(AVFrame * frame, unsigned int streamId)
 {
     AVPacket pkt;
     av_init_packet(&pkt);
@@ -309,7 +321,7 @@ void AviWriter::end(ResourceOStream & ostr)
     }
 
     // Free the contexts
-    for(int i = 0; i < m_oc->nb_streams; i++) 
+    for(unsigned int i = 0; i < m_oc->nb_streams; i++) 
     {
         avcodec_close(m_oc->streams[i]->codec);
         av_freep(&m_oc->streams[i]->codec);

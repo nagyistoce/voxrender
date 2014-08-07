@@ -73,7 +73,7 @@ void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CBuffer2D<ColorRgbaLdr
         (sampleBuffer.width()  + threads.x - 1) / threads.x,
         (sampleBuffer.height() + threads.y - 1) / threads.y 
         );
-    
+
 	// Execute the kernel
     cudaEvent_t start, stop;
     VOX_CUDA_CHECK(cudaEventCreate(&start));
@@ -86,6 +86,8 @@ void TonemapKernel::execute(CSampleBuffer2D sampleBuffer, CBuffer2D<ColorRgbaLdr
 
     // Acquire the time for this kernel execution
     cudaEventElapsedTime(&m_elapsedTime, start, stop);
+    VOX_CUDA_CHECK(cudaEventDestroy(start));
+    VOX_CUDA_CHECK(cudaEventDestroy(stop));
 }
 
 } // namespace vox

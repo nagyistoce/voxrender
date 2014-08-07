@@ -166,13 +166,23 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant& value)
     // Ensure the node remains within the parent boundaries
     if (change == QGraphicsItem::ItemPositionChange && !m_ignorePosChange)
     {
-        QPointF const nodeRangeMin = m_parent->rect().topLeft();
-        QPointF const nodeRangeMax = m_parent->rect().bottomRight();
+        auto const rect     = m_parent->rect();
+        auto const rangeMin = rect.topLeft();
+        auto const rangeMax = rect.bottomRight();
 
-        position.setX(qMin(nodeRangeMax.x(), qMax(position.x(), nodeRangeMin.x())));
-        position.setY(qMin(nodeRangeMax.y(), qMax(position.y(), nodeRangeMin.y())));
+        // Pre-clip node to the window boundaries
+        position.setX(qMin(rangeMax.x(), qMax(position.x(), rangeMin.x())));
+        position.setY(qMin(rangeMax.y(), qMax(position.y(), rangeMin.y())));
+        
+        // Validate the new normalized node position
+        QPointF normalized;
+        normalized.setX((position.x() - rect.x()) / rect.width());
+        normalized.setY(1.f - (position.y() - rect.y()) / rect.height());
 
-        m_parent->onNodeItemChange(this, position);
+        m_parent->onNodeItemChange(this, normalized); // Get the new position
+
+        position.setX(normalized.x() * rect.width()  + rect.x());
+        position.setY((1.f - normalized.y()) * rect.height() + rect.y());
 
         return position;
     }

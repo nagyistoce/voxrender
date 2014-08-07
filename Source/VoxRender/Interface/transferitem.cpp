@@ -274,24 +274,28 @@ void TransferItem::onNodeItemChanged(NodeItem * item)
 // ----------------------------------------------------------------------------
 void TransferItem::onNodeItemChange(NodeItem * item, QPointF & pos)
 {
-    auto transfer = MainWindow::instance->scene()->transfer;
-    if (transfer->type() == Transfer1D::typeID())
+    auto scene    =  MainWindow::instance->scene();
+    auto transfer = scene->transfer;
+    auto key      = item->data().get();
+
+    if (auto transfer1D = dynamic_cast<Transfer1D*>(transfer.get()))
     {
-        for (auto iter = m_nodes.begin(); iter != m_nodes.end(); ++iter)
-        if ((*iter).get() == item)
+        auto nodes = transfer1D->nodes();return;
+        for (auto iter = nodes.begin(); iter != nodes.end(); ++iter)
+        if ((*iter).get() == key)
         {
-            if (iter != m_nodes.begin()) 
+            if (iter != nodes.begin()) 
             {
-                auto pX = (*--iter)->pos().x();
+                auto pX = (*--iter)->density;
                 if (pX > pos.x()) pos.setX(pX);
                 ++iter;
             }
         
             ++iter;
 
-            if (iter != m_nodes.end())
+            if (iter != nodes.end())
             {
-                auto nX = (*iter)->pos().x();
+                auto nX = (*iter)->density;
                 if (nX < pos.x()) pos.setX(nX);
             }
 

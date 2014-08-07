@@ -34,6 +34,10 @@
 #include "Actions/AddRemKeyAct.h"
 #include "VoxLib/Action/ActionManager.h"
 #include "VoxLib/Video/VidStream.h"
+#include "VoxScene/Camera.h"
+#include "VoxScene/PrimGroup.h"
+#include "VoxScene/Light.h"
+#include "VoxScene/RenderParams.h"
 
 using namespace vox;
 
@@ -209,7 +213,7 @@ void AnimateWidget::on_pushButton_load_clicked()
 
     MainWindow::instance->stopRender();
     
-    auto lock = scene->lock(); // Lock for edit
+    auto lock = scene->lock(MainWindow::instance); // Lock for edit
 
     // Load the endpoint if the selected frame is outside the existing range of frame values
     if      (frames.front().first > index) frames.front().second->clone(scene);
@@ -237,6 +241,13 @@ void AnimateWidget::on_pushButton_load_clicked()
             scene->animator->interp(fbeg, fend, factor, scene);
         }
     }
+
+    if (scene->parameters)   scene->parameters->setDirty();
+    if (scene->lightSet)     scene->lightSet->setDirty();
+    if (scene->camera)       scene->camera->setDirty();
+    if (scene->clipGeometry) scene->clipGeometry->setDirty();
+    if (scene->transfer)     scene->transfer->setDirty();
+    if (scene->transferMap)  scene->transferMap->setDirty();
 
     lock.reset();
 

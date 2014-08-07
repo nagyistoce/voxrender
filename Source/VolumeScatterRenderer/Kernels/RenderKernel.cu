@@ -549,7 +549,7 @@ void RenderKernel::execute(size_t xstart, size_t ystart, size_t width, size_t he
         (width + threads.x - 1) / threads.x,
 		(height + threads.y - 1) / threads.y 
         );
-
+    
 	// Execute the kernel
     cudaEvent_t start, stop;
     VOX_CUDA_CHECK(cudaEventCreate(&start));
@@ -562,6 +562,8 @@ void RenderKernel::execute(size_t xstart, size_t ystart, size_t width, size_t he
 
     // Acquire the time for this kernel execution
     cudaEventElapsedTime(&m_elapsedTime, start, stop);
+    VOX_CUDA_CHECK(cudaEventDestroy(start));
+    VOX_CUDA_CHECK(cudaEventDestroy(stop));
 }
 
 } // namespace vox

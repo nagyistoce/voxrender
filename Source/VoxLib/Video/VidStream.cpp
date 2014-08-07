@@ -117,7 +117,7 @@ void VidIStream::pull()
 // --------------------------------------------------------------------
 //  Pushes a frame to the output stream
 // --------------------------------------------------------------------
-void VidOStream::push(Bitmap const& frame, unsigned int streamId)
+void VidOStream::push(Bitmap const& frame, int streamId)
 {
     if (!m_ostr) throw Error(__FILE__, __LINE__, VOX_LOG_CATEGORY,
         "Video stream must be open to push", Error_BadStream);

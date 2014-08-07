@@ -30,19 +30,24 @@
 #include "mainwindow.h"
 #include "animatewidget.h"
 #include "VoxScene/Animator.h"
+#include "VoxLib/Core/Geometry/Vector.h"
 
 // QT Dependencies
 #include <QtWidgets/QGraphicsSceneMouseEvent>
 
+using namespace vox;
+
 namespace {
 namespace filescope {
+
+    Vector2 const STEP_RANGE(10, 200);
 
 } // namespace filescope
 } // namespace anonymous
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Constructor - initialize the grid graphic options
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 AnimateItem::AnimateItem(AnimateWidget * parent) :
 	QGraphicsRectItem(),
 	m_brushEnabled(QBrush(QColor::fromHsl(0, 0, 80))),
@@ -64,9 +69,9 @@ AnimateItem::AnimateItem(AnimateWidget * parent) :
     connect(&m_scrollTimer, SIGNAL(timeout()), this, SLOT(scrollWindow()));
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::setFrame(int frame)
 {
     m_framePos = frame;
@@ -77,9 +82,9 @@ void AnimateItem::setFrame(int frame)
     update();
 }
  
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Scrolls the display window and then resets the timer
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::scrollWindow()
 {
     if (m_mousePos == 0) m_offset -= m_step;
@@ -90,19 +95,31 @@ void AnimateItem::scrollWindow()
     update();
 }
 
-// ------------------------------------------------------------
-//  Scrolls the window on mouse wheel events
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+//  Scrolls the window/ on mouse wheel events
+// ----------------------------------------------------------------------------
 void AnimateItem::onMouseWheel(QWheelEvent * pEvent)
 {
-    m_offset += pEvent->delta() / 60;
+    // Zoom on view if CTRL down ...
+    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+        int oldRange = m_range;
+        m_step = clamp(m_step - pEvent->delta() / 12, 
+            filescope::STEP_RANGE[0], filescope::STEP_RANGE[1]);
+        m_range = 12 * m_step;
+        m_offset += (oldRange - m_range) / 2;
+    }
+    else // ...  scroll through view
+    {
+        m_offset += pEvent->delta() / 60 * m_step / 10;
+    }
 
     update();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::onMousePress(QMouseEvent* pEvent)
 {
     if (pEvent->button() == Qt::RightButton)
@@ -133,9 +150,9 @@ void AnimateItem::onMousePress(QMouseEvent* pEvent)
     update();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Set the current frame to the hovered frame
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::onMouseRelease(QMouseEvent* pEvent)
 {
     m_isMouseDown = false;
@@ -161,9 +178,9 @@ void AnimateItem::onMouseRelease(QMouseEvent* pEvent)
     update();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Update the position of the draggable frame cursor
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::onMouseMove(QMouseEvent* pEvent)
 {
     // :TODO: Stuff to move to filescope/private members
@@ -178,7 +195,7 @@ void AnimateItem::onMouseMove(QMouseEvent* pEvent)
     auto pos = pEvent->pos();
     pos.setX(pos.x() - WIDTH);
     auto mousePos = (int)(pos.x() / DX + 0.5f);
-    mousePos = vox::clamp<int>(mousePos, 0, m_range);
+    mousePos = clamp(mousePos, 0, m_range);
     
     // Determine if the cursor has moved
     if (mousePos == m_mousePos) return;
@@ -197,13 +214,13 @@ void AnimateItem::onMouseMove(QMouseEvent* pEvent)
     update();
 }
 
-// ------------------------------------------------------------
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::onMouseEnter(QEvent * pEvent) { }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //  Resets the mouse hover index
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::onMouseLeave(QEvent * pEvent)
 {
     m_mousePos = -1;
@@ -214,9 +231,9 @@ void AnimateItem::onMouseLeave(QEvent * pEvent)
     update();
 }
 
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Draws a 2D grid with the specified axial labels
-// ------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     char const * Y_LABELS[] = {"Camera", "Volume", "Transfer", "Clipping", "Lights", "Settings"};
@@ -291,8 +308,8 @@ void AnimateItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 	}
 
 	// Draw markings along X-axis 
-    int offset = (m_offset < 0) ? abs(m_offset) % 10 : (10 - (m_offset % 10)) % 10;
-    float xoffset = DX * (offset / 10.0f);
+    int offset = (m_offset < 0) ? abs(m_offset) % m_step : (m_step - (m_offset % m_step)) % m_step;
+    float xoffset = DX * offset / m_step;
 	for (int i = 0; i <= m_range / m_step; i++)
 	{
         auto w = gridRect.left() + i*DX + xoffset;

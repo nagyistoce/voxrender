@@ -54,7 +54,7 @@ public:
 
     virtual void end(ResourceOStream & ostr);
 
-    virtual void addFrame(ResourceOStream & ostr, Bitmap const& bitmap, unsigned int streamId = 0);
+    virtual void addFrame(ResourceOStream & ostr, Bitmap const& bitmap, int streamId);
 
 private:
     AVStream* addVideoStream(OptionSet const& options);
@@ -63,7 +63,7 @@ private:
 
     void allocPicture();
 
-    bool writeFrame(AVFrame * frame, unsigned int streamId);
+    int writeFrame(AVFrame * frame, unsigned int streamId);
 
 private:
     std::shared_ptr<void> m_handle;
@@ -84,7 +84,7 @@ public:
 
     virtual void end(ResourceOStream & ostr) { }
 
-    virtual void getFrame() { }
+    virtual void getFrame(int streamId = -1) { }
 
 private:
     std::shared_ptr<void> m_handle;

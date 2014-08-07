@@ -144,7 +144,7 @@ private:
     float m_framerate;  ///< The current approximate framerate
     float m_lastFrame;  ///< The timestamp for the last frame
 
-    Stereo m_displayMode;
+    Stereo m_displayMode; ///< The type of the stereo image display
 
 signals:
 	void viewChanged(float zoomFactor);

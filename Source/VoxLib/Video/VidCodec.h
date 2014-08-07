@@ -49,7 +49,7 @@ public:
 
     virtual void begin(ResourceOStream & ostr, OptionSet const& options) { }
 
-    virtual void addFrame(ResourceOStream & ostr, Bitmap const& frame, unsigned int streamId = 0) { }
+    virtual void addFrame(ResourceOStream & ostr, Bitmap const& frame, int streamId = -1) { }
     
     virtual void end(ResourceOStream & ostr) { }
 };
@@ -62,7 +62,7 @@ public:
 
     virtual void begin(ResourceIStream & ostr, OptionSet const& options) { }
     
-    virtual void getFrame(unsigned int streamId = 0) { }
+    virtual void getFrame(int streamId = -1) { }
 
     virtual void end(ResourceIStream & ostr) { }
 };

@@ -71,6 +71,7 @@ void LightSet::clone(LightSet & lightSet)
 std::shared_ptr<Light> LightSet::add()
 {
     auto light = Light::create();
+    light->setParent(shared_from_this());
     m_lights.push_back(light);
     return light;
 }

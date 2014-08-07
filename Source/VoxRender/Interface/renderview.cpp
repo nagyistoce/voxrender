@@ -47,8 +47,12 @@ namespace filescope {
     // Bit flags for tracking key events in the view
     static const unsigned int KEY_LEFT  = 1 << 0;
     static const unsigned int KEY_RIGHT = 1 << 1;
-    static const unsigned int KEY_UP    = 1 << 2;
-    static const unsigned int KEY_DOWN  = 1 << 3;
+    static const unsigned int KEY_FRONT = 1 << 2;
+    static const unsigned int KEY_BACK  = 1 << 3;
+    static const unsigned int KEY_SPINL = 1 << 4;
+    static const unsigned int KEY_SPINR = 1 << 5;
+    static const unsigned int KEY_UP    = 1 << 6;
+    static const unsigned int KEY_DOWN  = 1 << 7;
 
 } // namespace filescope
 } // namespace anonymous
@@ -277,10 +281,14 @@ void RenderView::keyPressEvent(QKeyEvent * event)
     switch (event->key())
     {
         // Camera strafe keys
-        case Qt::Key_W: m_ioFlags |= filescope::KEY_UP;    break;
+        case Qt::Key_W: m_ioFlags |= filescope::KEY_FRONT; break;
         case Qt::Key_A: m_ioFlags |= filescope::KEY_LEFT;  break;
-        case Qt::Key_S: m_ioFlags |= filescope::KEY_DOWN;  break;
+        case Qt::Key_S: m_ioFlags |= filescope::KEY_BACK;  break;
         case Qt::Key_D: m_ioFlags |= filescope::KEY_RIGHT; break;
+        case Qt::Key_Q: m_ioFlags |= filescope::KEY_SPINL; break;
+        case Qt::Key_E: m_ioFlags |= filescope::KEY_SPINR; break;
+        case Qt::Key_R: m_ioFlags |= filescope::KEY_UP;    break;
+        case Qt::Key_F: m_ioFlags |= filescope::KEY_DOWN;  break;
 
         // :TEST: Plane cut
         case Qt::Key_Control: if (m_activeTool == Tool_Drag) m_activeTool = Tool_ClipPlane; break;
@@ -295,10 +303,14 @@ void RenderView::keyReleaseEvent(QKeyEvent * event)
     switch (event->key())
     {
         // Camera strafe keys
-        case Qt::Key_W: m_ioFlags &= ~filescope::KEY_UP;    break;
+        case Qt::Key_W: m_ioFlags &= ~filescope::KEY_FRONT; break;
         case Qt::Key_A: m_ioFlags &= ~filescope::KEY_LEFT;  break;
-        case Qt::Key_S: m_ioFlags &= ~filescope::KEY_DOWN;  break;
+        case Qt::Key_S: m_ioFlags &= ~filescope::KEY_BACK;  break;
         case Qt::Key_D: m_ioFlags &= ~filescope::KEY_RIGHT; break;
+        case Qt::Key_Q: m_ioFlags &= ~filescope::KEY_SPINL; break;
+        case Qt::Key_E: m_ioFlags &= ~filescope::KEY_SPINR; break;
+        case Qt::Key_R: m_ioFlags &= ~filescope::KEY_UP;    break;
+        case Qt::Key_F: m_ioFlags &= ~filescope::KEY_DOWN;  break;
 
         // Plane cut
         case Qt::Key_Control: 
@@ -330,13 +342,11 @@ void RenderView::setDisplayMode(Stereo mode)
 
 // ----------------------------------------------------------------------------
 //  Processes and applies scene interactions for this frame
-//  :TODO: This is the old scene change mechanism, locking is used now for simplicity
-//         DO NOT LOCK here because we are not on the UI thread anymore.
 // ----------------------------------------------------------------------------
 void RenderView::processSceneInteractions()
 {
-    static const float    camSpeed(5.0f);
-    static const Vector2f camWSense(-0.0025f, 0.0025f);
+    static const float CAM_SPEED     = 5.0f;
+    static const float CAM_ROT_SPEED = 0.0025f;
 
     // Compute the time statistics for speed scaling
     auto curr    = std::chrono::high_resolution_clock::now();
@@ -349,22 +359,34 @@ void RenderView::processSceneInteractions()
     auto camera = scene->camera;
     if (!camera) return;
 
-    // Handle camera strafe associated with key holds
-    float duration = (float)m_lastTimeDiff.count() / 10000.0f;
-    float distance = camSpeed * duration;
-    if (m_ioFlags & filescope::KEY_UP)    { camera->move(distance);      camera->setDirty(); }
-    if (m_ioFlags & filescope::KEY_RIGHT) { camera->moveRight(distance); camera->setDirty(); }
-    if (m_ioFlags & filescope::KEY_DOWN)  { camera->move(-distance);     camera->setDirty(); }
-    if (m_ioFlags & filescope::KEY_LEFT)  { camera->moveLeft(distance);  camera->setDirty(); }
+    // -------
+    // Process keyboard mappings
+    if (m_ioFlags) 
+    {
+        float duration    = (float)m_lastTimeDiff.count() / 10000.0f;
+        float distance    = CAM_SPEED * duration;
+        float rotDistance = CAM_ROT_SPEED * duration;
 
-    // Handle camera rotation from mouse movement
+        if (m_ioFlags & filescope::KEY_FRONT) camera->move(distance);
+        if (m_ioFlags & filescope::KEY_RIGHT) camera->moveRight(distance);
+        if (m_ioFlags & filescope::KEY_BACK)  camera->move(-distance);
+        if (m_ioFlags & filescope::KEY_LEFT)  camera->moveLeft(distance);
+        if (m_ioFlags & filescope::KEY_UP)    camera->moveUp(distance);
+        if (m_ioFlags & filescope::KEY_DOWN)  camera->moveUp(-distance);
+        if (m_ioFlags & filescope::KEY_SPINL) camera->roll(-rotDistance);
+        if (m_ioFlags & filescope::KEY_SPINR) camera->roll(rotDistance);
+
+        camera->setDirty();
+    }
+
+    // -------
+    // Process mouse interactions
     int dx = m_mouseDeltaX.fetchAndStoreRelaxed(0);
     int dy = m_mouseDeltaY.fetchAndStoreRelaxed(0);
     if (dx || dy)
     {
-        Vector2f rotation = Vector2f(dx, dy) * camWSense;
-        camera->pitch(rotation[1]); 
-        camera->yaw(rotation[0]);
+        camera->pitch(dy * CAM_ROT_SPEED); 
+        camera->yaw(dx * -CAM_ROT_SPEED);
         camera->setDirty();
     }
 }
@@ -375,18 +397,23 @@ void RenderView::processSceneInteractions()
 void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
 {
     vox::FrameBuffer & frame = *lock->framebuffer.get();
+
+    // Image properties
+    auto height = m_image.height();
+    auto width  = m_image.width();
+    auto stride = m_image.stride();
     
+    // Set the scene rectangle
+    auto sceneWidth = (m_displayMode == Stereo_SideBySide) ? width * 2 : width;
+    m_renderscene->setSceneRect(0.0f, 0.0f, (float)sceneWidth, (float)height);
+
     // Stuff here is messed up, need to thoroughly go through the docs to figure out
     // how to do this properly
-    if (m_image.width() != frame.width() || 
-        m_image.height() != frame.height() || 
+    if (width  != frame.width()  || 
+        height != frame.height() || 
         m_image.layers() != frame.layers())
     {
         m_image = frame.copy();
-
-        auto rect = m_renderscene->sceneRect();
-        m_renderscene->setSceneRect(
-            0.0f, 0.0f, (float)m_image.width(),  (float)m_image.height());
     }
     else for (unsigned int i = 0; i < frame.layers(); i++)
     {
@@ -394,17 +421,28 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     }
 
     QImage qimage;
+    QPainter painter;
+
+    // Compose the display image depending on the stereo settings
     switch (m_displayMode)
     {
     case Stereo_Left:
         qimage = QImage((unsigned char*)m_image.data(0),
-            m_image.width(), m_image.height(),
-            m_image.stride(), QImage::Format_RGB32);
+            width, height, stride, QImage::Format_RGB32);
         break;
     case Stereo_Right:
         qimage = QImage((unsigned char*)m_image.data(m_image.layers() - 1),
-            m_image.width(), m_image.height(),
-            m_image.stride(), QImage::Format_RGB32);
+            width, height, stride, QImage::Format_RGB32);
+        break;
+    case Stereo_SideBySide:
+        qimage = QImage((unsigned char*)m_image.data(0),
+            width, height, stride, QImage::Format_RGB32);
+        qimage = qimage.copy(0, 0, width*2, height);
+        
+        painter.begin(&qimage);
+        painter.drawImage(width, 0, 
+            QImage((unsigned char*)m_image.data(m_image.layers() - 1),
+                width, height, stride, QImage::Format_RGB32));
         break;
     default:
         qimage = QImage((unsigned char*)m_image.data(0),
@@ -419,7 +457,6 @@ void RenderView::setImage(std::shared_ptr<vox::FrameBufferLock> lock)
     // Draws the statistical information overlay
     if (m_overlayStats)
     {
-        QPainter painter;
         painter.begin(&qimage);
         painter.setPen(Qt::white);
         painter.setCompositionMode(QPainter::CompositionMode_Source);

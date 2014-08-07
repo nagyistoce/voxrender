@@ -229,14 +229,14 @@ public:
     {
         // Execute one cycle of the device rendering kernel
         RenderKernel::execute(0, 0, m_hdrBuffer[0].width(), m_hdrBuffer[0].height(), 0);
-
+        
         // Perform tonemapping on the HDR image buffer
         TonemapKernel::execute(m_hdrBuffer[0], m_ldrBuffer, m_exposure);
         if (m_hdrBuffer[1].width() != 0)
         {
             RenderKernel::execute(0, 0, m_hdrBuffer[1].width(), m_hdrBuffer[1].height(), 1);
         }
-
+        
         m_frameBuffer->wait(); // Await user lock release
 
         // Read the data back to the host

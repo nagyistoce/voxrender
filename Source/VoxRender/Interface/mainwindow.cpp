@@ -1014,7 +1014,7 @@ void MainWindow::on_pushButton_devicesAdd_clicked()
 
     BOOST_FOREACH( auto & item, items )
     {
-        if( item->column( ) == 0 && item->background( ) != Color_Enabled )
+        if (item->column( ) == 0 && item->background( ) != Color_Enabled)
         {
             // Add the associated device to the renderer
             auto idItem = ui->table_devices->item( item->row( ), 0 );
